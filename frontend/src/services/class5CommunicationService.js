@@ -20,6 +20,11 @@ const class5CommunicationService = {
     return response.data;
   },
 
+  submitActivityResult: async (data) => {
+    const response = await axiosInstance.post('/class5-communication/activity-result', data);
+    return response.data;
+  },
+
   getDailyMission: async () => {
     const response = await axiosInstance.get('/class5-communication/daily-mission');
     return response.data;

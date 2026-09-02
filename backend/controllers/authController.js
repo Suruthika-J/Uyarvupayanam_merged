@@ -25,7 +25,7 @@ const register = async (req, res) => {
       return res.status(403).json({ message: "Student registration is currently disabled by administrator." });
     }
 
-    const { name, email, password, classLevel, district } = req.body;
+    const { name, email, password, userType, classLevel, district } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Please provide all required fields" });
@@ -36,6 +36,9 @@ const register = async (req, res) => {
       return res.status(409).json({ message: "Email already exists" });
     }
 
+    const validUserTypes = ["school_student", "college_student", "graduate"];
+    const finalUserType = validUserTypes.includes(userType) ? userType : "school_student";
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -43,8 +46,9 @@ const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      classLevel,
-      district,
+      userType: finalUserType,
+      classLevel: classLevel || "",
+      district: district || "",
       role: "student",
       status: "active"
     });
@@ -56,6 +60,7 @@ const register = async (req, res) => {
             id: user._id,
             name: user.name,
             email: user.email,
+            userType: user.userType,
             onboardingCompleted: user.onboardingCompleted
         }
     });

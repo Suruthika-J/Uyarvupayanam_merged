@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const registerStudent = async (req, res) => {
   try {
-    const { name, email, password, classLevel, district } = req.body;
+    const { name, email, password, userType, classLevel, district } = req.body;
 
     // Check if student exists
     const existingStudent = await User.findOne({ email });
@@ -13,17 +13,22 @@ const registerStudent = async (req, res) => {
       return res.status(409).json({ message: "Email already exists" });
     }
 
+    // Validate userType enum
+    const validUserTypes = ["school_student", "college_student", "graduate"];
+    const finalUserType = validUserTypes.includes(userType) ? userType : "school_student";
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create student
+    // Create student (Strictly role="student", preventing role escalation)
     const student = new User({
       name,
       email,
       password: hashedPassword,
-      classLevel,
-      district,
+      userType: finalUserType,
+      classLevel: classLevel || "",
+      district: district || "",
       role: "student",
       status: "active"
     });
@@ -34,7 +39,7 @@ const registerStudent = async (req, res) => {
     try {
       await AdminNotification.create({
         title: "New Student Registration",
-        message: `A new student ${name} has registered.`,
+        message: `A new student ${name} (${finalUserType}) has registered.`,
         type: "student_registration",
       });
 
@@ -43,7 +48,7 @@ const registerStudent = async (req, res) => {
       if (io) {
         io.to("admins").emit("new_admin_notification", {
           title: "New Student Registration",
-          message: `A new student ${name} has registered.`,
+          message: `A new student ${name} (${finalUserType}) has registered.`,
           type: "student_registration",
         });
       }
@@ -57,6 +62,7 @@ const registerStudent = async (req, res) => {
             id: student._id,
             name: student.name,
             email: student.email,
+            userType: student.userType,
             onboardingCompleted: student.onboardingCompleted
         }
     });
@@ -99,6 +105,7 @@ const loginStudent = async (req, res) => {
         _id: student._id,
         name: student.name,
         email: student.email,
+        userType: student.userType || "school_student",
         classLevel: student.classLevel,
         district: student.district,
         onboardingCompleted: student.onboardingCompleted

@@ -45,7 +45,7 @@ export default function LoginPage() {
       const res = await axios.post(`${API_BASE}/students/login`, form)
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
-      navigate(from, { replace: true })
+      navigate('/student/dashboard', { replace: true })
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Check your credentials.'
       setApiError(msg)

@@ -10,6 +10,7 @@ import { classContentService } from '../../../services/classContentService'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
+import ActivityCard from '../../components/class5/activities/ActivityCard'
 import { scholarshipService, careerService } from '../../services'
 import { examService } from '../../../services/examService'
 import AuthModal from '../../components/ui/AuthModal'
@@ -820,12 +821,99 @@ export default function ClassLevelPage(props) {
                         )}
                      </div>
                   </div>
+                ) : activeSec === 'Fun' ? (
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 32, marginBottom: 32 }}>
+                      <ActivityCard
+                        title="Drawing Challenge"
+                        category="Fun"
+                        description="Use your imagination and create something amazing!"
+                        skill="Creativity"
+                        difficulty="Beginner"
+                        cta="Start Activity"
+                        emoji="🎨"
+                        gradient="linear-gradient(135deg, #ec4899 0%, #f59e0b 100%)"
+                        onStart={() => navigate('/student/class5/fun/drawing-challenge')}
+                      />
+                      <ActivityCard
+                        title="Story Builder"
+                        category="Fun Learning"
+                        description="Choose your characters, place and ideas, then create your own story!"
+                        skill="Creativity"
+                        difficulty="Beginner"
+                        cta="Start Activity"
+                        emoji="📝"
+                        gradient="linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)"
+                        onStart={() => navigate('/student/class5/fun/story-builder')}
+                      />
+                      <ActivityCard
+                        title="Make Your Own Song"
+                        category="Fun Learning"
+                        description="Choose your ideas, create your lyrics, and make your own fun song!"
+                        skill="Creativity & Expression"
+                        difficulty="Beginner"
+                        cta="Start Activity"
+                        emoji="🎵"
+                        gradient="linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)"
+                        onStart={() => navigate('/student/class5/fun/make-your-own-song')}
+                      />
+                      <ActivityCard
+                        title="Treasure Hunt"
+                        category="Fun Learning"
+                        description="Follow the clues, solve the puzzles, and find the hidden treasure!"
+                        skill="Observation & Problem Solving"
+                        difficulty="Beginner"
+                        cta="Start Hunt"
+                        emoji="🗺️"
+                        gradient="linear-gradient(135deg, #10b981 0%, #3b82f6 100%)"
+                        onStart={() => navigate('/student/class5/fun/treasure-hunt')}
+                      />
+                    </div>
+                    {filteredContent.length === 0 ? (
+                      <div style={{ textAlign:'center', padding:'50px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                        <SEmpty title="More activities coming soon" desc="We're adding more fun activities for Class 5. Check back soon!" />
+                      </div>
+                    ) : (
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
+                        {filteredContent.map(item => (
+                          <div key={item._id} style={{ background:'#fff', borderRadius:32, border:'1px solid #f1f5f9', overflow:'hidden', display:'flex', flexDirection:'column', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)' }}>
+                            <div style={{ padding:32, flex:1, display:'flex', flexDirection:'column' }}>
+                              <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+                                <SBadge color="purple">{item.category || 'Fun'}</SBadge>
+                              </div>
+                              <h3 style={{ fontSize:22, fontWeight:900, margin:'0 0 12px', lineHeight:1.3 }}>{item.title}</h3>
+                              <p style={{ color:'#64748b', marginBottom:24, lineHeight:1.6 }}>{item.shortDescription}</p>
+                              <SBtn variant="primary" style={{ width:'100%', marginTop:'auto', borderRadius:16, padding:'14px 0' }} onClick={() => handleCardClick(item)}>
+                                Explore
+                              </SBtn>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
                   <SEmpty title="Nothing found yet" desc={`We haven't added items to ${activeSec} for Class ${cleanLevel} yet.`} />
                 </div>
               ) : (
-                filteredContent.map(item => {
+                <React.Fragment>
+                  {activeSec === 'Games' && (
+                    <div style={{ gridColumn: '1/-1', marginBottom: 32 }}>
+                      <ActivityCard
+                        title="Pattern Master"
+                        category="Games"
+                        description="Find the pattern and discover what comes next!"
+                        skill="Logical Thinking"
+                        difficulty="Beginner"
+                        cta="Play Now"
+                        emoji="🔍"
+                        gradient="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                        onStart={() => navigate('/student/class5/games/pattern-master')}
+                      />
+                    </div>
+                  )}
+                {filteredContent.map(item => {
                   if (item.isDirect) {
                     return (
                       <div key={item._id} style={{ 
@@ -925,10 +1013,12 @@ export default function ClassLevelPage(props) {
                          >
                             Explore Detailed Guide
                          </SBtn>
-                      </div>
-                    </div>
-                  )
-                })
+                       </div>
+                     </div>
+                   )
+                 })
+                }
+                </React.Fragment>
               )}
             </div>
           </div>

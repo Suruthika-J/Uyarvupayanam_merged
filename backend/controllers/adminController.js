@@ -30,8 +30,11 @@ exports.loginAdmin = async (req, res) => {
 
 exports.dashboardStats = async (req, res) => {
   try {
-    // 1. Total students
+    // 1. Total students & breakdown by category
     const totalStudents = await User.countDocuments({ role: "student" });
+    const schoolStudents = await User.countDocuments({ role: "student", $or: [{ userType: "school_student" }, { userType: { $exists: false } }] });
+    const collegeStudents = await User.countDocuments({ role: "student", userType: "college_student" });
+    const graduates = await User.countDocuments({ role: "student", userType: "graduate" });
 
     // 2. Active courses count
     const activeCourses = await Course.countDocuments();
@@ -95,6 +98,9 @@ exports.dashboardStats = async (req, res) => {
 
     res.json({
       totalStudents,
+      schoolStudents,
+      collegeStudents,
+      graduates,
       activeCourses,
       examsCount,
       scholarshipsCount,
@@ -113,7 +119,29 @@ exports.dashboardStats = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
   try {
-    const { search, status } = req.query;
+    const { search, status, userType, field } = req.query;
+
+    if (userType === "administrator") {
+      const adminFilter = {};
+      if (search) {
+        adminFilter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
+      const admins = await Admin.find(adminFilter).select("-password").sort({ createdAt: -1 });
+      const mappedAdmins = admins.map(a => ({
+        _id: a._id,
+        name: a.name || "Admin User",
+        email: a.email,
+        userType: "administrator",
+        status: a.isActive ? "active" : "blocked",
+        role: a.role,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt
+      }));
+      return res.json(mappedAdmins);
+    }
     
     // Allow users that either have role "student" explicitly or don't have a role set yet
     const roleCondition = { $or: [{ role: "student" }, { role: { $exists: false } }] };
@@ -121,10 +149,17 @@ exports.getUsers = async (req, res) => {
 
     if (status && status !== "all") {
       if (status === "active") {
-        // Active status includes both explicit "active" or missing status
         conditions.push({ $or: [{ status: "active" }, { status: { $exists: false } }] });
       } else {
         conditions.push({ status: status });
+      }
+    }
+
+    if (userType && userType !== "all") {
+      if (userType === "school_student") {
+        conditions.push({ $or: [{ userType: "school_student" }, { userType: { $exists: false } }] });
+      } else {
+        conditions.push({ userType: userType });
       }
     }
 
@@ -147,6 +182,35 @@ exports.getUsers = async (req, res) => {
   } catch (error) {
     console.error("Get users error:", error);
     res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+exports.getUserDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const CollegeStudentProfile = require("../models/CollegeStudentProfile");
+    const Recommendation = require("../models/Recommendation");
+
+    let collegeProfile = null;
+    let recommendation = null;
+
+    if (user.userType === "college_student" || user.userType === "graduate") {
+      collegeProfile = await CollegeStudentProfile.findOne({ userId: user._id });
+    }
+
+    recommendation = await Recommendation.findOne({ userId: user._id }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      user,
+      collegeProfile,
+      recommendation
+    });
+  } catch (error) {
+    console.error("Get user details error:", error);
+    res.status(500).json({ message: "Failed to fetch user details" });
   }
 };
 

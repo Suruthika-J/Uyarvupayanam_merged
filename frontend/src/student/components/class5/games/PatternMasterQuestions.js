@@ -1,0 +1,42 @@
+export const PATTERN_MASTER_QUESTIONS = [
+  {
+    id: 'pm-1',
+    prompt: 'Look at the number pattern. What number comes next?',
+    pattern: '2, 4, 6, 8, ___',
+    options: ['9', '10', '11', '12'],
+    answer: '10',
+    hint: 'We keep adding 2 each time.',
+  },
+  {
+    id: 'pm-2',
+    prompt: 'The shapes repeat in this order. Which shape comes next?',
+    pattern: '● ■ ● ■ ● ___',
+    options: ['● (Circle)', '■ (Square)', '▲ (Triangle)', '★ (Star)'],
+    answer: '■ (Square)',
+    hint: 'The shapes go Circle, Square, Circle, Square...',
+  },
+  {
+    id: 'pm-3',
+    prompt: 'Follow the pattern. What colour comes next?',
+    pattern: 'Red, Blue, Red, Blue, Red, ___',
+    options: ['Green', 'Blue', 'Yellow', 'Purple'],
+    answer: 'Blue',
+    hint: 'The colours switch between Red and Blue.',
+  },
+  {
+    id: 'pm-4',
+    prompt: 'Can you find the pattern? What number comes next?',
+    pattern: '1, 2, 4, 8, ___',
+    options: ['10', '12', '14', '16'],
+    answer: '16',
+    hint: 'We multiply by 2 each time.',
+  },
+  {
+    id: 'pm-5',
+    prompt: 'Spot the pattern in the number line. What comes next?',
+    pattern: '5, 10, 15, 20, ___',
+    options: ['21', '22', '25', '30'],
+    answer: '25',
+    hint: 'We keep adding 5 each time.',
+  },
+];

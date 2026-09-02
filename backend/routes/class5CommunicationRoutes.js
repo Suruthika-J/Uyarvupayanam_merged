@@ -7,6 +7,7 @@ const verifyStudent = require("../middleware/verifyStudent");
 const {
   getProgress,
   completeStep,
+  submitActivityResult,
   getOrGenerateDailyMission,
   completeDailyMission,
   uploadVoiceRecording,
@@ -38,6 +39,7 @@ const upload = multer({
 // Authenticated student routes
 router.get("/progress", verifyStudent, getProgress);
 router.post("/step", verifyStudent, completeStep);
+router.post("/activity-result", verifyStudent, submitActivityResult);
 router.get("/daily-mission", verifyStudent, getOrGenerateDailyMission);
 router.post("/daily-mission/complete", verifyStudent, completeDailyMission);
 router.post("/voice-recording", verifyStudent, upload.single("audio"), uploadVoiceRecording);

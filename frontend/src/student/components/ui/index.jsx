@@ -193,7 +193,7 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
 }
 
 /* ── Select ──────────────────────────────────────────────── */
-export function SSelect({ label, children, style = {}, ...props }) {
+export function SSelect({ label, options, children, style = {}, ...props }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       {label && (
@@ -204,13 +204,20 @@ export function SSelect({ label, children, style = {}, ...props }) {
       )}
       <select style={{
         width: '100%', fontFamily: 'var(--s-font-body)',
-        background: 'var(--s-surface)',
+        background: '#fff',
         border: '1.5px solid var(--s-border)',
         borderRadius: 10, padding: '11px 14px',
         fontSize: 14, color: 'var(--s-text)', outline: 'none',
+        cursor: 'pointer',
         transition: 'border-color 0.2s ease',
         ...style,
-      }} {...props}>{children}</select>
+      }} {...props}>
+        {children || (options && options.map((opt, idx) => {
+          const val = typeof opt === 'object' ? opt.value : opt
+          const lbl = typeof opt === 'object' ? (opt.label || opt.value) : opt
+          return <option key={val || idx} value={val}>{lbl}</option>
+        }))}
+      </select>
     </div>
   )
 }

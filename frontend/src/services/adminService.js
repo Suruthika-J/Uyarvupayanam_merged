@@ -31,6 +31,11 @@ export const adminService = {
     return response.data
   },
 
+  getUserDetails: async (id) => {
+    const response = await axiosInstance.get(`/admin/users/${id}`)
+    return response.data
+  },
+
   blockUser: async (id) => {
     const response = await axiosInstance.patch(`/admin/users/${id}/block`)
     return response.data
@@ -97,4 +102,31 @@ export const adminService = {
     const response = await axiosInstance.post('/colleges/bulk/fetch-all-courses')
     return response.data
   },
+
+  // ── College Student Management Services ──
+  getCollegeStudents: async (params = {}) => {
+    const response = await axiosInstance.get('/admin/college/students', { params })
+    return response.data
+  },
+
+  getCollegeStudentProfile: async (id) => {
+    const response = await axiosInstance.get(`/admin/college/students/${id}`)
+    return response.data
+  },
+
+  updateCollegeStudent: async (id, data) => {
+    const response = await axiosInstance.put(`/admin/college/students/${id}`, data)
+    return response.data
+  },
+
+  toggleCollegeStudentStatus: async (id, status) => {
+    const response = await axiosInstance.patch(`/admin/college/students/${id}/status`, { status })
+    return response.data
+  },
+
+  sendCollegeStudentNotification: async (id, notification) => {
+    const response = await axiosInstance.post(`/admin/college/students/${id}/notify`, notification)
+    return response.data
+  },
 }
+

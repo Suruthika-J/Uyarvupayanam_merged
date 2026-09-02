@@ -28,6 +28,15 @@ export default function RecommendationResultPage() {
         if (student) fetchResult();
     }, [student]);
 
+    useEffect(() => {
+        if (student?.userType === 'college_student') {
+            navigate('/student/advisor', { replace: true });
+            return;
+        }
+    }, [student, navigate]);
+
+    if (student?.userType === 'college_student') return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SLoader /></div>;
+
     if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SLoader /></div>;
 
     if (!result) return (

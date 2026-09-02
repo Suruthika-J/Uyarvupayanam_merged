@@ -100,10 +100,16 @@ function formatDate(d) {
 /* ────────────────────────────────────────────────────────────── 
    DASHBOARD PAGE
    ────────────────────────────────────────────────────────────── */
+import { Navigate } from 'react-router-dom'
+
 export default function DashboardPage() {
   const { student, logout } = useStudentAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  if (student?.userType === 'college_student') {
+    return <Navigate to="/college/dashboard" replace />
+  }
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isClass5 = student?.classLevel === '5' || student?.classLevel === '5th' || student?.classLevel === 'Class 5';

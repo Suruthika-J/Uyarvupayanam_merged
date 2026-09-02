@@ -38,6 +38,14 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run Ayurveda importer on startup:", err);
   }
+  try {
+    const { seedTaxonomyData } = require("./utils/taxonomySeeder");
+    const { seedCollegeCareers } = require("./utils/collegeCareerSeeder");
+    seedTaxonomyData().catch(err => console.error("Error in taxonomy seeding:", err));
+    seedCollegeCareers().catch(err => console.error("Error in college careers seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run seeders on startup:", err);
+  }
 });
 
 const app = express();
@@ -116,12 +124,14 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/admin/college", require("./routes/collegeAdminRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/career-paths", require("./routes/careerPathRoutes"));
 app.use("/api/courses", require("./routes/courseRoutes"));
 app.use("/api/exams", require("./routes/examRoutes"));
 app.use("/api/colleges", require("./routes/collegeRoutes"));
 app.use("/api/scholarships", require("./routes/scholarshipRoutes"));
+app.use("/api/college-scholarships", require("./routes/collegeScholarshipRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/admin/notifications", require("./routes/adminNotificationRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
@@ -130,10 +140,15 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
 app.use("/api/user-actions", require("./routes/userActionRoutes"));
+app.use("/api/assessment", require("./routes/grokAssessmentRoutes"));
+app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
+app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));
+app.use("/api/college-advisor", require("./routes/collegeAdvisorRoutes"));
+app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));
 app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 app.use("/api/class5-communication", require("./routes/class5CommunicationRoutes"));
 app.use("/api/communication-content", require("./routes/communicationContentRoutes"));

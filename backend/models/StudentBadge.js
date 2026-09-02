@@ -19,6 +19,11 @@ const studentBadgeSchema = new mongoose.Schema(
         "Communication Hero",
         "Kind Speaker",
         "Active Learner",
+        "Pattern Master",
+        "Creative Artist",
+        "Storyteller",
+        "Young Songwriter",
+        "Treasure Hunter",
       ],
     },
     unlockedAt: {

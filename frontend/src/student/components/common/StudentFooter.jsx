@@ -2,17 +2,36 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { FiMail, FiPhone, FiMapPin, FiInstagram, FiTwitter, FiYoutube } from 'react-icons/fi'
 
-const EXPLORE = [
-  { to: '/student/class5',  label: 'Class 5'  },
-  { to: '/student/class8',  label: 'Class 8'  },
-  { to: '/student/class10', label: 'Class 10' },
-  { to: '/student/class12', label: 'Class 12' },
-  { to: '/student/careers', label: 'All Paths' },
+const PLATFORM_LINKS = [
+  { to: '/#about',        label: 'About' },
+  { to: '/student/careers', label: 'Explore' },
+  { to: '/#how-it-works',  label: 'How It Works' },
+  { to: '/#features',      label: 'Features' },
 ]
 
-const QUICK = [
-  { to: '/student/notifications', label: 'Notifications'  },
-  { to: '/student/signin',        label: 'Student Login'  },
+const STUDENT_LINKS = [
+  { to: '/student/careers',           label: 'School Student' },
+  { to: '/student/courses',           label: 'College Student' },
+  { to: '/student/colleges/explorer', label: 'Graduate' },
+]
+
+const RESOURCE_LINKS = [
+  { to: '/student/careers',         label: 'Careers' },
+  { to: '/student/courses',         label: 'Courses' },
+  { to: '/student/colleges',        label: 'Colleges' },
+  { to: '/student/scholarships',     label: 'Scholarships' },
+  { to: '/student/colleges/cutoff', label: 'Entrance Exams' },
+]
+
+const ACCOUNT_LINKS = [
+  { to: '/student/signin', label: 'Login' },
+  { to: '/student/signup', label: 'Sign Up' },
+]
+
+const LEGAL_LINKS = [
+  { to: '/#privacy', label: 'Privacy Policy' },
+  { to: '/#terms',   label: 'Terms of Service' },
+  { to: '/#contact', label: 'Contact Us' },
 ]
 
 export default function StudentFooter() {
@@ -21,65 +40,65 @@ export default function StudentFooter() {
       background: '#0c1520',
       color: '#94a3b8',
     }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '52px 24px 28px' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '52px 24px 28px' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 40, marginBottom: 48,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 36, marginBottom: 48,
         }}>
           {/* Brand */}
-          <div>
-            <Link to="/student/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ gridColumn: 'span 1' }}>
+            <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
                 <span style={{
                   fontFamily: 'var(--s-font-display)', fontWeight: 800,
-                  fontSize: 17, color: '#7dd3fc',
+                  fontSize: 18, color: '#7dd3fc',
                 }}>
                   Uyarvu Payanam
                 </span>
                 <span style={{
                   fontFamily: 'var(--s-font-display)', fontWeight: 600,
-                  fontSize: 11, color: '#64748b',
+                  fontSize: 10, color: '#64748b',
                   letterSpacing: '0.08em', textTransform: 'uppercase',
                 }}>
-                  Career Guidance Platform
+                  Unified Career Ecosystem
                 </span>
               </div>
             </Link>
             <p style={{
-              fontSize: 14, lineHeight: 1.7,
-              color: '#64748b', maxWidth: 240, marginBottom: 20,
+              fontSize: 13, lineHeight: 1.7,
+              color: '#64748b', maxWidth: 220, marginBottom: 20,
             }}>
-              Empowering Tamil Nadu students with the right career guidance at every step.
+              Empowering Tamil Nadu school students, college students, and graduates with transparent guidance.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               {[FiInstagram, FiTwitter, FiYoutube].map((Icon, i) => (
                 <a key={i} href="#" style={{
-                  width: 36, height: 36, borderRadius: 10,
+                  width: 34, height: 34, borderRadius: 10,
                   background: 'rgba(255,255,255,0.06)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: '#64748b', textDecoration: 'none',
                   transition: 'all 0.2s',
                 }}>
-                  <Icon size={16} />
+                  <Icon size={15} />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Explore */}
+          {/* Platform */}
           <div>
             <h4 style={{
               fontFamily: 'var(--s-font-display)', fontWeight: 700,
               fontSize: 12, color: '#7dd3fc', marginBottom: 16,
               letterSpacing: '0.06em', textTransform: 'uppercase',
             }}>
-              Explore
+              Platform
             </h4>
-            {EXPLORE.map(l => (
+            {PLATFORM_LINKS.map(l => (
               <Link key={l.to} to={l.to} style={{
                 display: 'block', color: '#64748b',
-                textDecoration: 'none', fontSize: 14, marginBottom: 10,
+                textDecoration: 'none', fontSize: 13, marginBottom: 10,
                 transition: 'color 0.15s',
               }}>
                 {l.label}
@@ -87,46 +106,75 @@ export default function StudentFooter() {
             ))}
           </div>
 
-          {/* Quick Links */}
+          {/* Student */}
           <div>
             <h4 style={{
               fontFamily: 'var(--s-font-display)', fontWeight: 700,
               fontSize: 12, color: '#7dd3fc', marginBottom: 16,
               letterSpacing: '0.06em', textTransform: 'uppercase',
             }}>
-              Quick Links
+              Student
             </h4>
-            {QUICK.map(l => (
+            {STUDENT_LINKS.map(l => (
               <Link key={l.to} to={l.to} style={{
                 display: 'block', color: '#64748b',
-                textDecoration: 'none', fontSize: 14, marginBottom: 10,
+                textDecoration: 'none', fontSize: 13, marginBottom: 10,
               }}>
                 {l.label}
               </Link>
             ))}
           </div>
 
-          {/* Contact */}
+          {/* Resources */}
           <div>
             <h4 style={{
               fontFamily: 'var(--s-font-display)', fontWeight: 700,
               fontSize: 12, color: '#7dd3fc', marginBottom: 16,
               letterSpacing: '0.06em', textTransform: 'uppercase',
             }}>
-              Contact
+              Resources
             </h4>
-            {[
-              { Icon: FiMail,   text: 'support@uyarvupayanam.in' },
-              { Icon: FiPhone,  text: '+91 98765 43210'          },
-              { Icon: FiMapPin, text: 'Coimbatore, Tamil Nadu'   },
-            ].map(({ Icon, text }, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                marginBottom: 12, fontSize: 14, color: '#64748b',
+            {RESOURCE_LINKS.map(l => (
+              <Link key={l.to} to={l.to} style={{
+                display: 'block', color: '#64748b',
+                textDecoration: 'none', fontSize: 13, marginBottom: 10,
               }}>
-                <Icon size={15} style={{ color: '#7dd3fc', flexShrink: 0 }} />
-                {text}
-              </div>
+                {l.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Account */}
+          <div>
+            <h4 style={{
+              fontFamily: 'var(--s-font-display)', fontWeight: 700,
+              fontSize: 12, color: '#7dd3fc', marginBottom: 16,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}>
+              Account
+            </h4>
+            {ACCOUNT_LINKS.map(l => (
+              <Link key={l.to} to={l.to} style={{
+                display: 'block', color: '#64748b',
+                textDecoration: 'none', fontSize: 13, marginBottom: 10,
+              }}>
+                {l.label}
+              </Link>
+            ))}
+            <h4 style={{
+              fontFamily: 'var(--s-font-display)', fontWeight: 700,
+              fontSize: 12, color: '#7dd3fc', marginTop: 20, marginBottom: 12,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}>
+              Legal
+            </h4>
+            {LEGAL_LINKS.map(l => (
+              <Link key={l.to} to={l.to} style={{
+                display: 'block', color: '#64748b',
+                textDecoration: 'none', fontSize: 13, marginBottom: 8,
+              }}>
+                {l.label}
+              </Link>
             ))}
           </div>
         </div>
@@ -137,11 +185,11 @@ export default function StudentFooter() {
           justifyContent: 'space-between', alignItems: 'center',
           flexWrap: 'wrap', gap: 10,
         }}>
-          <p style={{ fontSize: 13, color: '#334155' }}>
+          <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>
             © {new Date().getFullYear()} Uyarvu Payanam. All rights reserved.
           </p>
-          <p style={{ fontSize: 13, color: '#334155' }}>
-            Guiding Tamil Nadu's future, one student at a time.
+          <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>
+            Empowering Tamil Nadu's academic and career journey.
           </p>
         </div>
       </div>

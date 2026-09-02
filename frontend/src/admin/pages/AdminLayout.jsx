@@ -28,16 +28,25 @@ import OnboardingManagementPage from './admin/OnboardingManagementPage'
 import AssessmentManagementPage from './admin/AssessmentManagementPage'
 import AdmissionHelpRequestsPage from './admin/AdmissionHelpRequestsPage'
 
+import AcademicTaxonomyManagementPage from './admin/AcademicTaxonomyManagementPage'
+import CollegeCareerCatalogManagementPage from './admin/CollegeCareerCatalogManagementPage'
+import CollegeStudentsPage from './admin/CollegeStudentsPage'
+import CollegeScholarshipsPage from './admin/CollegeScholarshipsPage'
+
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
-  { id: 'users', icon: '👥', label: 'User Management', path: 'users' },
+  { id: 'users', icon: '👥', label: 'School Students', path: 'users' },
+  { id: 'college-students', icon: '🎓', label: 'College Students', path: 'college-students' },
+  { id: 'taxonomy', icon: '🏛️', label: 'Academic Taxonomy', path: 'taxonomy' },
+  { id: 'college-careers', icon: '💼', label: 'College Career Catalog', path: 'college-careers' },
   { id: 'admission-help', icon: '🎓', label: 'Admission Help', path: 'admission-help' },
   { id: 'mentor', icon: '🤝', label: 'Guidance Requests', path: 'mentor-requests' },
   { id: 'careers', icon: '🎯', label: 'Career Paths', path: 'careers' },
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
   { id: 'colleges', icon: '🏫', label: 'College Management', path: 'colleges' },
-  { id: 'scholarships', icon: '🎓', label: 'Scholarships', path: 'scholarships' },
+  { id: 'scholarships', icon: '🎓', label: 'School Scholarships', path: 'scholarships' },
+  { id: 'college-scholarships', icon: '🏆', label: 'College Scholarships', path: 'college-scholarships' },
   { id: 'cutoff', icon: '📈', label: 'Cutoff Management', path: 'cutoff' },
   { id: 'notifications', icon: '🔔', label: 'Notifications', path: 'notifications' },
   { id: 'reports', icon: '📉', label: 'Reports & Analytics', path: 'reports' },
@@ -49,14 +58,18 @@ const NAV = [
 
 const PAGE_META = {
   '': { title: 'Dashboard', sub: 'Overview & Analytics' },
-  'users': { title: 'User Management', sub: 'Manage student accounts' },
+  'users': { title: 'User Management', sub: 'Manage school student accounts' },
+  'college-students': { title: 'College Student Management', sub: 'Higher education student accounts, profiles & roadmaps' },
+  'taxonomy': { title: 'Academic Taxonomy', sub: 'Manage fields, degrees, domains & specializations' },
+  'college-careers': { title: 'College Career Catalog', sub: 'Manage career entities & required skills' },
   'admission-help': { title: 'Admission Help Requests', sub: 'Manage college admission assistance' },
   'mentor-requests': { title: 'Guidance Requests', sub: 'Manage student-mentor interactions' },
   'careers': { title: 'Career Paths', sub: 'Hub for academic roadmaps' },
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
   'colleges': { title: 'College Management', sub: 'College database' },
-  'scholarships': { title: 'Scholarships', sub: 'Scholarship listings & deadlines' },
+  'scholarships': { title: 'School Scholarships', sub: 'School scholarship listings & deadlines' },
+  'college-scholarships': { title: 'College Scholarship Management', sub: 'Higher Education Financial Schemes & AI Eligibility' },
   'cutoff': { title: 'Cutoff Management', sub: 'Year-wise cutoff data' },
   'notifications': { title: 'Notifications', sub: 'Send alerts to students' },
   'reports': { title: 'Reports & Analytics', sub: 'Data export & trends' },
@@ -157,6 +170,9 @@ export default function AdminLayout() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="college-students" element={<CollegeStudentsPage />} />
+            <Route path="taxonomy" element={<AcademicTaxonomyManagementPage />} />
+            <Route path="college-careers" element={<CollegeCareerCatalogManagementPage />} />
             <Route path="admission-help" element={<AdmissionHelpRequestsPage />} />
             <Route path="mentor-requests" element={<MentorRequestsPage />} />
             
@@ -172,6 +188,7 @@ export default function AdminLayout() {
             <Route path="exams" element={<ExamsPage />} />
             <Route path="colleges" element={<CollegesPage />} />
             <Route path="scholarships" element={<ScholarshipsPage />} />
+            <Route path="college-scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="cutoff" element={<CutoffPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="reports" element={<ReportsPage />} />

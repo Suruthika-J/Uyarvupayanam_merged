@@ -22,6 +22,10 @@ function AppRoutes() {
         path="/login"
         element={isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />}
       />
+      <Route
+        path="/admin/login"
+        element={isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />}
+      />
 
       {/* ── Admin Panel ── */}
       <Route
@@ -35,10 +39,8 @@ function AppRoutes() {
         }
       />
 
-      {/* ── Student Frontend ── */}
-      <Route path="/" element={<Navigate to="/student" replace />} />
-      <Route path="/student/*" element={<StudentRoutes />} />
-      <Route path="*" element={<Navigate to="/student" replace />} />
+      {/* ── Common Public Platform & Student Routes ── */}
+      <Route path="/*" element={<StudentRoutes />} />
     </Routes>
   )
 }
