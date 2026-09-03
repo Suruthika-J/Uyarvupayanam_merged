@@ -110,6 +110,387 @@ const SAMPLE_RESULTS = {
   }
 }
 
+// ── 7 Pillars of College Student Academic & Career Progression ──────────────
+const COLLEGE_PROGRESSION_CARDS = [
+  {
+    step: '01',
+    num: '1',
+    title: '1. College Entry',
+    subtitle: 'Campus Discovery & TNEA Cutoffs',
+    badge: 'Campus Entry',
+    category: 'Admissions & Cutoffs',
+    image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+    desc: 'Explore 500+ verified Tamil Nadu colleges with TNEA engineering cutoffs, community quotas, campus accreditations, and district registries.',
+    tags: ['TNEA Cutoffs', '500+ Colleges', 'District Search'],
+    link: '/student/colleges',
+    ctaText: 'Explore Colleges',
+    color: '#0284c7',
+    colorLight: '#e0f2fe',
+    icon: FiMapPin
+  },
+  {
+    step: '02',
+    num: '2',
+    title: '2. Degree Program',
+    subtitle: 'Undergraduate, Diploma & Masters',
+    badge: 'Degree Discovery',
+    category: 'UG, PG & Diploma Courses',
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
+    desc: 'Browse multi-disciplinary degree courses across Engineering, Medicine, Pure Sciences, Commerce, Arts, and Allied Health Sciences.',
+    tags: ['Course Curriculums', 'Eligibility Criteria', 'Degree Mapping'],
+    link: '/student/courses',
+    ctaText: 'Browse Degree Programs',
+    color: '#059669',
+    colorLight: '#d1fae5',
+    icon: FiBookOpen
+  },
+  {
+    step: '03',
+    num: '3',
+    title: '3. Domain Specialization',
+    subtitle: 'Core Disciplines & Emerging Tech',
+    badge: 'Specialization',
+    category: 'Core & Emerging Tracks',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    desc: 'Deep-dive into high-demand branches like AI & Data Science, Robotics, Cyber Security, Cloud Computing, VLSI, and Bio-Engineering.',
+    tags: ['Emerging Tech', 'Niche Electives', 'Industry Certs'],
+    link: '/colleges/explorer',
+    ctaText: 'View Specializations',
+    color: '#7c3aed',
+    colorLight: '#ede9fe',
+    icon: FiLayers
+  },
+  {
+    step: '04',
+    num: '4',
+    title: '4. Skill Acquisition',
+    subtitle: 'Hands-on Technical & Core Skills',
+    badge: 'Skill Mastery',
+    category: 'Telemetry Gap Analysis',
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
+    desc: 'Benchmark your acquired abilities against industry benchmarks, identify skill gaps, and build verifiable portfolio projects that recruiters value.',
+    tags: ['Skill Gap Engine', 'Practical Projects', 'Tool Mastery'],
+    link: '/student/careers',
+    ctaText: 'Build In-Demand Skills',
+    color: '#ea580c',
+    colorLight: '#ffedd5',
+    icon: FiZap
+  },
+  {
+    step: '05',
+    num: '5',
+    title: '5. Career Options',
+    subtitle: '200+ Career Paths & Salaries',
+    badge: 'Career Scopes',
+    category: '200+ Career Directions',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+    desc: 'Evaluate transparent salary benchmarks, job growth trajectories, hiring companies, and real-world responsibilities across 200+ verified career pathways.',
+    tags: ['Salary Insights', 'Hiring Sectors', 'Job Growth Outlook'],
+    link: '/student/careers',
+    ctaText: 'Explore Career Paths',
+    color: '#2563eb',
+    colorLight: '#dbeafe',
+    icon: FiBriefcase
+  },
+  {
+    step: '06',
+    num: '6',
+    title: '6. Academic Advisor',
+    subtitle: 'AI Mentorship & Guidance',
+    badge: 'Advisory Support',
+    category: '1-on-1 Guidance & Chat',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+    desc: 'Get real-time AI guidance tuned directly to your degree, branch, and academic year, or connect with senior peer mentors for personalized advice.',
+    tags: ['AI Advisor Chat', 'Peer Mentors', 'Adaptive Study Plans'],
+    link: '/college/advisor',
+    ctaText: 'Consult Academic Advisor',
+    color: '#d97706',
+    colorLight: '#fef3c7',
+    icon: FiUserCheck
+  },
+  {
+    step: '07',
+    num: '7',
+    title: '7. Personalized Scopes',
+    subtitle: 'Scholarships, Grants & Roadmaps',
+    badge: 'Financial Aid',
+    category: 'Schemes & Learning Roadmaps',
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    desc: 'Unlock matched government stipends, trust scholarships, merit financial aid, and structured milestone learning roadmaps customized to your academic profile.',
+    tags: ['College Scholarships', 'Eligibility Match', 'Milestone Roadmaps'],
+    link: '/student/scholarships',
+    ctaText: 'Unlock Scopes & Aid',
+    color: '#e11d48',
+    colorLight: '#ffe4e6',
+    icon: FiAward
+  }
+]
+
+// ── 6 Pillars of Graduate Progression & Career Advancement ──────────────────
+const GRADUATE_PROGRESSION_CARDS = [
+  {
+    step: '01',
+    num: '1',
+    title: '1. Degree Completed',
+    subtitle: 'Undergraduate & Diploma Baseline',
+    badge: 'Degree Baseline',
+    category: 'Completed Qualifications',
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    desc: 'Consolidate your completed degree credentials, CGPA, and major coursework to assess readiness for high-yield next steps.',
+    tags: ['Degree Credentials', 'CGPA Baseline', 'Coursework Audit'],
+    link: '/onboarding/graduate',
+    ctaText: 'Verify Degree Baseline',
+    color: '#1e40af',
+    colorLight: '#dbeafe',
+    icon: FiAward
+  },
+  {
+    step: '02',
+    num: '2',
+    title: '2. Skills & Interests',
+    subtitle: 'Core Competencies & Diagnostics',
+    badge: 'Skill Telemetry',
+    category: 'Competency Evaluation',
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
+    desc: 'Assess your acquired technical, analytical, and management competencies through AI diagnostic tests to uncover core strengths and gaps.',
+    tags: ['Skill Diagnostics', 'Aptitude Benchmarking', 'Core Strengths'],
+    link: '/student/careers',
+    ctaText: 'Evaluate Competencies',
+    color: '#059669',
+    colorLight: '#d1fae5',
+    icon: FiZap
+  },
+  {
+    step: '03',
+    num: '3',
+    title: '3. Career Direction',
+    subtitle: 'Industry Sectors & Roles',
+    badge: 'Career Mapping',
+    category: 'Target Industry Trajectories',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+    desc: 'Identify target sectors from IT and Data Science to Core Engineering, Banking, and Civil Services tailored to your graduate background.',
+    tags: ['Target Industries', 'Market Salary Trends', 'Growth Trajectories'],
+    link: '/student/careers',
+    ctaText: 'Explore Career Paths',
+    color: '#7c3aed',
+    colorLight: '#ede9fe',
+    icon: FiBriefcase
+  },
+  {
+    step: '04',
+    num: '4',
+    title: '4. Competitive Exams (GATE/CAT)',
+    subtitle: 'National & State Testing Readiness',
+    badge: 'Exam Readiness',
+    category: 'GATE, CAT, UPSC, TNPSC',
+    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
+    desc: 'Access exam registration timelines, syllabus breakdowns, previous cutoff benchmarks, and preparation strategies for national tests.',
+    tags: ['GATE / CAT / GRE', 'TNPSC / UPSC', 'Cutoffs & Syllabus'],
+    link: '/student/careers',
+    ctaText: 'Explore Exam Guides',
+    color: '#b45309',
+    colorLight: '#fef3c7',
+    icon: FiFileText
+  },
+  {
+    step: '05',
+    num: '5',
+    title: '5. Higher Studies / Upskilling',
+    subtitle: 'Masters, PhD & Certifications',
+    badge: 'Post-Grad Study',
+    category: 'M.Tech, MBA, M.S. & Certs',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    desc: 'Discover verified Post-Graduate programs (M.E/M.Tech, MBA, M.Sc) and industry certifications from AWS, Google, and Microsoft.',
+    tags: ['Postgraduate Courses', 'Industry Certs', 'Research Fellowships'],
+    link: '/student/colleges/explorer',
+    ctaText: 'Discover PG Programs',
+    color: '#0284c7',
+    colorLight: '#e0f2fe',
+    icon: FiBookOpen
+  },
+  {
+    step: '06',
+    num: '6',
+    title: '6. Professional Placement',
+    subtitle: 'Resume Telemetry & Mentorship',
+    badge: 'Placement Launch',
+    category: 'Job Readiness & Mentors',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+    desc: 'Generate an AI-structured resume, practice realistic technical mock interviews, and connect with senior alumni mentors for job referrals.',
+    tags: ['Resume Generator', 'Mock Interviews', 'Alumni Mentors'],
+    link: '/student/signup',
+    ctaText: 'Launch Career Placement',
+    color: '#db2777',
+    colorLight: '#ffe4e6',
+    icon: FiUserCheck
+  }
+]
+
+function CollegePillarCard({ item }) {
+  const [hovered, setHovered] = React.useState(false)
+  const Icon = item.icon
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#ffffff',
+        borderRadius: 18,
+        overflow: 'hidden',
+        border: hovered ? `1.5px solid ${item.color}` : '1.5px solid var(--s-border)',
+        boxShadow: hovered ? `0 14px 32px rgba(0,0,0,0.12)` : 'var(--s-shadow)',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}
+    >
+      {/* Image Container */}
+      <div style={{ position: 'relative', height: 180, width: '100%', overflow: 'hidden', background: '#0f172a' }}>
+        <img
+          src={item.image}
+          alt={item.title}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            transition: 'transform 0.5s ease',
+            filter: 'brightness(0.92)'
+          }}
+          loading="lazy"
+        />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.78) 100%)'
+        }} />
+
+        {/* Top Badges */}
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span style={{
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(6px)',
+            color: '#ffffff',
+            fontSize: 11,
+            fontWeight: 800,
+            padding: '3px 10px',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.2)'
+          }}>
+            <span style={{ color: item.color }}>{item.step}</span> STAGE
+          </span>
+
+          <span style={{
+            background: item.colorLight,
+            color: item.color,
+            fontSize: 11,
+            fontWeight: 800,
+            padding: '3px 10px',
+            borderRadius: 16,
+            textTransform: 'uppercase'
+          }}>
+            {item.badge}
+          </span>
+        </div>
+
+        {/* Bottom category with icon */}
+        <div style={{
+          position: 'absolute',
+          bottom: 10,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}>
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: item.color,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <Icon size={16} />
+          </div>
+          <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+            {item.category}
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <h4 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 4px', color: 'var(--s-text)' }}>
+          {item.title}
+        </h4>
+        <div style={{ fontSize: 12, fontWeight: 700, color: item.color, marginBottom: 8 }}>
+          {item.subtitle}
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.55, margin: '0 0 14px', flex: 1 }}>
+          {item.desc}
+        </p>
+
+        {/* Tags */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+          {item.tags.map((t, idx) => (
+            <span
+              key={idx}
+              style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: '#475569',
+                background: '#f1f5f9',
+                padding: '2px 8px',
+                borderRadius: 6,
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        {/* Link */}
+        <Link
+          to={item.link}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 14px',
+            borderRadius: 10,
+            background: hovered ? item.color : '#f8fafc',
+            color: hovered ? '#ffffff' : item.color,
+            border: `1.5px solid ${hovered ? item.color : '#e2e8f0'}`,
+            fontSize: 12.5,
+            fontWeight: 800,
+            textDecoration: 'none',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <span>{item.ctaText}</span>
+          <FiArrowRight size={15} style={{ transform: hovered ? 'translateX(3px)' : 'none', transition: 'transform 0.2s' }} />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ── Interactive Feature Cards ────────────────────────────────────────────────
 const FEATURE_PREVIEWS = [
   {
@@ -367,22 +748,52 @@ export default function ExplorePage() {
                   <SBadge color="green">Degree & Specialization</SBadge>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 12, marginTop: 20 }}>
-                  {[
-                    '1. College Entry',
-                    '2. Degree Program',
-                    '3. Domain Specialization',
-                    '4. Skill Acquisition',
-                    '5. Career Options',
-                    '6. Academic Advisor',
-                    '7. Personalized Scopes'
-                  ].map((node, i) => (
+                {/* Horizontal Sequence Flow */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 12, marginTop: 16 }}>
+                  {COLLEGE_PROGRESSION_CARDS.map((item, i) => (
                     <React.Fragment key={i}>
-                      <div style={{ padding: '10px 16px', borderRadius: 10, background: '#d1fae5', color: '#047857', fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>
-                        {node}
+                      <div style={{
+                        padding: '8px 14px',
+                        borderRadius: 20,
+                        background: '#d1fae5',
+                        color: '#047857',
+                        fontWeight: 800,
+                        fontSize: 12.5,
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6
+                      }}>
+                        <span style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          background: '#047857',
+                          color: '#fff',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 10.5,
+                          fontWeight: 900
+                        }}>
+                          {i + 1}
+                        </span>
+                        <span>{item.title.replace(/^\d+\.\s*/, '')}</span>
                       </div>
-                      {i < 6 && <FiChevronRight size={18} color="#94a3b8" style={{ flexShrink: 0 }} />}
+                      {i < 6 && <FiChevronRight size={16} color="#94a3b8" style={{ flexShrink: 0 }} />}
                     </React.Fragment>
+                  ))}
+                </div>
+
+                {/* 7 Attractive Image Cards Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: 22,
+                  marginTop: 24
+                }}>
+                  {COLLEGE_PROGRESSION_CARDS.map(item => (
+                    <CollegePillarCard key={item.step} item={item} />
                   ))}
                 </div>
 
@@ -406,21 +817,52 @@ export default function ExplorePage() {
                   <SBadge color="blue">Post-Grad & Industry</SBadge>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 12, marginTop: 20 }}>
-                  {[
-                    '1. Degree Completed',
-                    '2. Skills & Interests',
-                    '3. Career Direction',
-                    '4. Competitive Exams (GATE/CAT)',
-                    '5. Higher Studies / Upskilling',
-                    '6. Professional Placement'
-                  ].map((node, i) => (
+                {/* Horizontal Sequence Flow */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 12, marginTop: 16 }}>
+                  {GRADUATE_PROGRESSION_CARDS.map((item, i) => (
                     <React.Fragment key={i}>
-                      <div style={{ padding: '10px 16px', borderRadius: 10, background: '#dbeafe', color: '#1e40af', fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>
-                        {node}
+                      <div style={{
+                        padding: '8px 14px',
+                        borderRadius: 20,
+                        background: '#dbeafe',
+                        color: '#1e40af',
+                        fontWeight: 800,
+                        fontSize: 12.5,
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6
+                      }}>
+                        <span style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          background: '#1e40af',
+                          color: '#fff',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 10.5,
+                          fontWeight: 900
+                        }}>
+                          {i + 1}
+                        </span>
+                        <span>{item.title.replace(/^\d+\.\s*/, '')}</span>
                       </div>
-                      {i < 5 && <FiChevronRight size={18} color="#94a3b8" style={{ flexShrink: 0 }} />}
+                      {i < 5 && <FiChevronRight size={16} color="#94a3b8" style={{ flexShrink: 0 }} />}
                     </React.Fragment>
+                  ))}
+                </div>
+
+                {/* 6 Attractive Image Cards Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: 22,
+                  marginTop: 24
+                }}>
+                  {GRADUATE_PROGRESSION_CARDS.map(item => (
+                    <CollegePillarCard key={item.step} item={item} />
                   ))}
                 </div>
 

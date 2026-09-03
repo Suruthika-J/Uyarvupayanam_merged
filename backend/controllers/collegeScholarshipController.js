@@ -1,6 +1,8 @@
 const CollegeScholarship = require("../models/CollegeScholarship");
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const SavedItem = require("../models/SavedItem");
+const ScholarshipApplication = require("../models/ScholarshipApplication");
+const User = require("../models/User");
 
 /**
  * ── GET /api/college-scholarships ───────────────────────────────────────────
@@ -190,7 +192,8 @@ exports.getCollegeScholarships = async (req, res) => {
  */
 exports.getRecommendedScholarships = async (req, res) => {
   try {
-    const userId = req.user.id; // From verifyStudent middleware
+    // verifyStudent sets req.student (not req.user)
+    const userId = req.student?._id;
     const profile = await CollegeStudentProfile.findOne({ userId }).lean();
 
     const scholarships = await CollegeScholarship.find({
@@ -420,5 +423,111 @@ exports.importCollegeScholarshipsCSV = async (req, res) => {
   } catch (error) {
     console.error("Import College Scholarships Error:", error);
     res.status(500).json({ success: false, message: "Failed to process import" });
+  }
+};
+
+/**
+ * ── GET /api/college-scholarships/my-applications ──────────────────────────
+ * Returns a map of scholarshipId → applicationStatus for the current student.
+ * Used by the frontend to show Tracking section and per-card status badges.
+ */
+exports.getMyApplicationStatuses = async (req, res) => {
+  try {
+    const studentId = req.student?._id;
+    if (!studentId) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+
+    const applications = await ScholarshipApplication.find({
+      studentId,
+      scholarshipType: "college"
+    }).lean();
+
+    // Build a map { scholarshipId: applicationStatus }
+    const statusMap = {};
+    applications.forEach(app => {
+      if (app.scholarshipId) {
+        statusMap[app.scholarshipId.toString()] = app.applicationStatus;
+      }
+    });
+
+    // Also return full records for the Tracking tab
+    res.json({
+      success: true,
+      statusMap,
+      applications
+    });
+  } catch (error) {
+    console.error("Get My Applications Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch application statuses" });
+  }
+};
+
+/**
+ * ── POST /api/college-scholarships/:id/apply-status ────────────────────────
+ * Body: { status: "Interested" | "Applied" | "Not Interested" | "remove" }
+ * Upserts a ScholarshipApplication record for the authenticated student.
+ * If status is "remove", the tracking record is deleted.
+ */
+exports.setApplicationStatus = async (req, res) => {
+  try {
+    const studentId = req.student?._id;
+    if (!studentId) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+
+    const { id: scholarshipId } = req.params;
+    const { status, notes } = req.body;
+
+    const VALID_STATUSES = ["Interested", "Applied", "Not Interested"];
+
+    // Handle removal
+    if (status === "remove") {
+      await ScholarshipApplication.findOneAndDelete({ studentId, scholarshipId });
+      return res.json({ success: true, message: "Tracking record removed" });
+    }
+
+    if (!VALID_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`
+      });
+    }
+
+    // Fetch scholarship for name/provider
+    const scholarship = await CollegeScholarship.findById(scholarshipId).lean();
+    if (!scholarship) {
+      return res.status(404).json({ success: false, message: "Scholarship not found" });
+    }
+
+    // Get student details
+    const student = await User.findById(studentId).lean();
+
+    // Upsert — create or update the tracking record
+    const updated = await ScholarshipApplication.findOneAndUpdate(
+      { studentId, scholarshipId },
+      {
+        studentId,
+        scholarshipId,
+        scholarshipType: "college",
+        scholarshipName: scholarship.scholarshipName,
+        scholarshipProvider: scholarship.provider,
+        studentName: student?.name || "Student",
+        studentEmail: student?.email || "",
+        applicationStatus: status,
+        notes: notes || "",
+        appliedDate: status === "Applied" ? new Date() : undefined
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: `Status set to "${status}" successfully`,
+      application: updated
+    });
+  } catch (error) {
+    console.error("Set Application Status Error:", error);
+    res.status(500).json({ success: false, message: "Failed to update application status" });
   }
 };

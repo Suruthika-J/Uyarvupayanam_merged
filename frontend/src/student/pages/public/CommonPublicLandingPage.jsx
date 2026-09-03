@@ -12,6 +12,122 @@ import {
 } from 'react-icons/fi'
 import { SLoader, SBadge } from '../../components/ui'
 
+// ── 7 Pillars of Academic & Career Progression ──────────────────────────────
+const COLLEGE_JOURNEY_PILLARS = [
+  {
+    step: '01',
+    title: 'College Entry',
+    subtitle: 'Admission Gateways & Campus Discovery',
+    badge: 'Campus Entry',
+    category: 'Admissions & TNEA Cutoffs',
+    color: '#0284c7',
+    colorLight: '#e0f2fe',
+    glowColor: 'rgba(2, 132, 199, 0.22)',
+    icon: FiMapPin,
+    image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+    description: 'Explore 500+ verified colleges across Tamil Nadu with government TNEA cutoffs, community quotas, campus accreditations, and district registries.',
+    tags: ['TNEA Cutoffs', '500+ Colleges', 'District Registry'],
+    ctaText: 'Explore Colleges',
+    link: '/student/colleges'
+  },
+  {
+    step: '02',
+    title: 'Degree Program',
+    subtitle: 'Academic Disciplines & Qualifications',
+    badge: 'Degree Programs',
+    category: 'UG, PG & Diploma Courses',
+    color: '#059669',
+    colorLight: '#d1fae5',
+    glowColor: 'rgba(5, 150, 105, 0.22)',
+    icon: FiBookOpen,
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
+    description: 'Discover multi-disciplinary degree courses spanning Engineering, Medicine, Pure Sciences, Commerce, Arts, and Allied Health Sciences.',
+    tags: ['Course Mappings', 'Curriculums', 'Eligibility Criteria'],
+    ctaText: 'Browse Degree Programs',
+    link: '/student/courses'
+  },
+  {
+    step: '03',
+    title: 'Domain Specialization',
+    subtitle: 'Niche Branches & Future Tech',
+    badge: 'Specialization',
+    category: 'Core & Emerging Tracks',
+    color: '#7c3aed',
+    colorLight: '#ede9fe',
+    glowColor: 'rgba(124, 58, 237, 0.22)',
+    icon: FiLayers,
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    description: 'Deep-dive into high-impact specializations from AI, Data Science, and Cyber Security to Robotics, Cloud Infrastructure, and Bio-Technology.',
+    tags: ['Emerging Tech', 'Specialized Electives', 'Industry Certs'],
+    ctaText: 'View Specializations',
+    link: '/explore'
+  },
+  {
+    step: '04',
+    title: 'Skill Acquisition',
+    subtitle: 'Hands-on Technical & Core Skills',
+    badge: 'Skill Mastery',
+    category: 'Telemetry Gap Analysis',
+    color: '#ea580c',
+    colorLight: '#ffedd5',
+    glowColor: 'rgba(234, 88, 12, 0.22)',
+    icon: FiZap,
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
+    description: 'Benchmark your acquired abilities against industry benchmarks, identify skill gaps, and build verifiable portfolio projects that recruiters value.',
+    tags: ['Skill Gap Engine', 'Practical Projects', 'Tool Mastery'],
+    ctaText: 'Build In-Demand Skills',
+    link: '/student/careers'
+  },
+  {
+    step: '05',
+    title: 'Career Options',
+    subtitle: 'Market Demands & Salary Insights',
+    badge: 'Career Scopes',
+    category: '200+ Career Directions',
+    color: '#2563eb',
+    colorLight: '#dbeafe',
+    glowColor: 'rgba(37, 99, 235, 0.22)',
+    icon: FiBriefcase,
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+    description: 'Evaluate transparent salary benchmarks, job growth trajectories, hiring companies, and real-world responsibilities across 200+ verified career pathways.',
+    tags: ['Salary Benchmarks', 'Hiring Sectors', 'Job Growth Outlook'],
+    ctaText: 'Explore Career Paths',
+    link: '/student/careers'
+  },
+  {
+    step: '06',
+    title: 'Academic Advisor',
+    subtitle: 'AI-Powered Direction & Mentorship',
+    badge: 'Advisory Support',
+    category: '1-on-1 Guidance & Chat',
+    color: '#d97706',
+    colorLight: '#fef3c7',
+    glowColor: 'rgba(217, 119, 6, 0.22)',
+    icon: FiUserCheck,
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+    description: 'Get real-time AI guidance tuned directly to your degree, branch, and academic year, or connect with senior peer mentors for personalized advice.',
+    tags: ['AI Advisor Chat', 'Peer Mentors', 'Adaptive Study Plans'],
+    ctaText: 'Consult Academic Advisor',
+    link: '/explore'
+  },
+  {
+    step: '07',
+    title: 'Personalized Scopes',
+    subtitle: 'Scholarships, Grants & Future Horizons',
+    badge: 'Financial Aid',
+    category: 'Schemes & Learning Roadmaps',
+    color: '#e11d48',
+    colorLight: '#ffe4e6',
+    glowColor: 'rgba(225, 29, 72, 0.22)',
+    icon: FiAward,
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    description: 'Unlock matched government stipends, trust scholarships, merit financial aid, and long-term learning roadmaps customized to your academic profile.',
+    tags: ['College Scholarships', 'Eligibility Match', 'Milestone Roadmaps'],
+    ctaText: 'Unlock Scopes & Aid',
+    link: '/student/scholarships'
+  }
+]
+
 // ── 3 User Type Audiences ───────────────────────────────────────────────────
 const USER_TYPES = [
   {
@@ -235,6 +351,206 @@ function AccessibilityBar() {
   )
 }
 
+// ── Interactive 7-Pillars Journey Card Component ─────────────────────────────
+function JourneyCard({ item, index }) {
+  const [hovered, setHovered] = useState(false)
+  const Icon = item.icon
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#ffffff',
+        borderRadius: 22,
+        overflow: 'hidden',
+        border: hovered ? `1.5px solid ${item.color}` : '1.5px solid var(--s-border)',
+        boxShadow: hovered
+          ? `0 20px 42px ${item.glowColor}, 0 6px 14px rgba(0,0,0,0.06)`
+          : 'var(--s-shadow)',
+        transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}
+    >
+      {/* Card Image Container */}
+      <div style={{ position: 'relative', height: 215, width: '100%', overflow: 'hidden', background: '#0b1329' }}>
+        <img
+          src={item.image}
+          alt={item.title}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            filter: 'brightness(0.92)'
+          }}
+          loading="lazy"
+        />
+        {/* Soft vignette gradient */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(11,19,41,0.2) 0%, rgba(11,19,41,0.78) 100%)'
+        }} />
+
+        {/* Step Badge (Top-Left) */}
+        <div style={{
+          position: 'absolute',
+          top: 14,
+          left: 14,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          color: '#ffffff',
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.06em',
+          padding: '4px 10px',
+          borderRadius: 20,
+          border: '1px solid rgba(255,255,255,0.18)'
+        }}>
+          <span style={{ color: item.color, fontWeight: 900 }}>{item.step}</span>
+          <span style={{ opacity: 0.85 }}>STAGE</span>
+        </div>
+
+        {/* Category Pill (Top-Right) */}
+        <div style={{
+          position: 'absolute',
+          top: 14,
+          right: 14,
+          background: item.colorLight,
+          color: item.color,
+          fontSize: 11,
+          fontWeight: 800,
+          padding: '4px 11px',
+          borderRadius: 20,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em'
+        }}>
+          {item.badge}
+        </div>
+
+        {/* Floating Category in Image Bottom */}
+        <div style={{
+          position: 'absolute',
+          bottom: 14,
+          left: 14,
+          right: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10
+        }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: item.color,
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 4px 14px ${item.color}66`,
+            flexShrink: 0
+          }}>
+            <Icon size={19} />
+          </div>
+          <div style={{ color: '#ffffff', fontSize: 12.5, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.7)' }}>
+            {item.category}
+          </div>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <h3 style={{
+          fontSize: 20,
+          fontWeight: 900,
+          color: 'var(--s-text)',
+          margin: '0 0 4px',
+          fontFamily: 'var(--s-font-display)',
+          lineHeight: 1.25
+        }}>
+          {item.title}
+        </h3>
+
+        <div style={{
+          fontSize: 12.5,
+          fontWeight: 700,
+          color: item.color,
+          marginBottom: 10
+        }}>
+          {item.subtitle}
+        </div>
+
+        <p style={{
+          fontSize: 13.5,
+          color: 'var(--s-text3)',
+          lineHeight: 1.6,
+          margin: '0 0 16px',
+          flex: 1
+        }}>
+          {item.description}
+        </p>
+
+        {/* Highlight Tags */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+          {item.tags.map((tag, tIdx) => (
+            <span
+              key={tIdx}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#475569',
+                background: '#f1f5f9',
+                padding: '3px 9px',
+                borderRadius: 8,
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* CTA Link */}
+        <Link
+          to={item.link}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '11px 16px',
+            borderRadius: 12,
+            background: hovered ? item.color : '#f8fafc',
+            color: hovered ? '#ffffff' : item.color,
+            border: `1.5px solid ${hovered ? item.color : '#e2e8f0'}`,
+            fontSize: 13,
+            fontWeight: 800,
+            textDecoration: 'none',
+            transition: 'all 0.25s ease'
+          }}
+        >
+          <span>{item.ctaText}</span>
+          <FiArrowRight
+            size={16}
+            style={{
+              transform: hovered ? 'translateX(4px)' : 'translateX(0)',
+              transition: 'transform 0.25s ease'
+            }}
+          />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Common Public Landing Page ──────────────────────────────────────────
 export default function CommonPublicLandingPage() {
   const { isAuthenticated } = useStudentAuth()
@@ -331,6 +647,217 @@ export default function CommonPublicLandingPage() {
                 <div className="s-stat-label">{s.label}</div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── 7 PILLARS OF ACADEMIC & CAREER PROGRESSION SECTION ── */}
+        <section className="s-section" id="journey" style={{ background: '#f8fafc', padding: '80px 0', borderBottom: '1px solid var(--s-border)' }}>
+          <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 20px' }}>
+            
+            {/* Section Header */}
+            <div className="s-section-header s-anim-up" style={{ textAlign: 'center', marginBottom: 44 }}>
+              <div className="s-section-tag" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: '#d1fae5',
+                color: '#047857',
+                fontWeight: 800,
+                fontSize: 12,
+                padding: '5px 14px',
+                borderRadius: 20
+              }}>
+                <FiCompass size={14} /> Higher Education & Career Blueprint
+              </div>
+
+              <h2 className="s-section-title" style={{ fontSize: 'clamp(2rem, 3.8vw, 2.75rem)', margin: '14px 0 10px', fontWeight: 900 }}>
+                From College Entry to Personalized Scopes
+              </h2>
+
+              <p className="s-section-desc" style={{ maxWidth: 740, margin: '0 auto', fontSize: 15, color: 'var(--s-text2)' }}>
+                Navigate every milestone of your higher education journey. Explore verified colleges, evaluate degrees, sharpen domain skills, and unlock custom career pathways and scholarships.
+              </p>
+
+              {/* Interactive Stage Sequence Flow */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: 6,
+                padding: '10px 18px',
+                background: '#ffffff',
+                borderRadius: 30,
+                border: '1px solid var(--s-border)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                maxWidth: 1040,
+                margin: '28px auto 0'
+              }}>
+                {COLLEGE_JOURNEY_PILLARS.map((p, pIdx) => (
+                  <div key={pIdx} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: 'var(--s-text2)'
+                    }}>
+                      <span style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: p.colorLight,
+                        color: p.color,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        fontWeight: 900
+                      }}>
+                        {pIdx + 1}
+                      </span>
+                      <span>{p.title}</span>
+                    </div>
+                    {pIdx < COLLEGE_JOURNEY_PILLARS.length - 1 && (
+                      <span style={{ color: '#cbd5e1', fontSize: 12, margin: '0 2px' }}>→</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 7 Image Cards Grid + 8th Completion Banner */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: 28
+            }}>
+              {COLLEGE_JOURNEY_PILLARS.map((item, idx) => (
+                <JourneyCard key={item.step} item={item} index={idx} />
+              ))}
+
+              {/* 8th Action Showcase Banner completing the layout */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #0b1329 0%, #064e3b 50%, #0f3460 100%)',
+                  borderRadius: 22,
+                  padding: '36px 32px',
+                  color: '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 12px 36px rgba(4, 120, 87, 0.25)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  minHeight: 380
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  right: -30,
+                  top: -30,
+                  width: 200,
+                  height: 200,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(52, 211, 153, 0.15) 0%, transparent 70%)'
+                }} />
+
+                <div>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    padding: '4px 12px',
+                    borderRadius: 20,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: '#a7f3d0',
+                    marginBottom: 16
+                  }}>
+                    <FiZap size={13} /> Unified Student Telemetry
+                  </div>
+
+                  <h3 style={{
+                    fontSize: 24,
+                    fontWeight: 900,
+                    color: '#ffffff',
+                    margin: '0 0 12px',
+                    fontFamily: 'var(--s-font-display)',
+                    lineHeight: 1.25
+                  }}>
+                    Connect All 7 Pillars on Your Student Dashboard
+                  </h3>
+
+                  <p style={{ fontSize: 14, color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Build your academic profile once. Our AI telemetry synchronizes your enrolled degree, specialization branch, skill gap analysis, and scholarship eligibility in real time.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 26 }}>
+                    {[
+                      '100% Free for all students across Tamil Nadu',
+                      'Personalized AI Study Planner & Ask AI Advisor',
+                      'Auto-matching for government & trust scholarships'
+                    ].map((pt, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0' }}>
+                        <FiCheckCircle size={15} style={{ color: '#34d399', flexShrink: 0 }} />
+                        <span>{pt}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <Link
+                    to="/student/signup"
+                    style={{
+                      flex: 1,
+                      minWidth: 160,
+                      padding: '12px 20px',
+                      borderRadius: 12,
+                      background: '#34d399',
+                      color: '#064e3b',
+                      fontWeight: 800,
+                      fontSize: 13.5,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      boxShadow: '0 4px 14px rgba(52, 211, 153, 0.35)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>Get Started Free</span>
+                    <FiArrowRight size={16} />
+                  </Link>
+
+                  <Link
+                    to="/explore"
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: 12,
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: 13.5,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Explore Platform
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
