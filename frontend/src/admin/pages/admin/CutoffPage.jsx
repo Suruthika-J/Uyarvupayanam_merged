@@ -210,6 +210,9 @@ export default function CutoffPage() {
               <option value="2023">2023</option>
               <option value="2022">2022</option>
            </FilterSelect>
+           <SBtn variant="outline" onClick={() => window.open(`/cutoffs/college-list-c${selectedYear.slice(-1)}.pdf`, '_blank')} style={{ borderRadius: 99, background: '#fff', color: 'var(--primary)' }}>
+              📄 View Official PDF
+           </SBtn>
            <SBtn variant="outline" onClick={handleExport} style={{ borderRadius: 99, background: '#fff' }}>
               <FiDownload /> Export
            </SBtn>
@@ -229,14 +232,14 @@ export default function CutoffPage() {
               <thead>
                 <tr style={{ background: 'var(--surface2)', borderBottom: '1.5px solid var(--border)' }}>
                   <th onClick={() => toggleSort('collegeId.collegeName')} style={{ padding: '20px 24px', textAlign: 'left', width: 450, cursor: 'pointer' }}>
-                     College Name {sortField === 'collegeId.collegeName' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                     College Name {sortField === 'collegeId.collegeName' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
                   </th>
                   <th onClick={() => toggleSort('courseId.courseName')} style={{ padding: '20px 24px', textAlign: 'left', cursor: 'pointer' }}>
-                     Branch {sortField === 'courseId.courseName' ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                     Branch {sortField === 'courseId.courseName' ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
                   </th>
                   {['OC', 'BC', 'BCM', 'MBC', 'SC', 'SCA', 'ST'].map(cat => (
                     <th key={cat} onClick={() => toggleSort(cat)} style={{ padding: '20px 10px', textAlign: 'center', cursor: 'pointer' }}>
-                       {cat} {sortField === cat ? (sortDir === 'asc' ? '↑' : '↓') : '⇅'}
+                       {cat} {sortField === cat ? (sortDir === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
                     </th>
                   ))}
                   <th style={{ padding: '20px 24px', textAlign: 'center' }}>Actions</th>
@@ -252,7 +255,7 @@ export default function CutoffPage() {
                             {r.collegeId?.collegeName || r.collegeName || r.college || 'N/A'}
                           </span>
                           <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>
-                             ({r.collegeId?.collegeCode || r.collegeCode || r.coc || '—'})
+                             ({r.collegeId?.collegeCode || r.collegeCode || r.coc || 'â€”'})
                           </span>
                         </div>
                       </div>
@@ -262,7 +265,7 @@ export default function CutoffPage() {
                         {r.courseId?.courseName || r.department || r.course || 'N/A'}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)', marginTop: 4, textTransform: 'uppercase' }}>
-                        {r.courseId?.branchCode || r.branchCode || r.brc || '—'}
+                        {r.courseId?.branchCode || r.branchCode || r.brc || 'â€”'}
                       </div>
                     </td>
                     {['OC', 'BC', 'BCM', 'MBC', 'SC', 'SCA', 'ST'].map(cat => (
@@ -358,5 +361,6 @@ export default function CutoffPage() {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
-  )
+  );
 }
+

@@ -44,7 +44,7 @@ const app = express();
 const server = http.createServer(app);
 
 // ─── CORS Origins ───────────────────────────────────────────────────
-const devOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const devOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
 const productionOrigin = process.env.FRONTEND_URL || "";
 const allowedOrigins = process.env.NODE_ENV === "production" && productionOrigin
   ? [productionOrigin]
@@ -54,7 +54,7 @@ const corsOriginValidator = (origin, callback) => {
   if (!origin || allowedOrigins.includes(origin)) {
     callback(null, true);
   } else {
-    callback(new Error("Not allowed by CORS"));
+    callback(new Error("CORS policy: Origin not allowed"));
   }
 };
 
@@ -71,27 +71,46 @@ const io = new Server(server, {
 app.set("io", io);
 
 io.on("connection", (socket) => {
-  console.log(`ðŸ”Œ Socket connected: ${socket.id}`);
+  console.log(`🔌 Socket connected: ${socket.id}`);
 
-  // â”€â”€ Admin connection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Admin connection ─────────────────────────────────────────────
   // Admin clients join the "admins" room for multi-tab state sync.
   // Admin does NOT join "students" or any "user_<id>" room.
   socket.on("join_admin", () => {
     socket.join("admins");
-    console.log(`ðŸ” Admin socket ${socket.id} joined [admins] room`);
+    console.log(`🔑 Admin socket ${socket.id} joined [admins] room`);
   });
 
-  // â”€â”€ Student connection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Student connection ───────────────────────────────────────────
   // Students emit "join_student" with their userId.
   // They join TWO rooms:
-  //   1. "students"       â†’ shared room for broadcast notifications
-  //   2. "user_<userId>"  â†’ personal room for targeted notifications
+  //   1. "students"       → shared room for broadcast notifications
+  //   2. "user_<userId>"  → personal room for targeted notifications
   // Admin clients do NOT call this event, so admin is NEVER in these rooms
   // and will NEVER receive user notification socket events.
   socket.on("join_student", (userId) => {
     socket.join("students");           // shared broadcast room
     socket.join(`user_${userId}`);     // personal room
-    console.log(`ðŸŽ“ Student ${userId} joined rooms: students, user_${userId}`);
+    console.log(`🎓 Student ${userId} joined rooms: students, user_${userId}`);
+  });
+
+  // Legacy support: if old client code calls join_user_room
+  socket.on("join_user_room", (userId) => {
+    socket.join("students");
+    socket.join(`user_${userId}`);
+    console.log(`📌 Socket ${socket.id} joined room: user_${userId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`🔌 Socket disconnected: ${socket.id}`);
+  });
+});
+
+// ── Middleware ──────────────────────────────────────────────────────
+app.use(cors({
+  origin: corsOriginValidator,
+  credentials: true,
+}));{userId} joined rooms: students, user_${userId}`);
   });
 
   // Legacy support: if old client code calls join_user_room
@@ -107,10 +126,25 @@ io.on("connection", (socket) => {
 });
 
 // â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+<<<<<<< HEAD
 app.use(cors({
   origin: corsOriginValidator,
   credentials: true,
 }));
+=======
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy: Origin not allowed"));
+      }
+    },
+    credentials: true,
+  })
+);
+>>>>>>> origin/blackboxai/fix-cutoff-pagination
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -118,6 +152,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/career-paths", require("./routes/careerPathRoutes"));
+app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
+app.use("/api/cutoff", require("./routes/cutoffRoutes"));
 app.use("/api/courses", require("./routes/courseRoutes"));
 app.use("/api/exams", require("./routes/examRoutes"));
 app.use("/api/colleges", require("./routes/collegeRoutes"));
