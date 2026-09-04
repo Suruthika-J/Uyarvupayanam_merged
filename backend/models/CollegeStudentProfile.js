@@ -37,6 +37,21 @@ const collegeStudentProfileSchema = new mongoose.Schema(
     skills: [{ type: String }],
     strengths: [{ type: String }],
 
+    // ── Extended Profile Fields (Task 02 — Single Source of Truth) ──────────
+    currentSemester: { type: String, trim: true },          // e.g. "3rd Semester"
+    cgpa: { type: String, trim: true },                     // e.g. "8.2"
+    subjects: [{ type: String }],                           // active semester subjects
+    targetCareer: { type: String, trim: true },             // primary career goal
+    completedCourses: [{ type: String }],                   // course titles completed
+    projects: [{
+      title: { type: String },
+      description: { type: String },
+      techStack: { type: String }
+    }],
+    phone: { type: String, trim: true },
+    grokAssessmentScore: { type: Number },
+    grokAssessmentResults: [{ type: mongoose.Schema.Types.Mixed }],
+
     // Wizard completion tracking
     currentStep: { type: Number, default: 1 },
     profileCompletion: { type: Number, default: 0 },

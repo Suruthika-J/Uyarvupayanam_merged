@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useStudentAuth } from '../context/StudentAuthContext'
+import { CollegeProfileProvider } from '../context/CollegeProfileContext'
 import {
   FiGrid, FiUser, FiCompass, FiZap, FiBriefcase,
   FiFileText, FiAward, FiBookmark, FiTarget, FiBarChart2,
@@ -160,7 +161,9 @@ export default function CollegeStudentLayout() {
 
         {/* Main Content via Outlet */}
         <main style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
-          <Outlet />
+          <CollegeProfileProvider>
+            <Outlet />
+          </CollegeProfileProvider>
         </main>
       </div>
     </div>

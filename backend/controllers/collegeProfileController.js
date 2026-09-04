@@ -70,6 +70,15 @@ const saveProfile = async (req, res) => {
       careerInterests,
       skills,
       strengths,
+      // ── New fields (Task 02) ──
+      currentSemester,
+      cgpa,
+      subjects,
+      targetCareer,
+      completedCourses,
+      projects,
+      phone,
+      // ── Wizard tracking ──
       currentStep,
       isFinalStep
     } = req.body;
@@ -80,7 +89,7 @@ const saveProfile = async (req, res) => {
       profile = new CollegeStudentProfile({ userId, field: field || "engineering", degreeProgramme: degreeProgramme || "B.E. (Bachelor of Engineering)" });
     }
 
-    // Update fields if provided
+    // Update existing fields if provided
     if (institution !== undefined) profile.institution = institution;
     if (institutionDistrict !== undefined) profile.institutionDistrict = institutionDistrict;
     if (currentYear !== undefined) profile.currentYear = currentYear;
@@ -95,22 +104,23 @@ const saveProfile = async (req, res) => {
     if (skills !== undefined) profile.skills = skills;
     if (strengths !== undefined) profile.strengths = strengths;
 
+    // Update new fields (Task 02)
+    if (currentSemester !== undefined) profile.currentSemester = currentSemester;
+    if (cgpa !== undefined) profile.cgpa = cgpa;
+    if (subjects !== undefined) profile.subjects = subjects;
+    if (targetCareer !== undefined) profile.targetCareer = targetCareer;
+    if (completedCourses !== undefined) profile.completedCourses = completedCourses;
+    if (projects !== undefined) profile.projects = projects;
+    if (phone !== undefined) profile.phone = phone;
+
     if (currentStep !== undefined) {
       profile.currentStep = Math.max(profile.currentStep, currentStep);
     }
 
-    // Calculate Completion Percentage
-    let score = 0;
-    if (profile.institution) score += 15;
-    if (profile.currentYear) score += 15;
-    if (profile.field) score += 20;
-    if (profile.degreeProgramme) score += 20;
-    if (profile.domain || profile.specialization) score += 15;
-    if (profile.skills && profile.skills.length > 0) score += 15;
+    // ── Richer Completion Percentage (weighted across all fields) ──
+    profile.profileCompletion = calculateProfileCompletion(profile);
 
-    profile.profileCompletion = Math.min(100, score);
-
-    if (isFinalStep || score >= 85) {
+    if (isFinalStep || profile.profileCompletion >= 85) {
       profile.isCompleted = true;
       // Mark onboarding completed on User document as well
       await User.findByIdAndUpdate(userId, { onboardingCompleted: true });
@@ -129,8 +139,91 @@ const saveProfile = async (req, res) => {
   }
 };
 
+// ── Partial Update (Patch) — For modules to update individual fields ──────────
+const patchProfile = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Whitelist of patchable fields
+    const PATCHABLE = [
+      "currentSemester", "cgpa", "subjects", "targetCareer",
+      "completedCourses", "projects", "phone", "skills", "strengths",
+      "certifications", "academicInterests", "careerInterests",
+      "grokAssessmentScore", "grokAssessmentResults"
+    ];
+
+    let profile = await CollegeStudentProfile.findOne({ userId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found. Complete onboarding first." });
+    }
+
+    // Apply only whitelisted fields
+    for (const key of PATCHABLE) {
+      if (req.body[key] !== undefined) {
+        profile[key] = req.body[key];
+      }
+    }
+
+    // Recalculate completion
+    profile.profileCompletion = calculateProfileCompletion(profile);
+
+    await profile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated",
+      profile
+    });
+  } catch (error) {
+    console.error("Patch college profile error:", error);
+    res.status(500).json({ success: false, message: "Failed to update profile" });
+  }
+};
+
+// ── Profile Completion Calculator ─────────────────────────────────────────────
+function calculateProfileCompletion(profile) {
+  let score = 0;
+  const weights = {
+    institution: 10,
+    currentYear: 8,
+    field: 10,
+    degreeProgramme: 10,
+    domain: 8,
+    specialization: 5,
+    skills: 10,
+    currentSemester: 6,
+    cgpa: 6,
+    subjects: 5,
+    targetCareer: 7,
+    academicInterests: 5,
+    careerInterests: 5,
+    completedCourses: 5
+  };
+
+  if (profile.institution) score += weights.institution;
+  if (profile.currentYear) score += weights.currentYear;
+  if (profile.field) score += weights.field;
+  if (profile.degreeProgramme) score += weights.degreeProgramme;
+  if (profile.domain) score += weights.domain;
+  if (profile.specialization) score += weights.specialization;
+  if (profile.skills && profile.skills.length > 0) score += weights.skills;
+  if (profile.currentSemester) score += weights.currentSemester;
+  if (profile.cgpa) score += weights.cgpa;
+  if (profile.subjects && profile.subjects.length > 0) score += weights.subjects;
+  if (profile.targetCareer) score += weights.targetCareer;
+  if (profile.academicInterests && profile.academicInterests.length > 0) score += weights.academicInterests;
+  if (profile.careerInterests && profile.careerInterests.length > 0) score += weights.careerInterests;
+  if (profile.completedCourses && profile.completedCourses.length > 0) score += weights.completedCourses;
+
+  return Math.min(100, score);
+}
+
 module.exports = {
   getMetadata,
   getMyProfile,
-  saveProfile
+  saveProfile,
+  patchProfile
 };
