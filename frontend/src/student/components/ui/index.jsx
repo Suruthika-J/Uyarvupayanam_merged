@@ -230,20 +230,28 @@ const ALERT_STYLES = {
   info:    { bg: 'var(--s-blue-l)', border: '#93c5fd', text: 'var(--s-blue)' },
 }
 
-export function SAlert({ type = 'info', children, onClose }) {
-  const s = ALERT_STYLES[type]
+export function SAlert({ type = 'info', children, message, onClose, style = {} }) {
+  const s = ALERT_STYLES[type] || ALERT_STYLES.info
+  const alertContent = children || message
+  if (!alertContent) return null
   return (
     <div style={{
-      background: s.bg, border: `1px solid ${s.border}`, color: s.text,
-      borderRadius: 10, padding: '12px 16px',
-      fontSize: 14, fontWeight: 500,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+      background: s.bg, border: `1.5px solid ${s.border}`, color: s.text,
+      borderRadius: 12, padding: '12px 18px',
+      fontSize: 14, fontWeight: 600,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      ...style,
     }}>
-      <span>{children}</span>
+      <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 16 }}>{type === 'error' ? '⚠️' : type === 'success' ? '✓' : 'ℹ'}</span>
+        {alertContent}
+      </span>
       {onClose && (
         <button onClick={onClose} style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          color: 'inherit', fontSize: 18, lineHeight: 1, flexShrink: 0,
+          color: 'inherit', fontSize: 20, fontWeight: 700, lineHeight: 1, flexShrink: 0,
+          opacity: 0.8,
         }}>×</button>
       )}
     </div>

@@ -4,12 +4,13 @@ import { useStudentAuth } from '../../context/StudentAuthContext'
 import axios from 'axios'
 import { SBtn, SCard, SInput, SSelect, SAlert, SLoader } from '../../components/ui'
 import { taxonomyService } from '../../services/taxonomyService'
+import onboardingService from '../../../services/onboardingService'
 import { COLLEGE_FIELDS_DATA } from '../../config/collegeFieldsData'
 import {
   FiArrowRight, FiArrowLeft, FiSave, FiCheckCircle,
   FiBookOpen, FiHome, FiCpu, FiHeart, FiFeather, FiShield,
   FiBriefcase, FiGlobe, FiActivity, FiStar, FiAward, FiCheck, FiZap, FiHelpCircle,
-  FiUsers, FiSun, FiBook, FiDollarSign, FiRadio
+  FiUsers, FiSun, FiBook, FiDollarSign, FiRadio, FiAlertCircle, FiTrendingUp, FiTarget, FiRefreshCw
 } from 'react-icons/fi'
 
 const ICON_MAP = {
@@ -109,11 +110,14 @@ export default function CollegeOnboardingPage() {
     strengths: ['Analytical Thinking', 'Team Collaboration']
   })
 
-  // Grok Assessment State (Step 7)
-  const [grokQuestions, setGrokQuestions] = useState([])
-  const [grokAnswers, setGrokAnswers] = useState({})
-  const [loadingGrok, setLoadingGrok] = useState(false)
-  const [grokSource, setGrokSource] = useState('')
+  // Domain-Aware Assessment State (Step 7)
+  const [domainQuestions, setDomainQuestions] = useState([])
+  const [domainAnswers, setDomainAnswers] = useState({})
+  const [missingDomain, setMissingDomain] = useState(false)
+  const [loadingDomainQuestions, setLoadingDomainQuestions] = useState(false)
+  const [baselineReport, setBaselineReport] = useState(null)
+  const [submittingAssessment, setSubmittingAssessment] = useState(false)
+  const [activeStageTab, setActiveStageTab] = useState('ALL')
 
   // Load Fields Taxonomy on Mount
   useEffect(() => {
@@ -144,6 +148,9 @@ export default function CollegeOnboardingPage() {
               careerInterests: p.careerInterests?.length ? p.careerInterests : prev.careerInterests,
               skills: p.skills?.length ? p.skills : prev.skills
             }))
+            if (p.onboardingBaseline) {
+              setBaselineReport(p.onboardingBaseline)
+            }
             if (p.currentStep && p.currentStep > 1) {
               setStep(Math.min(7, p.currentStep))
             }
@@ -209,29 +216,29 @@ export default function CollegeOnboardingPage() {
     loadSpecializations()
   }, [profile.fieldId, profile.domain])
 
-  // Fetch Grok AI Assessment Questions when Step 7 is reached
+  // Fetch Domain-Aware Onboarding Questions when Step 7 is reached
   useEffect(() => {
-    if (step === 7 && grokQuestions.length === 0) {
-      fetchGrokQuestions()
+    if (step === 7 && domainQuestions.length === 0 && !baselineReport) {
+      fetchDomainQuestions()
     }
   }, [step])
 
-  const fetchGrokQuestions = async () => {
-    setLoadingGrok(true)
+  const fetchDomainQuestions = async () => {
+    setLoadingDomainQuestions(true)
+    setError('')
     try {
-      const res = await axios.post('http://localhost:5000/api/assessment/generate-grok-questions', {
-        degreeProgramme: profile.degreeProgramme,
-        domain: profile.domain,
-        userType: 'college_student'
-      })
-      if (res.data?.success && Array.isArray(res.data.questions)) {
-        setGrokQuestions(res.data.questions)
-        setGrokSource(res.data.source || 'xAI Grok API')
+      const res = await onboardingService.getCollegeQuestions()
+      if (res.missingDomain) {
+        setMissingDomain(true)
+      } else if (res.success && Array.isArray(res.questions)) {
+        setMissingDomain(false)
+        setDomainQuestions(res.questions)
       }
     } catch (err) {
-      console.warn('Failed to fetch Grok questions')
+      console.warn('Failed to fetch domain questions:', err)
+      setError('Failed to prepare domain questions. Please check connection and retry.')
     } finally {
-      setLoadingGrok(false)
+      setLoadingDomainQuestions(false)
     }
   }
 
@@ -318,6 +325,45 @@ export default function CollegeOnboardingPage() {
     if (step > 1) {
       setStep(s => s - 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handleSubmitDomainAssessment = async () => {
+    setSubmittingAssessment(true)
+    setError('')
+    try {
+      const payloadAnswers = domainQuestions.map(q => ({
+        questionId: q.id,
+        questionText: q.questionText,
+        topic: q.topic,
+        difficulty: q.difficulty,
+        selectedAnswer: domainAnswers[q.id] || '',
+        correctAnswer: q.correctAnswer
+      }))
+
+      const res = await onboardingService.submitCollegeOnboarding({ answers: payloadAnswers })
+      if (res.success && res.baselineResult) {
+        setBaselineReport(res.baselineResult)
+      } else {
+        setError('Assessment submission failed. Please try again.')
+      }
+    } catch (err) {
+      console.error('Submit assessment error:', err)
+      setError('Failed to submit domain assessment.')
+    } finally {
+      setSubmittingAssessment(false)
+    }
+  }
+
+  const handleRetakeAssessment = async () => {
+    try {
+      await onboardingService.retakeDomainAssessment()
+      setBaselineReport(null)
+      setDomainAnswers({})
+      setDomainQuestions([])
+      fetchDomainQuestions()
+    } catch (err) {
+      setError('Failed to reset assessment.')
     }
   }
 
@@ -670,80 +716,216 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 7: xAI Grok Dynamic Onboarding Assessment Questions */}
+          {/* STEP 7: Domain-Aware Onboarding Assessment & Baseline Telemetry */}
           {step === 7 && (
             <div className="s-anim-up">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#6d28d9', letterSpacing: '0.06em' }}>
-                    ⚡ Powered by xAI Grok API
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-primary)', letterSpacing: '0.06em' }}>
+                    🎯 Domain-Aware Academic Diagnostic Engine
                   </div>
-                  <h3 style={{ fontSize: 20, fontWeight: 800, margin: '4px 0 0', color: 'var(--s-text)' }}>
-                    Step 7: AI Aptitude & Branch Diagnostic Quiz
+                  <h3 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: 'var(--s-text)' }}>
+                    Step 7: Knowledge Baseline Assessment
                   </h3>
                 </div>
-                <span style={{ fontSize: 11, background: '#ede9fe', color: '#6d28d9', padding: '6px 12px', borderRadius: 20, fontWeight: 800 }}>
-                  {profile.degreeProgramme} • {profile.domain}
-                </span>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, background: 'var(--s-primary-l)', color: 'var(--s-primary)', padding: '6px 12px', borderRadius: 20, fontWeight: 800 }}>
+                    {profile.domain || 'Domain Unselected'}
+                  </span>
+                  {profile.specialization && (
+                    <span style={{ fontSize: 12, background: '#d1fae5', color: '#047857', padding: '6px 12px', borderRadius: 20, fontWeight: 800 }}>
+                      {profile.specialization}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {loadingGrok ? (
-                <div style={{ padding: 40, textAlign: 'center' }}>
-                  <SLoader label="Generating dynamic diagnostic questions using xAI Grok API..." />
+              {/* Missing Domain Handling (Section 22) */}
+              {missingDomain ? (
+                <div style={{ background: '#fffba6', border: '1.5px solid #f59e0b', borderRadius: 20, padding: 30, textAlign: 'center' }}>
+                  <FiAlertCircle size={44} style={{ color: '#d97706', marginBottom: 12 }} />
+                  <h4 style={{ fontSize: 18, fontWeight: 800, color: '#92400e', margin: '0 0 8px' }}>
+                    Academic Profile Incomplete
+                  </h4>
+                  <p style={{ fontSize: 14, color: '#78350f', maxWidth: 500, margin: '0 auto 20px' }}>
+                    Please complete your academic profile so we can personalize your onboarding assessment.
+                  </p>
+                  <SBtn variant="primary" onClick={() => setStep(2)}>
+                    Complete Field & Domain Selection
+                  </SBtn>
                 </div>
-              ) : grokQuestions.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, fontSize: 13, color: 'var(--s-text2)' }}>
-                    📝 Answer these 5 randomized Easy-to-Medium diagnostic questions generated specifically for your selected degree (<strong>{profile.degreeProgramme}</strong>) and domain branch (<strong>{profile.domain}</strong>).
+              ) : baselineReport ? (
+                /* ── BASELINE SUMMARY REPORT CARD ── */
+                <div style={{ background: '#f8fafc', border: '2px solid #047857', borderRadius: 24, padding: 30 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: '#d1fae5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <FiCheckCircle size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: 18, fontWeight: 900, color: '#065f46', margin: 0 }}>
+                        Initial Academic Knowledge Baseline
+                      </h4>
+                      <div style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
+                        Assessment Complete • {profile.domain}
+                      </div>
+                    </div>
                   </div>
 
-                  {grokQuestions.map((q, qIdx) => {
-                    const selectedOpt = grokAnswers[q.id]
+                  <div style={{ background: '#fff', border: '1px solid #a7f3d0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#064e3b', margin: 0, lineHeight: 1.6 }}>
+                      {baselineReport.currentBaseline}
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginBottom: 24 }}>
+                    {/* Strengths */}
+                    <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#047857', marginBottom: 12 }}>
+                        <FiTrendingUp size={16} /> Areas Showing Strength
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {baselineReport.strengths?.map((s, idx) => (
+                          <span key={idx} style={{ background: '#d1fae5', color: '#065f46', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
+                            ✓ {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Areas to Strengthen */}
+                    <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#b45309', marginBottom: 12 }}>
+                        <FiTarget size={16} /> Areas to Strengthen
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {baselineReport.areasToStrengthen?.map((a, idx) => (
+                          <span key={idx} style={{ background: '#fef3c7', color: '#92400e', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
+                            🎯 {a}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommended Starting Topics */}
+                  <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18, marginBottom: 24 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#6d28d9', marginBottom: 12 }}>
+                      🚀 Recommended Starting Topics
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {baselineReport.recommendedStartingTopics?.map((t, idx) => (
+                        <span key={idx} style={{ background: '#ede9fe', color: '#5b21b6', padding: '6px 14px', borderRadius: 16, fontSize: 12, fontWeight: 700 }}>
+                          • {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                    <button
+                      type="button"
+                      onClick={handleRetakeAssessment}
+                      style={{
+                        background: 'none', border: '1px solid var(--s-border)',
+                        borderRadius: 12, padding: '10px 18px', fontSize: 13, fontWeight: 700,
+                        color: 'var(--s-text2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                      }}
+                    >
+                      <FiRefreshCw size={14} /> Retake Domain Quiz
+                    </button>
+                  </div>
+                </div>
+              ) : loadingDomainQuestions ? (
+                <div style={{ padding: 50, textAlign: 'center' }}>
+                  <SLoader label="Preparing questions based on your academic profile..." />
+                </div>
+              ) : domainQuestions.length > 0 ? (
+                /* ── 3-STAGE QUESTION ASSESSMENT WORKFLOW ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                  {/* Stage Progress Header */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: 14, borderRadius: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase' }}>Stage 1 — Foundation</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1e40af' }}>Very Easy (Basic Concepts)</div>
+                    </div>
+                    <div style={{ background: '#fef3c7', border: '1px solid #fde68a', padding: 14, borderRadius: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#b45309', textTransform: 'uppercase' }}>Stage 2 — Conceptual</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>Easy (Application & Logic)</div>
+                    </div>
+                    <div style={{ background: '#f3e8ff', border: '1px solid #e9d5ff', padding: 14, borderRadius: 14 }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#6d28d9', textTransform: 'uppercase' }}>Stage 3 — Moderate</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#5b21b6' }}>Analytical Reasoning</div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, fontSize: 13, color: 'var(--s-text2)' }}>
+                    📝 Answer these diagnostic questions tailored specifically to your branch (<strong>{profile.domain}</strong>). The progression tests your baseline conceptual knowledge.
+                  </div>
+
+                  {domainQuestions.map((q, qIdx) => {
+                    const selectedOpt = domainAnswers[q.id]
+                    const diffBadge = {
+                      VERY_EASY: { label: 'Very Easy (Foundation)', bg: '#dbeafe', text: '#1e40af' },
+                      EASY: { label: 'Easy (Conceptual)', bg: '#fef3c7', text: '#b45309' },
+                      MODERATE: { label: 'Moderate (Analytical)', bg: '#f3e8ff', text: '#6d28d9' }
+                    }[q.difficulty] || { label: q.difficulty, bg: '#f1f5f9', text: '#475569' }
+
                     return (
-                      <div key={q.id || qIdx} style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 20 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
-                            Question {qIdx + 1} of {grokQuestions.length} • {q.topic || 'Concept Check'}
+                      <div key={q.id || qIdx} style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 18, padding: 22 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-primary)' }}>
+                            Question {qIdx + 1} of {domainQuestions.length} • {q.topic || 'Core Fundamentals'}
                           </span>
-                          <span style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 8, fontWeight: 700 }}>
-                            Easy - Medium
+                          <span style={{ fontSize: 11, background: diffBadge.bg, color: diffBadge.text, padding: '4px 10px', borderRadius: 10, fontWeight: 800 }}>
+                            {diffBadge.label}
                           </span>
                         </div>
 
-                        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14 }}>
-                          {q.question}
+                        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)', marginBottom: 16, lineHeight: 1.5 }}>
+                          {q.questionText}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
                           {q.options?.map((opt, oIdx) => {
-                            const isChosen = selectedOpt === oIdx
-                            const isCorrect = oIdx === q.correctIndex
+                            const isChosen = selectedOpt === opt
                             return (
                               <button
                                 key={oIdx}
                                 type="button"
-                                onClick={() => setGrokAnswers({ ...grokAnswers, [q.id]: oIdx })}
+                                onClick={() => setDomainAnswers({ ...domainAnswers, [q.id]: opt })}
                                 style={{
-                                  padding: 12, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                  border: isChosen ? (isCorrect ? '2px solid #047857' : '2px solid #dc2626') : '1px solid var(--s-border)',
-                                  background: isChosen ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#fff',
-                                  color: 'var(--s-text)', fontSize: 13, fontWeight: 600
+                                  padding: 14, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                                  border: isChosen ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
+                                  background: isChosen ? 'var(--s-primary-l)' : '#fff',
+                                  color: isChosen ? 'var(--s-primary)' : 'var(--s-text)',
+                                  fontSize: 13, fontWeight: 600, transition: 'all 0.15s ease'
                                 }}
                               >
-                                <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
+                                <strong style={{ marginRight: 6 }}>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
                               </button>
                             )
                           })}
                         </div>
-
-                        {selectedOpt !== undefined && q.explanation && (
-                          <div style={{ marginTop: 12, padding: 10, background: '#eff6ff', borderRadius: 10, fontSize: 12, color: '#1e40af' }}>
-                            💡 <strong>Explanation:</strong> {q.explanation}
-                          </div>
-                        )}
                       </div>
                     )
                   })}
+
+                  <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <SBtn
+                      variant="primary"
+                      onClick={handleSubmitDomainAssessment}
+                      disabled={submittingAssessment || Object.keys(domainAnswers).length < domainQuestions.length}
+                      style={{ padding: '14px 36px', borderRadius: 14, fontSize: 15 }}
+                    >
+                      {submittingAssessment ? 'Calculating Knowledge Baseline...' : 'Submit Diagnostic Assessment & Calculate Baseline'}
+                    </SBtn>
+                    {Object.keys(domainAnswers).length < domainQuestions.length && (
+                      <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 8 }}>
+                        Please answer all {domainQuestions.length} questions to complete baseline evaluation.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : null}
             </div>

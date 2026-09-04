@@ -109,6 +109,12 @@ export const adminService = {
     return response.data
   },
 
+  // ── Graduate Management Services ──
+  getGraduates: async (params = {}) => {
+    const response = await axiosInstance.get('/admin/college/graduates', { params })
+    return response.data
+  },
+
   getCollegeStudentProfile: async (id) => {
     const response = await axiosInstance.get(`/admin/college/students/${id}`)
     return response.data

@@ -41,8 +41,10 @@ connectDB().then(() => {
   try {
     const { seedTaxonomyData } = require("./utils/taxonomySeeder");
     const { seedCollegeCareers } = require("./utils/collegeCareerSeeder");
+    const { seedCollegeQuestions } = require("./seeders/seedCollegeQuestions");
     seedTaxonomyData().catch(err => console.error("Error in taxonomy seeding:", err));
     seedCollegeCareers().catch(err => console.error("Error in college careers seeding:", err));
+    seedCollegeQuestions().catch(err => console.error("Error in college questions seeding:", err));
   } catch (err) {
     console.error("Failed to require/run seeders on startup:", err);
   }
@@ -146,6 +148,8 @@ app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
+app.use("/api/college-onboarding", require("./routes/collegeOnboardingRoutes"));
+app.use("/api/graduate", require("./routes/graduateRoutes"));
 app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));
 app.use("/api/college-advisor", require("./routes/collegeAdvisorRoutes"));
 app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));

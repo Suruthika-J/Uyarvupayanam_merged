@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
+const GraduateProfile = require("../models/GraduateProfile");
 const Recommendation = require("../models/Recommendation");
 const StudentActivityHistory = require("../models/StudentActivityHistory");
 const StudentSkillProgress = require("../models/StudentSkillProgress");
@@ -29,10 +30,10 @@ exports.getCollegeStudents = async (req, res) => {
       limit = 10
     } = req.query;
 
-    // 1. Base User Filter: strictly college_student or graduate
+    // 1. Base User Filter: strictly college_student
     const userQuery = {
       role: "student",
-      userType: { $in: ["college_student", "graduate"] }
+      userType: "college_student"
     };
 
     if (status && status !== "all") {
@@ -352,5 +353,125 @@ exports.sendStudentNotification = async (req, res) => {
   } catch (error) {
     console.error("Send Student Notification Error:", error);
     res.status(500).json({ success: false, message: "Failed to send notification" });
+  }
+};
+
+/**
+ * ── GET /api/admin/college/graduates ─────────────────────────────────────────
+ * Returns filtered, searched, sorted, and paginated list of Graduates
+ */
+exports.getGraduates = async (req, res) => {
+  try {
+    const {
+      search,
+      degree,
+      domain,
+      graduationYear,
+      careerDirection,
+      employmentStatus,
+      status,
+      sortBy = "createdAt",
+      order = "desc",
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const userQuery = {
+      role: "student",
+      userType: "graduate"
+    };
+
+    if (status && status !== "all") {
+      userQuery.status = status;
+    }
+
+    if (search && search.trim()) {
+      const s = search.trim();
+      userQuery.$or = [
+        { name: { $regex: s, $options: "i" } },
+        { email: { $regex: s, $options: "i" } }
+      ];
+    }
+
+    const users = await User.find(userQuery).select("-password").lean();
+    const userIds = users.map(u => u._id);
+
+    const profileQuery = { userId: { $in: userIds } };
+
+    if (degree && degree !== "all") profileQuery.degree = { $regex: degree, $options: "i" };
+    if (domain && domain !== "all") profileQuery.domain = { $regex: domain, $options: "i" };
+    if (graduationYear && graduationYear !== "all") profileQuery.graduationYear = graduationYear;
+    if (careerDirection && careerDirection !== "all") profileQuery.primaryCareerDirection = { $regex: careerDirection, $options: "i" };
+    if (employmentStatus && employmentStatus !== "all") profileQuery.employmentStatus = { $regex: employmentStatus, $options: "i" };
+
+    const matchingProfiles = await GraduateProfile.find(profileQuery).lean();
+    const profileMap = new Map(matchingProfiles.map(p => [p.userId.toString(), p]));
+
+    const filteredUsers = users.filter(u => profileMap.has(u._id.toString()));
+
+    const combinedList = filteredUsers.map(user => {
+      const profile = profileMap.get(user._id.toString()) || {};
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        status: user.status,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt,
+        degree: profile.degree || "Not set",
+        domain: profile.domain || "Not set",
+        specialization: profile.specialization || "None",
+        college: profile.college || "Not set",
+        graduationYear: profile.graduationYear || "Not set",
+        cgpa: profile.cgpa || "N/A",
+        employmentStatus: profile.employmentStatus || "Seeking opportunities",
+        primaryCareerDirection: profile.primaryCareerDirection || "Not set",
+        careerReadinessScore: profile.careerReadinessScore || 40,
+        profileCompletion: profile.profileCompletion || 0,
+        technicalSkills: profile.technicalSkills || [],
+        selectedExams: profile.selectedExams || [],
+        preferredHigherDegrees: profile.preferredHigherDegrees || [],
+        preferredRoles: profile.preferredRoles || []
+      };
+    });
+
+    const sortOrder = order === "asc" ? 1 : -1;
+    combinedList.sort((a, b) => {
+      if (sortBy === "name") return sortOrder * a.name.localeCompare(b.name);
+      if (sortBy === "graduationYear") return sortOrder * String(a.graduationYear).localeCompare(String(b.graduationYear));
+      if (sortBy === "profileCompletion") return sortOrder * (a.profileCompletion - b.profileCompletion);
+      if (sortBy === "careerReadinessScore") return sortOrder * (a.careerReadinessScore - b.careerReadinessScore);
+      return sortOrder * (new Date(a.createdAt) - new Date(b.createdAt));
+    });
+
+    const total = combinedList.length;
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const startIndex = (pageNum - 1) * limitNum;
+    const paginatedGraduates = combinedList.slice(startIndex, startIndex + limitNum);
+
+    const allProfiles = await GraduateProfile.find({}).select("degree domain graduationYear primaryCareerDirection employmentStatus").lean();
+    const filterOptions = {
+      degrees: [...new Set(allProfiles.map(p => p.degree).filter(Boolean))],
+      domains: [...new Set(allProfiles.map(p => p.domain).filter(Boolean))],
+      graduationYears: [...new Set(allProfiles.map(p => p.graduationYear).filter(Boolean))],
+      careerDirections: [...new Set(allProfiles.map(p => p.primaryCareerDirection).filter(Boolean))],
+      employmentStatuses: [...new Set(allProfiles.map(p => p.employmentStatus).filter(Boolean))]
+    };
+
+    res.json({
+      success: true,
+      graduates: paginatedGraduates,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum) || 1
+      },
+      filterOptions
+    });
+  } catch (error) {
+    console.error("Get Graduates Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch graduates" });
   }
 };

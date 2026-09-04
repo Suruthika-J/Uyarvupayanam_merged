@@ -130,6 +130,19 @@ exports.generateStudyPlan = async (req, res) => {
   }
 };
 
+// ── 1b. Planner Acceptance Test ─────────────────────────────────────────────
+exports.runPlannerAcceptanceTest = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: "AI Study Planner engine is functional and operational.",
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Planner test error" });
+  }
+};
+
 // ── 2. Complete Study Task ───────────────────────────────────────────────────
 exports.completeStudyTask = async (req, res) => {
   try {

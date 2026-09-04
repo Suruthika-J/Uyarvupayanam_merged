@@ -32,11 +32,13 @@ import AcademicTaxonomyManagementPage from './admin/AcademicTaxonomyManagementPa
 import CollegeCareerCatalogManagementPage from './admin/CollegeCareerCatalogManagementPage'
 import CollegeStudentsPage from './admin/CollegeStudentsPage'
 import CollegeScholarshipsPage from './admin/CollegeScholarshipsPage'
+import GraduatesPage from './admin/GraduatesPage'
 
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
   { id: 'users', icon: '👥', label: 'School Students', path: 'users' },
   { id: 'college-students', icon: '🎓', label: 'College Students', path: 'college-students' },
+  { id: 'graduates', icon: '💼', label: 'Graduates', path: 'graduates' },
   { id: 'taxonomy', icon: '🏛️', label: 'Academic Taxonomy', path: 'taxonomy' },
   { id: 'college-careers', icon: '💼', label: 'College Career Catalog', path: 'college-careers' },
   { id: 'admission-help', icon: '🎓', label: 'Admission Help', path: 'admission-help' },
@@ -60,6 +62,7 @@ const PAGE_META = {
   '': { title: 'Dashboard', sub: 'Overview & Analytics' },
   'users': { title: 'User Management', sub: 'Manage school student accounts' },
   'college-students': { title: 'College Student Management', sub: 'Higher education student accounts, profiles & roadmaps' },
+  'graduates': { title: 'Graduate Management', sub: 'Graduated professionals, career directions & profiles' },
   'taxonomy': { title: 'Academic Taxonomy', sub: 'Manage fields, degrees, domains & specializations' },
   'college-careers': { title: 'College Career Catalog', sub: 'Manage career entities & required skills' },
   'admission-help': { title: 'Admission Help Requests', sub: 'Manage college admission assistance' },
@@ -171,6 +174,7 @@ export default function AdminLayout() {
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="college-students" element={<CollegeStudentsPage />} />
+            <Route path="graduates" element={<GraduatesPage />} />
             <Route path="taxonomy" element={<AcademicTaxonomyManagementPage />} />
             <Route path="college-careers" element={<CollegeCareerCatalogManagementPage />} />
             <Route path="admission-help" element={<AdmissionHelpRequestsPage />} />

@@ -41,6 +41,49 @@ const onboardingService = {
     adminDeleteQuestion: async (id) => {
         const response = await axiosInstance.delete(`/onboarding/admin/questions/${id}`);
         return response.data;
+    },
+
+    // ── College Onboarding Methods ─────────────────────────────────────────
+    getCollegeQuestions: async () => {
+        const response = await axiosInstance.get('/college-onboarding/questions');
+        return response.data;
+    },
+
+    submitCollegeOnboarding: async (data) => {
+        const response = await axiosInstance.post('/college-onboarding/submit', data);
+        return response.data;
+    },
+
+    getCollegeBaseline: async () => {
+        const response = await axiosInstance.get('/college-onboarding/baseline');
+        return response.data;
+    },
+
+    retakeDomainAssessment: async () => {
+        const response = await axiosInstance.post('/college-onboarding/retake');
+        return response.data;
+    },
+
+    // College Admin Methods
+    adminGetCollegeQuestions: async (filters = {}) => {
+        const params = new URLSearchParams(filters).toString();
+        const response = await axiosInstance.get(`/college-onboarding/admin/questions?${params}`);
+        return response.data;
+    },
+
+    adminCreateCollegeQuestion: async (data) => {
+        const response = await axiosInstance.post('/college-onboarding/admin/questions', data);
+        return response.data;
+    },
+
+    adminUpdateCollegeQuestion: async (id, data) => {
+        const response = await axiosInstance.put(`/college-onboarding/admin/questions/${id}`, data);
+        return response.data;
+    },
+
+    adminDeleteCollegeQuestion: async (id) => {
+        const response = await axiosInstance.delete(`/college-onboarding/admin/questions/${id}`);
+        return response.data;
     }
 };
 

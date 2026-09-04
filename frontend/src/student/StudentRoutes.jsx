@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { StudentAuthProvider, useStudentAuth } from './context/StudentAuthContext'
 import StudentLayout from './layouts/StudentLayout'
 import CollegeStudentLayout from './layouts/CollegeStudentLayout'
+import GraduateLayout from './layouts/GraduateLayout'
 import StudentProtectedRoute from './layouts/StudentProtectedRoute'
 import MaintenanceGuard from './components/common/MaintenanceGuard'
 
@@ -63,13 +64,30 @@ import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 
+// Graduate student pages
+import GraduateDashboardPage from './pages/graduate/GraduateDashboardPage'
+import GraduateProfilePage from './pages/graduate/GraduateProfilePage'
+import GraduateCareersPage from './pages/graduate/GraduateCareersPage'
+import GraduateSkillGapPage from './pages/graduate/GraduateSkillGapPage'
+import GraduateRoadmapPage from './pages/graduate/GraduateRoadmapPage'
+import GraduateExamsPage from './pages/graduate/GraduateExamsPage'
+import GraduateHigherStudiesPage from './pages/graduate/GraduateHigherStudiesPage'
+import GraduateUpskillingPage from './pages/graduate/GraduateUpskillingPage'
+import GraduatePlacementPage from './pages/graduate/GraduatePlacementPage'
+import GraduateResumePage from './pages/graduate/GraduateResumePage'
+import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
+import GraduateAIAdvisorPage from './pages/graduate/GraduateAIAdvisorPage'
+
 import './student.css'
 
-// A smart dashboard redirector that decides which layout to send the college student to
+// A smart dashboard redirector that decides which layout to send students to
 function CollegeDashboardRedirector() {
   const { student } = useStudentAuth()
   if (student?.userType === 'college_student') {
     return <Navigate to="/college/dashboard" replace />
+  }
+  if (student?.userType === 'graduate') {
+    return <Navigate to="/graduate/dashboard" replace />
   }
   // Fallback: render the school dashboard
   return <DashboardPage />
@@ -194,6 +212,29 @@ export default function StudentRoutes() {
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="bookmarks" element={<BookmarksPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* ════════════════════════════════════════════════════════
+              GRADUATE ROUTES  (GraduateLayout — dark navy sidebar)
+              All under /graduate/* prefix — sidebar stays constant
+              ════════════════════════════════════════════════════════ */}
+          <Route
+            path="/graduate"
+            element={<StudentProtectedRoute><GraduateLayout /></StudentProtectedRoute>}
+          >
+            <Route path="dashboard" element={<GraduateDashboardPage />} />
+            <Route path="profile" element={<GraduateProfilePage />} />
+            <Route path="careers" element={<GraduateCareersPage />} />
+            <Route path="skill-gap" element={<GraduateSkillGapPage />} />
+            <Route path="roadmap" element={<GraduateRoadmapPage />} />
+            <Route path="exams" element={<GraduateExamsPage />} />
+            <Route path="higher-studies" element={<GraduateHigherStudiesPage />} />
+            <Route path="upskilling" element={<GraduateUpskillingPage />} />
+            <Route path="placement" element={<GraduatePlacementPage />} />
+            <Route path="resume" element={<GraduateResumePage />} />
+            <Route path="interview" element={<GraduateInterviewPage />} />
+            <Route path="ai-advisor" element={<GraduateAIAdvisorPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

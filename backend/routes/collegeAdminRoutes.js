@@ -6,13 +6,15 @@ const {
   getCollegeStudentProfile,
   updateCollegeStudent,
   toggleStudentStatus,
-  sendStudentNotification
+  sendStudentNotification,
+  getGraduates
 } = require("../controllers/collegeAdminController");
 
 // Protect all college admin routes
 router.use(verifyAdmin);
 
 router.get("/students", getCollegeStudents);
+router.get("/graduates", getGraduates);
 router.get("/students/:id", getCollegeStudentProfile);
 router.put("/students/:id", updateCollegeStudent);
 router.patch("/students/:id/status", toggleStudentStatus);

@@ -52,6 +52,34 @@ const collegeStudentProfileSchema = new mongoose.Schema(
     grokAssessmentScore: { type: Number },
     grokAssessmentResults: [{ type: mongoose.Schema.Types.Mixed }],
 
+    // ── Domain-Aware Onboarding Baseline Telemetry ─────────────────────────
+    onboardingBaseline: {
+      field: { type: String },
+      degree: { type: String },
+      domain: { type: String },
+      specialization: { type: String },
+      currentBaseline: { type: String },
+      strengths: [{ type: String }],
+      areasToStrengthen: [{ type: String }],
+      recommendedStartingTopics: [{ type: String }],
+      scorePercentage: { type: Number },
+      assessedAt: { type: Date }
+    },
+    onboardingHistory: [
+      {
+        field: { type: String },
+        degree: { type: String },
+        domain: { type: String },
+        specialization: { type: String },
+        currentBaseline: { type: String },
+        strengths: [{ type: String }],
+        areasToStrengthen: [{ type: String }],
+        recommendedStartingTopics: [{ type: String }],
+        scorePercentage: { type: Number },
+        assessedAt: { type: Date }
+      }
+    ],
+
     // Wizard completion tracking
     currentStep: { type: Number, default: 1 },
     profileCompletion: { type: Number, default: 0 },

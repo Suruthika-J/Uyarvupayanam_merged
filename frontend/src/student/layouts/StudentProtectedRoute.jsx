@@ -51,16 +51,27 @@ export default function StudentProtectedRoute({ children }) {
   }
 
   // 2. Cross-Access Protection
-  // College-only routes blocked for school students
+  // Graduate routes blocked for non-graduates
+  if (!isGraduate && path.startsWith('/graduate')) {
+    return <Navigate to={isCollegeStudent ? "/college/dashboard" : "/student/dashboard"} replace />
+  }
+
+  // College-only routes blocked for school students and graduates
   const collegeOnlyPaths = ['/student/academic/planner', '/student/academic/roadmap', '/student/career/skill-gap', '/student/career/compare', '/student/career/resume', '/student/career/interview-prep', '/student/study-tools/notes-summarizer']
   if (isSchoolStudent && collegeOnlyPaths.some(p => path.startsWith(p))) {
     return <Navigate to="/student/dashboard" replace />
   }
+  if (isGraduate && (path.startsWith('/college') || collegeOnlyPaths.some(p => path.startsWith(p)))) {
+    return <Navigate to="/graduate/dashboard" replace />
+  }
 
-  // School-only routes blocked for college students
+  // School-only routes blocked for college students and graduates
   const schoolOnlyPaths = ['/student/class5', '/student/class8', '/student/class10', '/student/class12']
   if (isCollegeStudent && schoolOnlyPaths.some(p => path.startsWith(p))) {
-    return <Navigate to="/student/dashboard" replace />
+    return <Navigate to="/college/dashboard" replace />
+  }
+  if (isGraduate && schoolOnlyPaths.some(p => path.startsWith(p))) {
+    return <Navigate to="/graduate/dashboard" replace />
   }
 
   return children
