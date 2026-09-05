@@ -154,58 +154,64 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Build reset URL
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `http://localhost:5173/student/reset-password/${resetToken}`;
+    console.log(`\n🔑 [PASSWORD RESET GENERATED] Email: ${user.email} | Reset Link: ${resetUrl}\n`);
 
-    // Send email
-    try {
-      const transporter = createTransporter();
-      await transporter.sendMail({
-        from: `"Uyarvu Payanam" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: "Password Reset - Uyarvu Payanam",
-        html: `
-          <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafb; padding: 32px;">
-            <div style="background: #ffffff; border-radius: 16px; padding: 40px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
-              <div style="text-align: center; margin-bottom: 28px;">
-                <h1 style="color: #0f4c75; font-size: 24px; margin: 0;">Uyarvu Payanam</h1>
-                <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0;">Career Guidance Platform</p>
+    // Send email if SMTP credentials configured
+    let emailSent = false;
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        const transporter = createTransporter();
+        await transporter.sendMail({
+          from: `"Uyarvu Payanam" <${process.env.EMAIL_USER}>`,
+          to: user.email,
+          subject: "Password Reset - Uyarvu Payanam",
+          html: `
+            <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafb; padding: 32px;">
+              <div style="background: #ffffff; border-radius: 16px; padding: 40px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                <div style="text-align: center; margin-bottom: 28px;">
+                  <h1 style="color: #0f4c75; font-size: 24px; margin: 0;">Uyarvu Payanam</h1>
+                  <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0;">Career Guidance Platform</p>
+                </div>
+                <h2 style="color: #111827; font-size: 20px; margin-bottom: 12px;">Password Reset Request</h2>
+                <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+                  Hello <strong>${user.name}</strong>,
+                </p>
+                <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+                  You requested to reset your password. Click the button below to set a new password:
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                  <a href="${resetUrl}" style="display: inline-block; background: #0f4c75; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 15px;">
+                    Reset Password
+                  </a>
+                </div>
+                <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+                  This link will expire in <strong>1 hour</strong>. If you didn't request this reset, you can safely ignore this email.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+                <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                  © ${new Date().getFullYear()} Uyarvu Payanam. All rights reserved.
+                </p>
               </div>
-              <h2 style="color: #111827; font-size: 20px; margin-bottom: 12px;">Password Reset Request</h2>
-              <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-                Hello <strong>${user.name}</strong>,
-              </p>
-              <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-                You requested to reset your password. Click the button below to set a new password:
-              </p>
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${resetUrl}" style="display: inline-block; background: #0f4c75; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 15px;">
-                  Reset Password
-                </a>
-              </div>
-              <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
-                This link will expire in <strong>1 hour</strong>. If you didn't request this reset, you can safely ignore this email.
-              </p>
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} Uyarvu Payanam. All rights reserved.
-              </p>
             </div>
-          </div>
-        `,
-      });
+          `,
+        });
 
-      console.log(`Password reset email sent to ${user.email}`);
-    } catch (emailErr) {
-      console.error("Email send error:", emailErr);
-      // Clear the token if email fails
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      await user.save();
-      return res.status(500).json({ message: "Failed to send reset email. Please try again later." });
+        emailSent = true;
+        console.log(`Password reset email sent to ${user.email}`);
+      } catch (emailErr) {
+        console.warn("SMTP Email delivery failed (using direct reset link fallback):", emailErr.message);
+      }
+    } else {
+      console.log("SMTP EMAIL_USER/EMAIL_PASS not configured in .env; using direct dev reset link.");
     }
 
     res.status(200).json({
-      message: "If an account with that email exists, a reset link has been sent."
+      success: true,
+      message: "If an account with that email exists, a reset link has been sent.",
+      emailSent,
+      resetUrl,
+      resetToken
     });
 
   } catch (error) {

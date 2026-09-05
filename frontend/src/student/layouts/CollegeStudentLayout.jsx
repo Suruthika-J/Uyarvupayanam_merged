@@ -5,11 +5,15 @@ import { CollegeProfileProvider } from '../context/CollegeProfileContext'
 import {
   FiGrid, FiUser, FiCompass, FiZap, FiBriefcase,
   FiFileText, FiAward, FiBookmark, FiTarget, FiBarChart2,
-  FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiBell
+  FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiBell,
+  FiClock, FiCode, FiUsers
 } from 'react-icons/fi'
 
 const COLLEGE_SIDEBAR_NAV = [
   { id: 'dashboard',     icon: FiGrid,         label: 'Dashboard',           to: '/college/dashboard' },
+  { id: 'focus',         icon: FiClock,        label: 'Focus Learning',      to: '/college/academic/focus' },
+  { id: 'coding-arena',  icon: FiCode,         label: 'Coding Arena',        to: '/college/career/coding-arena' },
+  { id: 'peer-network',  icon: FiUsers,        label: 'Peer Learning',       to: '/college/community/mentors' },
   { id: 'profile',       icon: FiUser,         label: 'My Academic Profile', to: '/college/profile' },
   { id: 'advisor',       icon: FiCompass,      label: 'Academic Advisor',    to: '/college/advisor' },
   { id: 'skill-gap',     icon: FiZap,          label: 'Skill Gap Analysis',  to: '/college/career/skill-gap' },

@@ -7,6 +7,11 @@ import { taxonomyService } from '../../services/taxonomyService'
 import onboardingService from '../../../services/onboardingService'
 import { COLLEGE_FIELDS_DATA } from '../../config/collegeFieldsData'
 import {
+  getPersonalizedCareerRecommendations,
+  getPersonalizedAcademicFocusOptions,
+  COLLEGE_CAREER_CATALOG
+} from '../../services/collegeCareerRecommendationEngine'
+import {
   FiArrowRight, FiArrowLeft, FiSave, FiCheckCircle,
   FiBookOpen, FiHome, FiCpu, FiHeart, FiFeather, FiShield,
   FiBriefcase, FiGlobe, FiActivity, FiStar, FiAward, FiCheck, FiZap, FiHelpCircle,
@@ -118,6 +123,8 @@ export default function CollegeOnboardingPage() {
   const [baselineReport, setBaselineReport] = useState(null)
   const [submittingAssessment, setSubmittingAssessment] = useState(false)
   const [activeStageTab, setActiveStageTab] = useState('ALL')
+  const [dismissedCareerIds, setDismissedCareerIds] = useState([])
+  const [showExploreModal, setShowExploreModal] = useState(false)
 
   // Load Fields Taxonomy on Mount
   useEffect(() => {
@@ -615,73 +622,286 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 5: Interests & Goals */}
-          {step === 5 && (
-            <div className="s-anim-up">
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-                Step 5: Academic Interests & Career Aspirations
-              </h3>
-              <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
-                Select what drives your academic journey.
-              </p>
+          {/* STEP 5: Personalized Academic Interests & Career Aspirations */}
+          {step === 5 && (() => {
+            const personalizedFocus = getPersonalizedAcademicFocusOptions(profile)
+            const recResult = getPersonalizedCareerRecommendations(profile)
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <div>
-                  <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 10, color: 'var(--s-text)' }}>
-                    Academic Focus Options (Select all that apply)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
-                    {ACADEMIC_INTEREST_OPTIONS.map(opt => {
-                      const isSelected = profile.academicInterests.includes(opt)
-                      return (
-                        <div
-                          key={opt}
-                          onClick={() => toggleArrayItem('academicInterests', opt)}
-                          style={{
-                            padding: 14, borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                            background: isSelected ? 'var(--s-primary-l)' : '#fff',
-                            fontSize: 13, fontWeight: 700, color: 'var(--s-text)',
-                            display: 'flex', alignItems: 'center', gap: 10
-                          }}
-                        >
-                          <FiCheck size={16} style={{ opacity: isSelected ? 1 : 0.2 }} />
-                          <span>{opt}</span>
-                        </div>
-                      )
-                    })}
+            const recommendedPathways = (recResult.recommendedPathways || [])
+              .filter(c => !dismissedCareerIds.includes(c.id))
+            const relatedDirections = (recResult.relatedDirections || [])
+              .filter(c => !dismissedCareerIds.includes(c.id))
+            const careerSwitches = (recResult.careerSwitches || [])
+              .filter(c => !dismissedCareerIds.includes(c.id))
+
+            const renderCareerCard = (career, isSwitchCard = false) => {
+              const isPrimary = profile.targetCareer === career.title
+              const isSelected = profile.careerInterests.includes(career.title) || isPrimary
+
+              return (
+                <div
+                  key={career.id}
+                  style={{
+                    padding: 20, borderRadius: 16, background: '#fff',
+                    border: isPrimary ? '2.5px solid #047857' : isSelected ? '2px solid #0284c7' : '1px solid var(--s-border)',
+                    boxShadow: isPrimary ? '0 6px 20px rgba(4, 120, 87, 0.12)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <h4 style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+                          {career.title}
+                        </h4>
+                        <span style={{
+                          fontSize: 11, fontWeight: 800,
+                          background: isSwitchCard ? '#fff7ed' : '#ecfdf5',
+                          color: isSwitchCard ? '#c2410c' : '#047857',
+                          padding: '3px 10px', borderRadius: 12,
+                          border: isSwitchCard ? '1px solid #ffedd5' : '1px solid #a7f3d0'
+                        }}>
+                          {career.matchScore > 0 ? `${career.matchScore}% Match` : 'Cross-Domain Explorer'}
+                        </span>
+                        {isPrimary && (
+                          <span style={{ fontSize: 11, fontWeight: 800, background: '#047857', color: '#fff', padding: '3px 10px', borderRadius: 12 }}>
+                            🎯 Primary Target Role
+                          </span>
+                        )}
+                        {isSwitchCard && (
+                          <span style={{ fontSize: 11, fontWeight: 800, background: '#ea580c', color: '#fff', padding: '3px 10px', borderRadius: 12 }}>
+                            🔀 Career Switch Path
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 4 }}>
+                        {career.category} • {career.description}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfile(prev => ({
+                            ...prev,
+                            targetCareer: career.title,
+                            careerInterests: Array.from(new Set([...prev.careerInterests, career.title]))
+                          }))
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                          background: isPrimary ? '#047857' : '#f1f5f9',
+                          color: isPrimary ? '#fff' : '#334155',
+                          border: isPrimary ? 'none' : '1px solid #cbd5e1'
+                        }}
+                      >
+                        {isPrimary ? '✓ Primary Target' : 'Set as Primary'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleArrayItem('careerInterests', career.title)}
+                        style={{
+                          padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                          background: isSelected ? '#e0f2fe' : '#fff',
+                          color: isSelected ? '#0284c7' : '#64748b',
+                          border: '1px solid #cbd5e1'
+                        }}
+                      >
+                        {isSelected ? '✓ In Pathway List' : '+ Add to Pathway'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDismissedCareerIds(prev => [...prev, career.id])}
+                        title="Not interested in this career"
+                        style={{ padding: '6px 10px', borderRadius: 8, background: '#fef2f2', color: '#dc2626', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Transparent Match Reason */}
+                  <div style={{ fontSize: 12, color: isSwitchCard ? '#9a3412' : '#0369a1', background: isSwitchCard ? '#fff7ed' : '#f0f9ff', padding: '10px 14px', borderRadius: 10, marginTop: 10, lineHeight: 1.4 }}>
+                    💡 <strong>Why this matches you:</strong> {career.matchExplanation}
+                  </div>
+
+                  {/* Matched Strengths */}
+                  {career.matchedStrengths?.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#047857', marginTop: 8, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <strong>✓ Your Profile Strengths:</strong>
+                      {career.matchedStrengths.map((str, idx) => (
+                        <span key={idx} style={{ background: '#d1fae5', padding: '2px 8px', borderRadius: 6, color: '#065f46', fontWeight: 600 }}>
+                          {str}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Skills to Develop */}
+                  {career.skillGapsToDevelop?.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#475569', marginTop: 8, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <strong>△ Target Skills to Develop:</strong>
+                      {career.skillGapsToDevelop.map((sk, idx) => (
+                        <span key={idx} style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, color: '#334155', fontWeight: 600 }}>
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <div className="s-anim-up">
+                {/* Profile Guidance Context Banner */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  borderRadius: 18, padding: '20px 24px', color: '#fff', marginBottom: 28,
+                  boxShadow: '0 6px 20px rgba(2, 132, 199, 0.2)'
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.9, marginBottom: 4 }}>
+                    🎯 PROFILE-DRIVEN RECOMMENDATIONS ENGINE
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, margin: '0 0 6px', color: '#fff' }}>
+                    Step 5: Tailored Focus & Career Pathways
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#e0f2fe', margin: 0, lineHeight: 1.5 }}>
+                    Generated for your academic profile: <strong>{profile.degreeProgramme || 'Degree'}</strong>
+                    {profile.domain && ` • ${profile.domain}`}
+                    {profile.specialization && ` → ${profile.specialization}`} ({profile.currentYear || '1st Year'})
+                  </p>
                 </div>
 
-                <div>
-                  <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 10, color: 'var(--s-text)' }}>
-                    Target Career Pathways
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
-                    {CAREER_INTEREST_OPTIONS.map(opt => {
-                      const isSelected = profile.careerInterests.includes(opt)
-                      return (
-                        <div
-                          key={opt}
-                          onClick={() => toggleArrayItem('careerInterests', opt)}
-                          style={{
-                            padding: 14, borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid #b45309' : '1px solid var(--s-border)',
-                            background: isSelected ? '#fef3c7' : '#fff',
-                            fontSize: 13, fontWeight: 700, color: 'var(--s-text)',
-                            display: 'flex', alignItems: 'center', gap: 10
-                          }}
-                        >
-                          <FiStar size={16} style={{ color: isSelected ? '#b45309' : '#cbd5e1' }} />
-                          <span>{opt}</span>
-                        </div>
-                      )
-                    })}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+                  {/* 1. Personalized Academic Focus Options */}
+                  <div>
+                    <label style={{ fontWeight: 800, fontSize: 14, display: 'block', marginBottom: 6, color: 'var(--s-text)' }}>
+                      Personalized Academic Focus (Select your priorities)
+                    </label>
+                    <p style={{ fontSize: 12, color: 'var(--s-text3)', marginBottom: 14 }}>
+                      Choose academic focus areas matching your branch and year goals.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+                      {personalizedFocus.map(opt => {
+                        const isSelected = profile.academicInterests.includes(opt.title)
+                        return (
+                          <div
+                            key={opt.id}
+                            onClick={() => toggleArrayItem('academicInterests', opt.title)}
+                            style={{
+                              padding: 16, borderRadius: 14, cursor: 'pointer',
+                              border: isSelected ? '2px solid #0284c7' : '1px solid var(--s-border)',
+                              background: isSelected ? '#f0f9ff' : '#fff',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: 8 }}>
+                                {opt.category}
+                              </span>
+                              <div style={{
+                                width: 22, height: 22, borderRadius: '50%',
+                                background: isSelected ? '#0284c7' : '#f1f5f9',
+                                color: isSelected ? '#fff' : '#cbd5e1',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}>
+                                <FiCheck size={14} />
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 4 }}>
+                              {opt.title}
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--s-text3)', lineHeight: 1.4 }}>
+                              {opt.desc}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
+
+                  {/* 2. Directly Recommended Career Pathways */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 10 }}>
+                      <div>
+                        <label style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)', margin: 0 }}>
+                          🎯 Recommended Career Pathways (Direct Academic Fit)
+                        </label>
+                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
+                          Careers directly supported by your major degree ({profile.degreeProgramme || 'Degree'}).
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowExploreModal(true)}
+                        style={{
+                          background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
+                          padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                        }}
+                      >
+                        <FiGlobe size={14} /> Explore All Careers
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+                      {recommendedPathways.length > 0 ? (
+                        recommendedPathways.map(c => renderCareerCard(c, false))
+                      ) : (
+                        <div style={{ padding: 16, background: '#f8fafc', borderRadius: 12, fontSize: 13, color: '#64748b' }}>
+                          No direct pathways match this specific sub-specialization. Check related directions below.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Related Career Directions */}
+                  {relatedDirections.length > 0 && (
+                    <div>
+                      <div style={{ marginBottom: 6 }}>
+                        <label style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)', margin: 0 }}>
+                          🔄 Related Career Directions (Interdisciplinary / Adjacent)
+                        </label>
+                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
+                          Adjacent pathways bridging your academic background with interdisciplinary skills.
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+                        {relatedDirections.map(c => renderCareerCard(c, false))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. Explore Career Switches */}
+                  {careerSwitches.length > 0 && (
+                    <div>
+                      <div style={{ marginBottom: 6 }}>
+                        <label style={{ fontWeight: 800, fontSize: 14, color: '#c2410c', margin: 0 }}>
+                          🔀 Explore Career Switches (Optional Cross-Domain Pathways)
+                        </label>
+                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
+                          Careers requiring a significant domain transition and prerequisite learning.
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+                        {careerSwitches.map(c => renderCareerCard(c, true))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* STEP 6: Skills */}
           {step === 6 && (
@@ -975,6 +1195,66 @@ export default function CollegeOnboardingPage() {
           </div>
         </SCard>
       </div>
+
+      {/* ── EXPLORE ALL CAREERS MODAL ────────────────────────────────────── */}
+      {showExploreModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: 700, borderRadius: 24, padding: 28, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 14 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                  Explore All College Careers & Pathways
+                </h3>
+                <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>
+                  Search or select any career pathway from our comprehensive catalog.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExploreModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: '1fr', gap: 12, paddingRight: 6 }}>
+              {COLLEGE_CAREER_CATALOG.map(career => {
+                const isPrimary = profile.targetCareer === career.title
+                const isSelected = profile.careerInterests.includes(career.title)
+
+                return (
+                  <div key={career.id} style={{ padding: 16, borderRadius: 14, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{career.title}</div>
+                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{career.category} • {career.description}</div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfile(prev => ({
+                            ...prev,
+                            targetCareer: career.title,
+                            careerInterests: Array.from(new Set([...prev.careerInterests, career.title]))
+                          }))
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                          background: isPrimary ? '#047857' : '#0284c7', color: '#fff', border: 'none'
+                        }}
+                      >
+                        {isPrimary ? '✓ Primary Target' : 'Select Target'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

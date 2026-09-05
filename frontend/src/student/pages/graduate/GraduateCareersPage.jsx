@@ -2,21 +2,20 @@ import React, { useState, useEffect } from 'react'
 import {
   FiBriefcase, FiTrendingUp, FiArrowRight, FiCheckCircle,
   FiZap, FiCompass, FiAward, FiLayers, FiDollarSign, FiClock,
-  FiChevronRight, FiFilter, FiExternalLink
+  FiChevronRight, FiFilter, FiExternalLink, FiHelpCircle
 } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import graduateService from '../../../services/graduateService'
+import {
+  generatePersonalizedCareers,
+  getEffectiveAcademicHierarchy
+} from '../../services/graduatePersonalizationEngine'
+import GraduateCourseImage from '../../components/common/GraduateCourseImage'
 
 export default function GraduateCareersPage() {
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState({
-    education: null,
-    currentSkills: [],
-    directCareers: [],
-    transitionCareers: [],
-    advice: ''
-  })
-  const [activeTab, setActiveTab] = useState('all') // 'all', 'direct', 'transition'
+  const [profile, setProfile] = useState({})
+  const [activeCategory, setActiveCategory] = useState('All')
   const [selectedCareer, setSelectedCareer] = useState(null)
 
   useEffect(() => {
@@ -27,31 +26,27 @@ export default function GraduateCareersPage() {
     try {
       setLoading(true)
       const res = await graduateService.getCareers()
-      if (res.success) {
-        setData({
-          education: res.education || null,
-          currentSkills: res.currentSkills || [],
-          directCareers: res.directCareers || [],
-          transitionCareers: res.transitionCareers || [],
-          advice: res.advice || ''
-        })
+      if (res.success && res.profile) {
+        setProfile(res.profile)
+      } else {
+        const pRes = await graduateService.getProfile()
+        if (pRes.success && pRes.profile) setProfile(pRes.profile)
       }
     } catch (err) {
-      console.error('Failed to load graduate careers:', err)
+      console.error('Failed to load graduate careers profile:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const directList = data.directCareers || []
-  const transitionList = data.transitionCareers || []
+  const academic = getEffectiveAcademicHierarchy(profile)
+  const personalizedCareers = generatePersonalizedCareers(profile)
 
-  const displayList =
-    activeTab === 'direct'
-      ? directList
-      : activeTab === 'transition'
-      ? transitionList
-      : [...directList, ...transitionList]
+  const categories = ['All', ...new Set(personalizedCareers.map(c => c.category))]
+
+  const displayList = activeCategory === 'All'
+    ? personalizedCareers
+    : personalizedCareers.filter(c => c.category === activeCategory)
 
   if (loading) {
     return (
@@ -72,13 +67,13 @@ export default function GraduateCareersPage() {
       }}>
         <div style={{ maxWidth: 720 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#93c5fd', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            <FiCompass size={16} /> Graduate Career Trajectories
+            <FiCompass size={16} /> PROFILE-DRIVEN GRADUATE CAREER ENGINE
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 8px', color: '#fff' }}>
-            Career Pathways for {data.education?.degree || 'Graduates'}
+            Personalized Career Pathways for {academic.degree} in {academic.domain}
           </h1>
           <p style={{ margin: 0, color: '#cbd5e1', fontSize: 14, lineHeight: 1.5 }}>
-            {data.advice || 'Explore direct core engineering/science tracks or pivot into high-demand cross-domain roles with transferrable skills.'}
+            Every career match is calculated from your completed degree, specialization, technical competencies, tools, and professional interests.
           </p>
         </div>
 
@@ -108,172 +103,106 @@ export default function GraduateCareersPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 10, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
-        <button
-          onClick={() => setActiveTab('all')}
-          style={{
-            padding: '8px 18px', borderRadius: 20, border: 'none',
-            background: activeTab === 'all' ? '#0f172a' : '#f1f5f9',
-            color: activeTab === 'all' ? '#fff' : '#475569',
-            fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
-          }}
-        >
-          All Pathways ({directList.length + transitionList.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('direct')}
-          style={{
-            padding: '8px 18px', borderRadius: 20, border: 'none',
-            background: activeTab === 'direct' ? '#2563eb' : '#f1f5f9',
-            color: activeTab === 'direct' ? '#fff' : '#475569',
-            fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
-          }}
-        >
-          🎯 Direct Core Tracks ({directList.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('transition')}
-          style={{
-            padding: '8px 18px', borderRadius: 20, border: 'none',
-            background: activeTab === 'transition' ? '#7c3aed' : '#f1f5f9',
-            color: activeTab === 'transition' ? '#fff' : '#475569',
-            fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
-          }}
-        >
-          ⚡ Career Switching (Cross-Domain) ({transitionList.length})
-        </button>
+      {/* Category Filter Chips */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+        {categories.map((cat, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              padding: '8px 18px', borderRadius: 20, border: 'none',
+              background: activeCategory === cat ? '#0f172a' : '#f1f5f9',
+              color: activeCategory === cat ? '#fff' : '#475569',
+              fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
+            }}
+          >
+            {cat === 'All' ? `All Ranked Match Pathways (${personalizedCareers.length})` : cat}
+          </button>
+        ))}
       </div>
-
-      {/* Section Explainer Banner if switching selected */}
-      {activeTab === 'transition' && (
-        <div style={{
-          background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 12,
-          padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14
-        }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <FiZap size={18} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#581c87' }}>
-              Switching from Non-CS to Tech / Data / Product
-            </h4>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b21a8', lineHeight: 1.5 }}>
-              Over 40% of tech and analytics professionals started in mechanical, civil, electrical, or science degrees.
-              Your mathematical intuition, problem-solving, and domain knowledge are your <strong>superpowers</strong>.
-              Below are the fastest transition paths with the exact bridge skills you need.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Career Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 20 }}>
         {displayList.map((career, idx) => {
-          const isTransition = career.type === 'transition' || career.isAlternate
           return (
             <div
               key={idx}
               style={{
                 background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0',
-                padding: 24, display: 'flex', flexDirection: 'column',
+                padding: 20, display: 'flex', flexDirection: 'column',
                 justifyContent: 'space-between', position: 'relative',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 transition: 'transform 0.2s, box-shadow 0.2s'
               }}
             >
-              {/* Card Header */}
               <div>
+                {/* Course-Specific Visual Image */}
+                <div style={{ marginBottom: 14 }}>
+                  <GraduateCourseImage course={career} height={160} borderRadius={12} />
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <span style={{
-                    fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
-                    background: isTransition ? '#f3e8ff' : '#eff6ff',
-                    color: isTransition ? '#7c3aed' : '#2563eb',
-                    textTransform: 'uppercase', letterSpacing: '0.04em'
+                    fontSize: 12, fontWeight: 800, padding: '4px 10px', borderRadius: 20,
+                    background: career.matchScore >= 80 ? '#d1fae5' : '#dbeafe',
+                    color: career.matchScore >= 80 ? '#047857' : '#1d4ed8'
                   }}>
-                    {isTransition ? '⚡ Cross-Domain Switch' : '🎯 Direct Match'}
+                    {career.matchScore}% Match
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: 6 }}>
-                    {career.demand || 'High Demand'}
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', background: '#f1f5f9', padding: '3px 8px', borderRadius: 6 }}>
+                    {career.growthOutlook}
                   </span>
                 </div>
 
                 <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
-                  {career.title || career.careerName || 'Software Specialist'}
+                  {career.title}
                 </h3>
-                <p style={{ margin: '0 0 14px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
-                  {career.description || career.summary || 'Design and implement industry-standard solutions with cutting-edge tools.'}
+                <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
+                  {career.description}
                 </p>
 
-                {/* Metrics */}
+                {/* "Why Am I Seeing This?" Explanation Box */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
-                  background: '#f8fafc', padding: '10px 14px', borderRadius: 10, marginBottom: 16
+                  background: '#f8fafc', padding: '10px 12px', borderRadius: 10,
+                  fontSize: 12, color: '#334155', marginBottom: 14, borderLeft: '3px solid #2563eb'
                 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Starting CTC</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-                      {career.salaryRange || '₹4.5 - 9 LPA'}
-                    </div>
+                  <div style={{ fontWeight: 800, fontSize: 11, color: '#1e40af', textTransform: 'uppercase', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <FiHelpCircle size={12} /> Why this matches your profile:
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
-                      {isTransition ? 'Transition Time' : 'Experience Needed'}
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-                      {career.timeline || (isTransition ? '3 - 5 Months' : 'Fresher Friendly')}
-                    </div>
-                  </div>
+                  {career.whyItMatches}
                 </div>
 
-                {/* Transferable & Bridge Skills if transition */}
-                {isTransition && career.transferableSkills && (
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', textTransform: 'uppercase', marginBottom: 4 }}>
-                      ✓ Your Transferable Strengths:
+                {/* Strengths & Missing Skills */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                  <div style={{ background: '#f0fdf4', padding: 10, borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: 4 }}>
+                      ✓ Your Strengths
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {career.transferableSkills.map((ts, sIdx) => (
-                        <span key={sIdx} style={{ fontSize: 11, background: '#ecfdf5', color: '#065f46', padding: '2px 8px', borderRadius: 4 }}>
-                          {ts}
-                        </span>
-                      ))}
+                    <div style={{ fontSize: 11.5, color: '#15803d', fontWeight: 600 }}>
+                      {career.matchingSkills.slice(0, 3).join(', ')}
                     </div>
                   </div>
-                )}
-
-                {/* Required Skills / Bridge Skills */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: isTransition ? '#7c3aed' : '#2563eb', textTransform: 'uppercase', marginBottom: 6 }}>
-                    {isTransition ? '⚡ Key Bridge Skills to Learn:' : '🛠️ Core Skills Needed:'}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {(career.bridgeSkills || career.requiredSkills || ['Python', 'SQL', 'Git', 'Analytics']).slice(0, 5).map((skill, sIdx) => (
-                      <span
-                        key={sIdx}
-                        style={{
-                          fontSize: 11.5, fontWeight: 600,
-                          background: '#f1f5f9', color: '#334155',
-                          padding: '3px 8px', borderRadius: 6
-                        }}
-                      >
-                        {typeof skill === 'string' ? skill : skill.name}
-                      </span>
-                    ))}
+                  <div style={{ background: '#fffbeb', padding: 10, borderRadius: 8, border: '1px solid #fde68a' }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', marginBottom: 4 }}>
+                      🎯 Skills to Learn
+                    </div>
+                    <div style={{ fontSize: 11.5, color: '#b45309', fontWeight: 600 }}>
+                      {career.missingSkills.slice(0, 3).join(', ')}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Action Buttons */}
               <div style={{ paddingTop: 14, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Link
-                  to={`/graduate/skill-gap?target=${encodeURIComponent(career.title || career.careerName)}`}
+                  to={`/graduate/skill-gap?target=${encodeURIComponent(career.title)}`}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     fontSize: 13, fontWeight: 700, color: '#2563eb', textDecoration: 'none'
                   }}
                 >
-                  View Gap & Roadmap <FiArrowRight size={14} />
+                  Analyze Skill Gap <FiArrowRight size={14} />
                 </Link>
                 <button
                   onClick={() => setSelectedCareer(career)}
@@ -301,13 +230,13 @@ export default function GraduateCareersPage() {
             background: '#fff', borderRadius: 20, maxWidth: 560, width: '100%',
             padding: 28, position: 'relative', maxHeight: '90vh', overflowY: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#2563eb' }}>
-                  Career Breakdown
+                  {selectedCareer.matchScore}% Personalized Match
                 </span>
                 <h2 style={{ margin: '4px 0 10px', fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
-                  {selectedCareer.title || selectedCareer.careerName}
+                  {selectedCareer.title}
                 </h2>
               </div>
               <button
@@ -318,42 +247,41 @@ export default function GraduateCareersPage() {
               </button>
             </div>
 
+            <div style={{ marginBottom: 16 }}>
+              <GraduateCourseImage course={selectedCareer} height={180} borderRadius={12} />
+            </div>
+
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: '0 0 16px' }}>
-              {selectedCareer.description || 'Specialized role focused on technical problem solving and modern stack implementation.'}
+              {selectedCareer.description}
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-              <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Market Salary</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{selectedCareer.salaryRange || '₹5 - 10 LPA'}</div>
+            <div style={{ background: '#eff6ff', padding: 14, borderRadius: 12, border: '1px solid #bfdbfe', marginBottom: 16 }}>
+              <div style={{ fontWeight: 800, fontSize: 12, color: '#1e40af', marginBottom: 4 }}>
+                Profile Explanation:
               </div>
-              <div style={{ background: '#f8fafc', padding: 12, borderRadius: 10 }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Industry Outlook</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#059669' }}>{selectedCareer.demand || 'High Growth'}</div>
+              <div style={{ fontSize: 13, color: '#1e3a8a' }}>
+                {selectedCareer.whyItMatches}
               </div>
             </div>
 
             <div style={{ marginBottom: 20 }}>
               <h4 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                Key Roles & Day-to-Day Responsibilities
+                Recommended Action:
               </h4>
-              <ul style={{ margin: 0, paddingLeft: 18, color: '#475569', fontSize: 13, lineHeight: 1.6 }}>
-                <li>Analyze system requirements and design modular solutions</li>
-                <li>Write robust, clean, and tested code or automation workflows</li>
-                <li>Collaborate with cross-functional product, QA, and operations teams</li>
-                <li>Stay updated with the latest frameworks, tools, and best practices</li>
-              </ul>
+              <div style={{ fontSize: 13, color: '#475569', background: '#f8fafc', padding: 12, borderRadius: 10 }}>
+                {selectedCareer.recommendedNextStep}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
               <Link
-                to={`/graduate/skill-gap?target=${encodeURIComponent(selectedCareer.title || selectedCareer.careerName)}`}
+                to={`/graduate/skill-gap?target=${encodeURIComponent(selectedCareer.title)}`}
                 style={{
                   flex: 1, textAlign: 'center', background: '#2563eb', color: '#fff',
                   textDecoration: 'none', padding: '12px', borderRadius: 10, fontWeight: 700, fontSize: 14
                 }}
               >
-                Start Skill Gap Analysis
+                Analyze Skill Gap & Roadmap
               </Link>
               <button
                 onClick={() => setSelectedCareer(null)}

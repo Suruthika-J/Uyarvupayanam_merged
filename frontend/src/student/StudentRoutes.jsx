@@ -53,6 +53,8 @@ import CollegeProfilePage from './pages/profile/CollegeProfilePage'
 import StudyPlannerPage from './pages/academic/StudyPlannerPage'
 import LearningRoadmapPage from './pages/academic/LearningRoadmapPage'
 import PerformanceAnalyticsPage from './pages/academic/PerformanceAnalyticsPage'
+import FocusLearningPage from './pages/academic/FocusLearningPage'
+import CodingArenaPage from './pages/career/CodingArenaPage'
 import ProfileAwareAskAIChatbotPage from './pages/advisor/ProfileAwareAskAIChatbotPage'
 import SkillGapAnalysisPage from './pages/career/SkillGapAnalysisPage'
 import CareerComparisonPage from './pages/career/CareerComparisonPage'
@@ -198,9 +200,11 @@ export default function StudentRoutes() {
             <Route path="profile" element={<CollegeProfilePage />} />
             <Route path="advisor" element={<CollegeAdvisorDashboardPage />} />
             <Route path="advisor/chat" element={<ProfileAwareAskAIChatbotPage />} />
+            <Route path="academic/focus" element={<FocusLearningPage />} />
             <Route path="academic/planner" element={<StudyPlannerPage />} />
             <Route path="academic/roadmap" element={<LearningRoadmapPage />} />
             <Route path="academic/performance" element={<PerformanceAnalyticsPage />} />
+            <Route path="career/coding-arena" element={<CodingArenaPage />} />
             <Route path="career/skill-gap" element={<SkillGapAnalysisPage />} />
             <Route path="career/compare" element={<CareerComparisonPage />} />
             <Route path="career/resume" element={<ResumeBuilderPage />} />

@@ -2,69 +2,52 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
   FiZap, FiCheckCircle, FiAlertTriangle, FiTarget,
-  FiArrowRight, FiLayers, FiTrendingUp, FiTool, FiBookOpen
+  FiArrowRight, FiLayers, FiTrendingUp, FiTool, FiBookOpen, FiHelpCircle
 } from 'react-icons/fi'
 import graduateService from '../../../services/graduateService'
-
-const POPULAR_TARGETS = [
-  'Data Analyst', 'Full Stack Developer', 'Cloud DevOps Engineer',
-  'Software Engineer', 'AI / ML Engineer', 'Business Analyst',
-  'Cybersecurity Analyst', 'Product Specialist', 'Embedded Systems Engineer'
-]
+import {
+  generatePersonalizedCareers,
+  generatePersonalizedSkillGap,
+  getEffectiveAcademicHierarchy
+} from '../../services/graduatePersonalizationEngine'
+import GraduateCourseImage from '../../components/common/GraduateCourseImage'
 
 export default function GraduateSkillGapPage() {
   const [searchParams] = useSearchParams()
   const urlTarget = searchParams.get('target')
 
   const [loading, setLoading] = useState(true)
-  const [targetRole, setTargetRole] = useState(urlTarget || 'Software Engineer')
-  const [analysis, setAnalysis] = useState({
-    targetRole: '',
-    userSkills: [],
-    missingCriticalSkills: [],
-    recommendedTools: [],
-    coursesSuggested: []
-  })
+  const [profile, setProfile] = useState({})
+  const [targetRole, setTargetRole] = useState(urlTarget || '')
 
   useEffect(() => {
-    fetchGap()
+    fetchProfile()
   }, [])
 
-  const fetchGap = async (customTarget) => {
+  const fetchProfile = async () => {
     try {
       setLoading(true)
-      const res = await graduateService.getSkillGap()
-      if (res.success) {
-        setAnalysis({
-          targetRole: customTarget || res.targetRole || 'Software Engineer',
-          userSkills: res.userSkills || [],
-          missingCriticalSkills: res.missingCriticalSkills || [
-            { name: 'System Design & Architecture', priority: 'High', reason: 'Critical for mid-level hiring' },
-            { name: 'Docker & Containerization', priority: 'Medium', reason: 'Industry standard for modern deployments' },
-            { name: 'REST API & Microservices', priority: 'High', reason: 'Required for backend integration' }
-          ],
-          recommendedTools: res.recommendedTools || ['Git & GitHub', 'Postman', 'Docker', 'Linux CLI', 'AWS Basics'],
-          coursesSuggested: res.coursesSuggested || []
-        })
-        if (!customTarget && res.targetRole) {
-          setTargetRole(res.targetRole)
-        }
+      const res = await graduateService.getProfile()
+      if (res.success && res.profile) {
+        setProfile(res.profile)
       }
     } catch (err) {
-      console.error('Failed to load skill gap analysis:', err)
+      console.error('Failed to load profile for skill gap:', err)
     } finally {
       setLoading(false)
     }
   }
 
+  const academic = getEffectiveAcademicHierarchy(profile)
+  const careers = generatePersonalizedCareers(profile)
+  const defaultTarget = urlTarget || targetRole || careers[0]?.title || 'Software Specialist'
+
+  const skillGap = generatePersonalizedSkillGap(profile, defaultTarget)
+  const currentTarget = defaultTarget
+
   const handleTargetChange = (newTarget) => {
     setTargetRole(newTarget)
-    fetchGap(newTarget)
   }
-
-  // Calculate quick readiness match %
-  const totalRelevant = (analysis.userSkills.length || 1) + (analysis.missingCriticalSkills.length || 1)
-  const matchPercentage = Math.min(95, Math.max(35, Math.round((analysis.userSkills.length / totalRelevant) * 100)))
 
   if (loading) {
     return (
@@ -85,13 +68,13 @@ export default function GraduateSkillGapPage() {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38bdf8', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            <FiZap size={16} /> Skill Gap & Industry Benchmarking
+            <FiZap size={16} /> PROFILE-GROUNDED SKILL GAP BENCHMARKING
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 8px', color: '#fff' }}>
-            Skill Gap for {targetRole}
+            Skill Gap for {currentTarget}
           </h1>
           <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
-            Compare your verified college abilities against market hiring standards and bridge missing proficiencies.
+            Tailored against your <strong>{academic.degree} in {academic.domain}</strong> background and verified candidate competencies.
           </p>
         </div>
 
@@ -101,12 +84,12 @@ export default function GraduateSkillGapPage() {
           borderRadius: 14, padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16
         }}>
           <div>
-            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Target Role Readiness</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: matchPercentage >= 70 ? '#10b981' : '#38bdf8' }}>
-              {matchPercentage}%
+            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Pathway Match</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: skillGap.matchScore >= 75 ? '#10b981' : '#38bdf8' }}>
+              {skillGap.matchScore}%
             </div>
           </div>
-          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `conic-gradient(#2563eb ${matchPercentage * 3.6}deg, rgba(255,255,255,0.1) 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `conic-gradient(#2563eb ${skillGap.matchScore * 3.6}deg, rgba(255,255,255,0.1) 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff' }}>
               Fit
             </div>
@@ -120,15 +103,15 @@ export default function GraduateSkillGapPage() {
         border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'
       }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>
-          Select Target Role:
+          Select Target Pathway:
         </span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {POPULAR_TARGETS.map((role) => {
-            const isSelected = targetRole.toLowerCase() === role.toLowerCase()
+          {careers.slice(0, 6).map((c) => {
+            const isSelected = currentTarget.toLowerCase() === c.title.toLowerCase()
             return (
               <button
-                key={role}
-                onClick={() => handleTargetChange(role)}
+                key={c.title}
+                onClick={() => handleTargetChange(c.title)}
                 style={{
                   padding: '6px 14px', borderRadius: 20, border: 'none',
                   background: isSelected ? '#2563eb' : '#f1f5f9',
@@ -136,10 +119,23 @@ export default function GraduateSkillGapPage() {
                   fontSize: 12.5, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s'
                 }}
               >
-                {role}
+                {c.title} ({c.matchScore}%)
               </button>
             )
           })}
+        </div>
+      </div>
+
+      {/* Why Target Matches Box */}
+      <div style={{ background: '#eff6ff', padding: 16, borderRadius: 14, border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <FiHelpCircle size={22} color="#1d4ed8" />
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 13, color: '#1e40af', textTransform: 'uppercase' }}>
+            Why am I seeing this pathway gap?
+          </div>
+          <div style={{ fontSize: 13.5, color: '#1e3a8a' }}>
+            {skillGap.whyTargetMatches}
+          </div>
         </div>
       </div>
 
@@ -157,19 +153,19 @@ export default function GraduateSkillGapPage() {
                 <FiCheckCircle size={18} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Skills You Possess</h3>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>From your verified profile</p>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Verified Candidate Strengths</h3>
+                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>From your profile evidence</p>
               </div>
             </div>
             <span style={{ fontSize: 12, fontWeight: 800, background: '#ecfdf5', color: '#065f46', padding: '3px 10px', borderRadius: 20 }}>
-              {analysis.userSkills.length} Verified
+              {skillGap.strongSkills.length} Core Strengths
             </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {analysis.userSkills.length === 0 ? (
+            {skillGap.strongSkills.length === 0 ? (
               <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8' }}>
-                No technical skills logged yet.
+                No advanced skills logged yet.
                 <div style={{ marginTop: 8 }}>
                   <Link to="/graduate/profile" style={{ color: '#2563eb', fontWeight: 700, fontSize: 13 }}>
                     + Update Skills in Profile
@@ -177,23 +173,17 @@ export default function GraduateSkillGapPage() {
                 </div>
               </div>
             ) : (
-              analysis.userSkills.map((sk, idx) => (
+              skillGap.strongSkills.map((sk, idx) => (
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '10px 14px', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <FiCheckCircle size={15} color="#10b981" />
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0f172a' }}>
-                      {typeof sk === 'string' ? sk : sk.name}
-                    </span>
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0f172a' }}>{sk}</span>
                   </div>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-                    background: (typeof sk === 'object' && sk.proficiency === 'Advanced') ? '#ecfdf5' : '#eff6ff',
-                    color: (typeof sk === 'object' && sk.proficiency === 'Advanced') ? '#059669' : '#2563eb'
-                  }}>
-                    {typeof sk === 'object' ? sk.proficiency : 'Intermediate'}
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#ecfdf5', color: '#059669' }}>
+                    Advanced
                   </span>
                 </div>
               ))
@@ -212,104 +202,84 @@ export default function GraduateSkillGapPage() {
                 <FiAlertTriangle size={18} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Critical Skills Gap</h3>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Required for competitive {targetRole} roles</p>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Missing Critical Skills to Learn</h3>
+                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Required for hiring qualification</p>
               </div>
             </div>
             <span style={{ fontSize: 12, fontWeight: 800, background: '#fef2f2', color: '#991b1b', padding: '3px 10px', borderRadius: 20 }}>
-              {analysis.missingCriticalSkills.length} High Impact
+              {skillGap.missingCriticalSkills.length} High Priority
             </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {analysis.missingCriticalSkills.map((gap, idx) => {
-              const skillName = typeof gap === 'string' ? gap : gap.name
-              const priority = typeof gap === 'object' ? gap.priority : 'High'
-              const reason = typeof gap === 'object' ? gap.reason : 'Essential for job qualifications'
-
-              return (
-                <div key={idx} style={{
-                  padding: '12px 14px', borderRadius: 10, background: '#fefefe',
-                  border: '1px solid #fecaca', display: 'flex', flexDirection: 'column', gap: 4
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
-                      {skillName}
-                    </span>
-                    <span style={{
-                      fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 12,
-                      background: priority === 'High' ? '#fecaca' : '#fef3c7',
-                      color: priority === 'High' ? '#b91c1c' : '#b45309',
-                      textTransform: 'uppercase'
-                    }}>
-                      {priority} Priority
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>{reason}</div>
+            {skillGap.missingCriticalSkills.map((sk, idx) => (
+              <div key={idx} style={{
+                padding: '12px 14px', borderRadius: 10, background: '#fffbeb',
+                border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+              }}>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+                  • {sk}
                 </div>
-              )
-            })}
+                <span style={{ fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 12, background: '#fef3c7', color: '#78350f', textTransform: 'uppercase' }}>
+                  Target Gap
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
       </div>
 
-      {/* Tools & Recommendations Section */}
+      {/* Recommended Learning Modules with Course Images */}
       <div style={{
         background: '#fff', borderRadius: 16, padding: 24,
         border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FiTool size={18} />
+            <FiBookOpen size={18} />
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
-              Standard Industry Tools for {targetRole}
+              Actionable Learning Modules for {currentTarget}
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
-              Tools hiring recruiters look for on your resume
+              Every skill gap leads directly to structured practice and project evidence with relevant course visual graphics.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-          {analysis.recommendedTools.map((tool, idx) => (
-            <div key={idx} style={{
-              background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8,
-              padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#334155',
-              display: 'flex', alignItems: 'center', gap: 6
-            }}>
-              🛠️ {tool}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20, marginBottom: 20 }}>
+          {skillGap.learningModules.map((mod) => (
+            <div key={mod.id} style={{ background: '#f8fafc', padding: 16, borderRadius: 14, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                {/* Course Visual */}
+                <div style={{ marginBottom: 12 }}>
+                  <GraduateCourseImage course={{ title: mod.resourceTitle, skill: mod.skill }} height={150} borderRadius={10} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, background: '#e0e7ff', color: '#3730a3', padding: '2px 8px', borderRadius: 6 }}>
+                    Module #{mod.step}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{mod.estimatedWeeks} Weeks</span>
+                </div>
+                <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{mod.resourceTitle}</h4>
+                <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>{mod.whyRequired}</p>
+              </div>
+
+              <Link
+                to={`/graduate/upskilling?skill=${encodeURIComponent(mod.skill)}`}
+                style={{
+                  textAlign: 'center', background: '#2563eb', color: '#fff',
+                  textDecoration: 'none', padding: '10px 14px', borderRadius: 8,
+                  fontWeight: 700, fontSize: 13, display: 'block'
+                }}
+              >
+                {mod.actionLabel}
+              </Link>
             </div>
           ))}
-        </div>
-
-        {/* Action Call to Action */}
-        <div style={{
-          background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-          borderRadius: 12, padding: '18px 22px', display: 'flex',
-          justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14
-        }}>
-          <div>
-            <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: '#1e40af' }}>
-              Ready to Bridge These Gaps in 8 Weeks?
-            </h4>
-            <p style={{ margin: 0, fontSize: 13, color: '#1e3a8a' }}>
-              Follow the structured 4-phase career roadmap with project-based milestones.
-            </p>
-          </div>
-          <Link
-            to="/graduate/roadmap"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: '#2563eb', color: '#fff', textDecoration: 'none',
-              padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 13.5,
-              boxShadow: '0 4px 12px rgba(37,99,235,0.3)'
-            }}
-          >
-            Open 4-Phase Roadmap <FiArrowRight size={15} />
-          </Link>
         </div>
       </div>
     </div>

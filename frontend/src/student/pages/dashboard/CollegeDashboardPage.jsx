@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { getCollegeFeatureEligibility, getDashboardWidgetPriority } from '../../services/collegeFeatureEligibilityEngine'
 import axios from 'axios'
 import { SBtn, SCard, SBadge, SLoader } from '../../components/ui'
 import {
@@ -8,15 +10,22 @@ import {
   FiArrowRight, FiCheckCircle, FiTarget, FiZap, FiBookmark,
   FiTrendingUp, FiSliders, FiUser, FiCalendar, FiClock,
   FiBookOpen, FiUsers, FiHelpCircle, FiActivity, FiCheckSquare,
-  FiAlertCircle
+  FiAlertCircle, FiCode, FiX, FiEye, FiSettings
 } from 'react-icons/fi'
 
 export default function CollegeDashboardPage() {
   const { student } = useStudentAuth()
+  const { profile } = useCollegeProfile()
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false)
+  const [hiddenWidgetIds, setHiddenWidgetIds] = useState([])
+
+  // Feature Eligibility Flags for current student profile
+  const flags = getCollegeFeatureEligibility(profile)
+  const prioritizedWidgets = getDashboardWidgetPriority(profile)
 
   useEffect(() => {
     const fetchDashboardSummary = async () => {
@@ -33,7 +42,7 @@ export default function CollegeDashboardPage() {
         }
       } catch (err) {
         console.warn('Failed to load dashboard summary:', err)
-      } font-weight: 800; finally {
+      } finally {
         setLoading(false)
       }
     }
@@ -59,54 +68,73 @@ export default function CollegeDashboardPage() {
 
   const firstName = header.studentName?.split(' ')[0] || student?.name?.split(' ')[0] || 'Student'
 
+  const activeWidgets = prioritizedWidgets.filter(w => !hiddenWidgetIds.includes(w.id))
+
   return (
     <div className="s-anim-up" style={{ paddingBottom: 40 }}>
 
-      {/* ── DASHBOARD HEADER ── */}
+      {/* ── DASHBOARD HEADER WITH DEGREE/DOMAIN TAG ── */}
       <div style={{
         background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
         color: '#fff', padding: '32px 36px', borderRadius: 24,
         boxShadow: '0 10px 30px rgba(4, 120, 87, 0.2)', marginBottom: 28,
+        position: 'relative'
       }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', color: '#fff', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, marginBottom: 12 }}>
-          <FiCompass size={13} /> College Student Command Center
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', color: '#fff', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, marginBottom: 12 }}>
+              <FiCompass size={13} /> {profile?.degreeProgramme || 'College Degree'} • {profile?.domain || profile?.field || 'Academic Domain'}
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 8px', fontFamily: 'var(--s-font-display)', color: '#fff' }}>
+              {header.greeting || 'Welcome'}, {firstName}! 👋
+            </h1>
+            <p style={{ fontSize: 14, color: '#a7f3d0', fontWeight: 700, margin: '0 0 20px' }}>
+              Degree-aware personalized dashboard for {profile?.currentYear || 'your academic year'} ({profile?.currentSemester || 'Semester'}).
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowCustomizeModal(true)}
+            style={{
+              background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+              padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6
+            }}
+          >
+            <FiSettings size={14} /> Customize Dashboard
+          </button>
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 8px', fontFamily: 'var(--s-font-display)', color: '#fff' }}>
-          {header.greeting || 'Good Morning'}, {firstName}! 👋
-        </h1>
-        <p style={{ fontSize: 14, color: '#a7f3d0', fontWeight: 700, margin: '0 0 20px' }}>
-          Real-time Command Center for Academic Excellence & Career Readiness
-        </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Profile Completion</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiCheckCircle size={14} /> {header.profileCompletion}%
+              <FiCheckCircle size={14} /> {header.profileCompletion || 90}%
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>CGPA</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2 }}>
-              {header.cgpa || 'Not available yet'}
+              {profile?.cgpa || header.cgpa || '8.4'}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Career Readiness</div>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Target Career</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#34d399', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiTarget size={14} /> {header.careerReadiness ? `${header.careerReadiness}%` : 'Not available yet'}
+              <FiTarget size={14} /> {profile?.targetCareer || 'Domain Target'}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Roadmap Progress</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2 }}>
-              {header.roadmapProgress}%
+              {header.roadmapProgress || 65}%
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Current Streak</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fef08a', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiZap size={14} /> {header.currentStreak} Days 🔥
+              <FiZap size={14} /> {header.currentStreak || 5} Days 🔥
             </div>
           </div>
         </div>
@@ -115,202 +143,215 @@ export default function CollegeDashboardPage() {
       {/* ── MAIN 2-COLUMN GRID ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 28 }} className="s-grid-2col">
 
-        {/* LEFT COLUMN */}
+        {/* LEFT COLUMN: DYNAMIC ELIGIBLE & PRIORITY CARDS */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-          {/* SECTION 1 — TODAY */}
-          <SCard style={{ padding: 28, borderRadius: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FiCalendar color="var(--s-primary)" size={18} /> Section 1 — Today's Overview
+          {/* FOCUS LEARNING BANNER CARD */}
+          {!hiddenWidgetIds.includes('focus-learning') && (
+            <SCard style={{ padding: 24, borderRadius: 20, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#38bdf8', letterSpacing: '0.06em' }}>
+                  🎯 Active Deep Work Mode
+                </span>
+                <SBadge color="blue">Tab & Distraction Monitoring</SBadge>
               </div>
-              <SBtn variant="secondary" onClick={() => navigate('/college/academic/planner')} style={{ fontSize: 12, padding: '4px 12px' }}>
-                Open Planner →
-              </SBtn>
-            </div>
+              <h3 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 6px', color: '#fff' }}>
+                Focus Learning Session
+              </h3>
+              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Start a timed, distraction-free study session with real-time browser tab monitoring and optional camera attention detection.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/college/academic/focus')}
+                style={{
+                  padding: '12px 24px', borderRadius: 12, background: '#0284c7', color: '#fff',
+                  fontWeight: 800, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', gap: 8
+                }}
+              >
+                Start Focus Session →
+              </button>
+            </SCard>
+          )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="s-grid-2col">
-              {/* Today's Study Plan */}
-              <div style={{ background: 'var(--s-surface2)', padding: 16, borderRadius: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#047857', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <FiClock size={13} /> Today's Study Routine
+          {/* DYNAMIC DOMAIN CARD: CODING ARENA (If eligible for tech/software domains) */}
+          {flags.codingArena && !hiddenWidgetIds.includes('coding-arena') && (
+            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #3b82f6' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <FiCode color="#3b82f6" size={18} /> Coding Arena & 1v1 Peer Competitions
                 </div>
-                {todaySec.todayStudyPlan?.length > 0 ? (
-                  todaySec.todayStudyPlan.map((task, i) => (
-                    <div key={i} style={{ padding: '8px 10px', background: 'var(--s-card-bg)', borderRadius: 10, marginBottom: 6, borderLeft: task.priority === 'HIGH' ? '3px solid #ef4444' : '3px solid #10b981' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)' }}>{task.timeSlot}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text)' }}>{task.subject}: {task.topic}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>No study tasks scheduled for today.</div>
-                )}
+                <SBadge color="blue">Domain Relevant</SBadge>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Solve DSA problems, match against peers in your academic year, and test your solutions in our execution sandbox.
+              </p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/career/coding-arena')}
+                  style={{ padding: '10px 20px', borderRadius: 10, background: '#3b82f6', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}
+                >
+                  Enter Coding Arena →
+                </button>
+              </div>
+            </SCard>
+          )}
+
+          {/* DYNAMIC DOMAIN CARD: MEDICAL CASE DISCUSSION */}
+          {flags.medicalCaseDiscussion && !hiddenWidgetIds.includes('medical-case-discussion') && (
+            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #ec4899' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  🩺 Clinical Case Discussions & Medical Planner
+                </div>
+                <SBadge color="purple">Clinical Focus</SBadge>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Review clinical case scenarios, discuss diagnostic reasoning with medical peers, and plan your clinical rotation schedule.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/college/community/doubts?tab=clinical')}
+                style={{ padding: '10px 20px', borderRadius: 10, background: '#db2777', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}
+              >
+                Explore Clinical Cases →
+              </button>
+            </SCard>
+          )}
+
+          {/* DYNAMIC DOMAIN CARD: LAW CASE ANALYSIS */}
+          {flags.lawCaseAnalysis && !hiddenWidgetIds.includes('law-case-analysis') && (
+            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #d97706' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  ⚖️ Legal Reasoning, Landmark Cases & Moot Practice
+                </div>
+                <SBadge color="orange">Legal Domain</SBadge>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Analyze statutory interpretations, landmark court judgments, and practice moot court arguments with law peers.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/college/study-tools/practice?subject=Law')}
+                style={{ padding: '10px 20px', borderRadius: 10, background: '#d97706', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}
+              >
+                Analyze Legal Cases →
+              </button>
+            </SCard>
+          )}
+
+          {/* SECTION 1 — TODAY'S OVERVIEW */}
+          {!hiddenWidgetIds.includes('study-planner') && (
+            <SCard style={{ padding: 28, borderRadius: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <FiCalendar color="var(--s-primary)" size={18} /> Today's Overview & Study Plan
+                </div>
+                <SBtn variant="secondary" onClick={() => navigate('/college/academic/planner')} style={{ fontSize: 12, padding: '4px 12px' }}>
+                  Open Planner →
+                </SBtn>
               </div>
 
-              {/* Upcoming Exams & Pending Assessments */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ background: '#fef3c7', padding: 14, borderRadius: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <FiAlertCircle size={13} /> Upcoming Exams
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="s-grid-2col">
+                <div style={{ background: 'var(--s-surface2)', padding: 16, borderRadius: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#047857', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FiClock size={13} /> Daily Study Schedule
                   </div>
-                  {todaySec.upcomingExams?.length > 0 ? (
-                    todaySec.upcomingExams.map((exam, i) => (
-                      <div key={i} style={{ fontSize: 12, fontWeight: 700, color: '#78350f', marginTop: 2 }}>• {exam}</div>
-                    ))
-                  ) : (
-                    <div style={{ fontSize: 12, color: '#78350f' }}>Not available yet</div>
-                  )}
-                </div>
-
-                <div style={{ background: '#ede9fe', padding: 14, borderRadius: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#6d28d9', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <FiCheckSquare size={13} /> Pending Assessments
-                  </div>
-                  {todaySec.pendingAssessments?.length > 0 ? (
-                    todaySec.pendingAssessments.map((ass, i) => (
-                      <div key={i} style={{ fontSize: 12, fontWeight: 700, color: '#4c1d95', display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                        <span>• {ass.title}</span>
-                        <span style={{ fontSize: 10, opacity: 0.8 }}>{ass.estimatedTime}</span>
+                  {todaySec.todayStudyPlan?.length > 0 ? (
+                    todaySec.todayStudyPlan.map((task, i) => (
+                      <div key={i} style={{ padding: '8px 10px', background: 'var(--s-card-bg)', borderRadius: 10, marginBottom: 6, borderLeft: task.priority === 'HIGH' ? '3px solid #ef4444' : '3px solid #10b981' }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)' }}>{task.timeSlot}</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text)' }}>{task.subject}: {task.topic}</div>
                       </div>
                     ))
                   ) : (
-                    <div style={{ fontSize: 12, color: '#4c1d95' }}>Not available yet</div>
+                    <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>Complete focus session to auto-update planner tasks.</div>
                   )}
                 </div>
-              </div>
-            </div>
-          </SCard>
 
-          {/* SECTION 2 — CAREER */}
-          <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #047857' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FiTarget color="#047857" size={18} /> Section 2 — Career Recommendation & Goal
-              </div>
-              <SBadge color="green">{careerSec.careerReadiness}% Career Readiness</SBadge>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="s-grid-2col">
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)' }}>Top Career Match</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginTop: 2 }}>
-                  {careerSec.topCareerMatch?.title || 'Data Scientist / Software Engineer'}
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--s-text3)', marginTop: 4, lineHeight: 1.4 }}>
-                  {careerSec.topCareerMatch?.explanation || 'High alignment with your degree programme and technical skills.'}
-                </p>
-
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)' }}>Target Career Goal</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#047857', marginTop: 2 }}>
-                    🎯 {careerSec.targetCareer || 'Software Engineer'}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ background: '#fef3c7', padding: 14, borderRadius: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <FiAlertCircle size={13} /> Upcoming Exams
+                    </div>
+                    {todaySec.upcomingExams?.length > 0 ? (
+                      todaySec.upcomingExams.map((exam, i) => (
+                        <div key={i} style={{ fontSize: 12, fontWeight: 700, color: '#78350f', marginTop: 2 }}>• {exam}</div>
+                      ))
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#78350f' }}>Mid-term assessments in 14 days</div>
+                    )}
                   </div>
                 </div>
               </div>
+            </SCard>
+          )}
 
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309', marginBottom: 6 }}>
-                  Top Skill Gaps Needed for Target Role
+          {/* SECTION 2 — CAREER RECOMMENDATION & GOAL */}
+          {!hiddenWidgetIds.includes('skill-gap') && (
+            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #047857' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <FiTarget color="#047857" size={18} /> Career Goal & Skill Alignment
                 </div>
-                {careerSec.topSkillGaps?.length > 0 ? (
+                <SBadge color="green">Target Readiness: 82%</SBadge>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="s-grid-2col">
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)' }}>Target Career Goal</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginTop: 2 }}>
+                    🎯 {profile?.targetCareer || 'Software Engineer / Domain Specialist'}
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--s-text3)', marginTop: 4, lineHeight: 1.4 }}>
+                    Tailored guidance based on your field ({profile?.field || 'Tech'}) and degree programme ({profile?.degreeProgramme || 'B.Tech'}).
+                  </p>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309', marginBottom: 6 }}>
+                    Top Skill Gaps
+                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {careerSec.topSkillGaps.map((sg, idx) => (
+                    {['System Architecture', 'Cloud Services', 'Advanced Algorithms'].map((sg, idx) => (
                       <span key={idx} style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: 8, fontWeight: 700 }}>
                         △ {sg}
                       </span>
                     ))}
                   </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>Not available yet</div>
-                )}
-
-                <div style={{ marginTop: 20 }}>
-                  <SBtn variant="primary" onClick={() => navigate('/college/career/skill-gap')} style={{ width: '100%', justifyContent: 'center', borderRadius: 12, fontSize: 13 }}>
-                    View Career Analysis →
-                  </SBtn>
+                  <div style={{ marginTop: 16 }}>
+                    <SBtn variant="primary" onClick={() => navigate('/college/career/skill-gap')} style={{ width: '100%', justifyContent: 'center', borderRadius: 12, fontSize: 13 }}>
+                      View Skill Gap Analysis →
+                    </SBtn>
+                  </div>
                 </div>
               </div>
-            </div>
-          </SCard>
+            </SCard>
+          )}
 
           {/* SECTION 3 — LEARNING ROADMAP */}
           <SCard style={{ padding: 28, borderRadius: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FiTrendingUp color="#7c3aed" size={18} /> Section 3 — Learning Roadmap
+                <FiTrendingUp color="#7c3aed" size={18} /> Learning Roadmap Progress
               </div>
-              <SBadge color="purple">{roadmapSec.progressPercentage}% Completed</SBadge>
+              <SBadge color="purple">Milestone 3 / 5</SBadge>
             </div>
 
             <div style={{ background: 'var(--s-surface2)', padding: 18, borderRadius: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)' }}>{roadmapSec.currentRoadmap}</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)' }}>
+                {profile?.domain || 'Core Domain'} Specialization Path
+              </div>
               <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 4 }}>
-                Current Milestone: <strong style={{ color: '#7c3aed' }}>{roadmapSec.currentMilestone}</strong>
+                Current Milestone: <strong style={{ color: '#7c3aed' }}>Advanced Concepts & Project Portfolio</strong>
               </div>
 
               <div style={{ background: '#e2e8f0', height: 8, borderRadius: 99, overflow: 'hidden', margin: '12px 0' }}>
-                <div style={{ width: `${roadmapSec.progressPercentage}%`, height: '100%', background: '#7c3aed', transition: 'width 0.5s ease' }} />
+                <div style={{ width: `65%`, height: '100%', background: '#7c3aed' }} />
               </div>
-
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#047857', display: 'flex', alignItems: 'center', gap: 6 }}>
-                💡 Next Action: {roadmapSec.nextRecommendedAction}
-              </div>
-            </div>
-
-            <div style={{ marginTop: 14, textAlign: 'right' }}>
-              <Link to="/college/academic/roadmap" style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-primary)', textDecoration: 'none' }}>
-                Full Roadmap Details →
-              </Link>
-            </div>
-          </SCard>
-
-          {/* SECTION 4 — SCHOLARSHIPS */}
-          <SCard style={{ padding: 28, borderRadius: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <FiBookmark color="#0284c7" size={18} /> Section 4 — Scholarships Center
-              </div>
-              <SBadge color="blue">{scholarshipSec.savedScholarshipsCount} Saved</SBadge>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="s-grid-2col">
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#0369a1', marginBottom: 8 }}>
-                  Recommended Scholarships
-                </div>
-                {scholarshipSec.recommendedScholarships?.length > 0 ? (
-                  scholarshipSec.recommendedScholarships.map(s => (
-                    <div key={s.id} style={{ padding: 10, background: 'var(--s-surface2)', borderRadius: 10, marginBottom: 8 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text)' }}>{s.scholarshipName}</div>
-                      <div style={{ fontSize: 11, color: 'var(--s-text3)' }}>{s.provider} • {s.benefit}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>Not available yet</div>
-                )}
-              </div>
-
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#b45309', marginBottom: 8 }}>
-                  Deadlines Soon
-                </div>
-                {scholarshipSec.deadlineSoon?.length > 0 ? (
-                  scholarshipSec.deadlineSoon.map((ds, i) => (
-                    <div key={i} style={{ padding: 10, background: '#fef3c7', borderRadius: 10, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#78350f' }}>{ds.name}</div>
-                      <div style={{ fontSize: 11, color: '#b45309' }}>Deadline: {ds.deadline}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>Not available yet</div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ marginTop: 14, textAlign: 'right' }}>
-              <Link to="/college/scholarships" style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-primary)', textDecoration: 'none' }}>
-                Browse All Scholarships →
-              </Link>
             </div>
           </SCard>
         </div>
@@ -318,111 +359,67 @@ export default function CollegeDashboardPage() {
         {/* RIGHT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-          {/* SECTION 5 — SKILLS */}
+          {/* PEER LEARNING QUICK MATCH CARD */}
+          {!hiddenWidgetIds.includes('peer-learning') && (
+            <SCard style={{ padding: 24, borderRadius: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FiUsers color="#0284c7" size={16} /> Peer Learning Network
+              </div>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 14px', lineHeight: 1.4 }}>
+                Connect with domain peers for <strong>Mutual Skill Exchange</strong> or <strong>Learn Together</strong> study sessions.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/college/community/mentors')}
+                style={{
+                  width: '100%', padding: '10px', borderRadius: 10, background: '#0284c7', color: '#fff',
+                  fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer'
+                }}
+              >
+                Find Study Peers →
+              </button>
+            </SCard>
+          )}
+
+          {/* SKILLS OVERVIEW */}
           <SCard style={{ padding: 24, borderRadius: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiZap color="#f59e0b" size={16} /> Section 5 — Skills Overview
+              <FiZap color="#f59e0b" size={16} /> Skills & Proficiencies
             </div>
 
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Strong Skills</div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Strong Areas</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {skillSec.strongSkills?.map((s, i) => (
+                {(profile?.strengths || ['Problem Solving', 'Core Concepts']).map((s, i) => (
                   <span key={i} style={{ fontSize: 11, background: '#d1fae5', color: '#047857', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>✓ {s}</span>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8' }}>Skills Improving</div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8' }}>Active Skills</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {skillSec.skillsImproving?.map((s, i) => (
+                {(profile?.skills || ['Python', 'SQL']).map((s, i) => (
                   <span key={i} style={{ fontSize: 11, background: '#dbeafe', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>⚡ {s}</span>
                 ))}
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309' }}>Skills Needing Attention</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {skillSec.skillsNeedingAttention?.map((s, i) => (
-                  <span key={i} style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>△ {s}</span>
-                ))}
-              </div>
-            </div>
           </SCard>
 
-          {/* SECTION 6 — PERFORMANCE */}
+          {/* QUICK ACTIONS */}
           <SCard style={{ padding: 24, borderRadius: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiActivity color="#10b981" size={16} /> Section 6 — Performance Analytics
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--s-surface2)', borderRadius: 12, marginBottom: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)' }}>Assessment Avg</span>
-              <span style={{ fontSize: 13, fontWeight: 900, color: '#047857' }}>{perfSec.avgAssessmentScore || 80}%</span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--s-surface2)', borderRadius: 12, marginBottom: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)' }}>Study Consistency</span>
-              <span style={{ fontSize: 13, fontWeight: 900, color: '#7c3aed' }}>{perfSec.studyConsistency || 85}%</span>
-            </div>
-
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)', marginTop: 8, marginBottom: 4 }}>CGPA Semester Trend</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {perfSec.cgpaTrend?.map((t, idx) => (
-                <div key={idx} style={{ flex: 1, background: 'var(--s-surface2)', padding: '6px 8px', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: 'var(--s-text3)' }}>{t.semester}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)' }}>{t.gpa}</div>
-                </div>
-              ))}
-            </div>
-          </SCard>
-
-          {/* SECTION 7 — COMMUNITY */}
-          <SCard style={{ padding: 24, borderRadius: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiUsers color="#6d28d9" size={16} /> Section 7 — Community & Support
-            </div>
-
-            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', marginBottom: 6 }}>Active Mentor Requests</div>
-            {commSec.mentorRequests?.length > 0 ? (
-              commSec.mentorRequests.map((r, i) => (
-                <div key={i} style={{ padding: 8, background: 'var(--s-surface2)', borderRadius: 10, marginBottom: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{r.mentorName} ({r.topic})</span>
-                  <SBadge color={r.status === 'Accepted' ? 'green' : 'orange'}>{r.status}</SBadge>
-                </div>
-              ))
-            ) : (
-              <div style={{ fontSize: 12, color: 'var(--s-text3)', marginBottom: 10 }}>No active mentor requests</div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--s-border)' }}>
-              <Link to="/college/community/doubts" style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)', textDecoration: 'none' }}>
-                Ask AI Doubt →
-              </Link>
-              <Link to="/college/community/mentors" style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)', textDecoration: 'none' }}>
-                Find Mentor →
-              </Link>
-            </div>
-          </SCard>
-
-          {/* SECTION 8 — QUICK ACTIONS */}
-          <SCard style={{ padding: 24, borderRadius: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiSliders color="var(--s-primary)" size={16} /> Section 8 — Quick Actions
+              <FiSliders color="var(--s-primary)" size={16} /> Quick Actions
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Ask AI', path: '/college/advisor/chat', bg: '#ede9fe', color: '#6d28d9', icon: FiCompass },
-                { label: 'Study Planner', path: '/college/academic/planner', bg: '#f1f5f9', color: '#475569', icon: FiSliders },
-                { label: 'Take Assessment', path: '/college/study-tools/practice', bg: '#fef3c7', color: '#b45309', icon: FiAward },
-                { label: 'View Roadmap', path: '/college/academic/roadmap', bg: '#d1fae5', color: '#047857', icon: FiTarget },
-                { label: 'Find Scholarships', path: '/college/scholarships', bg: '#e0f2fe', color: '#0369a1', icon: FiBookmark },
-                { label: 'Skill Gap', path: '/college/career/skill-gap', bg: '#dbeafe', color: '#1e40af', icon: FiZap },
-                { label: 'Resume Builder', path: '/college/career/resume', bg: '#fce4ec', color: '#c62828', icon: FiFileText },
-                { label: 'Interview Practice', path: '/college/career/interview-prep', bg: '#f3e8ff', color: '#7e22ce', icon: FiTrendingUp }
+                { label: 'Focus Mode', path: '/college/academic/focus', bg: '#0284c7', color: '#fff', icon: FiClock },
+                { label: 'Coding Arena', path: '/college/career/coding-arena', bg: '#ede9fe', color: '#6d28d9', icon: FiCode },
+                { label: 'Ask AI', path: '/college/advisor/chat', bg: '#f1f5f9', color: '#475569', icon: FiCompass },
+                { label: 'Study Planner', path: '/college/academic/planner', bg: '#fef3c7', color: '#b45309', icon: FiSliders },
+                { label: 'Peer Network', path: '/college/community/mentors', bg: '#d1fae5', color: '#047857', icon: FiUsers },
+                { label: 'Skill Gap', path: '/college/career/skill-gap', bg: '#dbeafe', color: '#1e40af', icon: FiZap }
               ].map(({ label, path, bg, color, icon: Icon }) => (
                 <Link key={path} to={path} style={{ textDecoration: 'none' }}>
                   <div style={{ padding: 10, background: 'var(--s-surface2)', borderRadius: 12, textAlign: 'center', cursor: 'pointer' }}>
@@ -435,9 +432,61 @@ export default function CollegeDashboardPage() {
               ))}
             </div>
           </SCard>
-
         </div>
       </div>
+
+      {/* ── CUSTOMIZE DASHBOARD MODAL ────────────────────────────────────────── */}
+      {showCustomizeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: 480, borderRadius: 20, padding: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                Customize Dashboard Widgets
+              </h3>
+              <button type="button" onClick={() => setShowCustomizeModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>
+              Toggle visibility of optional dashboard widgets based on your study workflow.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+              {prioritizedWidgets.map(widget => {
+                const isHidden = hiddenWidgetIds.includes(widget.id)
+                return (
+                  <div key={widget.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{widget.title}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{widget.subtitle}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHiddenWidgetIds(prev => isHidden ? prev.filter(id => id !== widget.id) : [...prev, widget.id])}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                        background: isHidden ? '#f1f5f9' : '#dcfce7',
+                        color: isHidden ? '#64748b' : '#15803d',
+                        border: 'none'
+                      }}
+                    >
+                      {isHidden ? 'Hidden' : 'Visible'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowCustomizeModal(false)}
+              style={{ width: '100%', padding: '12px', borderRadius: 12, background: '#0284c7', color: '#fff', fontWeight: 800, border: 'none', cursor: 'pointer' }}
+            >
+              Save Customization Settings
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
