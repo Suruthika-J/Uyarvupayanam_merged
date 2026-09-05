@@ -70,6 +70,7 @@ const saveProfile = async (req, res) => {
       careerInterests,
       skills,
       strengths,
+      selfReportedSkills,
       // ── New fields (Task 02) ──
       currentSemester,
       cgpa,
@@ -103,6 +104,7 @@ const saveProfile = async (req, res) => {
     if (careerInterests !== undefined) profile.careerInterests = careerInterests;
     if (skills !== undefined) profile.skills = skills;
     if (strengths !== undefined) profile.strengths = strengths;
+    if (selfReportedSkills !== undefined) profile.selfReportedSkills = selfReportedSkills;
 
     // Update new fields (Task 02)
     if (currentSemester !== undefined) profile.currentSemester = currentSemester;
@@ -150,7 +152,7 @@ const patchProfile = async (req, res) => {
     // Whitelist of patchable fields
     const PATCHABLE = [
       "currentSemester", "cgpa", "subjects", "targetCareer",
-      "completedCourses", "projects", "phone", "skills", "strengths",
+      "completedCourses", "projects", "phone", "skills", "strengths", "selfReportedSkills",
       "certifications", "academicInterests", "careerInterests",
       "grokAssessmentScore", "grokAssessmentResults"
     ];

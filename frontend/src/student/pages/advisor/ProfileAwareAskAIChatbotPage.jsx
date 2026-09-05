@@ -51,7 +51,7 @@ export default function ProfileAwareAskAIChatbotPage() {
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ede9fe', color: '#6d28d9', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, textTransform: 'uppercase' }}>
-            <FiZap size={13} /> Powered by xAI Grok API
+            <FiZap size={13} /> Intelligent Domain Telemetry
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--s-text)', margin: '4px 0 0' }}>
             Profile-Aware AI Academic Advisor

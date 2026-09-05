@@ -398,15 +398,26 @@ const getStudentSkillGap = async (req, res) => {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const targetTitle = profile.targetCareer || profile.careerInterests?.[0] || "Software Engineer";
+    const targetTitle = profile.targetCareer || profile.careerInterests?.[0] || profile.specialization || profile.domain || "Domain Specialist";
     let career = await CollegeCareerCatalog.findOne({ title: targetTitle });
     if (!career) {
-      career = await CollegeCareerCatalog.findOne();
+      const domSearch = profile.domain || profile.specialization || profile.field || "";
+      career = await CollegeCareerCatalog.findOne({
+        $or: [
+          { domain: new RegExp(domSearch, "i") },
+          { field: new RegExp(domSearch, "i") },
+          { title: new RegExp(domSearch, "i") }
+        ]
+      });
     }
 
-    const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
+    const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle, domain: profile.domain });
     const userSkills = (profile.skills || []).map(s => s.toLowerCase());
     const userSubjects = (profile.subjects || []).map(s => s.toLowerCase());
+
+    const baseline = profile.onboardingBaseline || {};
+    const demonstratedStrengths = (baseline.strengths || []).map(s => s.toLowerCase());
+    const demonstratedWeaknesses = (baseline.areasToStrengthen || []).map(s => s.toLowerCase());
 
     const strong = [];
     const developing = [];
@@ -422,15 +433,19 @@ const getStudentSkillGap = async (req, res) => {
       const sName = skillObj.name;
       const sLower = sName.toLowerCase();
 
-      const hasExactSkill = userSkills.some(us => us.includes(sLower) || sLower.includes(us));
+      const isDemonstratedStrength = demonstratedStrengths.some(st => st.includes(sLower) || sLower.includes(st));
+      const isDemonstratedWeakness = demonstratedWeaknesses.some(w => w.includes(sLower) || sLower.includes(w));
+      const hasSelfReportedSkill = userSkills.some(us => us.includes(sLower) || sLower.includes(us));
       const hasSubject = userSubjects.some(sub => sub.includes(sLower) || sLower.includes(sub));
 
-      if (hasExactSkill) {
-        strong.push({ ...skillObj, status: "Strong", currentProficiency: "Advanced" });
-      } else if (hasSubject) {
-        developing.push({ ...skillObj, status: "Developing", currentProficiency: "Intermediate" });
+      if (isDemonstratedStrength) {
+        strong.push({ ...skillObj, status: "Strong", currentProficiency: "Advanced", source: "Assessed Demonstration" });
+      } else if (hasSelfReportedSkill && !isDemonstratedWeakness) {
+        strong.push({ ...skillObj, status: "Strong", currentProficiency: "Intermediate", source: "Self-Reported" });
+      } else if (isDemonstratedWeakness || hasSubject) {
+        developing.push({ ...skillObj, status: "Developing", currentProficiency: "Intermediate", source: "Needs Strengthening" });
       } else {
-        missing.push({ ...skillObj, status: "Missing", currentProficiency: "Needs Learning" });
+        missing.push({ ...skillObj, status: "Missing", currentProficiency: "Needs Learning", source: "Skill Gap" });
       }
     });
 
@@ -445,6 +460,11 @@ const getStudentSkillGap = async (req, res) => {
         strong,
         developing,
         missing
+      },
+      baselineAssessment: {
+        currentBaseline: baseline.currentBaseline || "Baseline Not Completed",
+        scorePercentage: baseline.scorePercentage || 0,
+        selfReportVsAssessedMatrix: baseline.selfReportVsAssessedMatrix || []
       },
       summary: {
         acquiredCount: strong.length,
@@ -468,13 +488,20 @@ const getStudentRoadmap = async (req, res) => {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const targetTitle = profile.targetCareer || "Software Engineer";
+    const targetTitle = profile.targetCareer || profile.careerInterests?.[0] || profile.specialization || profile.domain || "Domain Specialist";
     let career = await CollegeCareerCatalog.findOne({ title: targetTitle });
     if (!career) {
-      career = await CollegeCareerCatalog.findOne();
+      const domSearch = profile.domain || profile.specialization || profile.field || "";
+      career = await CollegeCareerCatalog.findOne({
+        $or: [
+          { domain: new RegExp(domSearch, "i") },
+          { field: new RegExp(domSearch, "i") },
+          { title: new RegExp(domSearch, "i") }
+        ]
+      });
     }
 
-    const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
+    const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle, domain: profile.domain });
     const milestones = fullCareer.recommendedRoadmap;
 
     res.status(200).json({

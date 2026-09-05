@@ -45,70 +45,124 @@ exports.generateStudyPlan = async (req, res) => {
     const { availableHoursPerWeek, timePerDay, upcomingExams, weakSubjects, focusAreas } = req.body;
 
     const profile = await CollegeStudentProfile.findOne({ userId: studentId });
-    const degree = profile?.degreeProgramme || "Computer Science / Technology";
-    const domain = profile?.domain || "Software Engineering";
-    const semester = profile?.currentSemester || "3rd Semester";
-    const subjects = profile?.subjects || ["Data Structures", "Database Systems", "Operating Systems"];
+    const { getStudentDomainContext } = require("../services/collegeRelevanceEngine");
+    const domainCtx = getStudentDomainContext(profile || {});
 
-    const inputs = {
-      availableHoursPerWeek: availableHoursPerWeek || (timePerDay ? parseInt(timePerDay) * 5 : 10),
-      upcomingExams: upcomingExams || [`${subjects[0]} Exam in 5 days`],
-      weakSubjects: weakSubjects || [subjects[1] || "Database Systems"],
-      focusAreas
-    };
+    const degree = profile?.degreeProgramme || profile?.field || "Academic Degree";
+    const domain = profile?.domain || profile?.specialization || "Core Academic Discipline";
+    const year = profile?.currentYear || profile?.academicYear || "Current Year";
+    const semester = profile?.currentSemester || "";
+    const targetCareer = profile?.targetCareer || profile?.careerGoal || profile?.specialization || profile?.domain || "Domain Specialist";
 
-    const targetCareer = profile?.targetCareer || "Software Engineer";
-    const hours = parseInt(inputs.availableHoursPerWeek) || 10;
+    // Derive domain-relevant subjects from profile or domain context
+    let domainSubjects = [];
+    if (Array.isArray(profile?.subjects) && profile.subjects.length > 0) {
+      domainSubjects = profile.subjects;
+    } else if (Array.isArray(profile?.onboardingBaseline?.areasToStrengthen) && profile.onboardingBaseline.areasToStrengthen.length > 0) {
+      domainSubjects = [...profile.onboardingBaseline.areasToStrengthen];
+    } else if (Array.isArray(profile?.onboardingBaseline?.strengths) && profile.onboardingBaseline.strengths.length > 0) {
+      domainSubjects = [...profile.onboardingBaseline.strengths];
+    }
+
+    if (domainSubjects.length < 3) {
+      const dNorm = (domain + " " + degree + " " + (profile?.field || "")).toLowerCase();
+      if (dNorm.includes("medicine") || dNorm.includes("bhms") || dNorm.includes("clinical") || dNorm.includes("health")) {
+        domainSubjects = ["General Medicine", "Clinical Pathology & Diagnostics", "Homoeopathic Materia Medica", "Organon of Medicine", "Surgical Specialties"];
+      } else if (dNorm.includes("electronics") || dNorm.includes("ece") || dNorm.includes("embedded")) {
+        domainSubjects = ["Embedded Systems", "Microcontrollers & Interfacing", "Digital Signal Processing", "VLSI Design", "Wireless Communications"];
+      } else if (dNorm.includes("mechanical") || dNorm.includes("cad")) {
+        domainSubjects = ["Thermodynamics & Heat Transfer", "Fluid Mechanics", "Machine Design & Kinematics", "CAD/CAM & FEA Analysis", "Manufacturing Processes"];
+      } else if (dNorm.includes("commerce") || dNorm.includes("finance") || dNorm.includes("accounting")) {
+        domainSubjects = ["Financial Accounting", "Corporate Taxation", "Auditing & Assurance", "Managerial Finance", "Cost Accounting"];
+      } else if (dNorm.includes("law") || dNorm.includes("legal")) {
+        domainSubjects = ["Corporate & Company Law", "Constitutional Law", "Contract Law", "Civil & Criminal Procedure", "Legal Drafting"];
+      } else {
+        domainSubjects = [`${domain} Core Principles`, `${domain} Advanced Methods`, `${domain} Practice & Analysis`, `${domain} Case Studies`];
+      }
+    }
+
+    // Filter incoming weakSubjects and upcomingExams for academic domain eligibility
+    const { evaluateAcademicRelevance } = require("../services/collegeRelevanceEngine");
+    
+    let rawWeak = Array.isArray(weakSubjects) ? weakSubjects : (weakSubjects ? [weakSubjects] : []);
+    let filteredWeak = rawWeak.filter(ws => {
+      if (!ws || typeof ws !== 'string') return false;
+      const rel = evaluateAcademicRelevance(profile, { title: ws });
+      return rel.isEligible;
+    });
+
+    let rawExams = Array.isArray(upcomingExams) ? upcomingExams : (upcomingExams ? [upcomingExams] : []);
+    let filteredExams = rawExams.filter(ex => {
+      if (!ex || typeof ex !== 'string') return false;
+      const rel = evaluateAcademicRelevance(profile, { title: ex });
+      return rel.isEligible;
+    });
+
+    const computedWeak = (filteredWeak.length > 0)
+      ? filteredWeak
+      : (profile?.onboardingBaseline?.areasToStrengthen && profile.onboardingBaseline.areasToStrengthen.length > 0)
+        ? profile.onboardingBaseline.areasToStrengthen
+        : [domainSubjects[1] || `${domain} Concepts`];
+
+    const computedExams = (filteredExams.length > 0)
+      ? filteredExams
+      : [];
+
+    const hours = parseInt(availableHoursPerWeek) || (timePerDay ? parseInt(timePerDay) * 5 : 10);
     const dailyHours = (hours / 5).toFixed(1);
+
+    const s1 = domainSubjects[0] || `${domain} Foundations`;
+    const s2 = computedWeak[0] || domainSubjects[1] || `${domain} Practice`;
+    const s3 = domainSubjects[2] || `${domain} Advanced`;
 
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const schedule = days.map((day, dIdx) => {
       const tasks = [];
       if (dIdx === 0) {
         tasks.push({
-          id: `m-1`, timeSlot: "6:00 PM – 7:00 PM", subject: subjects[0] || "Data Structures",
-          topic: "Trees & Graph Traversal Algorithms", duration: "60 mins", priority: "HIGH", category: "Exam Prep", status: "pending"
+          id: `m-1`, timeSlot: "6:00 PM – 7:00 PM", subject: s1,
+          topic: `${s1} — Core Principles & Key Concepts`, duration: "60 mins", priority: "HIGH", category: computedExams.length > 0 ? "Exam Prep" : "Core Academic", status: "pending"
         });
         tasks.push({
-          id: `m-2`, timeSlot: "7:15 PM – 8:00 PM", subject: inputs.weakSubjects[0] || "Database Systems",
-          topic: "SQL Joins & Index Optimization", duration: "45 mins", priority: "HIGH", category: "Weak Subject", status: "pending"
+          id: `m-2`, timeSlot: "7:15 PM – 8:00 PM", subject: s2,
+          topic: `${s2} — Target Skill Practice & Problem Solving`, duration: "45 mins", priority: "HIGH", category: "Focus Area", status: "pending"
         });
         tasks.push({
           id: `m-3`, timeSlot: "8:15 PM – 8:45 PM", subject: targetCareer,
-          topic: "Target Career Skill Practice", duration: "30 mins", priority: "MED", category: "Roadmap Skill", status: "pending"
+          topic: `${targetCareer} — Industry Application & Skill Practice`, duration: "30 mins", priority: "MED", category: "Roadmap Skill", status: "pending"
         });
       } else if (dIdx === 1) {
         tasks.push({
-          id: `t-1`, timeSlot: "6:00 PM – 7:00 PM", subject: inputs.weakSubjects[0] || "Database Systems",
-          topic: "Normalization (1NF to 3NF) & ER Modeling", duration: "60 mins", priority: "HIGH", category: "Weak Subject", status: "pending"
+          id: `t-1`, timeSlot: "6:00 PM – 7:00 PM", subject: s2,
+          topic: `${s2} — Concept Deep Dive & Case Analysis`, duration: "60 mins", priority: "HIGH", category: "Focus Area", status: "pending"
         });
         tasks.push({
-          id: `t-2`, timeSlot: "7:15 PM – 8:00 PM", subject: subjects[2] || "Operating Systems",
-          topic: "Process Synchronization & Deadlocks", duration: "45 mins", priority: "MED", category: "Core Subject", status: "pending"
+          id: `t-2`, timeSlot: "7:15 PM – 8:00 PM", subject: s3,
+          topic: `${s3} — Analytical Review & Fundamentals`, duration: "45 mins", priority: "MED", category: "Core Academic", status: "pending"
         });
       } else if (dIdx === 2) {
         tasks.push({
-          id: `w-1`, timeSlot: "6:00 PM – 7:00 PM", subject: subjects[0] || "Data Structures",
-          topic: "Dynamic Programming & Memory Complexity", duration: "60 mins", priority: "HIGH", category: "Exam Prep", status: "pending"
+          id: `w-1`, timeSlot: "6:00 PM – 7:00 PM", subject: s1,
+          topic: `${s1} — Advanced Application & Memory Benchmark`, duration: "60 mins", priority: "HIGH", category: "Core Academic", status: "pending"
         });
         tasks.push({
-          id: `w-2`, timeSlot: "7:15 PM – 8:00 PM", subject: inputs.weakSubjects[0] || "Database Systems",
-          topic: "Transaction Management & ACID Properties", duration: "30 mins", priority: "HIGH", category: "Weak Subject", status: "pending"
+          id: `w-2`, timeSlot: "7:15 PM – 8:00 PM", subject: s2,
+          topic: `${s2} — Self-Assessment & Gap Reinforcement`, duration: "30 mins", priority: "HIGH", category: "Focus Area", status: "pending"
         });
       } else if (dIdx === 3) {
         tasks.push({
-          id: `th-1`, timeSlot: "6:00 PM – 7:15 PM", subject: subjects[0] || "Data Structures",
-          topic: "Mock Exam Practice & Time Benchmark", duration: "75 mins", priority: "HIGH", category: "Exam Prep", status: "pending"
+          id: `th-1`, timeSlot: "6:00 PM – 7:15 PM", subject: s1,
+          topic: `${s1} — Practice Questions & Time-Bound Review`, duration: "75 mins", priority: "HIGH", category: "Practice", status: "pending"
         });
       } else if (dIdx === 4) {
         tasks.push({
-          id: `f-1`, timeSlot: "6:00 PM – 7:00 PM", subject: inputs.upcomingExams[0] || subjects[0],
-          topic: "Final Exam Revision & High-Yield Formula Sheet", duration: "60 mins", priority: "HIGH", category: "Exam Prep", status: "pending"
+          id: `f-1`, timeSlot: "6:00 PM – 7:00 PM", subject: computedExams[0] || s1,
+          topic: `${computedExams[0] || s1} — Comprehensive Revision & Summary Notes`, duration: "60 mins", priority: "HIGH", category: "Revision", status: "pending"
         });
       } else {
         tasks.push({
           id: `s-1`, timeSlot: "10:00 AM – 11:30 AM", subject: targetCareer,
-          topic: "Industry Capstone Portfolio Project Building", duration: "90 mins", priority: "MED", category: "Roadmap Skill", status: "pending"
+          topic: `${targetCareer} — Practical Project & Portfolio Building`, duration: "90 mins", priority: "MED", category: "Roadmap Skill", status: "pending"
         });
       }
       return { day, date: `Day ${dIdx + 1}`, dailyTargetHours: `${dailyHours} Hours`, tasks };
@@ -116,10 +170,18 @@ exports.generateStudyPlan = async (req, res) => {
 
     const structuredPlan = {
       title: `Intelligent Personal Study Schedule (${hours} Hours/Week)`,
-      overview: `Optimized plan prioritizing upcoming exam (${inputs.upcomingExams[0] || 'Core Exam'}) and weak subject (${inputs.weakSubjects[0] || 'Core Subject'}) with built-in rest breaks.`,
+      overview: `Domain-aligned plan for ${degree} (${domain}, ${year}) prioritizing core academic subjects with structured review breaks.`,
+      studentSummary: {
+        degree,
+        domain,
+        specialization: profile?.specialization || "",
+        year,
+        semester,
+        field: profile?.field || ""
+      },
       totalPlannedHours: hours,
-      weakSubjects: inputs.weakSubjects,
-      upcomingExams: inputs.upcomingExams,
+      weakSubjects: computedWeak,
+      upcomingExams: computedExams,
       schedule
     };
 
@@ -492,22 +554,26 @@ exports.askAdvisorChat = async (req, res) => {
     const { message, chatHistory } = req.body;
 
     const profile = await CollegeStudentProfile.findOne({ userId: studentId });
+    const { getStudentDomainContext } = require("../services/collegeRelevanceEngine");
+    const ctx = getStudentDomainContext(profile || {});
     const studentName = req.student?.name || "Student";
-    const degree = profile?.degreeProgramme || "College Student";
-    const domain = profile?.domain || "General Branch";
-    const skills = profile?.skills?.join(", ") || "General Skills";
-    const careerGoals = profile?.careerInterests?.join(", ") || profile?.targetCareer || "Software Engineering";
 
     const systemPrompt = `You are "Uyarvu AI Academic Advisor", an empathetic, highly knowledgeable college academic advisor.
 Student Name: "${studentName}"
-Degree: "${degree}"
-Domain: "${domain}"
-Skills: "${skills}"
-Target Careers: "${careerGoals}"
+Field: "${ctx.field}"
+Degree: "${ctx.degreeProgramme}"
+Domain Branch: "${ctx.domain}"
+Specialization: "${ctx.specialization}"
+Academic Stage: "${ctx.academicYear}" (${ctx.currentSemester})
+Target Career Role: "${ctx.targetCareer}"
+Active Skills: "${ctx.selectedSkills}"
+Assessed Baseline Knowledge: "${ctx.assessedKnowledgeBaseline}"
+Demonstrated Strengths: "${ctx.demonstratedStrengths}"
+Target Improvement Areas: "${ctx.targetedImprovementAreas}"
 
-Answer the student's question directly with actionable academic, skill, and career advice. Use student profile telemetry to make answers tailored to their exact background. Keep response under 300 words. Format with clean bullet points where appropriate.`;
+STRICT RULE: Give direct, practical academic and career advice strictly tailored to the student's degree, domain, and assessed knowledge level. Do NOT recommend unrelated fields (e.g. do not recommend coding to medicine/law students unless requested). Keep response under 300 words. Format with clean bullet points where appropriate.`;
 
-    let reply = `Hello ${studentName}! Based on your background in ${degree} (${domain}), I recommend focusing on building practical portfolio projects in ${skills} to strengthen your preparation for ${careerGoals}. What specific subject or career query can I clarify for you today?`;
+    let reply = `Hello ${studentName}! Based on your background in ${ctx.degreeProgramme} (${ctx.domain}), I recommend focusing on building practical projects in ${ctx.selectedSkills || 'your core domain'} to strengthen your preparation for ${ctx.targetCareer}. What specific subject or career query can I clarify for you today?`;
 
     try {
       const response = await axios.post(
@@ -691,11 +757,12 @@ exports.getCollegeDashboardSummary = async (req, res) => {
 
     // 2. Career & Recommendations
     let topCareerMatch = null;
-    let targetCareerName = profile?.targetCareer || "";
+    let targetCareerName = profile?.targetCareer || profile?.careerInterests?.[0] || profile?.specialization || profile?.domain || "";
     let targetCareerObj = null;
 
     if (careers.length > 0) {
-      // Evaluate basic career match if careers exist
+      // Evaluate career match filtered for academic domain relevance
+      const { filterRelevantCoursesForStudent } = require("../services/collegeRelevanceEngine");
       const userSkills = (profile?.skills || []).map(s => s.toLowerCase());
       const scoredCareers = careers.map(c => {
         const reqSkills = c.requiredSkills || [];
@@ -703,7 +770,8 @@ exports.getCollegeDashboardSummary = async (req, res) => {
         const matchPct = reqSkills.length > 0 ? Math.round((matched.length / reqSkills.length) * 40) + 50 : 75;
         return {
           title: c.title,
-          category: c.category || "Technology",
+          category: c.category || c.field || "Academic Discipline",
+          domain: c.domain,
           matchPercentage: Math.min(matchPct, 98),
           requiredSkills: c.requiredSkills || [],
           roadmap: c.roadmap || [],
@@ -711,47 +779,61 @@ exports.getCollegeDashboardSummary = async (req, res) => {
         };
       });
 
-      scoredCareers.sort((a, b) => b.matchPercentage - a.matchPercentage);
-      topCareerMatch = scoredCareers[0];
+      // Prefer careers in student's domain
+      const domNorm = (profile?.domain || profile?.specialization || "").toLowerCase();
+      const domainMatchingCareers = scoredCareers.filter(c => {
+        const cDom = (c.domain || c.category || c.title).toLowerCase();
+        return domNorm && (cDom.includes(domNorm) || domNorm.includes(cDom));
+      });
+
+      const candidateList = domainMatchingCareers.length > 0 ? domainMatchingCareers : scoredCareers;
+      candidateList.sort((a, b) => b.matchPercentage - a.matchPercentage);
+      topCareerMatch = candidateList[0];
 
       if (!targetCareerName && topCareerMatch) {
         targetCareerName = topCareerMatch.title;
       }
-      targetCareerObj = scoredCareers.find(c => c.title.toLowerCase() === targetCareerName.toLowerCase()) || topCareerMatch;
+      targetCareerObj = candidateList.find(c => c.title.toLowerCase() === targetCareerName.toLowerCase()) || topCareerMatch;
+    }
+
+    if (!targetCareerName) {
+      targetCareerName = profile?.specialization || profile?.domain || "Domain Specialist";
     }
 
     const careerReadiness = targetCareerObj ? targetCareerObj.matchPercentage : (cgpa ? Math.min(Math.round(cgpa * 10), 95) : 68);
 
     // Calculate Top Skill Gaps for Target Career
     const userSkillsLower = (profile?.skills || []).map(s => s.toLowerCase());
-    const targetReqSkills = targetCareerObj?.requiredSkills || ["Data Structures", "System Design", "SQL", "Cloud DevOps"];
+    const targetReqSkills = targetCareerObj?.requiredSkills?.length > 0 
+      ? targetCareerObj.requiredSkills 
+      : (profile?.skills?.length > 0 ? profile.skills : [`${profile?.domain || 'Core'} Practice`, `${profile?.specialization || 'Domain'} Application`, "Case Analysis"]);
     const topSkillGaps = targetReqSkills.filter(r => !userSkillsLower.some(u => u.includes(r.toLowerCase()) || r.toLowerCase().includes(u))).slice(0, 4);
 
     // 3. Section 1 — Today & Study Plan
     const studyPlanTasks = skillProgress?.studyPlan || [];
     const todayStudyPlan = studyPlanTasks.slice(0, 3).map(t => ({
       timeSlot: t.timeSlot || "6:00 PM – 7:00 PM",
-      subject: t.subject || "Core Coursework",
-      topic: t.topic || "Topic Practice",
+      subject: t.subject || `${profile?.domain || 'Core'} Coursework`,
+      topic: t.topic || "Practice & Review",
       priority: t.priority || "HIGH",
       status: t.status || "Pending"
     }));
 
     const upcomingExams = profile?.upcomingExams?.length > 0 
       ? profile.upcomingExams 
-      : ["Data Structures Mid-Sem (in 5 days)", "Database Systems Lab (in 12 days)"];
+      : ["No upcoming exams added yet"];
 
     const pendingAssessments = [
-      { id: "p1", title: "Target Career Skill Matrix Test", category: "Skill Assessment", estimatedTime: "15 mins" },
-      { id: "p2", title: "Adaptive Data Structures Quiz", category: "Practice Test", estimatedTime: "10 mins" }
+      { id: "p1", title: `${profile?.domain || 'Domain'} Knowledge Baseline`, category: "Baseline Matrix", estimatedTime: "15 mins" },
+      { id: "p2", title: `${profile?.specialization || profile?.domain || 'Academic'} Benchmark Quiz`, category: "Adaptive Assessment", estimatedTime: "10 mins" }
     ];
 
     // 4. Section 3 — Learning Roadmap
     const defaultRoadmap = [
-      { step: 1, title: "Phase 1: Core Fundamentals & Programming", isCompleted: true },
-      { step: 2, title: "Phase 2: Database Management & Data Modeling", isCompleted: true },
-      { step: 3, title: "Phase 3: System Architecture & API Engineering", isCompleted: false },
-      { step: 4, title: "Phase 4: Capstone Portfolio & Mock Interviews", isCompleted: false }
+      { step: 1, title: `Phase 1: ${profile?.domain || 'Core'} Foundation & Theory`, isCompleted: true },
+      { step: 2, title: `Phase 2: ${profile?.specialization || 'Specialized'} Diagnostics & Methods`, isCompleted: true },
+      { step: 3, title: `Phase 3: Advanced Practice & Practical Application`, isCompleted: false },
+      { step: 4, title: `Phase 4: ${targetCareerName} Capstone & Career Portfolio`, isCompleted: false }
     ];
     const activeRoadmapSteps = (targetCareerObj?.roadmap && targetCareerObj.roadmap.length > 0)
       ? targetCareerObj.roadmap.map((m, idx) => ({ step: idx + 1, title: m.title || `Phase ${idx+1}`, isCompleted: idx < 2 }))
@@ -772,10 +854,10 @@ exports.getCollegeDashboardSummary = async (req, res) => {
     const deadlineSoonScholarships = scholarships.filter(s => s.deadline && s.deadline.toLowerCase().includes("2026")).slice(0, 2);
 
     // 6. Section 5 — Skills
-    const userSkillsOriginal = profile?.skills || ["JavaScript", "Python", "SQL", "Data Structures"];
+    const userSkillsOriginal = profile?.skills?.length > 0 ? profile.skills : [`${profile?.domain || 'Core'} Practice`, `${profile?.specialization || 'Domain'} Diagnostics`];
     const strongSkills = userSkillsOriginal.slice(0, 3);
     const skillsImproving = userSkillsOriginal.slice(3, 5).concat(topSkillGaps.slice(0, 1));
-    const skillsNeedingAttention = topSkillGaps.length > 0 ? topSkillGaps : ["System Design", "Cloud Infrastructure"];
+    const skillsNeedingAttention = topSkillGaps.length > 0 ? topSkillGaps : [`${profile?.domain || 'Domain'} Deep Focus`];
 
     // 7. Section 6 — Performance Analytics
     const cgpaVal = cgpa || 8.2;
@@ -822,14 +904,14 @@ exports.getCollegeDashboardSummary = async (req, res) => {
           category: topCareerMatch.category,
           explanation: topCareerMatch.explanation
         } : null,
-        targetCareer: targetCareerName || "Software Engineer",
+        targetCareer: targetCareerName,
         careerReadiness,
         topSkillGaps
       },
       roadmapSection: {
-        currentRoadmap: `${targetCareerName || 'Software Engineer'} Career Pathway`,
+        currentRoadmap: `${targetCareerName} Career Pathway`,
         progressPercentage: roadmapProgress,
-        currentMilestone: currentMilestone ? currentMilestone.title : "Phase 2: Database Management",
+        currentMilestone: currentMilestone ? currentMilestone.title : `Phase 2: ${profile?.specialization || 'Domain Focus'}`,
         nextRecommendedAction: `Complete practice assessment for ${currentMilestone ? currentMilestone.title : 'Active Phase'}`
       },
       scholarshipSection: {

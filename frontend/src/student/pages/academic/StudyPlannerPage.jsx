@@ -12,11 +12,11 @@ export default function StudyPlannerPage() {
   const { profile } = useCollegeProfile()
   const [loading, setLoading] = useState(false)
   
-  // Customization inputs
+  // Customization inputs derived dynamically from profile
   const [availableHours, setAvailableHours] = useState('10')
-  const [upcomingExams, setUpcomingExams] = useState('Data Structures Exam (in 5 days)')
-  const [weakSubjects, setWeakSubjects] = useState('Database Management Systems')
-  const [focusAreas, setFocusAreas] = useState(profile?.subjects?.slice(0, 3).join(', ') || 'Data Structures, DBMS, Machine Learning')
+  const [upcomingExams, setUpcomingExams] = useState(profile?.upcomingExams?.join(', ') || '')
+  const [weakSubjects, setWeakSubjects] = useState(profile?.onboardingBaseline?.areasToStrengthen?.join(', ') || '')
+  const [focusAreas, setFocusAreas] = useState(profile?.subjects?.slice(0, 3).join(', ') || profile?.specialization || profile?.domain || '')
 
   // Schedule output & state
   const [studyPlan, setStudyPlan] = useState(null)
@@ -170,20 +170,20 @@ export default function StudyPlannerPage() {
             label="Upcoming Exams (High Priority)"
             value={upcomingExams}
             onChange={e => setUpcomingExams(e.target.value)}
-            placeholder="e.g. Data Structures Exam (in 5 days)"
+            placeholder={`e.g. ${profile?.domain || 'Core'} Midterm Exam`}
           />
 
           <SInput
             label="Weak Subjects (Priority Focus)"
             value={weakSubjects}
             onChange={e => setWeakSubjects(e.target.value)}
-            placeholder="e.g. Database Management Systems"
+            placeholder={`e.g. ${profile?.specialization || profile?.domain || 'Core Discipline'} Advanced Theory`}
           />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>
-            Student Profile: <strong>{profile?.degreeProgramme || 'Degree Student'}</strong> ({profile?.domain || 'CS'})
+            Student Profile: <strong>{profile?.degreeProgramme || profile?.field || 'Degree Student'}</strong> {profile?.domain || profile?.specialization ? `• ${profile.domain || profile.specialization}` : ''} {profile?.currentYear ? `(${profile.currentYear})` : ''}
           </div>
 
           <SBtn variant="primary" onClick={handleGeneratePlan} disabled={loading} style={{ padding: '10px 24px', borderRadius: 14, fontSize: 14 }}>

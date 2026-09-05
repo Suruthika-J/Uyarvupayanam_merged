@@ -23,7 +23,7 @@ export default function LearningRoadmapPage() {
       })
 
       if (res.data?.success) {
-        setTargetCareer(res.data.targetCareer || 'Software Engineer')
+        setTargetCareer(res.data.targetCareer || profile?.specialization || profile?.domain || 'Domain Pathway')
         setMilestones(res.data.milestones || [])
       }
     } catch (err) {

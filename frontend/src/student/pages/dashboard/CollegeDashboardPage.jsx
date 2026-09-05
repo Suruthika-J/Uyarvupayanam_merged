@@ -304,10 +304,10 @@ export default function CollegeDashboardPage() {
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)' }}>Target Career Goal</div>
                   <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginTop: 2 }}>
-                    🎯 {profile?.targetCareer || 'Software Engineer / Domain Specialist'}
+                    🎯 {profile?.targetCareer || profile?.specialization || profile?.domain || 'Academic & Professional Pathway'}
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--s-text3)', marginTop: 4, lineHeight: 1.4 }}>
-                    Tailored guidance based on your field ({profile?.field || 'Tech'}) and degree programme ({profile?.degreeProgramme || 'B.Tech'}).
+                    Tailored guidance based on your discipline ({profile?.field || profile?.domain || 'Academic Discipline'}) and degree programme ({profile?.degreeProgramme || 'Undergraduate'}).
                   </p>
                 </div>
 
@@ -381,25 +381,42 @@ export default function CollegeDashboardPage() {
             </SCard>
           )}
 
-          {/* SKILLS OVERVIEW */}
+          {/* SKILLS OVERVIEW & ASSESSED BASELINE */}
           <SCard style={{ padding: 24, borderRadius: 20 }}>
             <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiZap color="#f59e0b" size={16} /> Skills & Proficiencies
+              <FiZap color="#f59e0b" size={16} /> Knowledge Baseline & Skills
             </div>
 
+            {profile?.onboardingBaseline?.currentBaseline && (
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 12, marginBottom: 14, fontSize: 12, color: 'var(--s-text2)', lineHeight: 1.4 }}>
+                <strong>Assessed Baseline:</strong> {profile.onboardingBaseline.currentBaseline}
+              </div>
+            )}
+
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Strong Areas</div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Demonstrated Strengths</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {(profile?.strengths || ['Problem Solving', 'Core Concepts']).map((s, i) => (
+                {(profile?.onboardingBaseline?.strengths || profile?.strengths || ['Domain Core Concepts']).map((s, i) => (
                   <span key={i} style={{ fontSize: 11, background: '#d1fae5', color: '#047857', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>✓ {s}</span>
                 ))}
               </div>
             </div>
 
+            {profile?.onboardingBaseline?.areasToStrengthen?.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#b45309' }}>Target Improvement Areas</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                  {profile.onboardingBaseline.areasToStrengthen.map((a, i) => (
+                    <span key={i} style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>🎯 {a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8' }}>Active Skills</div>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8' }}>Active Profile Skills</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {(profile?.skills || ['Python', 'SQL']).map((s, i) => (
+                {(profile?.skills || ['Domain Fundamentals']).map((s, i) => (
                   <span key={i} style={{ fontSize: 11, background: '#dbeafe', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>⚡ {s}</span>
                 ))}
               </div>

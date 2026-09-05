@@ -12,10 +12,15 @@ import {
   COLLEGE_CAREER_CATALOG
 } from '../../services/collegeCareerRecommendationEngine'
 import {
+  getProfileRelevantSkills,
+  PROFICIENCY_LEVELS,
+  INTENT_OPTIONS
+} from '../../services/collegeSkillRecommendationEngine'
+import {
   FiArrowRight, FiArrowLeft, FiSave, FiCheckCircle,
   FiBookOpen, FiHome, FiCpu, FiHeart, FiFeather, FiShield,
   FiBriefcase, FiGlobe, FiActivity, FiStar, FiAward, FiCheck, FiZap, FiHelpCircle,
-  FiUsers, FiSun, FiBook, FiDollarSign, FiRadio, FiAlertCircle, FiTrendingUp, FiTarget, FiRefreshCw
+  FiUsers, FiSun, FiBook, FiDollarSign, FiRadio, FiAlertCircle, FiTrendingUp, FiTarget, FiRefreshCw, FiSliders
 } from 'react-icons/fi'
 
 const ICON_MAP = {
@@ -30,52 +35,10 @@ const TN_DISTRICTS = [
   'Tiruvannamalai', 'Cuddalore', 'Nagapattinam', 'Others'
 ]
 
-const SKILLS_OPTIONS = [
-  // Engineering & Technology
-  'Python / Data Science', 'Java / Spring Boot', 'Full Stack Web (React / Node)',
-  'AI & Machine Learning', 'Cyber Security / Ethical Hacking', 'Cloud Computing & DevOps',
-  'CAD / 3D Modeling (AutoCAD/SolidWorks)', 'Embedded Systems & IoT',
-  // Design & Media
-  'UI/UX Experience Design (Figma)', 'Graphic Design & Branding', 'Video Production & Editing',
-  // Management & Commerce
-  'Financial Modeling & Excel', 'Digital Marketing & Analytics', 'Business Analytics (Power BI/Tableau)',
-  'Tally & GST Accounting', 'Investment & Wealth Management',
-  // Medical & Health
-  'Clinical Research & Pharmacovigilance', 'Medical Coding & Billing',
-  // Law & Humanities
-  'Legal Drafting & Research', 'Public Policy Analysis', 'Counselling & Active Listening',
-  // Agriculture & Sciences
-  'Precision Agriculture & GIS', 'Research Methodology & Lab Skills', 'Data Analysis with Python/R',
-  // Soft Skills
-  'Problem Solving & Logic', 'Project Management & Leadership', 'Public Speaking & Communication'
-]
-
 const ACADEMIC_INTEREST_OPTIONS = [
   'Applied Industry Projects', 'Academic Research & Publications',
   'Competitive Entrance Exams (GATE / CAT / GRE)', 'Hackathons & Coding Competitions',
   'Internship Readiness & Placement Prep', 'Higher Education / M.Tech / MBA Prep'
-]
-
-const CAREER_INTEREST_OPTIONS = [
-  // Technology
-  'Software Engineering / Product Development', 'AI & Machine Learning Scientist',
-  'Data Engineer / Analyst', 'Cybersecurity Analyst', 'Cloud Architect / DevOps Engineer',
-  // Core Engineering
-  'Core Engineering & R&D', 'Automotive / EV Engineer', 'Robotics & Embedded Systems',
-  // Business & Finance
-  'Management & Strategy Consulting', 'Investment Banking / Finance', 'Chartered Accountant (CA)',
-  'Digital Marketing & Growth', 'Entrepreneurship & Startup Founder',
-  // Healthcare & Sciences
-  'Healthcare & Medical Specialist', 'Clinical Research Scientist', 'Pharmaceutical Professional',
-  'Environmental Scientist / Researcher',
-  // Law & Public Services
-  'Government Sector & Civil Services', 'Lawyer / Legal Consultant', 'Judicial Services',
-  // Education & Social
-  'Teacher / Academic Professional', 'Social Worker / Policy Analyst', 'Psychologist / Counsellor',
-  // Media & Creative
-  'Journalist / Content Creator', 'UX/UI Designer', 'Film & Media Producer',
-  // Agriculture
-  'Agricultural Scientist / Agronomist', 'Food Technology & Processing'
 ]
 
 export default function CollegeOnboardingPage() {
@@ -111,7 +74,11 @@ export default function CollegeOnboardingPage() {
     certifications: [],
     academicInterests: ['Applied Industry Projects', 'Internship Readiness & Placement Prep'],
     careerInterests: ['Software Engineering / Product Development', 'AI & Machine Learning Scientist'],
-    skills: ['Python / Data Science', 'Problem Solving & Logic'],
+    skills: ['Problem Solving & Algorithmic Logic', 'Python for Computing & Data Analysis'],
+    selfReportedSkills: [
+      { name: 'Problem Solving & Algorithmic Logic', selfReportedLevel: 'Intermediate', intent: 'Already practicing' },
+      { name: 'Python for Computing & Data Analysis', selfReportedLevel: 'Intermediate', intent: 'Already practicing' }
+    ],
     strengths: ['Analytical Thinking', 'Team Collaboration']
   })
 
@@ -292,6 +259,7 @@ export default function CollegeOnboardingPage() {
             academicInterests: profile.academicInterests,
             careerInterests: profile.careerInterests,
             skills: profile.skills,
+            selfReportedSkills: profile.selfReportedSkills,
             strengths: profile.strengths,
             currentStep: step,
             isFinalStep: isFinal
@@ -302,6 +270,43 @@ export default function CollegeOnboardingPage() {
     } catch (err) {
       console.warn('Save progress to backend failed')
     }
+  }
+
+  const toggleSkillItem = (skillName) => {
+    setProfile(prev => {
+      const existingNames = prev.skills || []
+      const isSelected = existingNames.includes(skillName)
+      let nextSkills = []
+      let nextSelfReported = [...(prev.selfReportedSkills || [])]
+
+      if (isSelected) {
+        nextSkills = existingNames.filter(s => s !== skillName)
+        nextSelfReported = nextSelfReported.filter(s => s.name !== skillName)
+      } else {
+        nextSkills = [...existingNames, skillName]
+        if (!nextSelfReported.some(s => s.name === skillName)) {
+          nextSelfReported.push({
+            name: skillName,
+            selfReportedLevel: 'Intermediate',
+            intent: 'Already practicing'
+          })
+        }
+      }
+      return { ...prev, skills: nextSkills, selfReportedSkills: nextSelfReported }
+    })
+  }
+
+  const updateSkillSelfReport = (skillName, key, value) => {
+    setProfile(prev => {
+      const list = [...(prev.selfReportedSkills || [])]
+      const idx = list.findIndex(s => s.name === skillName)
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], [key]: value }
+      } else {
+        list.push({ name: skillName, selfReportedLevel: 'Intermediate', intent: 'Already practicing', [key]: value })
+      }
+      return { ...prev, selfReportedSkills: list }
+    })
   }
 
   const handleSaveAndLater = async () => {
@@ -408,7 +413,7 @@ export default function CollegeOnboardingPage() {
             Build Your College Academic Profile
           </h1>
           <p style={{ fontSize: 14, color: 'var(--s-text3)', maxWidth: 640, margin: '0 auto' }}>
-            Personalized academic degree, domain branch, and xAI Grok skill assessment.
+            Personalized academic degree, domain branch, and skill assessment.
           </p>
         </div>
 
@@ -427,7 +432,7 @@ export default function CollegeOnboardingPage() {
 
         <SCard style={{ borderRadius: 24, padding: 36, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow-md)' }}>
 
-          {/* STEP 1: Basic Profile */}
+          {/* STEP 1 to STEP 5 remain unchanged */}
           {step === 1 && (
             <div className="s-anim-up">
               <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
@@ -471,7 +476,6 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 2: Major Field */}
           {step === 2 && (
             <div className="s-anim-up">
               <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
@@ -515,7 +519,6 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 3: Degree Programme */}
           {step === 3 && (
             <div className="s-anim-up">
               <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
@@ -551,7 +554,6 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 4: Domain Branch & Specialization */}
           {step === 4 && (
             <div className="s-anim-up">
               <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
@@ -622,17 +624,13 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 5: Personalized Academic Interests & Career Aspirations */}
           {step === 5 && (() => {
             const personalizedFocus = getPersonalizedAcademicFocusOptions(profile)
             const recResult = getPersonalizedCareerRecommendations(profile)
 
-            const recommendedPathways = (recResult.recommendedPathways || [])
-              .filter(c => !dismissedCareerIds.includes(c.id))
-            const relatedDirections = (recResult.relatedDirections || [])
-              .filter(c => !dismissedCareerIds.includes(c.id))
-            const careerSwitches = (recResult.careerSwitches || [])
-              .filter(c => !dismissedCareerIds.includes(c.id))
+            const recommendedPathways = (recResult.recommendedPathways || []).filter(c => !dismissedCareerIds.includes(c.id))
+            const relatedDirections = (recResult.relatedDirections || []).filter(c => !dismissedCareerIds.includes(c.id))
+            const careerSwitches = (recResult.careerSwitches || []).filter(c => !dismissedCareerIds.includes(c.id))
 
             const renderCareerCard = (career, isSwitchCard = false) => {
               const isPrimary = profile.targetCareer === career.title
@@ -668,11 +666,6 @@ export default function CollegeOnboardingPage() {
                             🎯 Primary Target Role
                           </span>
                         )}
-                        {isSwitchCard && (
-                          <span style={{ fontSize: 11, fontWeight: 800, background: '#ea580c', color: '#fff', padding: '3px 10px', borderRadius: 12 }}>
-                            🔀 Career Switch Path
-                          </span>
-                        )}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 4 }}>
                         {career.category} • {career.description}
@@ -698,66 +691,18 @@ export default function CollegeOnboardingPage() {
                       >
                         {isPrimary ? '✓ Primary Target' : 'Set as Primary'}
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleArrayItem('careerInterests', career.title)}
-                        style={{
-                          padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                          background: isSelected ? '#e0f2fe' : '#fff',
-                          color: isSelected ? '#0284c7' : '#64748b',
-                          border: '1px solid #cbd5e1'
-                        }}
-                      >
-                        {isSelected ? '✓ In Pathway List' : '+ Add to Pathway'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setDismissedCareerIds(prev => [...prev, career.id])}
-                        title="Not interested in this career"
-                        style={{ padding: '6px 10px', borderRadius: 8, background: '#fef2f2', color: '#dc2626', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
-                      >
-                        Dismiss
-                      </button>
                     </div>
                   </div>
 
-                  {/* Transparent Match Reason */}
                   <div style={{ fontSize: 12, color: isSwitchCard ? '#9a3412' : '#0369a1', background: isSwitchCard ? '#fff7ed' : '#f0f9ff', padding: '10px 14px', borderRadius: 10, marginTop: 10, lineHeight: 1.4 }}>
                     💡 <strong>Why this matches you:</strong> {career.matchExplanation}
                   </div>
-
-                  {/* Matched Strengths */}
-                  {career.matchedStrengths?.length > 0 && (
-                    <div style={{ fontSize: 11, color: '#047857', marginTop: 8, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <strong>✓ Your Profile Strengths:</strong>
-                      {career.matchedStrengths.map((str, idx) => (
-                        <span key={idx} style={{ background: '#d1fae5', padding: '2px 8px', borderRadius: 6, color: '#065f46', fontWeight: 600 }}>
-                          {str}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Skills to Develop */}
-                  {career.skillGapsToDevelop?.length > 0 && (
-                    <div style={{ fontSize: 11, color: '#475569', marginTop: 8, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <strong>△ Target Skills to Develop:</strong>
-                      {career.skillGapsToDevelop.map((sk, idx) => (
-                        <span key={idx} style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, color: '#334155', fontWeight: 600 }}>
-                          {sk}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )
             }
 
             return (
               <div className="s-anim-up">
-                {/* Profile Guidance Context Banner */}
                 <div style={{
                   background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                   borderRadius: 18, padding: '20px 24px', color: '#fff', marginBottom: 28,
@@ -776,17 +721,11 @@ export default function CollegeOnboardingPage() {
                   </p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-
-                  {/* 1. Personalized Academic Focus Options */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div>
                     <label style={{ fontWeight: 800, fontSize: 14, display: 'block', marginBottom: 6, color: 'var(--s-text)' }}>
-                      Personalized Academic Focus (Select your priorities)
+                      Personalized Academic Focus
                     </label>
-                    <p style={{ fontSize: 12, color: 'var(--s-text3)', marginBottom: 14 }}>
-                      Choose academic focus areas matching your branch and year goals.
-                    </p>
-
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                       {personalizedFocus.map(opt => {
                         const isSelected = profile.academicInterests.includes(opt.title)
@@ -801,19 +740,6 @@ export default function CollegeOnboardingPage() {
                               transition: 'all 0.15s ease'
                             }}
                           >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <span style={{ fontSize: 11, fontWeight: 800, color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: 8 }}>
-                                {opt.category}
-                              </span>
-                              <div style={{
-                                width: 22, height: 22, borderRadius: '50%',
-                                background: isSelected ? '#0284c7' : '#f1f5f9',
-                                color: isSelected ? '#fff' : '#cbd5e1',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                              }}>
-                                <FiCheck size={14} />
-                              </div>
-                            </div>
                             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 4 }}>
                               {opt.title}
                             </div>
@@ -826,117 +752,212 @@ export default function CollegeOnboardingPage() {
                     </div>
                   </div>
 
-                  {/* 2. Directly Recommended Career Pathways */}
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 10 }}>
-                      <div>
-                        <label style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)', margin: 0 }}>
-                          🎯 Recommended Career Pathways (Direct Academic Fit)
-                        </label>
-                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
-                          Careers directly supported by your major degree ({profile.degreeProgramme || 'Degree'}).
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowExploreModal(true)}
-                        style={{
-                          background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1',
-                          padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                        }}
-                      >
-                        <FiGlobe size={14} /> Explore All Careers
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+                    <label style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)', marginBottom: 12, display: 'block' }}>
+                      🎯 Recommended Career Pathways (Direct Academic Fit)
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       {recommendedPathways.length > 0 ? (
                         recommendedPathways.map(c => renderCareerCard(c, false))
                       ) : (
                         <div style={{ padding: 16, background: '#f8fafc', borderRadius: 12, fontSize: 13, color: '#64748b' }}>
-                          No direct pathways match this specific sub-specialization. Check related directions below.
+                          No direct pathways match. Check related directions below.
                         </div>
                       )}
                     </div>
                   </div>
-
-                  {/* 3. Related Career Directions */}
-                  {relatedDirections.length > 0 && (
-                    <div>
-                      <div style={{ marginBottom: 6 }}>
-                        <label style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)', margin: 0 }}>
-                          🔄 Related Career Directions (Interdisciplinary / Adjacent)
-                        </label>
-                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
-                          Adjacent pathways bridging your academic background with interdisciplinary skills.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
-                        {relatedDirections.map(c => renderCareerCard(c, false))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 4. Explore Career Switches */}
-                  {careerSwitches.length > 0 && (
-                    <div>
-                      <div style={{ marginBottom: 6 }}>
-                        <label style={{ fontWeight: 800, fontSize: 14, color: '#c2410c', margin: 0 }}>
-                          🔀 Explore Career Switches (Optional Cross-Domain Pathways)
-                        </label>
-                        <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '2px 0 0' }}>
-                          Careers requiring a significant domain transition and prerequisite learning.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
-                        {careerSwitches.map(c => renderCareerCard(c, true))}
-                      </div>
-                    </div>
-                  )}
-
                 </div>
               </div>
             )
           })()}
 
-          {/* STEP 6: Skills */}
-          {step === 6 && (
-            <div className="s-anim-up">
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-                Step 6: Skills & Technical Competencies
-              </h3>
-              <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
-                Select tools and technologies you currently practice or wish to build.
-              </p>
+          {/* STEP 6: DYNAMIC PROFILE-DRIVEN SKILLS IN 4 CATEGORIES */}
+          {step === 6 && (() => {
+            const dynamicSkills = getProfileRelevantSkills(profile)
+            const selectedNames = profile.skills || []
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                {SKILLS_OPTIONS.map(sk => {
-                  const isSelected = profile.skills.includes(sk)
-                  return (
+            // Categorize skills
+            const categorized = {
+              PRACTICING: dynamicSkills.filter(s => selectedNames.includes(s.name) && ((profile.selfReportedSkills || []).find(sr => sr.name === s.name)?.intent === 'Already practicing' || !(profile.selfReportedSkills || []).find(sr => sr.name === s.name))),
+              STRENGTHEN: dynamicSkills.filter(s => selectedNames.includes(s.name) && (profile.selfReportedSkills || []).find(sr => sr.name === s.name)?.intent === 'Want to strengthen'),
+              BUILD_NEXT: dynamicSkills.filter(s => !selectedNames.includes(s.name) && (s.tier === 'CORE' || s.tier === 'SPECIALIZATION')),
+              EXPLORE: dynamicSkills.filter(s => !selectedNames.includes(s.name) && s.tier !== 'CORE' && s.tier !== 'SPECIALIZATION')
+            }
+
+            const visibleSkills = activeStageTab === 'PRACTICING' ? categorized.PRACTICING
+              : activeStageTab === 'STRENGTHEN' ? categorized.STRENGTHEN
+              : activeStageTab === 'BUILD_NEXT' ? categorized.BUILD_NEXT
+              : activeStageTab === 'EXPLORE' ? categorized.EXPLORE
+              : dynamicSkills
+
+            return (
+              <div className="s-anim-up">
+                <div style={{
+                  background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+                  borderRadius: 18, padding: '20px 24px', color: '#fff', marginBottom: 20,
+                  boxShadow: '0 6px 20px rgba(4, 120, 87, 0.18)'
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.9, marginBottom: 4 }}>
+                    ⚡ STEP 6 — PROFILE-RELEVANT SKILLS & SELF-REPORTED PROFICIENCY
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, margin: '0 0 6px', color: '#fff' }}>
+                    Select Your Relevant Domain Skills
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#a7f3d0', margin: 0, lineHeight: 1.5 }}>
+                    Skills dynamically generated for <strong>{profile.domain || profile.fieldId}</strong>
+                    {profile.specialization && ` (${profile.specialization})`}. Self-report your current proficiency & learning intent.
+                  </p>
+                </div>
+
+                {/* 4 Category Filter Tabs */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'ALL', label: `All Skills (${dynamicSkills.length})` },
+                    { id: 'PRACTICING', label: `Already Practicing (${categorized.PRACTICING.length})` },
+                    { id: 'STRENGTHEN', label: `Strengthen (${categorized.STRENGTHEN.length})` },
+                    { id: 'BUILD_NEXT', label: `Build Next (${categorized.BUILD_NEXT.length})` },
+                    { id: 'EXPLORE', label: `Explore (${categorized.EXPLORE.length})` }
+                  ].map(tab => (
                     <button
-                      key={sk}
+                      key={tab.id}
                       type="button"
-                      onClick={() => toggleArrayItem('skills', sk)}
+                      onClick={() => setActiveStageTab(tab.id)}
                       style={{
-                        padding: '10px 18px', borderRadius: 20, cursor: 'pointer',
-                        border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                        background: isSelected ? 'var(--s-primary)' : '#fff',
-                        color: isSelected ? '#fff' : 'var(--s-text2)', fontWeight: 700, fontSize: 13
+                        padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                        background: activeStageTab === tab.id ? '#047857' : '#f1f5f9',
+                        color: activeStageTab === tab.id ? '#fff' : '#475569',
+                        border: activeStageTab === tab.id ? 'none' : '1px solid #cbd5e1',
+                        transition: 'all 0.15s ease'
                       }}
                     >
-                      {isSelected ? '✓ ' : '+ '} {sk}
+                      {tab.label}
                     </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+                  ))}
+                </div>
 
-          {/* STEP 7: Domain-Aware Onboarding Assessment & Baseline Telemetry */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {visibleSkills.length > 0 ? visibleSkills.map(sk => {
+                    const isSelected = selectedNames.includes(sk.name)
+                    const selfReport = (profile.selfReportedSkills || []).find(s => s.name === sk.name) || {
+                      selfReportedLevel: 'Intermediate',
+                      intent: 'Already practicing'
+                    }
+
+                    return (
+                      <div
+                        key={sk.id}
+                        style={{
+                          padding: 20, borderRadius: 16, background: '#fff',
+                          border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
+                          boxShadow: isSelected ? 'var(--s-shadow-md)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: isSelected ? 16 : 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div
+                              onClick={() => toggleSkillItem(sk.name)}
+                              style={{
+                                width: 24, height: 24, borderRadius: 6, cursor: 'pointer',
+                                background: isSelected ? 'var(--s-primary)' : '#f1f5f9',
+                                color: isSelected ? '#fff' : '#cbd5e1',
+                                border: isSelected ? 'none' : '1px solid #cbd5e1',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}
+                            >
+                              <FiCheck size={16} />
+                            </div>
+
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)' }}>
+                                  {sk.name}
+                                </span>
+                                <span style={{
+                                  fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8,
+                                  background: sk.tier === 'CORE' ? '#d1fae5' : sk.tier === 'SPECIALIZATION' ? '#e0f2fe' : '#fef3c7',
+                                  color: sk.tier === 'CORE' ? '#047857' : sk.tier === 'SPECIALIZATION' ? '#0284c7' : '#b45309'
+                                }}>
+                                  {sk.category}
+                                </span>
+                              </div>
+                              {sk.description && (
+                                <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 2 }}>{sk.description}</div>
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleSkillItem(sk.name)}
+                            style={{
+                              padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                              background: isSelected ? 'var(--s-primary-l)' : '#f1f5f9',
+                              color: isSelected ? 'var(--s-primary)' : '#475569',
+                              border: isSelected ? '1px solid var(--s-primary)' : '1px solid #cbd5e1'
+                            }}
+                          >
+                            {isSelected ? '✓ Selected' : '+ Add Skill'}
+                          </button>
+                        </div>
+
+                        {/* Interactive Self-Reported Controls when selected */}
+                        {isSelected && (
+                          <div style={{
+                            padding: 14, borderRadius: 12, background: 'var(--s-surface2)',
+                            border: '1px solid var(--s-border)', marginTop: 12,
+                            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14
+                          }} className="s-grid-2col">
+                            <div>
+                              <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text2)', display: 'block', marginBottom: 4 }}>
+                                Self-Reported Proficiency Level
+                              </label>
+                              <select
+                                value={selfReport.selfReportedLevel}
+                                onChange={e => updateSkillSelfReport(sk.name, 'selfReportedLevel', e.target.value)}
+                                style={{
+                                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1',
+                                  fontSize: 13, fontWeight: 700, background: '#fff', color: 'var(--s-text)'
+                                }}
+                              >
+                                {PROFICIENCY_LEVELS.map(lvl => (
+                                  <option key={lvl.value} value={lvl.value}>{lvl.label}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text2)', display: 'block', marginBottom: 4 }}>
+                                Learning Goal / Practice Intent
+                              </label>
+                              <select
+                                value={selfReport.intent}
+                                onChange={e => updateSkillSelfReport(sk.name, 'intent', e.target.value)}
+                                style={{
+                                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1',
+                                  fontSize: 13, fontWeight: 700, background: '#fff', color: 'var(--s-text)'
+                                }}
+                              >
+                                {INTENT_OPTIONS.map(opt => (
+                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }) : (
+                    <div style={{ padding: 20, background: '#f8fafc', borderRadius: 12, fontSize: 13, color: '#64748b', textAlign: 'center' }}>
+                      No skills currently listed in this category.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* STEP 7: DOMAIN-BASED KNOWLEDGE ASSESSMENT */}
           {step === 7 && (
             <div className="s-anim-up">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
@@ -945,7 +966,7 @@ export default function CollegeOnboardingPage() {
                     🎯 Domain-Aware Academic Diagnostic Engine
                   </div>
                   <h3 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 0', color: 'var(--s-text)' }}>
-                    Step 7: Knowledge Baseline Assessment
+                    Step 7: Domain Knowledge Baseline Assessment
                   </h3>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -960,7 +981,6 @@ export default function CollegeOnboardingPage() {
                 </div>
               </div>
 
-              {/* Missing Domain Handling (Section 22) */}
               {missingDomain ? (
                 <div style={{ background: '#fffba6', border: '1.5px solid #f59e0b', borderRadius: 20, padding: 30, textAlign: 'center' }}>
                   <FiAlertCircle size={44} style={{ color: '#d97706', marginBottom: 12 }} />
@@ -975,7 +995,7 @@ export default function CollegeOnboardingPage() {
                   </SBtn>
                 </div>
               ) : baselineReport ? (
-                /* ── BASELINE SUMMARY REPORT CARD ── */
+                /* ── ENHANCED BASELINE SUMMARY REPORT CARD ── */
                 <div style={{ background: '#f8fafc', border: '2px solid #047857', borderRadius: 24, padding: 30 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: '#d1fae5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1001,7 +1021,7 @@ export default function CollegeOnboardingPage() {
                     {/* Strengths */}
                     <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#047857', marginBottom: 12 }}>
-                        <FiTrendingUp size={16} /> Areas Showing Strength
+                        <FiTrendingUp size={16} /> Demonstrated Strengths
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {baselineReport.strengths?.map((s, idx) => (
@@ -1015,7 +1035,7 @@ export default function CollegeOnboardingPage() {
                     {/* Areas to Strengthen */}
                     <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#b45309', marginBottom: 12 }}>
-                        <FiTarget size={16} /> Areas to Strengthen
+                        <FiTarget size={16} /> Targeted Improvement Areas
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {baselineReport.areasToStrengthen?.map((a, idx) => (
@@ -1026,6 +1046,33 @@ export default function CollegeOnboardingPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* SELF-REPORTED VS ASSESSED COMPARISON MATRIX */}
+                  {baselineReport.selfReportVsAssessedMatrix?.length > 0 && (
+                    <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <FiSliders color="var(--s-primary)" size={16} /> Self-Reported vs. Assessed Knowledge Baseline
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {baselineReport.selfReportVsAssessedMatrix.map((item, idx) => (
+                          <div key={idx} style={{ padding: 12, borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{item.skillName}</div>
+                              <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>{item.comparisonNote}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <span style={{ fontSize: 11, background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: 8, fontWeight: 700 }}>
+                                Self-Report: {item.selfReportedLevel}
+                              </span>
+                              <span style={{ fontSize: 11, background: item.assessedLevel === 'Advanced' ? '#d1fae5' : '#fef3c7', color: item.assessedLevel === 'Advanced' ? '#047857' : '#b45309', padding: '4px 10px', borderRadius: 8, fontWeight: 800 }}>
+                                Assessed: {item.assessedLevel}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Recommended Starting Topics */}
                   <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18, marginBottom: 24 }}>
@@ -1057,13 +1104,10 @@ export default function CollegeOnboardingPage() {
                 </div>
               ) : loadingDomainQuestions ? (
                 <div style={{ padding: 50, textAlign: 'center' }}>
-                  <SLoader label="Preparing questions based on your academic profile..." />
+                  <SLoader label="Preparing questions based on your academic profile & selected skills..." />
                 </div>
               ) : domainQuestions.length > 0 ? (
-                /* ── 3-STAGE QUESTION ASSESSMENT WORKFLOW ── */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-                  {/* Stage Progress Header */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
                     <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: 14, borderRadius: 14 }}>
                       <div style={{ fontSize: 11, fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase' }}>Stage 1 — Foundation</div>
@@ -1147,7 +1191,20 @@ export default function CollegeOnboardingPage() {
                     )}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div style={{ background: '#f8fafc', border: '1px solid var(--s-border)', borderRadius: 20, padding: 32, textAlign: 'center' }}>
+                  <FiRefreshCw size={36} style={{ color: 'var(--s-primary)', marginBottom: 12 }} />
+                  <h4 style={{ fontSize: 18, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 8px' }}>
+                    Ready to Start {profile.domain || 'Domain'} Diagnostic Assessment
+                  </h4>
+                  <p style={{ fontSize: 14, color: 'var(--s-text3)', maxWidth: 500, margin: '0 auto 20px' }}>
+                    Click below to load your baseline questions tailored to your field and selected skills.
+                  </p>
+                  <SBtn variant="primary" onClick={fetchDomainQuestions} style={{ padding: '12px 28px', borderRadius: 12 }}>
+                    Load Diagnostic Questions
+                  </SBtn>
+                </div>
+              )}
             </div>
           )}
 

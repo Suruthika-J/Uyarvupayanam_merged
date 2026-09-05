@@ -25,6 +25,7 @@ export default function SkillGapAnalysisPage() {
   const [readinessScore, setReadinessScore] = useState(0)
   const [skills, setSkills] = useState({ strong: [], developing: [], missing: [] })
   const [updating, setUpdating] = useState(false)
+  const [baselineData, setBaselineData] = useState(null)
 
   const fetchSkillGap = async () => {
     setLoading(true)
@@ -34,9 +35,10 @@ export default function SkillGapAnalysisPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.data?.success) {
-        setTargetRole(res.data.targetCareer || 'Software Engineer')
+        setTargetRole(res.data.targetCareer || profile?.specialization || profile?.domain || 'Domain Specialist')
         setReadinessScore(res.data.readinessScore || 0)
         setSkills(res.data.skills || { strong: [], developing: [], missing: [] })
+        setBaselineData(res.data.baselineAssessment || null)
       }
     } catch (err) {
       console.warn('Failed to load live skill gap analysis:', err)
@@ -130,6 +132,18 @@ export default function SkillGapAnalysisPage() {
           <div style={{ fontSize: 11, color: '#d1fae5', fontWeight: 700 }}>Career Competency Match</div>
         </div>
       </div>
+
+      {/* ASSESSED KNOWLEDGE BASELINE SUMMARY */}
+      {baselineData?.currentBaseline && (
+        <SCard style={{ padding: 20, borderRadius: 18, marginBottom: 28, borderLeft: '5px solid #0284c7' }}>
+          <div style={{ fontSize: 14, fontWeight: 900, color: '#0369a1', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FiLayers size={16} /> Demonstrated Step 7 Assessment Baseline
+          </div>
+          <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.5 }}>
+            {baselineData.currentBaseline}
+          </div>
+        </SCard>
+      )}
 
       {/* 3-COLUMN SKILL MATRIX */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 22, marginBottom: 28 }} className="s-grid-1col">

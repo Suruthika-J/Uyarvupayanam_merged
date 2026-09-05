@@ -36,6 +36,23 @@ const collegeStudentProfileSchema = new mongoose.Schema(
     // Step 6: Skills & Strengths
     skills: [{ type: String }],
     strengths: [{ type: String }],
+    selfReportedSkills: [
+      {
+        skillId: { type: String },
+        name: { type: String, required: true },
+        category: { type: String },
+        selfReportedLevel: {
+          type: String,
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+          default: "Intermediate"
+        },
+        intent: {
+          type: String,
+          enum: ["Already practicing", "Want to build", "Interested in"],
+          default: "Already practicing"
+        }
+      }
+    ],
 
     // ── Extended Profile Fields (Task 02 — Single Source of Truth) ──────────
     currentSemester: { type: String, trim: true },          // e.g. "3rd Semester"
@@ -63,7 +80,24 @@ const collegeStudentProfileSchema = new mongoose.Schema(
       areasToStrengthen: [{ type: String }],
       recommendedStartingTopics: [{ type: String }],
       scorePercentage: { type: Number },
-      assessedAt: { type: Date }
+      assessedAt: { type: Date },
+      assessedSkills: [
+        {
+          topic: { type: String },
+          selfReportedLevel: { type: String },
+          assessedLevel: { type: String },
+          scorePercentage: { type: Number },
+          confidence: { type: String, default: "Moderate" }
+        }
+      ],
+      selfReportVsAssessedMatrix: [
+        {
+          skillName: { type: String },
+          selfReportedLevel: { type: String },
+          assessedLevel: { type: String },
+          comparisonNote: { type: String }
+        }
+      ]
     },
     onboardingHistory: [
       {
@@ -76,7 +110,16 @@ const collegeStudentProfileSchema = new mongoose.Schema(
         areasToStrengthen: [{ type: String }],
         recommendedStartingTopics: [{ type: String }],
         scorePercentage: { type: Number },
-        assessedAt: { type: Date }
+        assessedAt: { type: Date },
+        assessedSkills: [
+          {
+            topic: { type: String },
+            selfReportedLevel: { type: String },
+            assessedLevel: { type: String },
+            scorePercentage: { type: Number },
+            confidence: { type: String }
+          }
+        ]
       }
     ],
 
