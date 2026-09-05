@@ -847,7 +847,8 @@ exports.submitCollegeOnboarding = async (req, res) => {
       let top = ans.topic || "Domain Fundamentals";
 
       // If question ID is a database object ID, verify against DB
-      if (ans.questionId && !ans.questionId.startsWith("ai_")) {
+      const mongoose = require("mongoose");
+      if (ans.questionId && mongoose.Types.ObjectId.isValid(ans.questionId)) {
         const dbQ = await CollegeOnboardingQuestion.findById(ans.questionId);
         if (dbQ) {
           qText = dbQ.questionText;

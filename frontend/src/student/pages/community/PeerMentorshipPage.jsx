@@ -64,65 +64,168 @@ export default function PeerMentorshipPage() {
 
   // Build dynamic intelligent peer recommendations based on user profile
   useEffect(() => {
-    if (!profile) return
+    const prof = profile || {}
+    const myDomain = prof?.domain || prof?.field || 'Academic Domain'
+    const myYear = prof?.currentYear || '3rd Year'
+    const myDegree = prof?.degreeProgramme || 'Degree'
+    const myField = prof?.field || 'Discipline'
 
-    const myDomain = profile?.domain || 'Computer Science'
-    const myYear = profile?.currentYear || '3rd Year'
+    const isMedical = ['medicine', 'ayush', 'bhms', 'mbbs', 'bams', 'clinical', 'health'].some(term =>
+      myField.toLowerCase().includes(term) || myDegree.toLowerCase().includes(term) || myDomain.toLowerCase().includes(term)
+    )
 
-    const samplePeers = [
-      {
-        id: 'peer-1',
-        name: 'Siddharth R.',
-        field: profile.field || 'Engineering',
-        degree: profile.degreeProgramme || 'B.Tech',
-        domain: myDomain,
-        currentYear: myYear,
-        skills: ['Python', 'Data Structures', 'DBMS'],
-        strengths: ['Data Structures', 'Algorithms'],
-        onboardingBaseline: { areasToStrengthen: ['SQL', 'Web Development'] },
-        avatar: '👨‍💻'
-      },
-      {
-        id: 'peer-2',
-        name: 'Ananya V.',
-        field: profile.field || 'Engineering',
-        degree: profile.degreeProgramme || 'B.Tech',
-        domain: myDomain,
-        currentYear: myYear,
-        skills: ['SQL', 'React', 'Node.js'],
-        strengths: ['SQL', 'Database Management Systems'],
-        onboardingBaseline: { areasToStrengthen: ['Python', 'Machine Learning'] },
-        avatar: '👩‍💻'
-      },
-      {
-        id: 'peer-3',
-        name: 'Vikram K.',
-        field: profile.field || 'Engineering',
-        degree: profile.degreeProgramme || 'B.Tech',
-        domain: myDomain,
-        currentYear: myYear,
-        skills: ['Java', 'Operating Systems', 'System Design'],
-        strengths: ['Operating Systems', 'Java'],
-        onboardingBaseline: { areasToStrengthen: ['Data Structures'] },
-        avatar: '👨‍🎓'
-      },
-      {
-        id: 'peer-4',
-        name: 'Priya M.',
-        field: profile.field || 'Engineering',
-        degree: profile.degreeProgramme || 'B.Tech',
-        domain: myDomain,
-        currentYear: myYear,
-        skills: ['Python', 'SQL', 'Machine Learning'],
-        strengths: ['Machine Learning', 'Python'],
-        onboardingBaseline: { areasToStrengthen: ['Operating Systems'] },
-        avatar: '👩‍🔬'
-      }
-    ]
+    const isLaw = ['law', 'llb', 'legal', 'jurisprudence'].some(term =>
+      myField.toLowerCase().includes(term) || myDegree.toLowerCase().includes(term) || myDomain.toLowerCase().includes(term)
+    )
+
+    let samplePeers = []
+
+    if (isMedical) {
+      samplePeers = [
+        {
+          id: 'peer-1',
+          name: 'Dr. Siddharth R.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Clinical Diagnostics', 'Pathology', 'Pharmacology'],
+          strengths: ['Clinical Diagnostics', 'Pathology'],
+          onboardingBaseline: { areasToStrengthen: ['Homeopathic Therapeutics', 'Anatomy'] },
+          avatar: '🩺'
+        },
+        {
+          id: 'peer-2',
+          name: 'Ananya V.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Human Anatomy', 'Physiology', 'Biochemistry'],
+          strengths: ['Anatomy', 'Physiology'],
+          onboardingBaseline: { areasToStrengthen: ['Pharmacology', 'Clinical Diagnostics'] },
+          avatar: '👩‍⚕️'
+        },
+        {
+          id: 'peer-3',
+          name: 'Vikram K.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Organon of Medicine', 'Materia Medica', 'Repertory'],
+          strengths: ['Materia Medica', 'Repertory'],
+          onboardingBaseline: { areasToStrengthen: ['Pathology'] },
+          avatar: '👨‍⚕️'
+        },
+        {
+          id: 'peer-4',
+          name: 'Priya M.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Surgery Fundamentals', 'Obstetrics & Gynecology', 'Community Medicine'],
+          strengths: ['Community Medicine', 'Obstetrics'],
+          onboardingBaseline: { areasToStrengthen: ['Organon of Medicine'] },
+          avatar: '👩‍🔬'
+        }
+      ]
+    } else if (isLaw) {
+      samplePeers = [
+        {
+          id: 'peer-1',
+          name: 'Siddharth R.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Constitutional Law', 'Contract Law', 'Legal Drafting'],
+          strengths: ['Constitutional Law', 'Legal Drafting'],
+          onboardingBaseline: { areasToStrengthen: ['Criminal Law', 'Moot Court'] },
+          avatar: '⚖️'
+        },
+        {
+          id: 'peer-2',
+          name: 'Ananya V.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Criminal Law', 'Tort Law', 'Jurisprudence'],
+          strengths: ['Criminal Law', 'Moot Court Practice'],
+          onboardingBaseline: { areasToStrengthen: ['Contract Law', 'Legal Drafting'] },
+          avatar: '👩‍⚖️'
+        },
+        {
+          id: 'peer-3',
+          name: 'Vikram K.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Corporate Law', 'Intellectual Property', 'Arbitration'],
+          strengths: ['Corporate Law', 'Arbitration'],
+          onboardingBaseline: { areasToStrengthen: ['Constitutional Law'] },
+          avatar: '👨‍⚖️'
+        }
+      ]
+    } else {
+      samplePeers = [
+        {
+          id: 'peer-1',
+          name: 'Siddharth R.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Python', 'Data Structures', 'DBMS'],
+          strengths: ['Data Structures', 'Algorithms'],
+          onboardingBaseline: { areasToStrengthen: ['SQL', 'Web Development'] },
+          avatar: '👨‍💻'
+        },
+        {
+          id: 'peer-2',
+          name: 'Ananya V.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['SQL', 'React', 'Node.js'],
+          strengths: ['SQL', 'Database Management Systems'],
+          onboardingBaseline: { areasToStrengthen: ['Python', 'Machine Learning'] },
+          avatar: '👩‍💻'
+        },
+        {
+          id: 'peer-3',
+          name: 'Vikram K.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Java', 'Operating Systems', 'System Design'],
+          strengths: ['Operating Systems', 'Java'],
+          onboardingBaseline: { areasToStrengthen: ['Data Structures'] },
+          avatar: '👨‍🎓'
+        },
+        {
+          id: 'peer-4',
+          name: 'Priya M.',
+          field: myField,
+          degree: myDegree,
+          domain: myDomain,
+          currentYear: myYear,
+          skills: ['Python', 'SQL', 'Machine Learning'],
+          strengths: ['Machine Learning', 'Python'],
+          onboardingBaseline: { areasToStrengthen: ['Operating Systems'] },
+          avatar: '👩‍🔬'
+        }
+      ]
+    }
 
     // Compute compatibility for each peer
     const scoredPeers = samplePeers.map(peer => {
-      const match = calculatePeerCompatibility(profile, peer)
+      const match = calculatePeerCompatibility(prof, peer)
       return { ...peer, match }
     })
 
@@ -315,75 +418,94 @@ export default function PeerMentorshipPage() {
       </div>
 
       {/* ── RECOMMENDED PEER CARDS GRID ────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 40 }}>
-        {filteredPeers.map((peer) => {
-          const m = peer.match
-          const isSkillExchange = m.category === 'skillExchange'
+      {filteredPeers.length > 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 40 }}>
+          {filteredPeers.map((peer) => {
+            const m = peer.match
+            const isSkillExchange = m.category === 'skillExchange'
 
-          return (
-            <SCard key={peer.id} style={{
-              padding: 24, borderRadius: 20, position: 'relative',
-              border: isSkillExchange ? '2px solid #3b82f6' : '1px solid var(--s-border)',
-              boxShadow: isSkillExchange ? '0 8px 24px rgba(59, 130, 246, 0.12)' : 'none'
-            }}>
-              {/* Category Badge & Compatibility % */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 10,
-                  background: isSkillExchange ? '#eff6ff' : '#f1f5f9',
-                  color: isSkillExchange ? '#2563eb' : '#475569'
-                }}>
-                  {m.categoryLabel}
-                </span>
+            return (
+              <SCard key={peer.id} style={{
+                padding: 24, borderRadius: 20, position: 'relative',
+                border: isSkillExchange ? '2px solid #3b82f6' : '1px solid var(--s-border)',
+                boxShadow: isSkillExchange ? '0 8px 24px rgba(59, 130, 246, 0.12)' : 'none'
+              }}>
+                {/* Category Badge & Compatibility % */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 10,
+                    background: isSkillExchange ? '#eff6ff' : '#f1f5f9',
+                    color: isSkillExchange ? '#2563eb' : '#475569'
+                  }}>
+                    {m.categoryLabel}
+                  </span>
 
-                <span style={{ fontSize: 14, fontWeight: 900, color: '#059669', background: '#ecfdf5', padding: '4px 10px', borderRadius: 12 }}>
-                  {m.matchScore}% Match
-                </span>
-              </div>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: '#059669', background: '#ecfdf5', padding: '4px 10px', borderRadius: 12 }}>
+                    {m.matchScore}% Match
+                  </span>
+                </div>
 
-              {/* Peer Info (Privacy Safe: Display Name Only) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-                <div style={{ fontSize: 34 }}>{peer.avatar}</div>
-                <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
-                    {peer.name}
-                  </h3>
-                  <div style={{ fontSize: 12, color: 'var(--s-primary)', fontWeight: 700 }}>
-                    {peer.degree} • {peer.domain} ({peer.currentYear})
+                {/* Peer Info (Privacy Safe: Display Name Only) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 34 }}>{peer.avatar}</div>
+                  <div>
+                    <h3 style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+                      {peer.name}
+                    </h3>
+                    <div style={{ fontSize: 12, color: 'var(--s-primary)', fontWeight: 700 }}>
+                      {peer.degree} • {peer.domain} ({peer.currentYear})
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Transparent Compatibility Explanation */}
-              <div style={{ fontSize: 12, color: '#475569', background: '#f8fafc', padding: 10, borderRadius: 10, marginBottom: 14, lineHeight: 1.4 }}>
-                💡 <strong>Why matched:</strong> {m.explanation}
-              </div>
+                {/* Transparent Compatibility Explanation */}
+                <div style={{ fontSize: 12, color: '#475569', background: '#f8fafc', padding: 10, borderRadius: 10, marginBottom: 14, lineHeight: 1.4 }}>
+                  💡 <strong>Why matched:</strong> {m.explanation}
+                </div>
 
-              {/* Skills Tags */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-                {peer.skills.map((sk, idx) => (
-                  <span key={idx} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 8, background: '#e2e8f0', color: '#334155', fontWeight: 700 }}>
-                    {sk}
-                  </span>
-                ))}
-              </div>
+                {/* Skills Tags */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                  {peer.skills.map((sk, idx) => (
+                    <span key={idx} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 8, background: '#e2e8f0', color: '#334155', fontWeight: 700 }}>
+                      {sk}
+                    </span>
+                  ))}
+                </div>
 
-              {/* Connect Button */}
-              <button
-                type="button"
-                onClick={() => setRequestPeerModal(peer)}
-                style={{
-                  width: '100%', padding: '12px', borderRadius: 12, background: '#0284c7', color: '#fff',
-                  fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', gap: 8
-                }}
-              >
-                <FiPlusCircle size={16} /> Send Peer Connection Request
-              </button>
-            </SCard>
-          )
-        })}
-      </div>
+                {/* Connect Button */}
+                <button
+                  type="button"
+                  onClick={() => setRequestPeerModal(peer)}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 12, background: '#0284c7', color: '#fff',
+                    fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', gap: 8
+                  }}
+                >
+                  <FiPlusCircle size={16} /> Send Peer Connection Request
+                </button>
+              </SCard>
+            )
+          })}
+        </div>
+      ) : (
+        <SCard style={{ padding: 40, textAlign: 'center', borderRadius: 20, marginBottom: 40 }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>🤝</div>
+          <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 8px' }}>
+            No peers matched under this specific filter option yet.
+          </h3>
+          <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '0 0 20px' }}>
+            Switch to "All Intelligent Recommendations" to explore all available domain peers.
+          </p>
+          <button
+            type="button"
+            onClick={() => setActiveCategory('all')}
+            style={{ padding: '10px 20px', borderRadius: 12, background: '#0284c7', color: '#fff', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+          >
+            Show All Peers →
+          </button>
+        </SCard>
+      )}
 
       {/* ── PEER REQUEST MODAL ──────────────────────────────────────────────── */}
       {requestPeerModal && (

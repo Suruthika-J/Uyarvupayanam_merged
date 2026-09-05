@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { useCollegeProfile } from '../../context/CollegeProfileContext'
 import { getCollegeFeatureEligibility, getDashboardWidgetPriority } from '../../services/collegeFeatureEligibilityEngine'
+import { getCollegePracticeConfig } from '../../services/collegePracticeEngine'
 import axios from 'axios'
 import { SBtn, SCard, SBadge, SLoader } from '../../components/ui'
 import {
@@ -26,6 +27,7 @@ export default function CollegeDashboardPage() {
   // Feature Eligibility Flags for current student profile
   const flags = getCollegeFeatureEligibility(profile)
   const prioritizedWidgets = getDashboardWidgetPriority(profile)
+  const practiceConfig = getCollegePracticeConfig(profile)
 
   useEffect(() => {
     const fetchDashboardSummary = async () => {
@@ -175,25 +177,25 @@ export default function CollegeDashboardPage() {
             </SCard>
           )}
 
-          {/* DYNAMIC DOMAIN CARD: CODING ARENA (If eligible for tech/software domains) */}
-          {flags.codingArena && !hiddenWidgetIds.includes('coding-arena') && (
-            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #3b82f6' }}>
+          {/* DYNAMIC PROFILE-DRIVEN PRACTICE CARD (Domain-Specific) */}
+          {!hiddenWidgetIds.includes('practice-lab') && (
+            <SCard style={{ padding: 28, borderRadius: 20, borderLeft: '5px solid #0284c7' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FiCode color="#3b82f6" size={18} /> Coding Arena & 1v1 Peer Competitions
+                  <FiActivity color="#0284c7" size={18} /> {practiceConfig.practiceTitle}
                 </div>
-                <SBadge color="blue">Domain Relevant</SBadge>
+                <SBadge color="blue">{practiceConfig.badge}</SBadge>
               </div>
               <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 16px', lineHeight: 1.5 }}>
-                Solve DSA problems, match against peers in your academic year, and test your solutions in our execution sandbox.
+                {practiceConfig.practiceDescription}
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button
                   type="button"
-                  onClick={() => navigate('/college/career/coding-arena')}
-                  style={{ padding: '10px 20px', borderRadius: 10, background: '#3b82f6', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}
+                  onClick={() => navigate('/college/practice')}
+                  style={{ padding: '10px 20px', borderRadius: 10, background: '#0284c7', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}
                 >
-                  Enter Coding Arena →
+                  Enter {practiceConfig.navLabel} →
                 </button>
               </div>
             </SCard>
@@ -432,7 +434,7 @@ export default function CollegeDashboardPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { label: 'Focus Mode', path: '/college/academic/focus', bg: '#0284c7', color: '#fff', icon: FiClock },
-                { label: 'Coding Arena', path: '/college/career/coding-arena', bg: '#ede9fe', color: '#6d28d9', icon: FiCode },
+                { label: practiceConfig.navLabel, path: '/college/practice', bg: '#ede9fe', color: '#6d28d9', icon: practiceConfig.isComputing ? FiCode : FiActivity },
                 { label: 'Ask AI', path: '/college/advisor/chat', bg: '#f1f5f9', color: '#475569', icon: FiCompass },
                 { label: 'Study Planner', path: '/college/academic/planner', bg: '#fef3c7', color: '#b45309', icon: FiSliders },
                 { label: 'Peer Network', path: '/college/community/mentors', bg: '#d1fae5', color: '#047857', icon: FiUsers },

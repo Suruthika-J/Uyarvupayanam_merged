@@ -501,49 +501,188 @@ Return JSON object with keys:
   }
 };
 
+// ── Helper: Dynamic Domain Defaults for Student Profiles ──────────────────────
+function getDomainDefaults(profile = {}) {
+  const normText = `${profile?.degreeProgramme || ''} ${profile?.domain || ''} ${profile?.field || ''} ${profile?.specialization || ''}`.toLowerCase();
+
+  // 1. Medicine / Homeopathy / AYUSH / Health / Nursing / Dental / Pharmacy
+  if (normText.includes('homeo') || normText.includes('bhms') || normText.includes('medicine') || normText.includes('mbbs') || normText.includes('bams') || normText.includes('bds') || normText.includes('clinical') || normText.includes('health') || normText.includes('pharm') || normText.includes('nursing')) {
+    return {
+      degree: profile?.degreeProgramme || "BHMS (Bachelor of Homeopathic Medicine)",
+      domain: profile?.domain || "Clinical & Surgical Specialties",
+      skills: ["Clinical Diagnostics & Examination", "Homoeopathic Materia Medica", "Pharmacology & Therapeutics", "Patient Assessment & Case Taking"],
+      certs: ["Clinical Research Certification", "Medical Coding & Health Informatics", "Hospital Management Certification"],
+      projects: [
+        {
+          title: "Clinical Case Analysis & Therapeutics Study",
+          description: "In-depth clinical evaluation of patient symptom patterns, differential diagnosis, and therapeutic intervention outcomes.",
+          techStack: "Clinical Diagnostics, Case Taking, Materia Medica, GCP Ethics"
+        }
+      ],
+      targetCareer: "Clinical Specialist / Medical Officer",
+      missingAlerts: ["Clinical Case Portfolio", "Medical Registration Details"]
+    };
+  }
+
+  // 2. Electronics / Embedded / Electrical / Telecom
+  if (normText.includes('electronics') || normText.includes('ece') || normText.includes('embedded') || normText.includes('vlsi') || normText.includes('electrical') || normText.includes('eee')) {
+    return {
+      degree: profile?.degreeProgramme || "B.E. Electronics & Communication Engineering",
+      domain: profile?.domain || "Electronics & Embedded Systems",
+      skills: ["Embedded Systems & RTOS", "Microcontroller Architecture (ARM/ESP32)", "VLSI Chip Design", "Digital Signal Processing"],
+      certs: ["Embedded Systems & IoT Certification", "VLSI Chip Design Masterclass"],
+      projects: [
+        {
+          title: "IoT Embedded Sensor System",
+          description: "Hardware-software co-design project utilizing sensor networks, microcontrollers, and wireless communication protocols.",
+          techStack: "Embedded C, ARM Microcontrollers, MQTT, Proteus"
+        }
+      ],
+      targetCareer: "Embedded Systems Engineer",
+      missingAlerts: ["Hardware Project Demo Link", "VLSI Simulation Portfolio"]
+    };
+  }
+
+  // 3. Mechanical / Automobile / CAD
+  if (normText.includes('mechanical') || normText.includes('cad') || normText.includes('automobile') || normText.includes('thermal') || normText.includes('mechatronics')) {
+    return {
+      degree: profile?.degreeProgramme || "B.E. Mechanical Engineering",
+      domain: profile?.domain || "Mechanical & Automotive Engineering",
+      skills: ["3D CAD Modeling (SolidWorks / CATIA)", "Finite Element Analysis (ANSYS FEA)", "Thermodynamics & Fluid Mechanics", "Machine Element Design"],
+      certs: ["CAD/CAM & FEA Design Certification", "SolidWorks Certified Associate (CSWA)"],
+      projects: [
+        {
+          title: "Automotive Component FEA Stress & Thermal Analysis",
+          description: "Structural finite element analysis and CAD modeling of mechanical components under high thermal loads.",
+          techStack: "SolidWorks, ANSYS Workbench, GD&T, MATLAB"
+        }
+      ],
+      targetCareer: "Mechanical Design Engineer",
+      missingAlerts: ["CAD Portfolio Renderings", "FEA Analysis Reports"]
+    };
+  }
+
+  // 4. Civil / Architecture / Structural
+  if (normText.includes('civil') || normText.includes('structural') || normText.includes('arch') || normText.includes('construction')) {
+    return {
+      degree: profile?.degreeProgramme || "B.E. Civil Engineering",
+      domain: profile?.domain || "Structural & Civil Infrastructure",
+      skills: ["Structural Design & RCC", "AutoCAD & Revit Building Modeling", "Geotechnical & Soil Mechanics", "Construction Project Management"],
+      certs: ["AutoCAD & Revit Structural Certification", "Construction Safety & Management"],
+      projects: [
+        {
+          title: "Multi-Story Reinforced Concrete Structure Design",
+          description: "Structural design and seismic load analysis for multi-story residential building using modern CAD tools.",
+          techStack: "STAAD.Pro, AutoCAD, ETABS, RCC Standards"
+        }
+      ],
+      targetCareer: "Structural Engineer",
+      missingAlerts: ["Structural Blueprint Portfolio", "AutoCAD Drawing Files"]
+    };
+  }
+
+  // 5. Commerce / Finance / Accounting / CA / Management
+  if (normText.includes('commerce') || normText.includes('b.com') || normText.includes('finance') || normText.includes('account') || normText.includes('tax') || normText.includes('audit') || normText.includes('bba') || normText.includes('mba')) {
+    return {
+      degree: profile?.degreeProgramme || "B.Com (Bachelor of Commerce)",
+      domain: profile?.domain || "Accounting & Financial Management",
+      skills: ["Financial Accounting & IND-AS", "Corporate Taxation & GST Compliance", "Tally Prime & Ledger Audit", "Excel Financial Modeling & Valuation"],
+      certs: ["Tally & GST Accounting Certification", "Financial Modeling & Valuation (Excel)"],
+      projects: [
+        {
+          title: "Corporate Financial Statement & GST Audit Analysis",
+          description: "Comprehensive financial ratio analysis, tax liability computation, and internal control audit of corporate records.",
+          techStack: "Tally Prime, MS Excel, Financial Ratios, GST Portal"
+        }
+      ],
+      targetCareer: "Financial Analyst / Accountant",
+      missingAlerts: ["Tally / Excel Financial Models", "Audit Project Case Studies"]
+    };
+  }
+
+  // 6. Law / Legal
+  if (normText.includes('law') || normText.includes('legal') || normText.includes('ll.b') || normText.includes('llb') || normText.includes('advocacy') || normText.includes('jurisprudence')) {
+    return {
+      degree: profile?.degreeProgramme || "B.A. LL.B. (Integrated)",
+      domain: profile?.domain || "Corporate & Commercial Law",
+      skills: ["Legal Research & Case Precedent Analysis", "Legal Drafting & Pleading Construction", "Corporate Contract Review & Compliance", "Constitutional Law & Appellate Advocacy"],
+      certs: ["Cyber Law Certification", "Intellectual Property Rights (IPR) Certification"],
+      projects: [
+        {
+          title: "Corporate Contract Drafting & Litigation Case Study",
+          description: "Comprehensive legal research, case precedent synthesis, and draft pleadings for corporate commercial disputes.",
+          techStack: "Legal Research (Manupatra/SCC), Contract Drafting, Appellate Advocacy"
+        }
+      ],
+      targetCareer: "Legal Associate / Corporate Counsel",
+      missingAlerts: ["Moot Court Competition Briefs", "Legal Drafting Samples"]
+    };
+  }
+
+  // 7. Pure Sciences / Physics / Chemistry / Biology / Math
+  if (normText.includes('pure science') || normText.includes('b.sc') || normText.includes('m.sc') || normText.includes('microbiology') || normText.includes('biotech') || normText.includes('physics') || normText.includes('chemistry')) {
+    return {
+      degree: profile?.degreeProgramme || "B.Sc (Bachelor of Science)",
+      domain: profile?.domain || "Scientific Research & Analytics",
+      skills: ["Scientific Research Methodology", "Laboratory Instrumentation & Assays", "Data Analysis & Scientific Graphing", "Experimental Design & Hypothesis Testing"],
+      certs: ["Bioinformatics & Data Analysis Certification", "Research Methodology Masterclass"],
+      projects: [
+        {
+          title: "Experimental Assay & Spectroscopic Data Analysis",
+          description: "Quantitative analysis of experimental samples utilizing spectrophotometry and statistical validation models.",
+          techStack: "Spectrophotometry, Python/R Data Analysis, Scientific Method"
+        }
+      ],
+      targetCareer: "Research Analyst / Laboratory Specialist",
+      missingAlerts: ["Laboratory Assay Reports", "Research Paper Publications"]
+    };
+  }
+
+  // 8. Default fallback: Computer Science / Engineering / Software
+  return {
+    degree: profile?.degreeProgramme || "B.E. Computer Science and Engineering",
+    domain: profile?.domain || "Computer Science & Information Technology",
+    skills: ["Data Structures & Algorithms", "Full Stack Web Development", "Python for Computing", "SQL & Database Design"],
+    certs: ["Full Stack Web Development Certification", "Cloud Architect Certification"],
+    projects: [
+      {
+        title: "Full Stack Academic Web Portal",
+        description: "Responsive web application with RESTful APIs, user authentication, and relational database management.",
+        techStack: "React, Node.js, Express, MongoDB/SQL"
+      }
+    ],
+    targetCareer: "Software Engineer",
+    missingAlerts: ["GitHub Repository Links", "Live Demo Deployments"]
+  };
+}
+
 // ── 8. Smart Practice Questions Generator ─────────────────────────────────────
+// ── 8. Smart Practice Engine & Questions Generator ─────────────────────────────
+exports.getPracticeConfig = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id;
+    const profile = await CollegeStudentProfile.findOne({ userId: studentId });
+    const { getStudentPracticeConfig } = require("../services/collegePracticeEngine");
+    const practiceConfig = getStudentPracticeConfig(profile || {});
+    return res.json({ success: true, practiceConfig });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to get practice engine configuration" });
+  }
+};
+
 exports.generatePracticeQuestions = async (req, res) => {
   try {
     const studentId = req.student?.id || req.student?._id;
-    const { subject, difficulty, count } = req.body;
+    const { subject, difficulty, count, practiceType, topic } = req.body;
 
     const profile = await CollegeStudentProfile.findOne({ userId: studentId });
-    const domain = profile?.domain || "Computer Science & Engineering";
+    const { generateDomainPracticeSession } = require("../services/collegePracticeEngine");
+    const result = await generateDomainPracticeSession(profile || {}, { subject, difficulty, count, practiceType, topic });
 
-    const prompt = `Generate ${count || 5} multiple-choice academic practice questions for a college student in Domain: "${domain}", Subject: "${subject || "Domain Core"}", Difficulty: "${difficulty || "Medium"}".
-
-Return JSON array of objects with keys:
-- "id": string
-- "question": string
-- "options": array of 4 strings
-- "correctIndex": integer (0 to 3)
-- "topic": string
-- "explanation": string
-`;
-
-    const fallback = [
-      {
-        id: "p1",
-        question: `In ${domain}, what is the primary benefit of modular software/system design?`,
-        options: ["Increased coupling", "High maintainability and reusability", "Slower execution speed", "Eliminates documentation"],
-        correctIndex: 1,
-        topic: "System Design",
-        explanation: "Modular design decouples components, making code easier to test, maintain, and reuse."
-      },
-      {
-        id: "p2",
-        question: `Which data structure provides average O(1) key-based lookups?`,
-        options: ["Array", "Linked List", "Hash Table / Dictionary", "Binary Search Tree"],
-        correctIndex: 2,
-        topic: "Data Structures",
-        explanation: "Hash Tables utilize hash functions to map keys directly to buckets for O(1) average lookup."
-      }
-    ];
-
-    const questions = await queryGrokJson(prompt, "Respond strictly in raw JSON array.", fallback);
-    return res.json({ success: true, questions });
+    return res.json({ success: true, practiceConfig: result.practiceConfig, questions: result.questions });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Failed to generate practice questions" });
+    console.error("Generate practice error:", err);
+    res.status(500).json({ success: false, message: "Failed to generate practice session" });
   }
 };
 
@@ -607,45 +746,242 @@ STRICT RULE: Give direct, practical academic and career advice strictly tailored
   }
 };
 
-// ── 10. Intelligent Resume Builder Assistance ─────────────────────────────────
+// ── Helper: Domain-Specific Section Titles & Terminology Configuration ─────
+function getDomainSectionConfig(profile = {}) {
+  const normText = `${profile?.degreeProgramme || ''} ${profile?.domain || ''} ${profile?.field || ''} ${profile?.specialization || ''}`.toLowerCase();
+
+  if (normText.includes('homeo') || normText.includes('bhms') || normText.includes('medicine') || normText.includes('mbbs') || normText.includes('bams') || normText.includes('bds') || normText.includes('clinical') || normText.includes('health') || normText.includes('pharm') || normText.includes('nursing')) {
+    return {
+      domainKey: "medicine",
+      summaryTitle: "Professional & Clinical Summary",
+      competenciesTitle: "Clinical & Academic Competencies",
+      projectsTitle: "Clinical Case Studies & Applied Research",
+      certificationsTitle: "Medical & Clinical Certifications",
+      defaultCareerTarget: "Clinical Specialist / Medical Officer",
+      emptyProjectPrompt: "+ Add a Clinical Case Study or Research Assignment",
+      emptyCertPrompt: "+ Add a Medical / Clinical Certification or Workshop",
+      suggestedMissing: ["Add Academic CGPA", "Add Clinical Exposure", "Add Medical Seminars / Workshops"]
+    };
+  }
+
+  if (normText.includes('law') || normText.includes('legal') || normText.includes('ll.b') || normText.includes('llb') || normText.includes('advocacy') || normText.includes('jurisprudence')) {
+    return {
+      domainKey: "law",
+      summaryTitle: "Legal & Professional Summary",
+      competenciesTitle: "Legal Research & Advocacy Competencies",
+      projectsTitle: "Case Law Studies & Moot Court Drafts",
+      certificationsTitle: "Legal & Regulatory Certifications",
+      defaultCareerTarget: "Legal Associate / Corporate Counsel",
+      emptyProjectPrompt: "+ Add a Moot Court Brief or Case Study",
+      emptyCertPrompt: "+ Add a Legal / Regulatory Certification",
+      suggestedMissing: ["Add Academic CGPA", "Add Moot Court Experience", "Add Legal Drafting Samples"]
+    };
+  }
+
+  if (normText.includes('commerce') || normText.includes('b.com') || normText.includes('finance') || normText.includes('account') || normText.includes('tax') || normText.includes('audit') || normText.includes('bba') || normText.includes('mba')) {
+    return {
+      domainKey: "commerce",
+      summaryTitle: "Professional & Financial Summary",
+      competenciesTitle: "Accounting & Financial Competencies",
+      projectsTitle: "Corporate Financial & Audit Analysis",
+      certificationsTitle: "Accounting & Finance Certifications",
+      defaultCareerTarget: "Financial Analyst / Accountant",
+      emptyProjectPrompt: "+ Add a Financial Analysis or Audit Project",
+      emptyCertPrompt: "+ Add an Accounting or Tally Certification",
+      suggestedMissing: ["Add Academic CGPA", "Add Tally / Excel Models", "Add Audit Case Studies"]
+    };
+  }
+
+  if (normText.includes('electronics') || normText.includes('ece') || normText.includes('embedded') || normText.includes('vlsi') || normText.includes('electrical') || normText.includes('eee')) {
+    return {
+      domainKey: "electronics",
+      summaryTitle: "Professional & Technical Summary",
+      competenciesTitle: "Electronics & Embedded Systems Competencies",
+      projectsTitle: "Hardware & Microcontroller Projects",
+      certificationsTitle: "Embedded & Technical Certifications",
+      defaultCareerTarget: "Embedded Systems Engineer",
+      emptyProjectPrompt: "+ Add an Embedded System or Hardware Project",
+      emptyCertPrompt: "+ Add an Embedded / Hardware Certification",
+      suggestedMissing: ["Add Academic CGPA", "Add Hardware Demo Links", "Add Simulation Reports"]
+    };
+  }
+
+  if (normText.includes('mechanical') || normText.includes('cad') || normText.includes('automobile') || normText.includes('thermal')) {
+    return {
+      domainKey: "mechanical",
+      summaryTitle: "Professional & Engineering Summary",
+      competenciesTitle: "Mechanical Design & Simulation Competencies",
+      projectsTitle: "CAD Modeling & FEA Analysis Projects",
+      certificationsTitle: "CAD / CAM & Engineering Certifications",
+      defaultCareerTarget: "Mechanical Design Engineer",
+      emptyProjectPrompt: "+ Add a CAD / Mechanical Design Project",
+      emptyCertPrompt: "+ Add a SolidWorks or FEA Certification",
+      suggestedMissing: ["Add Academic CGPA", "Add CAD Renderings", "Add FEA Reports"]
+    };
+  }
+
+  return {
+    domainKey: "engineering",
+    summaryTitle: "Professional & Technical Summary",
+    competenciesTitle: "Key Technical Competencies",
+    projectsTitle: "Portfolio & Academic Projects",
+    certificationsTitle: "Recognized Certifications",
+    defaultCareerTarget: "Software Engineer",
+    emptyProjectPrompt: "+ Add a Software Project",
+    emptyCertPrompt: "+ Add a Technical Certification",
+    suggestedMissing: ["Add Academic CGPA", "Add Project Repository Links", "Add Certifications"]
+  };
+}
+
+// ── 10. Intelligent Resume Builder Assistance (Zero-Fabrication Source of Truth) ──
 exports.generateResumeSuggestions = async (req, res) => {
   try {
     const studentId = req.student?.id || req.student?._id;
     const profile = await CollegeStudentProfile.findOne({ userId: studentId });
 
-    const studentName = req.student?.name || "College Student";
-    const degree = profile?.degreeProgramme || "B.E. Computer Science and Engineering";
-    const domain = profile?.domain || "Computer Science";
-    const cgpa = profile?.cgpa || "8.4";
-    const skills = profile?.skills?.length > 0 ? profile.skills : ["Python", "Data Structures", "SQL", "React"];
-    const certs = profile?.certifications?.length > 0 ? profile.certifications : ["AWS Certified Cloud Practitioner"];
-    const projects = profile?.projects?.length > 0 ? profile.projects : [
-      { title: "AI Academic Portal", description: "Full stack student career recommendation portal.", techStack: "React, Node.js, MongoDB" }
-    ];
-    const targetCareer = profile?.targetCareer || profile?.careerInterests?.[0] || "Software Engineer";
+    const sectionConfig = getDomainSectionConfig(profile || {});
+    const studentName = req.student?.name || profile?.name || "College Student";
+    const degree = profile?.degreeProgramme || "Undergraduate Degree";
+    const domain = profile?.domain || profile?.field || "Academic Focus";
+    const specialization = profile?.specialization || "";
+    const currentYear = profile?.currentYear || "Undergraduate";
+    const currentSemester = profile?.currentSemester || "";
+    const cgpa = profile?.cgpa || "";
+    const rawTargetCareer = profile?.targetCareer || profile?.targetCareerPath || "";
+    let targetCareer = rawTargetCareer;
 
-    let strengthScore = 75;
+    if (!targetCareer) {
+      if (Array.isArray(profile?.careerInterests) && profile.careerInterests.length > 0) {
+        if (sectionConfig.domainKey === "medicine" || sectionConfig.domainKey === "law" || sectionConfig.domainKey === "commerce") {
+          const nonTechInterests = profile.careerInterests.filter(ci => {
+            const lower = (ci || "").toLowerCase();
+            return !lower.includes("software") && !lower.includes("developer") && !lower.includes("ai & machine learning") && !lower.includes("product development");
+          });
+          targetCareer = nonTechInterests[0] || "";
+        } else {
+          targetCareer = profile.careerInterests[0];
+        }
+      }
+    }
+
+    if (!targetCareer) {
+      targetCareer = sectionConfig.defaultCareerTarget || "";
+    }
+
+    // 1. Gather Genuine Student Skills (No Fabricated CS Skills)
+    let genuineSkills = [];
+    if (Array.isArray(profile?.skills) && profile.skills.length > 0) {
+      genuineSkills.push(...profile.skills);
+    }
+    if (Array.isArray(profile?.selfReportedSkills) && profile.selfReportedSkills.length > 0) {
+      profile.selfReportedSkills.forEach(s => {
+        if (s.name && !genuineSkills.includes(s.name)) genuineSkills.push(s.name);
+      });
+    }
+    if (Array.isArray(profile?.onboardingBaseline?.strengths) && profile.onboardingBaseline.strengths.length > 0) {
+      profile.onboardingBaseline.strengths.forEach(s => {
+        if (s && !genuineSkills.includes(s)) genuineSkills.push(s);
+      });
+    }
+
+    genuineSkills = [...new Set(genuineSkills.map(s => String(s).trim()))].filter(Boolean);
+
+    // STRICT DOMAIN GATE: Purge irrelevant CS skills for non-tech students unless student has explicitly declared a tech career target
+    if (sectionConfig.domainKey === "medicine" || sectionConfig.domainKey === "law" || sectionConfig.domainKey === "commerce") {
+      const isTargetTech = (targetCareer || '').toLowerCase().includes("software") || (targetCareer || '').toLowerCase().includes("developer");
+      if (!isTargetTech) {
+        genuineSkills = genuineSkills.filter(s => {
+          const lower = s.toLowerCase();
+          return !lower.includes("python") && !lower.includes("data science") && !lower.includes("react") && !lower.includes("node") && !lower.includes("mongodb") && !lower.includes("aws") && !lower.includes("problem solving & logic");
+        });
+      }
+    }
+
+    // 2. STRICT RULE: Projects and Certifications MUST come only from saved student profile data.
+    // If student has no saved projects or certifications, return empty arrays []. DO NOT FABRICATE DEMO DATA.
+    const genuineProjects = (Array.isArray(profile?.projects) && profile.projects.length > 0) ? profile.projects : [];
+    const genuineCerts = (Array.isArray(profile?.certifications) && profile.certifications.length > 0) ? profile.certifications : [];
+
+    // 3. Dynamic Profile-Grounded Professional Summary
+    const specText = specialization ? ` (${specialization})` : "";
+    const cgpaText = cgpa ? ` (CGPA: ${cgpa})` : "";
+    const skillsSummaryText = genuineSkills.length > 0 ? ` Developing competencies in ${genuineSkills.slice(0, 3).join(", ")}.` : "";
+    const careerSummaryText = targetCareer
+      ? ` Focusing on building domain knowledge and practical experience for ${targetCareer} roles.`
+      : ` Actively pursuing academic excellence and clinical/practical exposure in ${domain}.`;
+
+    const summary = `${currentYear} ${degree} student specializing in ${domain}${specText}${cgpaText}.${skillsSummaryText}${careerSummaryText}`;
+
+    // 4. Domain & Year-Aware Completeness Engine
+    let strengthScore = 100;
     const missingSections = [];
-    if (!profile?.cgpa) { strengthScore -= 10; missingSections.push("Academic CGPA"); }
-    if (!profile?.certifications?.length) { strengthScore -= 10; missingSections.push("Industry Certifications"); }
-    if (!profile?.projects?.length) { strengthScore -= 15; missingSections.push("Portfolio Projects"); }
+    if (!cgpa) { strengthScore -= 15; missingSections.push("Academic CGPA / Grade"); }
+    if (genuineSkills.length === 0) { strengthScore -= 20; missingSections.push("Key Competencies"); }
+    if (genuineProjects.length === 0) {
+      strengthScore -= 20;
+      if (sectionConfig.domainKey === "medicine") missingSections.push("Clinical Case Studies / Exposure");
+      else if (sectionConfig.domainKey === "law") missingSections.push("Moot Court / Case Studies");
+      else missingSections.push("Portfolio Projects / Assignments");
+    }
+    if (genuineCerts.length === 0) {
+      strengthScore -= 15;
+      if (sectionConfig.domainKey === "medicine") missingSections.push("Medical / Clinical Workshops");
+      else missingSections.push("Certifications / Training");
+    }
+    if (!targetCareer) { strengthScore -= 10; missingSections.push("Primary Career Goal"); }
 
     const resumeData = {
       name: studentName,
       degree,
       domain,
+      specialization,
+      currentYear,
+      currentSemester,
       cgpa,
-      professionalSummary: `Motivated ${degree} student specializing in ${domain} (CGPA ${cgpa}). Possesses core competencies in ${skills.slice(0, 3).join(", ")} with practical project experience. Actively building target portfolio for ${targetCareer} placement.`,
-      highlightSkills: skills,
-      certifications: certs,
-      suggestedProjects: projects,
-      resumeStrengthScore: Math.max(50, strengthScore),
-      missingSectionsToImprove: missingSections.length > 0 ? missingSections : ["Add competitive coding profile link"]
+      targetCareer,
+      sectionConfig,
+      professionalSummary: summary,
+      highlightSkills: genuineSkills,
+      certifications: genuineCerts,
+      suggestedProjects: genuineProjects, // Preserved key for frontend compatibility
+      projects: genuineProjects,
+      resumeStrengthScore: Math.max(40, strengthScore),
+      missingSectionsToImprove: missingSections.length > 0 ? missingSections : ["Add extra-curricular activities or publication details"]
     };
 
     return res.json({ success: true, resumeData, profile });
   } catch (err) {
+    console.error("Resume suggestions error:", err);
     res.status(500).json({ success: false, message: "Failed to generate resume suggestions" });
+  }
+};
+
+// ── 10b. Save / Update Resume Content Directly ────────────────────────────────
+exports.saveResumeData = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id;
+    const { professionalSummary, skills, certifications, projects, targetCareer } = req.body;
+
+    let profile = await CollegeStudentProfile.findOne({ userId: studentId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    if (skills !== undefined && Array.isArray(skills)) profile.skills = skills;
+    if (certifications !== undefined && Array.isArray(certifications)) profile.certifications = certifications;
+    if (projects !== undefined && Array.isArray(projects)) profile.projects = projects;
+    if (targetCareer !== undefined) profile.targetCareer = targetCareer;
+
+    await profile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Resume updated and saved to student profile successfully.",
+      profile
+    });
+  } catch (err) {
+    console.error("Save resume error:", err);
+    res.status(500).json({ success: false, message: "Failed to save resume updates" });
   }
 };
 
@@ -656,32 +992,90 @@ exports.generateInterviewQuestions = async (req, res) => {
     const profile = await CollegeStudentProfile.findOne({ userId: studentId });
     const { interviewType, targetRole } = req.body;
 
-    const role = targetRole || profile?.targetCareer || "Software Developer";
+    const defaults = getDomainDefaults(profile || {});
+    const role = targetRole || profile?.targetCareer || defaults.targetCareer;
     const type = interviewType || "Technical";
 
-    const questions = [
-      {
-        id: "i1",
-        question: `How do you approach debugging a memory leak or runtime bottleneck in a ${role} application?`,
-        category: "Technical & System Logic",
-        idealAnswerKeyPoints: ["Profiling tools", "Memory allocation analysis", "State isolation"],
-        sampleGoodAnswer: "I use profiling tools to monitor memory allocation, identify uncollected references, and systematically test component boundaries."
-      },
-      {
-        id: "i2",
-        question: `Explain how you optimize database query execution time for large datasets in ${role} systems.`,
-        category: "Database & Backend Architecture",
-        idealAnswerKeyPoints: ["Indexing strategies", "EXPLAIN execution plans", "Query caching"],
-        sampleGoodAnswer: "I analyze query execution plans using EXPLAIN ANALYZE, add appropriate composite indexes, and implement query caching where beneficial."
-      },
-      {
-        id: "i3",
-        question: `Describe a technical challenge you resolved while working on a ${role} project.`,
-        category: "Behavioral & Applied Engineering",
-        idealAnswerKeyPoints: ["Problem identification", "Technical trade-offs", "Quantified results"],
-        sampleGoodAnswer: "I identified a blocking I/O bottleneck, refactored synchronous calls to asynchronous event handling, improving throughput by 40%."
-      }
-    ];
+    // Domain-aware interview questions fallback
+    const normRole = (role + " " + (profile?.degreeProgramme || '')).toLowerCase();
+    let questions = [];
+
+    if (normRole.includes("medicine") || normRole.includes("bhms") || normRole.includes("clinical") || normRole.includes("doctor")) {
+      questions = [
+        {
+          id: "i1",
+          question: `How do you structure clinical history taking and symptom evaluation for a complex patient case in ${role}?`,
+          category: "Clinical Diagnostics & Case Evaluation",
+          idealAnswerKeyPoints: ["Systemic symptom timeline", "Differential diagnosis", "Patient safety & consent"],
+          sampleGoodAnswer: "I take a chronological history of present illness, evaluate constitutional symptoms, perform systemic examination, and synthesize a differential diagnosis list."
+        },
+        {
+          id: "i2",
+          question: `Explain your approach to selecting therapeutic interventions while evaluating contraindications in ${role}.`,
+          category: "Pharmacology & Therapeutics",
+          idealAnswerKeyPoints: ["Etiological assessment", "Therapeutic dosage guidelines", "Patient risk profile"],
+          sampleGoodAnswer: "I review physiological drug mechanisms, cross-check patient systemic sensitivities, and choose evidence-based therapeutic options."
+        },
+        {
+          id: "i3",
+          question: `Describe a clinical case challenge you successfully managed during your training or internships.`,
+          category: "Clinical Case Practice",
+          idealAnswerKeyPoints: ["Initial clinical presentation", "Diagnostic milestone", "Patient recovery outcome"],
+          sampleGoodAnswer: "I systematically investigated atypical symptoms, identified the primary underlying condition, and coordinated an effective clinical care plan."
+        }
+      ];
+    } else if (normRole.includes("law") || normRole.includes("legal")) {
+      questions = [
+        {
+          id: "i1",
+          question: `How do you approach legal case research and binding precedent analysis for ${role} matters?`,
+          category: "Legal Research & Precedent Analysis",
+          idealAnswerKeyPoints: ["Statutory interpretation", "Ratio decidendi extraction", "Distinguishing case facts"],
+          sampleGoodAnswer: "I analyze relevant statutory provisions, cross-reference high court and supreme court ratios, and evaluate factual applicability."
+        },
+        {
+          id: "i2",
+          question: `Explain how you construct airtight commercial contracts and mitigate client liability in ${role}.`,
+          category: "Legal Drafting & Compliance",
+          idealAnswerKeyPoints: ["Indemnity clauses", "Dispute resolution mechanisms", "Regulatory compliance"],
+          sampleGoodAnswer: "I draft precise operative definitions, incorporate robust indemnity and arbitration clauses, and align terms with current statutory regulations."
+        }
+      ];
+    } else if (normRole.includes("commerce") || normRole.includes("finance") || normRole.includes("accountant")) {
+      questions = [
+        {
+          id: "i1",
+          question: `How do you evaluate corporate financial health and cash flow sustainability in ${role}?`,
+          category: "Financial Analysis & Valuation",
+          idealAnswerKeyPoints: ["Working capital ratios", "Free cash flow analysis", "Debt-to-equity leverage"],
+          sampleGoodAnswer: "I examine income statement trends, balance sheet liquidity ratios, and free cash flow generation capacity."
+        },
+        {
+          id: "i2",
+          question: `Explain your approach to maintaining tax compliance and internal controls during financial audits.`,
+          category: "Auditing & Tax Compliance",
+          idealAnswerKeyPoints: ["GST & direct tax rules", "Voucher reconciliation", "Internal audit protocols"],
+          sampleGoodAnswer: "I reconcile ledger balances with bank statements, verify tax compliance filings, and test internal transaction controls."
+        }
+      ];
+    } else {
+      questions = [
+        {
+          id: "i1",
+          question: `How do you approach problem solving and system design challenges in ${role}?`,
+          category: "Domain Engineering & System Logic",
+          idealAnswerKeyPoints: ["Requirement analysis", "Modular architecture", "Performance optimization"],
+          sampleGoodAnswer: "I analyze functional requirements, break down the problem into modular components, and systematically test performance boundaries."
+        },
+        {
+          id: "i2",
+          question: `Explain how you optimize project workflows and maintain quality standards in ${role} projects.`,
+          category: "Quality & Process Architecture",
+          idealAnswerKeyPoints: ["Version control / documentation", "Testing frameworks", "Continuous feedback"],
+          sampleGoodAnswer: "I enforce structured documentation, automated testing checks, and iterative peer review cycles."
+        }
+      ];
+    }
 
     return res.json({ success: true, targetRole: role, questions });
   } catch (err) {
@@ -692,38 +1086,125 @@ exports.generateInterviewQuestions = async (req, res) => {
 // ── 12. Peer Mentors Listing ──────────────────────────────────────────────────
 exports.getPeerMentors = async (req, res) => {
   try {
-    const mentors = [
-      {
-        id: "m1",
-        name: "Arun Kumar",
-        degree: "B.E. Computer Science (4th Year)",
-        college: "PSG Tech, Coimbatore",
-        expertise: ["Data Structures", "System Design", "Placement Prep"],
-        rating: 4.9,
-        available: true,
-        avatar: "👨‍💻"
-      },
-      {
-        id: "m2",
-        name: "Priya Sundaram",
-        degree: "M.Tech Data Science",
-        college: "Anna University, Chennai",
-        expertise: ["Machine Learning", "Python Analytics", "Research Papers"],
-        rating: 4.8,
-        available: true,
-        avatar: "👩‍🔬"
-      },
-      {
-        id: "m3",
-        name: "Karthik Raja",
-        degree: "B.Tech IT (Final Year)",
-        college: "CIT, Coimbatore",
-        expertise: ["Full Stack React/Node", "Cloud DevOps", "Hackathons"],
-        rating: 4.95,
-        available: true,
-        avatar: "🚀"
-      }
-    ];
+    const studentId = req.student?.id || req.student?._id;
+    const profile = await CollegeStudentProfile.findOne({ userId: studentId });
+    const normDegree = (profile?.degreeProgramme || profile?.domain || '').toLowerCase();
+
+    let mentors = [];
+    if (normDegree.includes("bhms") || normDegree.includes("mbbs") || normDegree.includes("medicine") || normDegree.includes("clinical")) {
+      mentors = [
+        {
+          id: "m_med1",
+          name: "Dr. Ananya Ramesh",
+          degree: "BHMS (Final Year)",
+          college: "Government Homoeopathic Medical College",
+          expertise: ["Clinical Diagnostics", "Materia Medica", "Case Taking"],
+          rating: 4.9,
+          available: true,
+          avatar: "👩‍⚕️"
+        },
+        {
+          id: "m_med2",
+          name: "Dr. Rajesh Kannan",
+          degree: "MD Homoeopathy (2nd Year)",
+          college: "National Institute of Homoeopathy",
+          expertise: ["Organon of Medicine", "Pharmacology & Therapeutics", "Clinical Research"],
+          rating: 4.95,
+          available: true,
+          avatar: "👨‍⚕️"
+        },
+        {
+          id: "m_med3",
+          name: "Swetha M",
+          degree: "B.Pharm (Final Year)",
+          college: "Madras Medical College",
+          expertise: ["Pharmacology", "Clinical Research", "Hospital Internship Prep"],
+          rating: 4.85,
+          available: true,
+          avatar: "💊"
+        }
+      ];
+    } else if (normDegree.includes("law") || normDegree.includes("legal")) {
+      mentors = [
+        {
+          id: "m_law1",
+          name: "Advocate Siddarth V",
+          degree: "LL.M Corporate Law",
+          college: "School of Excellence in Law, Chennai",
+          expertise: ["Legal Research", "Moot Court Prep", "Corporate Drafting"],
+          rating: 4.9,
+          available: true,
+          avatar: "⚖️"
+        },
+        {
+          id: "m_law2",
+          name: "Priya Sundaram",
+          degree: "B.A. LL.B (5th Year)",
+          college: "National Law School",
+          expertise: ["Constitutional Law", "Cyber Law & IPR", "Judicial Services"],
+          rating: 4.85,
+          available: true,
+          avatar: "👩‍⚖️"
+        }
+      ];
+    } else if (normDegree.includes("commerce") || normDegree.includes("b.com") || normDegree.includes("finance")) {
+      mentors = [
+        {
+          id: "m_comm1",
+          name: "Karthik Raja, CA",
+          degree: "CA Finalist & B.Com",
+          college: "Loyola College, Chennai",
+          expertise: ["Tally & GST", "Financial Valuation", "Auditing"],
+          rating: 4.95,
+          available: true,
+          avatar: "📊"
+        },
+        {
+          id: "m_comm2",
+          name: "Meera Krishnan",
+          degree: "MBA Finance (2nd Year)",
+          college: "DOMS Anna University",
+          expertise: ["Excel Financial Modeling", "Corporate Tax", "Investment Analysis"],
+          rating: 4.88,
+          available: true,
+          avatar: "💼"
+        }
+      ];
+    } else {
+      mentors = [
+        {
+          id: "m1",
+          name: "Arun Kumar",
+          degree: "B.E. Computer Science (4th Year)",
+          college: "PSG Tech, Coimbatore",
+          expertise: ["Data Structures", "System Design", "Placement Prep"],
+          rating: 4.9,
+          available: true,
+          avatar: "👨‍💻"
+        },
+        {
+          id: "m2",
+          name: "Priya Sundaram",
+          degree: "M.Tech Data Science",
+          college: "Anna University, Chennai",
+          expertise: ["Machine Learning", "Python Analytics", "Research Papers"],
+          rating: 4.8,
+          available: true,
+          avatar: "👩‍🔬"
+        },
+        {
+          id: "m3",
+          name: "Karthik Raja",
+          degree: "B.Tech IT (Final Year)",
+          college: "CIT, Coimbatore",
+          expertise: ["Full Stack React/Node", "Cloud DevOps", "Hackathons"],
+          rating: 4.95,
+          available: true,
+          avatar: "🚀"
+        }
+      ];
+    }
+
     return res.json({ success: true, mentors });
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to load mentors" });
@@ -746,6 +1227,8 @@ exports.getCollegeDashboardSummary = async (req, res) => {
     const savedItems = await SavedItem.find({ userId: studentId }).lean();
 
     const careers = await CollegeCareerCatalog.find({ isPublished: true }).lean();
+    const { getStudentPracticeConfig } = require("../services/collegePracticeEngine");
+    const practiceConfig = getStudentPracticeConfig(profile || {});
 
     // 1. Header & Greeting
     const hour = new Date().getHours();
@@ -927,7 +1410,7 @@ exports.getCollegeDashboardSummary = async (req, res) => {
       performanceSection: {
         cgpaTrend,
         avgAssessmentScore: avgScore,
-        recentAttempt: testResults[0] ? { title: testResults[0].testTitle || "Practice Test", score: testResults[0].score } : { title: "Data Structures Practice", score: 80 },
+        recentAttempt: testResults[0] ? { title: testResults[0].testTitle || "Practice Test", score: testResults[0].score } : { title: `${profile?.domain || 'Academic'} Diagnostic Practice`, score: 80 },
         studyConsistency
       },
       communitySection: {
@@ -938,7 +1421,7 @@ exports.getCollegeDashboardSummary = async (req, res) => {
       quickActions: [
         { label: "Ask AI", path: "/college/advisor/chat", bg: "#ede9fe", color: "#6d28d9", icon: "FiCompass" },
         { label: "Study Planner", path: "/college/academic/planner", bg: "#f1f5f9", color: "#475569", icon: "FiSliders" },
-        { label: "Take Assessment", path: "/college/study-tools/practice", bg: "#fef3c7", color: "#b45309", icon: "FiAward" },
+        { label: practiceConfig?.navLabel || "Practice Lab", path: "/college/practice", bg: "#fef3c7", color: "#b45309", icon: "FiAward" },
         { label: "View Roadmap", path: "/college/academic/roadmap", bg: "#d1fae5", color: "#047857", icon: "FiTarget" },
         { label: "Find Scholarships", path: "/college/scholarships", bg: "#e0f2fe", color: "#0369a1", icon: "FiBookmark" },
         { label: "Skill Gap", path: "/college/career/skill-gap", bg: "#dbeafe", color: "#1e40af", icon: "FiZap" },

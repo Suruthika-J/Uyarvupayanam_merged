@@ -96,10 +96,10 @@ export default function CodingArenaPage() {
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate('/college/dashboard')}
+            onClick={() => navigate('/college/practice')}
             style={{ padding: '12px 24px', borderRadius: 12, background: '#0284c7', color: '#fff', fontWeight: 800, border: 'none', cursor: 'pointer' }}
           >
-            Return to Personal Dashboard
+            Go to My Domain Practice Lab
           </button>
           <button
             type="button"

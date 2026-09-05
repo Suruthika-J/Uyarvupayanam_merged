@@ -272,11 +272,11 @@ export function getProfileRelevantSkills(profile = {}) {
     }
   }
 
-  // 3. Add Cross-Domain Skills IF explicit tech / switch interest exists (e.g. BHMS + Healthcare Tech)
+  // 3. Add Cross-Domain Skills ONLY IF explicit software/data career transition intent exists and field is tech-related
+  const isTechField = fieldKey === 'engineering'
   const allInterests = [...careerInterests, targetCareer]
-  if (allInterests.some(i => i.includes('tech') || i.includes('software') || i.includes('ai') || i.includes('data') || i.includes('informatics'))) {
+  if (isTechField && allInterests.some(i => i.includes('software engineering') || i.includes('artificial intelligence') || i.includes('data science'))) {
     const techSkills = [
-      { name: 'Python for Health / Domain Data Analytics', category: 'Interdisciplinary Tech' },
       { name: 'Data Visualization & Reporting', category: 'Interdisciplinary Tech' }
     ]
     techSkills.forEach(s => {

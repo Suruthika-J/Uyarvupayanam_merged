@@ -13,8 +13,10 @@ const {
   submitInterviewResult,
   summarizeNotes,
   generatePracticeQuestions,
+  getPracticeConfig,
   askAdvisorChat,
   generateResumeSuggestions,
+  saveResumeData,
   generateInterviewQuestions,
   getPeerMentors,
   getCollegeDashboardSummary
@@ -32,8 +34,10 @@ router.post("/mentors/request-action", verifyStudent, handleMentorRequestAction)
 router.post("/interview-prep/submit", verifyStudent, submitInterviewResult);
 router.post("/summarize", verifyStudent, summarizeNotes);
 router.post("/practice-questions", verifyStudent, generatePracticeQuestions);
+router.get("/practice/config", verifyStudent, getPracticeConfig);
 router.post("/chat", verifyStudent, askAdvisorChat);
 router.get("/resume-builder", verifyStudent, generateResumeSuggestions);
+router.post("/resume-builder/save", verifyStudent, saveResumeData);
 router.post("/interview-prep", verifyStudent, generateInterviewQuestions);
 router.get("/mentors", verifyStudent, getPeerMentors);
 

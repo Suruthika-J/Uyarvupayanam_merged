@@ -48,6 +48,7 @@ import MakeYourOwnSongPage from './pages/careers/MakeYourOwnSongPage'
 import TreasureHuntPage from './pages/careers/TreasureHuntPage'
 
 // College student pages
+import CollegeDashboardPage from './pages/dashboard/CollegeDashboardPage'
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
 import CollegeProfilePage from './pages/profile/CollegeProfilePage'
 import StudyPlannerPage from './pages/academic/StudyPlannerPage'
@@ -63,6 +64,7 @@ import InterviewPreparationPage from './pages/career/InterviewPreparationPage'
 import NotesSummarizerPage from './pages/study-tools/NotesSummarizerPage'
 import CollegeScholarshipsPage from './pages/scholarships/CollegeScholarshipsPage'
 import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
+import CollegePracticePage from './pages/study-tools/CollegePracticePage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 
@@ -196,7 +198,7 @@ export default function StudentRoutes() {
             path="/college"
             element={<StudentProtectedRoute><CollegeStudentLayout /></StudentProtectedRoute>}
           >
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard" element={<CollegeDashboardPage />} />
             <Route path="profile" element={<CollegeProfilePage />} />
             <Route path="advisor" element={<CollegeAdvisorDashboardPage />} />
             <Route path="advisor/chat" element={<ProfileAwareAskAIChatbotPage />} />
@@ -204,13 +206,14 @@ export default function StudentRoutes() {
             <Route path="academic/planner" element={<StudyPlannerPage />} />
             <Route path="academic/roadmap" element={<LearningRoadmapPage />} />
             <Route path="academic/performance" element={<PerformanceAnalyticsPage />} />
+            <Route path="practice" element={<CollegePracticePage />} />
             <Route path="career/coding-arena" element={<CodingArenaPage />} />
             <Route path="career/skill-gap" element={<SkillGapAnalysisPage />} />
             <Route path="career/compare" element={<CareerComparisonPage />} />
             <Route path="career/resume" element={<ResumeBuilderPage />} />
             <Route path="career/interview-prep" element={<InterviewPreparationPage />} />
             <Route path="study-tools/notes-summarizer" element={<NotesSummarizerPage />} />
-            <Route path="study-tools/practice" element={<PracticeQuestionsPage />} />
+            <Route path="study-tools/practice" element={<CollegePracticePage />} />
             <Route path="community/mentors" element={<PeerMentorshipPage />} />
             <Route path="community/doubts" element={<DoubtResolutionPage />} />
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
