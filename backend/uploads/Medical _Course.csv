@@ -1,0 +1,74 @@
+Course Name,Category,Level,Duration,Eligibility,Future Scope
+MBBS,Medical,12th,5.5 Years,10+2 PCB + NEET,Doctor
+BDS,Medical,12th,5 Years,10+2 PCB + NEET,Dentist
+BAMS,Medical,12th,5.5 Years,10+2 PCB + NEET,Ayurvedic Doctor
+BHMS,Medical,12th,5.5 Years,10+2 PCB + NEET,Homeopathy Doctor
+BUMS,Medical,12th,5.5 Years,10+2 PCB,Unani Doctor
+BSMS,Medical,12th,5.5 Years,10+2 PCB,Siddha Doctor
+BPT,Medical,12th,4.5 Years,10+2 PCB,Physiotherapist
+BOT,Medical,12th,4 Years,10+2 PCB,Occupational Therapist
+BSc Nursing,Medical,12th,4 Years,10+2 PCB,Nurse
+Post Basic BSc Nursing,Medical,Nursing,2 Years,Diploma Nursing,Senior Nurse
+BPharm,Medical,12th,4 Years,10+2 PCB/PCM,Pharmacist
+DPharm,Medical,12th,2 Years,10+2 PCB/PCM,Pharmacist
+PharmD,Medical,12th,6 Years,10+2 PCB/PCM,Clinical Pharmacist
+BSc Radiology,Medical,12th,3 Years,10+2 PCB,Radiology Technician
+BSc Medical Lab Technology,Medical,12th,3 Years,10+2 PCB,Lab Technician
+BSc Anesthesia Technology,Medical,12th,3 Years,10+2 PCB,Anesthesia Technician
+BSc Cardiac Technology,Medical,12th,3 Years,10+2 PCB,Cardiac Technician
+BSc Dialysis Technology,Medical,12th,3 Years,10+2 PCB,Dialysis Technician
+BSc Operation Theatre Technology,Medical,12th,3 Years,10+2 PCB,OT Technician
+BSc Optometry,Medical,12th,4 Years,10+2 PCB,Optometrist
+BSc Medical Imaging Technology,Medical,12th,3 Years,10+2 PCB,Imaging Specialist
+BSc Respiratory Therapy,Medical,12th,3 Years,10+2 PCB,Respiratory Therapist
+BSc Emergency Medical Technology,Medical,12th,3 Years,10+2 PCB,Emergency Technician
+BSc Perfusion Technology,Medical,12th,3 Years,10+2 PCB,Perfusionist
+BSc Nutrition and Dietetics,Medical,12th,3 Years,10+2 PCB,Dietician
+BSc Public Health,Medical,12th,3 Years,10+2 PCB,Public Health Officer
+BSc Forensic Science,Medical,12th,3 Years,10+2 Science,Forensic Expert
+BSc Biotechnology,Medical,12th,3 Years,10+2 PCB,Biotechnologist
+MBBS,Medical,12th,5.5 Years,10+2 PCB + NEET,Doctor
+BDS,Medical,12th,5 Years,10+2 PCB + NEET,Dentist
+BAMS,Medical,12th,5.5 Years,10+2 PCB + NEET,Ayurvedic Doctor
+BHMS,Medical,12th,5.5 Years,10+2 PCB + NEET,Homeopathy Doctor
+BUMS,Medical,12th,5.5 Years,10+2 PCB,Unani Doctor
+BSMS,Medical,12th,5.5 Years,10+2 PCB,Siddha Doctor
+BPT,Medical,12th,4.5 Years,10+2 PCB,Physiotherapist
+BOT,Medical,12th,4 Years,10+2 PCB,Occupational Therapist
+BSc Nursing,Medical,12th,4 Years,10+2 PCB,Nurse
+Post Basic BSc Nursing,Medical,Nursing,2 Years,Diploma Nursing,Senior Nurse
+BPharm,Medical,12th,4 Years,10+2 PCB/PCM,Pharmacist
+DPharm,Medical,12th,2 Years,10+2 PCB/PCM,Pharmacist
+PharmD,Medical,12th,6 Years,10+2 PCB/PCM,Clinical Pharmacist
+BSc Radiology,Medical,12th,3 Years,10+2 PCB,Radiology Technician
+BSc Medical Lab Technology,Medical,12th,3 Years,10+2 PCB,Lab Technician
+BSc Anesthesia Technology,Medical,12th,3 Years,10+2 PCB,Anesthesia Technician
+BSc Cardiac Technology,Medical,12th,3 Years,10+2 PCB,Cardiac Technician
+BSc Dialysis Technology,Medical,12th,3 Years,10+2 PCB,Dialysis Technician
+BSc Operation Theatre Technology,Medical,12th,3 Years,10+2 PCB,OT Technician
+BSc Optometry,Medical,12th,4 Years,10+2 PCB,Optometrist
+BSc Medical Imaging Technology,Medical,12th,3 Years,10+2 PCB,Imaging Specialist
+BSc Respiratory Therapy,Medical,12th,3 Years,10+2 PCB,Respiratory Therapist
+BSc Emergency Medical Technology,Medical,12th,3 Years,10+2 PCB,Emergency Technician
+BSc Perfusion Technology,Medical,12th,3 Years,10+2 PCB,Perfusionist
+BSc Nutrition and Dietetics,Medical,12th,3 Years,10+2 PCB,Dietician
+BSc Public Health,Medical,12th,3 Years,10+2 PCB,Public Health Officer
+BSc Forensic Science,Medical,12th,3 Years,10+2 Science,Forensic Expert
+BSc Biotechnology,Medical,12th,3 Years,10+2 PCB,Biotechnologist
+Diploma in Nursing,Medical,12th,3 Years,10+2 PCB,Nurse
+Diploma in Medical Lab Technology,Medical,12th,2 Years,10+2 PCB,Lab Technician
+Diploma in Radiology,Medical,12th,2 Years,10+2 PCB,Radiology Technician
+Diploma in Dialysis Technology,Medical,12th,2 Years,10+2 PCB,Dialysis Technician
+Diploma in Operation Theatre Technology,Medical,12th,2 Years,10+2 PCB,OT Technician
+Diploma in Physiotherapy,Medical,12th,2 Years,10+2 PCB,Physiotherapy Assistant
+Diploma in Optometry,Medical,12th,2 Years,10+2 PCB,Optometrist
+Diploma in Emergency Medical Technology,Medical,12th,2 Years,10+2 PCB,Emergency Technician
+MD General Medicine,Medical,PG,3 Years,MBBS,Physician
+MS General Surgery,Medical,PG,3 Years,MBBS,Surgeon
+MD Pediatrics,Medical,PG,3 Years,MBBS,Pediatrician
+MD Radiology,Medical,PG,3 Years,MBBS,Radiologist
+MD Dermatology,Medical,PG,3 Years,MBBS,Dermatologist
+MD Psychiatry,Medical,PG,3 Years,MBBS,Psychiatrist
+MS Orthopedics,Medical,PG,3 Years,MBBS,Orthopedic Surgeon
+MD Anesthesia,Medical,PG,3 Years,MBBS,Anesthesiologist
+MD Pathology,Medical,PG,3 Years,MBBS,Pathologist

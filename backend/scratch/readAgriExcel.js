@@ -1,0 +1,12 @@
+const xlsx = require('xlsx');
+const path = require('path');
+const excelPath = path.resolve(__dirname, '../uploads/Agriculture Collge Offered Courses-Updated.xlsx');
+const wb = xlsx.readFile(excelPath);
+const ws = wb.Sheets[wb.SheetNames[0]];
+const rows = xlsx.utils.sheet_to_json(ws);
+console.log('Total rows:', rows.length);
+console.log('Columns:', Object.keys(rows[0] || {}));
+console.log('\n--- First 5 rows ---');
+rows.slice(0, 5).forEach((r, i) => console.log(`\nRow ${i+1}:`, JSON.stringify(r, null, 2)));
+console.log('\n--- Last 3 rows ---');
+rows.slice(-3).forEach((r, i) => console.log(`\nRow ${rows.length - 2 + i}:`, JSON.stringify(r, null, 2)));

@@ -1,0 +1,56 @@
+Course Name,Category,Level,Duration,Eligibility,Future Scope
+MBBS,Medical,12th,5.5 Years,10+2 PCB + NEET,Doctor
+BDS,Medical,12th,5 Years,10+2 PCB + NEET,Dentist
+BAMS,Medical,12th,5.5 Years,10+2 PCB,Ayurvedic Doctor
+BHMS,Medical,12th,5.5 Years,10+2 PCB,Homeopathy Doctor
+BPT,Medical,12th,4.5 Years,10+2 PCB,Physiotherapist
+BSc Nursing,Medical,12th,4 Years,10+2 PCB,Nurse
+BPharm,Medical,12th,4 Years,10+2 PCB/PCM,Pharmacist
+BTech Computer Science,Engineering,12th,4 Years,10+2 PCM,Software Engineer
+BTech Mechanical,Engineering,12th,4 Years,10+2 PCM,Mechanical Engineer
+BTech Civil,Engineering,12th,4 Years,10+2 PCM,Civil Engineer
+BTech Electrical,Engineering,12th,4 Years,10+2 PCM,Electrical Engineer
+BTech Electronics,Engineering,12th,4 Years,10+2 PCM,Electronics Engineer
+BTech AI,Engineering,12th,4 Years,10+2 PCM,AI Engineer
+BArch,Architecture,12th,5 Years,10+2 PCM,Architect
+BSc Physics,Science,12th,3 Years,10+2 Science,Scientist
+BSc Chemistry,Science,12th,3 Years,10+2 Science,Chemist
+BSc Mathematics,Science,12th,3 Years,10+2 Science,Data Analyst
+BSc Biotechnology,Science,12th,3 Years,10+2 PCB,Biotechnologist
+BSc Microbiology,Science,12th,3 Years,10+2 PCB,Microbiologist
+BCA,IT & Computer,12th,3 Years,10+2,Software Developer
+BSc Computer Science,IT & Computer,12th,3 Years,10+2,Programmer
+BSc Data Science,IT & Computer,12th,3 Years,10+2,Data Scientist
+BCom,Commerce,12th,3 Years,10+2 Commerce,Accountant
+BBA,Commerce,12th,3 Years,10+2,Business Manager
+CA,Commerce,12th,4-5 Years,10+2 Commerce,Chartered Accountant
+CS,Commerce,12th,3-4 Years,10+2 Commerce,Corporate Advisor
+BA English,Arts,12th,3 Years,10+2,Teacher
+BA History,Arts,12th,3 Years,10+2,Historian
+BA Sociology,Arts,12th,3 Years,10+2,Social Worker
+BA Political Science,Arts,12th,3 Years,10+2,Civil Services
+Journalism & Mass Communication,Media,12th,3 Years,10+2,Journalist
+Film Making,Media,12th,3 Years,10+2,Film Director
+Fashion Design,Design,12th,3 Years,10+2,Fashion Designer
+Graphic Design,Design,12th,3 Years,10+2,Graphic Designer
+Animation,Design,12th,3 Years,10+2,Animator
+Hotel Management,Hospitality,12th,3 Years,10+2,Hotel Manager
+Culinary Arts,Hospitality,12th,3 Years,10+2,Chef
+BSc Agriculture,Agriculture,12th,4 Years,10+2 PCB/PCM,Agriculture Officer
+Forestry,Agriculture,12th,4 Years,10+2 Science,Forest Officer
+LLB,Law,12th,5 Years,10+2,Lawyer
+Diploma Mechanical,Polytechnic,10th,3 Years,10th Pass,Mechanical Technician
+Diploma Civil,Polytechnic,10th,3 Years,10th Pass,Civil Technician
+Diploma Electrical,Polytechnic,10th,3 Years,10th Pass,Electrical Technician
+Diploma Computer Engineering,Polytechnic,10th,3 Years,10th Pass,Software Technician
+Diploma Automobile,Polytechnic,10th,3 Years,10th Pass,Automobile Technician
+Diploma Electronics,Polytechnic,10th,3 Years,10th Pass,Electronics Technician
+ITI Electrician,ITI,10th,2 Years,10th Pass,Electrician
+ITI Fitter,ITI,10th,2 Years,10th Pass,Mechanical Technician
+ITI Welder,ITI,10th,1 Year,10th Pass,Welder
+ITI Plumber,ITI,10th,1 Year,10th Pass,Plumber
+ITI Carpenter,ITI,10th,1 Year,10th Pass,Carpenter
+Diploma Agriculture,Agriculture,10th,2 Years,10th Pass,Agriculture Assistant
+Diploma Animation,Design,10th,2 Years,10th Pass,Animator
+Diploma Graphic Design,Design,10th,2 Years,10th Pass,Designer
+Diploma Hotel Management,Hospitality,10th,2 Years,10th Pass,Hotel Staff

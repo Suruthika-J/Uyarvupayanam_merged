@@ -1,0 +1,156 @@
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import axiosInstance from '../../../config/axios'
+import { SBtn, SInput, SAlert, SCard } from '../../components/ui'
+import { FiMail, FiArrowLeft, FiCheckCircle } from 'react-icons/fi'
+
+export default function ForgotPasswordPage() {
+  const [email, setEmail]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
+  const [success, setSuccess]   = useState(false)
+  const [emailError, setEmailError] = useState('')
+
+  const validate = () => {
+    if (!email) { setEmailError('Email is required'); return false }
+    if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('Enter a valid email'); return false }
+    setEmailError('')
+    return true
+  }
+
+  const handleSubmit = async (ev) => {
+    ev.preventDefault()
+    if (!validate()) return
+    setLoading(true)
+    setError('')
+
+    try {
+      await axiosInstance.post('/auth/forgot-password', { email })
+      setSuccess(true)
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Something went wrong. Please try again.'
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="student-root" style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(140deg,#f7f6f3 0%,#eaf3ee 100%)',
+      padding: '80px 20px 40px',
+    }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Link to="/home" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/logo.png"
+              alt="Uyarvu Payanam"
+              style={{ height: 44, width: 'auto', objectFit: 'contain', borderRadius: 12 }}
+            />
+            <span style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: 'var(--s-text)' }}>
+              Uyarvu <span style={{ color: 'var(--s-primary)' }}>Payanam</span>
+            </span>
+          </Link>
+        </div>
+
+        <SCard style={{ padding: '36px 32px' }} className="s-anim-up">
+          {success ? (
+            /* ── Success State ── */
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'var(--s-green-l)', color: 'var(--s-green)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px', fontSize: 32,
+              }}>
+                <FiCheckCircle size={32} />
+              </div>
+              <h1 style={{
+                fontFamily: 'var(--s-font-display)', fontWeight: 800,
+                fontSize: 22, color: 'var(--s-text)', marginBottom: 10,
+              }}>
+                Check Your Email
+              </h1>
+              <p style={{ fontSize: 14, color: 'var(--s-text3)', lineHeight: 1.7, marginBottom: 28 }}>
+                If an account with <strong style={{ color: 'var(--s-text)' }}>{email}</strong> exists,
+                we've sent a password reset link. Please check your inbox and spam folder.
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', marginBottom: 16 }}>
+                Didn't receive the email?
+              </p>
+              <SBtn
+                variant="outline"
+                onClick={() => { setSuccess(false); setEmail('') }}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Try Again
+              </SBtn>
+            </div>
+          ) : (
+            /* ── Form State ── */
+            <>
+              <div style={{
+                width: 56, height: 56, borderRadius: 14,
+                background: 'var(--s-primary-l)', color: 'var(--s-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px',
+              }}>
+                <FiMail size={26} />
+              </div>
+              <h1 style={{
+                fontFamily: 'var(--s-font-display)', fontWeight: 800,
+                fontSize: 22, color: 'var(--s-text)', marginBottom: 6, textAlign: 'center',
+              }}>
+                Forgot Password?
+              </h1>
+              <p style={{ fontSize: 14, color: 'var(--s-text3)', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 }}>
+                No worries! Enter your registered email and we'll send you a reset link.
+              </p>
+
+              {error && (
+                <div style={{ marginBottom: 18 }}>
+                  <SAlert type="error" onClose={() => setError('')}>{error}</SAlert>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <SInput
+                  label="Email Address"
+                  type="email"
+                  placeholder="you@email.com"
+                  icon={<FiMail />}
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setEmailError(''); setError('') }}
+                  error={emailError}
+                  id="forgot-email"
+                />
+                <SBtn
+                  type="submit"
+                  variant="primary"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  disabled={loading}
+                  id="forgot-submit"
+                >
+                  {loading ? 'Sending Reset Link…' : 'Send Reset Link'}
+                </SBtn>
+              </form>
+            </>
+          )}
+        </SCard>
+
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Link to="/signin" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: 14, fontWeight: 600, color: 'var(--s-text3)',
+            textDecoration: 'none', fontFamily: 'var(--s-font-display)',
+          }}>
+            <FiArrowLeft size={15} /> Back to Sign In
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
