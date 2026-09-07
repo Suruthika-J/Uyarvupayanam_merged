@@ -133,13 +133,16 @@ export default function StudentRoutes() {
             <Route path="onboarding/graduate" element={<StudentProtectedRoute><GraduateOnboardingPage /></StudentProtectedRoute>} />
             <Route path="student/onboarding/graduate" element={<StudentProtectedRoute><GraduateOnboardingPage /></StudentProtectedRoute>} />
             <Route path="onboarding/result" element={<StudentProtectedRoute><RecommendationResultPage /></StudentProtectedRoute>} />
+            <Route path="student/onboarding/result" element={<StudentProtectedRoute><RecommendationResultPage /></StudentProtectedRoute>} />
 
             {/* School class routes */}
             <Route path="class5" element={<ClassLevelPage level="5" />} />
             <Route path="student/class5" element={<ClassLevelPage level="5" />} />
             <Route path="class5/content/:slug" element={<ContentDetailPage />} />
             <Route path="class5/skills/communicationskills" element={<StudentProtectedRoute><Class5CommunicationPage /></StudentProtectedRoute>} />
+            <Route path="student/class5/skills/communicationskills" element={<StudentProtectedRoute><Class5CommunicationPage /></StudentProtectedRoute>} />
             <Route path="class5/skills/communicationskills/passport/:studentId" element={<Class5PassportPage />} />
+            <Route path="student/class5/skills/communicationskills/passport/:studentId" element={<Class5PassportPage />} />
             <Route path="class5/games/pattern-master" element={<StudentProtectedRoute><PatternMasterPage /></StudentProtectedRoute>} />
             <Route path="class5/fun/drawing-challenge" element={<StudentProtectedRoute><DrawingChallengePage /></StudentProtectedRoute>} />
             <Route path="class5/fun/story-builder" element={<StudentProtectedRoute><StoryBuilderPage /></StudentProtectedRoute>} />
@@ -155,27 +158,41 @@ export default function StudentRoutes() {
             <Route path="student/class12" element={<ClassLevelPage level="12" />} />
             <Route path="class12/content/:slug" element={<ContentDetailPage />} />
             <Route path="career-path/class-5/:slug" element={<ContentDetailPage />} />
+            <Route path="student/career-path/class-5/:slug" element={<ContentDetailPage />} />
             <Route path="career-path/class-8/:slug" element={<ContentDetailPage />} />
+            <Route path="student/career-path/class-8/:slug" element={<ContentDetailPage />} />
             <Route path="career-path/class-10/:slug" element={<ContentDetailPage />} />
+            <Route path="student/career-path/class-10/:slug" element={<ContentDetailPage />} />
             <Route path="career-path/class-12/:slug" element={<ContentDetailPage />} />
+            <Route path="student/career-path/class-12/:slug" element={<ContentDetailPage />} />
 
             {/* Shared public exploration routes */}
             <Route path="careers" element={<CareersPage />} />
             <Route path="student/careers" element={<CareersPage />} />
             <Route path="careers/class/:classKey" element={<CareerClassPage />} />
+            <Route path="student/careers/class/:classKey" element={<CareerClassPage />} />
             <Route path="careers/path/:id" element={<CareerDetailPage />} />
+            <Route path="student/careers/path/:id" element={<CareerDetailPage />} />
             <Route path="colleges" element={<CollegesPage />} />
             <Route path="student/colleges" element={<CollegesPage />} />
             <Route path="colleges/:id" element={<CollegeDetailPage />} />
+            <Route path="student/colleges/:id" element={<CollegeDetailPage />} />
             <Route path="colleges/category/:categoryName" element={<CollegeCategoryPage />} />
+            <Route path="student/colleges/category/:categoryName" element={<CollegeCategoryPage />} />
             <Route path="colleges/explorer" element={<CollegeCourseExplorer />} />
+            <Route path="student/colleges/explorer" element={<CollegeCourseExplorer />} />
             <Route path="colleges/cutoff" element={<TneaCutoffPage />} />
+            <Route path="student/colleges/cutoff" element={<TneaCutoffPage />} />
             <Route path="scholarships" element={<ScholarshipsPage />} />
             <Route path="student/scholarships" element={<ScholarshipsPage />} />
             <Route path="scholarships/:id" element={<ScholarshipDetailPage />} />
+            <Route path="student/scholarships/:id" element={<ScholarshipDetailPage />} />
             <Route path="courses" element={<CoursesPage />} />
+            <Route path="student/courses" element={<CoursesPage />} />
             <Route path="courses/:categoryKey" element={<CourseCategoryPage />} />
+            <Route path="student/courses/:categoryKey" element={<CourseCategoryPage />} />
             <Route path="course/:slug" element={<CourseDetailPage />} />
+            <Route path="student/course/:slug" element={<CourseDetailPage />} />
 
             {/* School Dashboard — redirects college students to /college/dashboard */}
             <Route path="dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
@@ -187,6 +204,19 @@ export default function StudentRoutes() {
             <Route path="profile" element={<StudentProtectedRoute><ProfilePage /></StudentProtectedRoute>} />
             <Route path="student/profile" element={<StudentProtectedRoute><ProfilePage /></StudentProtectedRoute>} />
 
+            {/* ─── CATCH-ALL  ────────────────────────────────────────────────
+                FALLBACK REDIRECT: This only runs when NO other route matches.
+                If a feature stops working and lands on /home here, it is almost
+                always a MISSING ROUTE, not a bad redirect — a component navigated
+                to a URL that was never registered in this file.
+
+                KEEP EVERY STUDENT ROUTE THIS FILE'S CONTRACT:
+                Every navigation going to /student/* (sidebar Links, navigate()
+                calls) needs BOTH a "path" route AND a "student/path" alias,
+                exactly like careers/colleges/scholarships/courses do below.
+                Adding a page = add the route pair, otherwise that page's links
+                silently bounce the user back to /home through this catch-all.
+                ─────────────────────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
 

@@ -134,7 +134,7 @@ export default function OnboardingPage() {
                 const updatedStudent = { ...student, onboardingCompleted: true };
                 const token = localStorage.getItem('studentToken');
                 login(token, updatedStudent);
-                navigate('/student/onboarding/result');
+                navigate('/student/dashboard');
             }
         } catch (err) {
             setError("Submission failed. Please try again.");

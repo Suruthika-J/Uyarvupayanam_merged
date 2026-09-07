@@ -7,6 +7,7 @@ import { userActionService } from '../../../services/userActionService';
 import { useStudentAuth } from '../../context/StudentAuthContext';
 import { SLoader, SBadge } from '../../components/ui';
 import axiosInstance from '../../../config/axios';
+import { fmtName, fmtProvider, fmtAmount, fmtDeadline, fmtEligibilityShort, fmtClasses } from './scholarshipText';
 
 export default function ScholarshipsPage() {
 
@@ -264,21 +265,25 @@ export default function ScholarshipsPage() {
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                    <SBadge color="blue" style={{ fontSize: 11 }}>{scholarship.category || 'General'}</SBadge>
                  </div>
-                 <h3 style={{ margin: 0, fontSize: 18, color: 'var(--s-text)', lineHeight: 1.4 }}>{scholarship.name || scholarship.scholarshipName}</h3>
-                 <p style={{ margin: '4px 0 0 0', color: 'var(--s-text3)', fontSize: 14 }}>{scholarship.provider || 'Independent Provider'}</p>
+                 <h3 style={{ margin: 0, fontSize: 18, color: 'var(--s-text)', lineHeight: 1.4 }}>{fmtName(scholarship)}</h3>
+                 <p style={{ margin: '4px 0 0 0', color: 'var(--s-text3)', fontSize: 14 }}>{fmtProvider(scholarship)}</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--s-text2)' }}>
                    <FiDollarSign style={{ color: 'var(--s-primary)' }} /> 
-                   <span style={{ fontWeight: 600 }}>{scholarship.amount || 'Variable Amount'}</span>
+                   <span style={{ fontWeight: 600 }}>{fmtAmount(scholarship)}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--s-text2)' }}>
                    <FiCalendar style={{ color: '#b45309' }} /> 
-                   <span>Deadline: <strong>{scholarship.deadline || 'Ongoing'}</strong></span>
+                   <span>Apply by: <strong>{fmtDeadline(scholarship)}</strong></span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--s-text2)' }}>
+                   <FiAward style={{ color: 'var(--s-primary)' }} />
+                   <span>For: <strong>{fmtClasses(scholarship)}</strong></span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--s-text3)', background: 'var(--s-bg2)', padding: '10px 12px', borderRadius: 8, marginTop: 'auto' }}>
-                  <strong>Eligibility:</strong> {scholarship.eligibility || 'See details'}
+                  <strong>Who can apply:</strong> {fmtEligibilityShort(scholarship)}
                 </div>
               </div>
 

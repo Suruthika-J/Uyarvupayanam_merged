@@ -4,6 +4,7 @@ const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const CollegeFetchedCourse = require("../models/CollegeFetchedCourse");
 const { parseTneaPdf } = require("../utils/pdfParser");
 const path = require("path");
+const { getStudentClass, buildCollegeEligibilityFilter } = require("../utils/academicEligibility");
 
 // @desc    Create new college
 // @route   POST /api/colleges
@@ -93,6 +94,17 @@ exports.getAllColleges = async (req, res) => {
           { district: { $regex: search, $options: "i" } },
         ],
       });
+    }
+
+    // Restrict to colleges offering courses the authenticated school student
+    // is academically eligible for.
+    const studentClass = getStudentClass(req);
+    const eligibilityFilter = await buildCollegeEligibilityFilter(studentClass, {
+      Course,
+      CollegeCourseMapping,
+    });
+    if (eligibilityFilter) {
+      andConditions.push(eligibilityFilter);
     }
 
     if (andConditions.length > 0) {

@@ -9,6 +9,7 @@ const {
   previewSourceImport,
   importFromSource
 } = require("../controllers/courseController");
+const optionalStudent = require("../middleware/optionalStudent");
 
 const router = express.Router();
 
@@ -24,8 +25,8 @@ router.post("/preview-import", previewSourceImport);
 // POST - Import from source (actual insert)
 router.post("/import-from-source", importFromSource);
 
-// GET - Get all courses
-router.get("/", getAllCourses);
+// GET - Get all courses (scoped to the student's level when a student token is present)
+router.get("/", optionalStudent, getAllCourses);
 
 // GET - Get single course by ID
 router.get("/:id", getCourseById);

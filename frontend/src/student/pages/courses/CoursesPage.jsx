@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { FiBookOpen, FiMapPin, FiChevronRight, FiSearch } from 'react-icons/fi'
 import { SBadge, SLoader, SEmpty, SSelect } from '../../components/ui'
 import { courseService, collegeService } from '../../services'
+import { useStudentAuth } from '../../context/StudentAuthContext'
+import EligibilityBanner from '../../components/EligibilityBanner'
+import { scopeCoursesForStudent } from '../../utils/schoolEligibility'
 
 const ADMIN_CATEGORIES = [
   "Agriculture", "Architecture", "Arts", "Commerce", "Design", 
@@ -25,6 +28,7 @@ const CATEGORY_COLORS = {
 
 export default function CoursesPage() {
   const navigate = useNavigate()
+  const { student } = useStudentAuth()
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [courses, setCourses] = useState([])
   const [colleges, setColleges] = useState([])
@@ -39,7 +43,7 @@ export default function CoursesPage() {
           collegeService.getAll()
         ])
         
-        if (courseRes.success) setCourses(courseRes.data || [])
+        if (courseRes.success) setCourses(scopeCoursesForStudent(courseRes.data || [], student))
         if (collegeRes.success) setColleges(collegeRes.data || [])
       } catch (err) {
         console.error('Error fetching course page data:', err)
@@ -48,7 +52,7 @@ export default function CoursesPage() {
       }
     }
     fetchData()
-  }, [])
+  }, [student])
 
   const groupedData = useMemo(() => {
     const groups = {}
@@ -128,6 +132,7 @@ export default function CoursesPage() {
 
       {/* Main Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <EligibilityBanner student={student} />
         {loading ? (
           <div style={{ padding: '100px 0' }}><SLoader /></div>
         ) : groupedData.length === 0 ? (

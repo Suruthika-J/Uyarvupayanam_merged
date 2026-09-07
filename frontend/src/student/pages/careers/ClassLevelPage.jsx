@@ -4,7 +4,8 @@ import {
   FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
   FiAward, FiActivity, FiVideo, FiBriefcase, FiInfo,
   FiBookmark, FiCompass, FiSearch, FiLayers, FiDollarSign,
-  FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin
+  FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin,
+  FiCheckCircle, FiClock
 } from 'react-icons/fi'
 import { classContentService } from '../../../services/classContentService'
 import { userActionService } from '../../../services/userActionService'
@@ -31,11 +32,8 @@ const CLASS_SECTIONS = {
   ],
   "5": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
-    { id: 'Entrance Exams', label: 'Exams', icon: FiAward, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
-    { id: 'Fun', label: 'Fun', icon: FiActivity, color: '#ec4899' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
-    { id: 'Games', label: 'Games', icon: FiStar, color: '#8b5cf6' },
   ],
   "8": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
@@ -472,7 +470,7 @@ export default function ClassLevelPage(props) {
                  🏫 Explore Colleges
               </SBtn>
             )}
-            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
+            <SBtn variant="white" onClick={() => navigate('/student/signup')} style={{ borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
                🚀 Start Exploring
             </SBtn>
           </div>
@@ -915,7 +913,81 @@ export default function ClassLevelPage(props) {
                   )}
                 {filteredContent.map(item => {
                   if (item.isDirect) {
-                    return (
+                    return cleanLevel === '5' ? (
+                      <div key={item._id} style={{ 
+                        background:'#fff', borderRadius:32, border:'1px solid #f1f5f9', 
+                        overflow:'hidden', display:'flex', flexDirection:'column', 
+                        boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', transition:'0.3s' 
+                      }} className="hover-lift">
+                        <div style={{ padding: 32, flex:1, display:'flex', flexDirection:'column', position: 'relative' }}>
+                          <button 
+                            onClick={() => handleSaveAction(item)} 
+                            style={{ 
+                              position:'absolute', top:24, right:24, width:44, height:44, 
+                              borderRadius:99, background:'#f8fafc', border:'1px solid #e2e8f0', cursor:'pointer', 
+                              display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
+                          </button>
+
+                          <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', paddingRight: 50 }}>
+                             <SBadge color="green">Scholarship</SBadge>
+                             {(item.grades || []).map(g => <SBadge key={g} color="purple">{g}</SBadge>)}
+                          </div>
+                          
+                          <h3 style={{ fontSize:22, fontWeight:900, margin:'0 0 8px', lineHeight:1.3 }}>{item.scholarshipName}</h3>
+                          <div style={{ fontSize:14, fontWeight:700, color:'#64748b', marginBottom:20, display:'flex', alignItems:'center', gap:6 }}>
+                             <FiBriefcase size={14}/> Provided by {item.provider || "Government / Organisation"}
+                          </div>
+
+                          <div style={{ background:'#f8fafc', borderRadius:20, padding:20, marginBottom:20, flex:1, display:'flex', flexDirection:'column', gap:16 }}>
+                             {item.benefit && (
+                                <div style={{ display:'flex', gap:12 }}>
+                                   <div style={{ width:40, height:40, flexShrink:0, borderRadius:14, background:'#dcfce7', color:'#16a34a', display:'grid', placeItems:'center' }}>
+                                      <FiDollarSign size={20} />
+                                   </div>
+                                   <div style={{ flex:1 }}>
+                                     <div style={{ fontSize:12, fontWeight:800, color:'#166534', textTransform:'uppercase', letterSpacing:0.5 }}>What you get</div>
+                                     <div style={{ fontSize:15, fontWeight:800, color:'#15803d', marginTop:2 }}>{item.benefit}</div>
+                                   </div>
+                                </div>
+                             )}
+                             {item.eligibility && (
+                                <div style={{ display:'flex', gap:12 }}>
+                                   <div style={{ width:40, height:40, flexShrink:0, borderRadius:14, background:'#dbeafe', color:'#2563eb', display:'grid', placeItems:'center' }}>
+                                      <FiCheckCircle size={20} />
+                                   </div>
+                                   <div style={{ flex:1 }}>
+                                     <div style={{ fontSize:12, fontWeight:800, color:'#1e40af', textTransform:'uppercase', letterSpacing:0.5 }}>Who can apply</div>
+                                     <div style={{ fontSize:13, fontWeight:600, color:'#334155', lineHeight:1.5, marginTop:2 }}>{item.eligibility}</div>
+                                   </div>
+                                </div>
+                             )}
+                             {item.deadline && (
+                                <div style={{ display:'flex', gap:12 }}>
+                                   <div style={{ width:40, height:40, flexShrink:0, borderRadius:14, background:'#fee2e2', color:'#dc2626', display:'grid', placeItems:'center' }}>
+                                      <FiClock size={20} />
+                                   </div>
+                                   <div style={{ flex:1 }}>
+                                     <div style={{ fontSize:12, fontWeight:800, color:'#991b1b', textTransform:'uppercase', letterSpacing:0.5 }}>Apply by</div>
+                                     <div style={{ fontSize:14, fontWeight:800, color:'#dc2626', marginTop:2 }}>{item.deadline}</div>
+                                   </div>
+                                </div>
+                             )}
+                          </div>
+                          
+                          <SBtn 
+                             variant="outline"
+                             style={{ width:'100%', borderRadius:16, padding:'14px 0', border: '2px solid #3b82f6', color: '#3b82f6' }} 
+                             onClick={() => handleCardClick(item)}
+                          >
+                             Apply / View Details ↗
+                          </SBtn>
+                        </div>
+                      </div>
+                    ) : (
                       <div key={item._id} style={{ 
                         background:'#fff', borderRadius:32, border:'1px solid #f1f5f9', 
                         overflow:'hidden', display:'flex', flexDirection:'column', 

@@ -1,9 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { FiArrowLeft, FiClock, FiFilter, FiSearch, FiTarget, FiArrowRight, FiInfo, FiMapPin } from 'react-icons/fi'
+import { FiArrowLeft, FiClock, FiFilter, FiSearch, FiTarget, FiArrowRight, FiInfo, FiMapPin, FiBookmark } from 'react-icons/fi'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { courseService } from '../../services'
+import { userActionService } from '../../../services/userActionService'
 import { SBadge, SBtn, SEmpty, SInput, SLoader, SSelect } from '../../components/ui'
+import EligibilityBanner from '../../components/EligibilityBanner'
+import { scopeCoursesForStudent } from '../../utils/schoolEligibility'
 import {
   COURSE_LEVEL_MAP,
   COURSE_LEVEL_CONFIGS,
@@ -12,7 +15,7 @@ import {
   COURSE_CATEGORIES,
 } from './courseCatalog'
 
-function CourseCard({ course, accent }) {
+function CourseCard({ course, accent, isSaved, onToggleSave }) {
   const navigate = useNavigate()
   const [showDetails, setShowDetails] = useState(false)
   const [colleges, setColleges] = useState([])
@@ -76,6 +79,18 @@ function CourseCard({ course, accent }) {
             {getCourseDisplayName(course)}
           </h2>
         </div>
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave(course) }}
+          style={{
+            background: isSaved ? 'var(--s-primary)' : 'rgba(0,0,0,0.05)',
+            border: 'none', borderRadius: '50%', width: 34, height: 34, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: isSaved ? '#fff' : 'var(--s-text3)', transition: '0.2s'
+          }}
+          title={isSaved ? 'Remove from saved' : 'Save course'}
+        >
+          <FiBookmark size={16} fill={isSaved ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: 'var(--s-text3)' }}>
@@ -219,7 +234,8 @@ export default function CourseCategoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const urlCategory = searchParams.get('category')
   const urlLevel = searchParams.get('level')
-  const { isAuthenticated } = useStudentAuth()
+  const { isAuthenticated, student } = useStudentAuth()
+  const navigate = useNavigate()
 
   const isSearchMode = categoryKey === 'search'
   const config = !isSearchMode ? COURSE_LEVEL_MAP[categoryKey] : null
@@ -229,6 +245,7 @@ export default function CourseCategoryPage() {
   const [search, setSearch] = useState('')
   const [streamFilter, setStreamFilter] = useState(urlCategory || 'All')
   const [levelFilter, setLevelFilter] = useState(urlLevel || (config ? config.level : 'All'))
+  const [savedIds, setSavedIds] = useState(new Set())
 
   // FETCH DATA WITH PARAMS (Dynamic Integration)
   useEffect(() => {
@@ -266,11 +283,39 @@ export default function CourseCategoryPage() {
     if (urlLevel) setLevelFilter(urlLevel)
   }, [urlCategory, urlLevel])
 
+  // ── Fetch saved courses (authenticated) ──
+  useEffect(() => {
+    if (!isAuthenticated) return
+    userActionService.getSavedList('Course')
+      .then((res) => {
+        const ids = (res?.data || []).map(item => item.contentId?._id || item.contentId).filter(Boolean)
+        setSavedIds(new Set(ids))
+      })
+      .catch((err) => console.error('Error fetching saved courses:', err))
+  }, [isAuthenticated])
+
+  // ── Toggle bookmark ──
+  const handleToggleSave = async (course) => {
+    if (!isAuthenticated) return navigate('/student/signin')
+    const id = course?._id
+    if (!id) return
+    try {
+      if (savedIds.has(id)) {
+        await userActionService.unsaveItem(id)
+        setSavedIds(prev => { const n = new Set(prev); n.delete(id); return n })
+      } else {
+        await userActionService.saveItem(id, 'Course')
+        setSavedIds(prev => new Set([...prev, id]))
+      }
+    } catch (err) { console.error(err) }
+  }
+
   const visibleCourses = useMemo(() => {
+    const scoped = scopeCoursesForStudent(courses, student)
     const q = search.trim().toLowerCase()
-    if (!q) return courses
+    if (!q) return scoped
     
-    return courses.filter((course) => {
+    return scoped.filter((course) => {
       return [
         getCourseDisplayName(course),
         course.category,
@@ -278,7 +323,7 @@ export default function CourseCategoryPage() {
         course.futureScope,
       ].some((value) => String(value || '').toLowerCase().includes(q))
     })
-  }, [courses, search])
+  }, [courses, search, student])
 
   const accentColor = config?.accent || '#0f4c75'
 
@@ -370,6 +415,8 @@ export default function CourseCategoryPage() {
                 key={course._id || course.id}
                 course={course}
                 accent={accentColor}
+                isSaved={savedIds.has(course._id)}
+                onToggleSave={handleToggleSave}
               />
             ))}
           </div>

@@ -3,6 +3,7 @@ const College = require("../models/College");
 const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const mongoose = require("mongoose");
 const { allSourceCourses, SOURCE_URL, SOURCE_NAME } = require("../data/sourceCoursesAfter12th");
+const { getStudentClass, buildCourseEligibilityFilter } = require("../utils/academicEligibility");
 
 // ─── Normalize helper for duplicate checking ──────────────────────
 const normalize = (str) => String(str || "").trim().toLowerCase();
@@ -59,6 +60,20 @@ exports.getAllCourses = async (req, res) => {
        }
     }
     if (category) filter.category = new RegExp(`^${category}$`, "i");
+
+    // Restrict to courses the authenticated school student is already
+    // academically eligible for (based on their completed class).
+    const studentClass = getStudentClass(req);
+    const eligibilityFilter = buildCourseEligibilityFilter(studentClass);
+    if (eligibilityFilter) {
+      if (Object.keys(filter).length === 0) {
+        filter = eligibilityFilter;
+      } else {
+        filter.$and = [{ ...filter }, eligibilityFilter];
+        delete filter.$or;
+        delete filter.category;
+      }
+    }
 
     const courses = await Course.find(filter).sort({ courseName: 1 });
 

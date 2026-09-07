@@ -9,6 +9,7 @@ import { SBadge, SCard, SBtn, SLoader, SEmpty } from '../../components/ui'
 import { scholarshipService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import { fmtName, fmtProvider, fmtClasses, fmtAmount, fmtDeadline, fmtEligibility, fmtDescription, fmtSteps } from './scholarshipText'
 
 export default function ScholarshipDetailPage() {
   const { id } = useParams()
@@ -87,19 +88,19 @@ export default function ScholarshipDetailPage() {
               <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
                 <SBadge color="white" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>{scholarship.category}</SBadge>
                 <SBadge color="white" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-                  For Class {Array.isArray(scholarship.targetClass) ? scholarship.targetClass.join(', ') : scholarship.targetClass}
+                  {fmtClasses(scholarship)}
                 </SBadge>
               </div>
               <h1 style={{ fontFamily: 'var(--s-font-display)', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, margin: 0, textTransform: 'capitalize' }}>
-                {scholarship.scholarshipName || scholarship.name}
+                {fmtName(scholarship)}
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16, opacity: 0.9 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16 }}>
-                  <FiAward /> {scholarship.provider || 'Verified Scheme'}
+                  <FiAward /> {fmtProvider(scholarship)}
                 </div>
                 {scholarship.deadline && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700 }}>
-                    <FiCalendar /> Deadline: {scholarship.deadline}
+                    <FiCalendar /> Deadline: {fmtDeadline(scholarship)}
                   </div>
                 )}
               </div>
@@ -133,24 +134,24 @@ export default function ScholarshipDetailPage() {
           {/* Benefits */}
           <SCard style={{ padding: 32, borderLeft: '5px solid #059669' }}>
             <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <FiDollarSign color="#059669" /> Scholarship Benefits
+              <FiDollarSign color="#059669" /> What you get
             </h2>
             <p style={{ fontSize: 18, fontWeight: 700, color: '#059669', marginBottom: 16 }}>
-              {scholarship.amount || scholarship.benefit || 'Financial assistance provided based on merit/need.'}
+              {fmtAmount(scholarship)}
             </p>
             <p style={{ fontSize: 16, lineHeight: 1.8, color: 'var(--s-text2)' }}>
-              {scholarship.description || 'This scholarship aims to support deserving students in their academic journey by covering tuition fees and providing other educational allowances.'}
+              {fmtDescription(scholarship)}
             </p>
           </SCard>
 
           {/* Eligibility */}
           <SCard style={{ padding: 32 }}>
             <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <FiTarget color="#059669" /> Eligibility Criteria
+              <FiTarget color="#059669" /> Who can apply
             </h2>
             <div style={{ background: '#f0fdf4', padding: 24, borderRadius: 16, border: '1px solid #dcfce7' }}>
               <p style={{ fontSize: 16, lineHeight: 1.8, color: '#166534', margin: 0 }}>
-                {scholarship.eligibility || 'Standard eligibility criteria apply. Usually requires minimum marks in previous examination and family income certificate.'}
+                {fmtEligibility(scholarship)}
               </p>
             </div>
           </SCard>
@@ -158,11 +159,11 @@ export default function ScholarshipDetailPage() {
           {/* How to Apply */}
           <SCard style={{ padding: 32 }}>
             <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <FiFileText color="#059669" /> Application Steps
+              <FiFileText color="#059669" /> How to apply
             </h2>
-            {scholarship.stepsToApply?.length > 0 ? (
+            {fmtSteps(scholarship).length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {scholarship.stepsToApply.map((step, i) => (
+                {fmtSteps(scholarship).map((step, i) => (
                   <div key={i} style={{ display: 'flex', gap: 16 }}>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#059669', color: '#fff', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 14, fontWeight: 900 }}>
                       {i + 1}
@@ -184,15 +185,15 @@ export default function ScholarshipDetailPage() {
 
         <aside>
           <SCard style={{ padding: 24, position: 'sticky', top: 100 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Quick Summary</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Quick facts</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                <div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Provider</div>
-                  <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{scholarship.provider}</div>
+                  <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{fmtProvider(scholarship)}</div>
                </div>
                <div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Category</div>
-                  <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{scholarship.category}</div>
+                  <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{scholarship.category || 'General'}</div>
                </div>
                <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, border: '1px solid #dbeafe' }}>
                   <div style={{ display: 'flex', gap: 8, color: '#1e40af' }}>

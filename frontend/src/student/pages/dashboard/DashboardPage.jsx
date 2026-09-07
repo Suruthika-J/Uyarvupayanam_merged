@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import {
   notificationService,
@@ -12,28 +12,14 @@ import {
 import { userActionService } from '../../../services/userActionService'
 import { SBtn, SLoader, SSectionHeader, SEmpty, SBadge, SCard } from '../../components/ui'
 import {
-  FiGrid, FiBookOpen, FiMapPin, FiFileText, FiAward,
-  FiBell, FiUser, FiSettings, FiLogOut, FiArrowRight,
-  FiClock, FiMenu, FiX,
+  FiArrowRight,
+  FiClock,
 } from 'react-icons/fi'
 import s from './DashboardPage.module.css'
 import { mentorRequestService } from '../../services/mentorRequestService'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
 import onboardingService from '../../../services/onboardingService'
 import class5CommunicationService from '../../../services/class5CommunicationService'
-
-/* â”€â”€ Sidebar navigation config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-const SIDEBAR_NAV = [
-  { id: 'dashboard',     icon: FiGrid,     label: 'Dashboard',      to: '/student/dashboard' },
-  { id: 'bookmarks',     icon: FiAward,    label: 'My Bookmarks',   to: '/student/bookmarks' },
-  { id: 'courses',       icon: FiBookOpen, label: 'Courses',        to: '/student/courses' },
-  { id: 'colleges',      icon: FiMapPin,   label: 'Colleges',       to: '/student/colleges' },
-  { id: 'exams',         icon: FiFileText, label: 'Entrance Exams', to: '/student/careers' },
-  { id: 'scholarships',  icon: FiAward,    label: 'Scholarships',   to: '/student/scholarships' },
-  { id: 'notifications', icon: FiBell,     label: 'Notifications',  to: '/student/notifications' },
-  { id: 'profile',       icon: FiUser,     label: 'Profile',        to: '/student/profile' },
-  { id: 'settings',      icon: FiSettings, label: 'Settings',       to: '/student/profile' },
-]
 
 /* â”€â”€ Stat card gradient presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const STAT_GRADIENTS = [
@@ -105,13 +91,11 @@ import { Navigate } from 'react-router-dom'
 export default function DashboardPage() {
   const { student, logout } = useStudentAuth()
   const navigate = useNavigate()
-  const location = useLocation()
 
   if (student?.userType === 'college_student') {
     return <Navigate to="/college/dashboard" replace />
   }
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const isClass5 = student?.classLevel === '5' || student?.classLevel === '5th' || student?.classLevel === 'Class 5';
   const [commProgress, setCommProgress] = useState(null);
 
@@ -236,11 +220,6 @@ export default function DashboardPage() {
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const firstName = student?.name?.split(' ')[0] || 'Student'
 
-  const handleLogout = () => {
-    logout()
-    navigate('/student/signin')
-  }
-
   const handleRetake = async () => {
     if (!window.confirm("Are you sure you want to retake the assessment? Your previous results will be reset.")) return;
     setRetaking(true);
@@ -279,71 +258,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className={s.layout}>
-
-      {/* ── SIDEBAR ─────────────────────────────────────────── */}
-      {sidebarOpen && <div className={s.overlay} onClick={() => setSidebarOpen(false)} />}
-
-      <aside className={`${s.sidebar} ${sidebarOpen ? s.sidebarOpen : ''}`}>
-        <div className={s.sidebarLabel}>Menu</div>
-
-        {SIDEBAR_NAV.filter(item => {
-          const isJunior = ['5', '8', '5th', '8th'].includes(String(student?.classLevel));
-          if (isJunior && ['courses', 'colleges'].includes(item.id)) return false;
-          return true;
-        }).map(({ id, icon: Icon, label, to }) => {
-          const isActive = location.pathname === to || (to !== '/student/dashboard' && location.pathname.startsWith(to))
-          return (
-            <Link
-              key={id}
-              to={to}
-              className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Icon size={16} />
-              {label}
-              {id === 'notifications' && unreadCount > 0 && (
-                <span className={s.navBadge}>{unreadCount}</span>
-              )}
-            </Link>
-          )
-        })}
-
-        <div className={s.sidebarDivider} />
-
-        <button
-          className={`${s.navItem} ${s.navItemDanger}`}
-          onClick={handleLogout}
-        >
-          <FiLogOut size={16} />
-          Logout
-        </button>
-
-        {/* Profile card at bottom */}
-        <div className={s.sidebarBottom}>
-          <div className={s.profileCard}>
-            <div className={s.profileAvatar}>
-              {student?.name?.[0]?.toUpperCase() || 'S'}
-            </div>
-            <div>
-              <div className={s.profileName}>{firstName}</div>
-              <div className={s.profileSub}>
-                {student?.classLevel ? `Class ${student.classLevel}` : 'Student'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile sidebar toggle */}
-      <button
-        className={s.mobileToggle}
-        onClick={() => setSidebarOpen((o) => !o)}
-        aria-label="Toggle sidebar"
-      >
-        {sidebarOpen ? <FiX /> : <FiMenu />}
-      </button>
-
+    <>
       {/* ── MAIN CONTENT ────────────────────────────────────── */}
       <div className={s.main}>
 
@@ -479,7 +394,7 @@ export default function DashboardPage() {
                       <div style={{ padding: 24, background: '#f8fafc', borderRadius: 20, border: '1px solid var(--s-border)', height: 'fit-content' }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 16 }}>Need Guidance?</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <SBtn variant="primary" size="sm" onClick={() => navigate('/student/guidance')} style={{ width: '100%', justifyContent: 'center' }}>Talk to Mentor</SBtn>
+                          <SBtn variant="primary" size="sm" onClick={() => setIsMentorModalOpen(true)} style={{ width: '100%', justifyContent: 'center' }}>Talk to Mentor</SBtn>
                           <button onClick={handleRetake} disabled={retaking} style={{ background: 'none', border: 'none', color: 'var(--s-primary)', fontSize: 14, fontWeight: 700, cursor: 'pointer', padding: 8 }}>
                             {retaking ? 'Resetting...' : 'Retake Assessment'}
                           </button>
@@ -552,7 +467,7 @@ export default function DashboardPage() {
               <SSectionHeader
                 title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? `🚀 Recommended for Class ${student?.classLevel?.replace(/\D/g, '')}` : "🧩 Recommended Careers" }
                 subtitle={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? "Based on your assessment results." : "Explore popular career paths tailored for your future." }
-                action={() => navigate((['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? `/student/career-path/class-${student?.classLevel?.replace(/\D/g, '')}` : '/student/careers')}
+                action={() => navigate((['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? `/student/class${student?.classLevel?.replace(/\D/g, '')}` : '/student/careers')}
                 actionLabel="View All"
               />
               <div className={s.careerGrid}>
@@ -774,6 +689,6 @@ export default function DashboardPage() {
         isOpen={isMentorModalOpen} 
         onClose={() => setIsMentorModalOpen(false)} 
       />
-    </div>
+    </>
   )
 }

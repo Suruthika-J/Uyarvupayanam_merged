@@ -16,11 +16,12 @@ const {
   bulkFetchAllCourses
 } = require("../controllers/automatedCourseController");
 const verifyAdmin = require("../middleware/verifyAdmin");
+const optionalStudent = require("../middleware/optionalStudent");
 
 const router = express.Router();
 
 // Public routes
-router.get("/", getAllColleges);
+router.get("/", optionalStudent, getAllColleges);
 router.get("/:id", getCollegeById);
 router.get("/:id/offered-courses", getOfferedCourses);
 
