@@ -13,12 +13,43 @@ const norm = (str) => (str || '').toString().toLowerCase().trim()
  * Client-side evaluation of student telemetry to get domain practice configuration
  */
 export function getCollegePracticeConfig(profile = {}) {
-  const normText = `${profile.degreeProgramme || ''} ${profile.domain || ''} ${profile.field || ''} ${profile.specialization || ''}`.toLowerCase()
-  const yearStr = norm(profile.currentYear || profile.academicYear)
+  let activeProfile = profile
+  if (!activeProfile || (!activeProfile.degreeProgramme && !activeProfile.domain && !activeProfile.field)) {
+    try {
+      const cached = localStorage.getItem('cachedCollegeProfile')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed && (parsed.degreeProgramme || parsed.domain || parsed.field)) {
+          activeProfile = parsed
+        }
+      }
+    } catch (e) {}
+  }
+
+  const normText = `${activeProfile?.degreeProgramme || ''} ${activeProfile?.domain || ''} ${activeProfile?.field || ''} ${activeProfile?.specialization || ''}`.toLowerCase()
+  const yearStr = norm(activeProfile?.currentYear || activeProfile?.academicYear)
   const yearLevel = yearStr.includes('1') || yearStr.includes('first') ? 1
                   : yearStr.includes('2') || yearStr.includes('second') ? 2
                   : yearStr.includes('3') || yearStr.includes('third') ? 3
                   : yearStr.includes('4') || yearStr.includes('fourth') || yearStr.includes('final') ? 4 : 2
+
+  if (!normText.trim()) {
+    return {
+      domainKey: "pending",
+      practiceModeId: "domain-practice",
+      practiceTitle: "Personalized Domain Practice Lab",
+      navLabel: "Domain Practice",
+      practiceDescription: "Analyze academic case scenarios and domain-grounded problem solving.",
+      badge: "Academic Practice",
+      isMedical: false,
+      isComputing: false,
+      yearLevel: 1,
+      activityTypes: ["Academic Case Scenarios", "Domain Knowledge Practice"],
+      defaultSubject: "Academic Practice",
+      subjects: ["Academic Practice"],
+      dailyMissionTitle: "Complete 2 Domain Practice Scenarios"
+    }
+  }
 
   // 1. Medicine & Clinical Specialties (BHMS, MBBS, BDS, B.Pharm, BAMS, Nursing)
   if (normText.includes('homeo') || normText.includes('bhms') || normText.includes('medicine') || normText.includes('mbbs') || normText.includes('bds') || normText.includes('bams') || normText.includes('clinical') || normText.includes('nursing')) {

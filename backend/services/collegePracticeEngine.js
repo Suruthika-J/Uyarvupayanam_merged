@@ -389,6 +389,74 @@ Respond strictly in valid JSON array of objects with schema:
         explanation: "Gross Profit = ₹3,000,000. Operating Profit = Gross Profit - Operating Expenses = ₹3,000,000 - ₹1,200,000 = ₹1,800,000. Operating Profit Ratio = (1,800,000 / 10,000,000) * 100 = 18%."
       }
     ],
+    management: [
+      {
+        id: "mgmt_1",
+        type: "case_study",
+        question: "In Porter's Five Forces framework, a industry with low capital requirements, minimal brand loyalty, and unpatented technology exhibits:",
+        options: [
+          "High Threat of New Entrants",
+          "High Supplier Bargaining Power",
+          "Low Industry Rivalry",
+          "High Barriers to Entry"
+        ],
+        correctIndex: 0,
+        topic: subject,
+        difficulty,
+        explanation: "Low capital investment, lack of proprietary technology, and low brand equity reduce entry barriers, resulting in high threat of new market entrants."
+      }
+    ],
+    mechanical: [
+      {
+        id: "mech_1",
+        type: "numerical",
+        question: "In thermodynamic evaluation of a Carnot heat engine operating between reservoir temperatures of 600 K and 300 K, what is the maximum thermal efficiency?",
+        options: [
+          "50%",
+          "60%",
+          "75%",
+          "40%"
+        ],
+        correctIndex: 0,
+        topic: subject,
+        difficulty,
+        explanation: "Carnot Efficiency = 1 - (TL / TH) = 1 - (300 / 600) = 0.50 or 50%."
+      }
+    ],
+    civil: [
+      {
+        id: "civ_1",
+        type: "mcq",
+        question: "In reinforced concrete beam design under IS 456, what parameter governs the maximum depth of the neutral axis for Fe 500 grade steel?",
+        options: [
+          "0.46 * d",
+          "0.53 * d",
+          "0.48 * d",
+          "0.38 * d"
+        ],
+        correctIndex: 0,
+        topic: subject,
+        difficulty,
+        explanation: "For Fe 500 yield strength steel, the limiting depth of neutral axis (xu,max/d) is 0.46 under limit state design."
+      }
+    ],
+    electronics: [
+      {
+        id: "ece_1",
+        type: "mcq",
+        question: "In digital microcontroller interfacing, which serial communication protocol utilizes two bi-directional lines (SDA and SCL) with master-slave addressing?",
+        options: [
+          "I2C (Inter-Integrated Circuit)",
+          "SPI (Serial Peripheral Interface)",
+          "UART (Universal Asynchronous Receiver-Transmitter)",
+          "CAN Bus"
+        ],
+        correctIndex: 0,
+        topic: subject,
+        difficulty,
+        explanation: "I2C uses two lines (Serial Data - SDA and Serial Clock - SCL) and supports multi-master/multi-slave operation using 7-bit or 10-bit addressing."
+      }
+    ],
     computing: [
       {
         id: "cs_1",

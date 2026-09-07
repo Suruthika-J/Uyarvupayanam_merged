@@ -15,20 +15,29 @@ export function useCollegeProfile() {
 
 export function CollegeProfileProvider({ children }) {
   const { student, token } = useStudentAuth()
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cachedCollegeProfile')
+      return cached ? JSON.parse(cached) : null
+    } catch (e) {
+      return null
+    }
+  })
+  const [loading, setLoading] = useState(!profile)
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const fetchProfile = useCallback(async () => {
-    if (!token) { setLoading(false); return }
+    const activeToken = token || localStorage.getItem('studentToken')
+    if (!activeToken) { setLoading(false); return }
     try {
-      setLoading(true)
+      if (!profile) setLoading(true)
       const res = await axios.get(`${API_BASE}/api/college-profile/my-profile`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       })
-      if (res.data?.success) {
+      if (res.data?.success && res.data.profile) {
         setProfile(res.data.profile)
+        localStorage.setItem('cachedCollegeProfile', JSON.stringify(res.data.profile))
       }
     } catch (err) {
       console.warn('CollegeProfileContext: Failed to fetch profile', err.message)

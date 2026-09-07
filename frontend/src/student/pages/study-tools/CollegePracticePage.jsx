@@ -11,9 +11,10 @@ import { getCollegePracticeConfig, fetchDomainPracticeSession } from '../../serv
 
 export default function CollegePracticePage() {
   const { profile } = useCollegeProfile()
-  const practiceConfig = getCollegePracticeConfig(profile || {})
-
-  const [selectedSubject, setSelectedSubject] = useState(practiceConfig.defaultSubject || practiceConfig.subjects[0])
+  const initialConfig = getCollegePracticeConfig(profile || {})
+  
+  const [practiceConfig, setPracticeConfig] = useState(initialConfig)
+  const [selectedSubject, setSelectedSubject] = useState(initialConfig.defaultSubject || initialConfig.subjects[0])
   const [selectedActivityType, setSelectedActivityType] = useState('All Activity Types')
   const [difficulty, setDifficulty] = useState('Medium')
   
@@ -32,14 +33,39 @@ export default function CollegePracticePage() {
   // Optional interdisciplinary skill exploration state
   const [showInterdisciplinary, setShowInterdisciplinary] = useState(false)
 
-  // Reset subject when practiceConfig changes
+  // Fetch backend practice config for exact database profile
   useEffect(() => {
-    if (practiceConfig?.subjects?.length > 0) {
-      setSelectedSubject(practiceConfig.defaultSubject || practiceConfig.subjects[0])
+    const fetchBackendConfig = async () => {
+      try {
+        const token = localStorage.getItem('studentToken')
+        const res = await axios.get('http://localhost:5000/api/study-tools/practice/config', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.data?.success && res.data.practiceConfig) {
+          const pConfig = res.data.practiceConfig
+          setPracticeConfig(pConfig)
+          setSelectedSubject(pConfig.defaultSubject || pConfig.subjects[0])
+        }
+      } catch (err) {
+        console.warn('Failed to load backend practice config:', err)
+      }
     }
-  }, [practiceConfig?.domainKey])
+    fetchBackendConfig()
+  }, [profile?.degreeProgramme, profile?.domain, profile?.field])
+
+  // Sync practiceConfig when client-side profile finishes loading
+  useEffect(() => {
+    const clientConfig = getCollegePracticeConfig(profile || {})
+    if (clientConfig && clientConfig.domainKey !== 'pending') {
+      setPracticeConfig(clientConfig)
+      if (clientConfig.defaultSubject) {
+        setSelectedSubject(clientConfig.defaultSubject)
+      }
+    }
+  }, [profile?.degreeProgramme, profile?.domain, profile?.field])
 
   const loadPracticeSession = async () => {
+    if (!selectedSubject || selectedSubject === 'Academic Practice') return
     setLoading(true)
     setSubmitted(false)
     setResultData(null)
