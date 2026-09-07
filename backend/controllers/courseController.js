@@ -39,7 +39,7 @@ exports.createCourse = async (req, res) => {
 exports.getAllCourses = async (req, res) => {
   try {
     const { level, targetLevel, category } = req.query;
-    const filter = {};
+    let filter = {};
 
     if (level) {
       const normalizedLevel = level.replace(/\s/g, '');

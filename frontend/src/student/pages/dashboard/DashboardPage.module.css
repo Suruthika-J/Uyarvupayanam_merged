@@ -683,7 +683,7 @@
 }
 
 .savedCardActions {
-  marginTop: auto;
+  margin-top: auto;
   display: flex;
   gap: 10px;
 }

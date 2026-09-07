@@ -394,6 +394,7 @@ export default function CourseCategoryPage() {
 
       {/* Content Area */}
       <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+        <EligibilityBanner student={student} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '0 4px' }}>
           <h2 style={{ fontFamily: 'var(--s-font-display)', fontSize: 18, fontWeight: 800, color: 'var(--s-text)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <FiFilter size={18} color={accentColor} /> Total Courses Found: ({visibleCourses.length})

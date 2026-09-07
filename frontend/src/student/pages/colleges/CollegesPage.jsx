@@ -5,6 +5,7 @@ import { collegeService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
 import { SCard, SBadge, SLoader, SEmpty, SInput, SSelect, SBtn } from '../../components/ui'
 import { FiMapPin, FiSearch, FiBookmark, FiArrowRight, FiGrid, FiList, FiX } from 'react-icons/fi'
+import EligibilityBanner from '../../components/EligibilityBanner'
 
 // Must match the admin STREAMS list exactly
 const STREAMS = [
@@ -122,7 +123,7 @@ function CollegeCard({ college, isSaved, onToggleSave }) {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 export default function CollegesPage() {
-  const { isAuthenticated } = useStudentAuth()
+  const { isAuthenticated, student } = useStudentAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -260,6 +261,8 @@ export default function CollegesPage() {
           </Link>
         </div>
       </div>
+
+      <EligibilityBanner student={student} />
 
       {/* ── Stream Category Cards ── */}
       <div style={{ marginBottom: 40 }} className="s-anim-up s-d1">

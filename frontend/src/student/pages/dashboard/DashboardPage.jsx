@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import {
   notificationService,
@@ -86,8 +86,6 @@ function formatDate(d) {
 /* ────────────────────────────────────────────────────────────── 
    DASHBOARD PAGE
    ────────────────────────────────────────────────────────────── */
-import { Navigate } from 'react-router-dom'
-
 export default function DashboardPage() {
   const { student, logout } = useStudentAuth()
   const navigate = useNavigate()
@@ -488,9 +486,11 @@ export default function DashboardPage() {
               <SSectionHeader
                 title="🔖 Saved Resources"
                 subtitle="Your bookmarked careers, exams, and scholarships"
+                action={() => navigate('/student/bookmarks')}
+                actionLabel="View All"
               />
               {savedGuidance.length === 0 ? (
-                <SEmpty icon="🔖" title="No saved resources yet" desc="Bookmark items to keep track of your career journey." />
+                <SEmpty icon="🔖" title="No saved resources yet" desc="Start exploring courses and colleges to build your personal roadmap." />
               ) : (
                 <div className={s.savedGrid}>
                   {savedGuidance.map((item, i) => {
@@ -622,7 +622,7 @@ export default function DashboardPage() {
                   subtitle="Don't miss these deadlines"
                 />
                 {scholarships.length === 0 ? (
-                  <SEmpty icon="ðŸŽ“" title="No scholarships yet" />
+                  <SEmpty icon="🎓" title="No scholarships yet" />
                 ) : (
                   <div className={s.scholarshipList}>
                     {scholarships.map((sch, i) => (
@@ -655,7 +655,7 @@ export default function DashboardPage() {
                 actionLabel="View All"
               />
               {notifications.length === 0 ? (
-                <SEmpty icon="ðŸ””" title="No notifications yet" desc="Admin updates will appear here" />
+                <SEmpty icon="🔔" title="No notifications yet" desc="Admin updates will appear here" />
               ) : (
                 <div className={s.notifList}>
                   {notifications.map((n, i) => (
@@ -668,7 +668,7 @@ export default function DashboardPage() {
                         {!n.isRead && <span className={s.notifDot} />}
                       </div>
                       <div className={s.notifMsg}>
-                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? 'â€¦' : ''}
+                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? '…' : ''}
                       </div>
                       <div className={s.notifTime}>{timeAgo(n.createdAt)}</div>
                     </div>

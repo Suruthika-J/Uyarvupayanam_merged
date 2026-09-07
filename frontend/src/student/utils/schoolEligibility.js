@@ -8,8 +8,9 @@ export const SCHOOL_CLASSES = [5, 8, 10, 12]
 const LEVEL_RULES = [
   { keys: /\b(degree|undergraduate)\b/i, min: 12 },
   { keys: /(after\s*12\s*(th)?|class\s*12\b|\b12\b|\b12th\b)/i, min: 12 },
-  { keys: /(after\s*10\s*(th)?|class\s*10\b|\b10\b|\b10th\b)/i, min: 10 },
+  { keys: /(after\s*10\s*(th)?|class\s*10\b|\b10\b|\b10th\b|10\s*\+?\s*10)/i, min: 10 },
   { keys: /\b(diploma|polytechnic|iti|certificate)\b/i, min: 10 },
+  { keys: /\b(sslc|secondary|matric)(\s*(pass|standard|school))?\b/i, min: 10 },
   { keys: /(class\s*8\b|\b8\b|\b8th\b)/i, min: 8 },
   { keys: /(class\s*5\b|\b5\b|\b5th\b)/i, min: 5 },
 ]

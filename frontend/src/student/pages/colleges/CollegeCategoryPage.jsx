@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { collegeService } from '../../services'
 import { SCard, SBadge, SLoader, SEmpty, SBtn, SInput } from '../../components/ui'
 import { FiMapPin, FiChevronLeft, FiSearch, FiExternalLink } from 'react-icons/fi'
+import { useStudentAuth } from '../../context/StudentAuthContext'
+import EligibilityBanner from '../../components/EligibilityBanner'
 
 const STREAM_STYLE = {
   Engineering:          { color: '#1d5fba', bg: '#eaf0fb', icon: '⚙️' },
@@ -25,6 +27,7 @@ const STREAM_STYLE = {
 export default function CollegeCategoryPage() {
   const { categoryName } = useParams()
   const navigate = useNavigate()
+  const { student } = useStudentAuth()
 
   const [colleges, setColleges] = useState([])
   const [loading, setLoading] = useState(true)
@@ -107,6 +110,8 @@ export default function CollegeCategoryPage() {
 
       {/* Content */}
       <div style={{ maxWidth: 1200, margin: '-28px auto 60px', padding: '0 24px' }}>
+
+        <EligibilityBanner student={student} />
 
         {/* Search bar */}
         <div style={{
