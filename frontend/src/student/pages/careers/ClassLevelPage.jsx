@@ -39,7 +39,6 @@ const CLASS_SECTIONS = {
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
-    { id: 'Fun', label: 'Fun', icon: FiActivity, color: '#ec4899' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
     { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
@@ -60,6 +59,29 @@ const CLASS_SECTIONS = {
     { id: 'FAQs', label: 'FAQs', icon: FiHelpCircle, color: '#334155' }
   ]
 }
+
+const SKILL_BADGE_STYLE = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  height: 26, padding: '0 12px', borderRadius: 99,
+  fontSize: 12, fontWeight: 600, lineHeight: 1,
+  fontFamily: 'var(--s-font-display)', letterSpacing: '0.02em',
+  whiteSpace: 'nowrap',
+};
+const SKILL_BADGE_TONES = {
+  gold:      { background: 'var(--s-gold-l)', color: 'var(--s-gold)' },
+  primary:   { background: 'var(--s-blue-l)', color: 'var(--s-blue)' },
+  secondary: { background: 'var(--s-bg2)',    color: 'var(--s-text2)' },
+};
+
+const SKILL_IMAGE_REPLACEMENTS = {
+  'https://images.unsplash.com/photo-1455390582262-044cdead2708?auto=format&fit=crop&q=80&w=600': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=600',
+  'https://images.unsplash.com/photo-1529156069898-49953eb1b5ce?auto=format&fit=crop&q=80&w=600': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1546410531-ea4eca38d8cb?q=80&w=1200&auto=format&fit=crop': 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=600',
+  'https://images.unsplash.com/photo-1592188657297-c6473602410a?q=80&w=1200': 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1621453229864-7729f270b224?q=80&w=1200': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200',
+  'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?q=80&w=1200&auto=format&fit=crop': 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+};
+const resolveCardImage = (coverImage) => SKILL_IMAGE_REPLACEMENTS[coverImage] || coverImage;
 
 const STREAM_TABS = ["Science", "Commerce", "Arts", "Diploma"];
 const SCHOLARSHIP_TABS = ["Merit", "NSP"];
@@ -166,6 +188,7 @@ export default function ClassLevelPage(props) {
   const [expandedCourseCat, setExpandedCourseCat] = useState(null)
   const [mappingData, setMappingData] = useState([])
   const [mappingLoading, setMappingLoading] = useState(false)
+  const isScopedBadge = (activeSec === 'Skills' && ['5','8','10'].includes(cleanLevel)) || (activeSec === 'Entrance Exams' && cleanLevel === '10')
   
   useEffect(() => {
     fetchContent()
@@ -486,23 +509,38 @@ export default function ClassLevelPage(props) {
           backgroundColor:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px)', borderRadius:24, boxShadow:'0 20px 25px -5px rgba(0,0,0,0.05)',
           marginBottom: activeSec === 'Streams' ? 20 : 50, border:'1px solid rgba(255,255,255,0.5)', position:'sticky', top:20, zIndex:100
         }}>
-          {availableSections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
-              style={{
-                flexShrink: 0, padding: '14px 24px', borderRadius: 18, border: 'none',
-                background: activeSec === s.id ? s.color : 'transparent',
-                color: activeSec === s.id ? '#fff' : '#475569',
-                display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800, fontSize:14,
-                cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: activeSec === s.id ? `0 10px 15px -3px ${s.color}44` : 'none',
-                transform: activeSec === s.id ? 'scale(1.02)' : 'scale(1)'
-              }}
-            >
-              <s.icon size={18} style={{ opacity: activeSec === s.id ? 1 : 0.7 }} /> {s.label}
-            </button>
-          ))}
+          {availableSections.map(s => {
+            const isClass5BasicsActive = cleanLevel === '5' && s.id === 'Basics' && activeSec === 'Basics';
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
+                style={{
+                  flexShrink: 0,
+                  padding: isClass5BasicsActive ? '0 12px' : '14px 24px',
+                  borderRadius: isClass5BasicsActive ? 99 : 18,
+                  height: isClass5BasicsActive ? 26 : 'auto',
+                  minHeight: isClass5BasicsActive ? 26 : 'auto',
+                  gap: isClass5BasicsActive ? 6 : 10,
+                  border: 'none',
+                  background: activeSec === s.id ? s.color : 'transparent',
+                  color: activeSec === s.id ? '#fff' : '#475569',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: isClass5BasicsActive ? 600 : 800,
+                  fontSize: isClass5BasicsActive ? 12 : 14,
+                  lineHeight: isClass5BasicsActive ? 1 : 'normal',
+                  fontFamily: isClass5BasicsActive ? 'var(--s-font-display)' : 'inherit',
+                  letterSpacing: isClass5BasicsActive ? '0.02em' : 'normal',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: isClass5BasicsActive ? `0 6px 12px -5px ${s.color}88` : (activeSec === s.id ? `0 10px 15px -3px ${s.color}44` : 'none'),
+                  transform: activeSec === s.id ? 'scale(1.02)' : 'scale(1)'
+                }}
+              >
+                <s.icon size={isClass5BasicsActive ? 14 : 18} style={{ opacity: activeSec === s.id ? 1 : 0.7 }} /> {s.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
@@ -561,32 +599,7 @@ export default function ClassLevelPage(props) {
                </div>
             </div>
 
-             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
-                {activeSec === 'Careers' && cleanLevel !== '12' && filteredContent.length > 0 && (
-                   <div style={{ marginBottom: 40 }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
-                         {filteredContent.map(item => (
-                            <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:32, border:'1px solid #f1f5f9', position: 'relative' }}>
-                               <button 
-                                 onClick={() => handleSaveAction(item)} 
-                                 style={{ 
-                                   position:'absolute', top:24, right:24, width:44, height:44, 
-                                   borderRadius:99, background:'#f8fafc', border:'1px solid #e2e8f0', cursor:'pointer', 
-                                   display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
-                                   transition: 'all 0.2s'
-                                 }}
-                               >
-                                 {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
-                               </button>
-                               <SBadge color="blue">{item.category}</SBadge>
-                               <h3 style={{ fontSize:22, fontWeight:900, marginTop:16 }}>{item.title}</h3>
-                               <p style={{ color:'#64748b', margin:'12px 0 20px' }}>{item.shortDescription}</p>
-                               <SBtn variant="outline" onClick={() => navigate(`/student/career-path/class-${cleanLevel}/${item.slug || item._id}`)}>View Guidance</SBtn>
-                            </div>
-                         ))}
-                      </div>
-                   </div>
-                )}
+             <div style={{ display: 'grid', gridTemplateColumns: (activeSec === 'Scholarships' || (activeSec === 'Skills' && ['5','8'].includes(cleanLevel)) || (activeSec === 'Entrance Exams' && cleanLevel === '10')) ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
                {/* --- CLASS 10 STREAMS LOGIC (STATIC CONTENT) --- */}
                {activeSec === 'Streams' && cleanLevel === '10' && activeSubTab !== 'Diploma' && (
                   <div style={{ gridColumn: '1/-1', marginBottom: 40 }}>
@@ -912,6 +925,7 @@ export default function ClassLevelPage(props) {
                     </div>
                   )}
                 {filteredContent.map(item => {
+                  const isCompactImageCard = (activeSec === 'Skills' && ['5','8'].includes(cleanLevel)) || (activeSec === 'Entrance Exams' && cleanLevel === '10');
                   if (item.isDirect) {
                     return cleanLevel === '5' ? (
                       <div key={item._id} style={{ 
@@ -1056,26 +1070,68 @@ export default function ClassLevelPage(props) {
                       overflow:'hidden', display:'flex', flexDirection:'column', 
                       boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', transition:'0.3s' 
                     }} className="hover-lift">
-                      <div style={{ width: '100%', height: 230, position:'relative' }}>
-                        <img src={item.coverImage || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button 
-                          onClick={() => handleSaveAction(item)} 
-                          style={{ 
-                            position:'absolute', top:20, right:20, width:48, height:48, 
-                            borderRadius:99, background:'#fff', border:'none', cursor:'pointer', 
-                            display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
-                            boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          {savedIds.has(item._id) ? <FiHeart size={22} fill="#ef4444" /> : <FiBookmark size={22} />}
-                        </button>
-                      </div>
-                      <div style={{ padding: 32, flex:1, display:'flex', flexDirection:'column' }}>
+                      {isCompactImageCard ? (
+                        <div style={{ padding: '18px 18px 0' }}>
+                          <div style={{ width: '100%', height: 220, borderRadius: 18, overflow: 'hidden', position: 'relative', background: '#f1f5f9' }}>
+                            <img 
+                              src={resolveCardImage(item.coverImage) || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display:'block' }}
+                              onError={(e) => { if (e.target.style.display !== 'none') { e.target.onerror = null; e.target.style.display = 'none'; } }}
+                            />
+                            <button 
+                              onClick={() => handleSaveAction(item)} 
+                              style={{ 
+                                position:'absolute', top:12, right:12, width:44, height:44, 
+                                borderRadius:99, background:'rgba(255,255,255,0.92)', border:'none', cursor:'pointer', 
+                                display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
+                                boxShadow:'0 4px 12px rgba(0,0,0,0.15)', backdropFilter:'blur(4px)'
+                              }}
+                            >
+                              {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ width: '100%', height: 230, position:'relative' }}>
+                          <img src={resolveCardImage(item.coverImage) || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button 
+                            onClick={() => handleSaveAction(item)} 
+                            style={{ 
+                              position:'absolute', top:20, right:20, width:48, height:48, 
+                              borderRadius:99, background:'#fff', border:'none', cursor:'pointer', 
+                              display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
+                              boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                            {savedIds.has(item._id) ? <FiHeart size={22} fill="#ef4444" /> : <FiBookmark size={22} />}
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ padding: isCompactImageCard ? '20px 22px 26px' : 32, flex:1, display:'flex', flexDirection:'column' }}>
+                         {isScopedBadge ? (
+                          <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+                            {item.featured && (
+                              <span style={{ ...SKILL_BADGE_STYLE, ...SKILL_BADGE_TONES.gold }}>FEATURED</span>
+                            )}
+                            {!(activeSec === 'Skills' && cleanLevel === '8' && String(item.category || '').toUpperCase() === 'FUN') && (
+                              <span style={{ ...SKILL_BADGE_STYLE, ...SKILL_BADGE_TONES.primary }}>{item.category}</span>
+                            )}
+                            {item.subCategoryLabel && String(item.subCategoryLabel).split(',').map((tag, i) => {
+                              const lbl = String(tag).trim()
+                              if (!lbl) return null
+                              if (activeSec === 'Skills' && cleanLevel === '8' && lbl.toUpperCase() === 'FUN') return null
+                              return (
+                                <span key={`${lbl}-${i}`} style={{ ...SKILL_BADGE_STYLE, ...SKILL_BADGE_TONES.secondary }}>{lbl.toUpperCase()}</span>
+                              )
+                            })}
+                         </div>
+                        ) : (
                          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
                             {item.featured && <SBadge color="gold">FEATURED</SBadge>}
                             <SBadge color="blue">{item.category}</SBadge>
                             {item.subCategoryLabel && <SBadge color="gray">{String(item.subCategoryLabel).toUpperCase()}</SBadge>}
                          </div>
+                        )}
                          <h3 style={{ fontSize:22, fontWeight:900, margin:'0 0 12px', lineHeight:1.3 }}>{item.title}</h3>
                          <p style={{ color:'#64748b', marginBottom:24, lineHeight:1.6 }}>{item.shortDescription}</p>
                          <SBtn 
