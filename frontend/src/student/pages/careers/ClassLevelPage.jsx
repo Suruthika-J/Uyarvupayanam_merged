@@ -4,7 +4,7 @@ import {
   FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
   FiAward, FiActivity, FiVideo, FiBriefcase, FiInfo,
   FiBookmark, FiCompass, FiSearch, FiLayers, FiDollarSign,
-  FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin,
+  FiFileText, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin,
   FiCheckCircle, FiClock
 } from 'react-icons/fi'
 import { classContentService } from '../../../services/classContentService'
@@ -18,6 +18,7 @@ import AuthModal from '../../components/ui/AuthModal'
 import { courseService } from '../../../services/courseService'
 import { collegeService } from '../../services/index'
 import axiosInstance from '../../../config/axios'
+import CollegesPage from '../../components/colleges/CollegesPage'
 
 const CLASS_SECTIONS = {
   default: [
@@ -45,6 +46,7 @@ const CLASS_SECTIONS = {
   ],
   "10": [
     { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#f59e0b' },
+    { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
   ],
@@ -181,7 +183,6 @@ export default function ClassLevelPage(props) {
   const [alert, setAlert] = useState({ type: '', text: '' })
   const [searchQuery, setSearchQuery] = useState('')
   const [courses, setCourses] = useState([])
-  const [colleges, setColleges] = useState([]) 
   const [exams, setExams] = useState([]) 
   const [explorerData, setExplorerData] = useState([])
   const [explorerLoading, setExplorerLoading] = useState(false)
@@ -251,6 +252,13 @@ export default function ClassLevelPage(props) {
              }]);
            }
         } else if (cleanLevel === '12') {
+          // The Colleges tab now renders from the college-course mapping
+          // endpoint (fetchMapping) which returns colleges with their courses.
+          if (activeSec !== 'Careers') {
+            setExplorerData([])
+            return
+          }
+
           const query = { 
             search: searchQuery.trim(),
             level: cleanLevel
@@ -261,8 +269,7 @@ export default function ClassLevelPage(props) {
           if (res.success) {
              const data = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : [])
              setExplorerData(data)
-             if (activeSec === 'Colleges') setColleges(data)
-             if (activeSec === 'Careers') setCourses(data)
+             setCourses(data)
           }
         }
       } catch (err) {
@@ -277,23 +284,17 @@ export default function ClassLevelPage(props) {
   }, [activeSec, activeSubTab, searchQuery, cleanLevel])
 
   useEffect(() => {
-    if (activeSec !== 'College Mapping') return;
+    if (!(activeSec === 'College Mapping' || (activeSec === 'Colleges' && (cleanLevel === '10' || cleanLevel === '12')))) return;
     
     const fetchMapping = async () => {
       setMappingLoading(true)
       try {
-        const levelFilter = cleanLevel === '10' ? 'diploma' : (cleanLevel === '12' ? 'after12th' : '')
         const res = await axiosInstance.get('/college-courses')
         if (res.data.success) {
-          let data = res.data.data
-          if (levelFilter) {
-             data = data.map(college => ({
-               ...college,
-               coursesOffered: college.coursesOffered.filter(c => 
-                 c.level === levelFilter || (cleanLevel === '12' && c.level === 'diploma')
-               )
-             })).filter(college => college.coursesOffered.length > 0)
-          }
+          // Both levels read the SAME admin-confirmed dataset. Class 10 is
+          // scoped to Diploma / Polytechnic inside CollegesPage (defaultStream),
+          // Class 12 sees every stream.
+          const data = (res.data.data || []).filter(college => (college.coursesOffered || []).length > 0)
           setMappingData(data)
         }
       } catch (err) {
@@ -488,11 +489,6 @@ export default function ClassLevelPage(props) {
             Explore scholarships, skills, exams, habits, and future opportunities.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-            {Number(cleanLevel) === 12 && (
-              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
-                 🏫 Explore Colleges
-              </SBtn>
-            )}
             <SBtn variant="white" onClick={() => navigate('/student/signup')} style={{ borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
                🚀 Start Exploring
             </SBtn>
@@ -576,7 +572,8 @@ export default function ClassLevelPage(props) {
           <div style={{ padding: '100px 0' }}><SLoader /></div>
         ) : (
           <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
+            {!['Colleges', 'College Mapping'].includes(activeSec) && (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
                <div>
                  <h2 style={{ fontSize:28, fontWeight:900 }}>
                    {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
@@ -598,6 +595,7 @@ export default function ClassLevelPage(props) {
                  )}
                </div>
             </div>
+            )}
 
              <div style={{ display: 'grid', gridTemplateColumns: (activeSec === 'Scholarships' || (activeSec === 'Skills' && ['5','8'].includes(cleanLevel)) || (activeSec === 'Entrance Exams' && cleanLevel === '10')) ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
                {/* --- CLASS 10 STREAMS LOGIC (STATIC CONTENT) --- */}
@@ -651,7 +649,7 @@ export default function ClassLevelPage(props) {
                )}
 
                {/* --- CLASS 12 & DIPLOMA LOGIC (uses explorerData) --- */}
-               {((activeSec === 'Careers' || activeSec === 'Colleges') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10' && (activeSubTab === 'All' || activeSubTab === 'Diploma')) ? (
+               {((activeSec === 'Careers') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10' && (activeSubTab === 'All' || activeSubTab === 'Diploma')) ? (
                   explorerLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : explorerData.length === 0 ? (
@@ -700,41 +698,15 @@ export default function ClassLevelPage(props) {
                       ))}
                      </div>
                    )
-                ) : activeSec === 'College Mapping' ? (
-                  mappingLoading ? (
-                    <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
-                  ) : mappingData.length === 0 ? (
-                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
-                      <SEmpty icon={<FiLink size={48} />} title="No mappings found" desc="Contact admin to map colleges to courses for this level." />
-                    </div>
-                  ) : (
-                    mappingData.map(clg => (
-                      <div key={clg._id} style={{ background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', padding:24, boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)' }}>
-                        <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:20 }}>
-                          <div style={{ width:48, height:48, borderRadius:12, background:'var(--s-primary-l)', color:'var(--s-primary)', display:'grid', placeItems:'center', fontSize:20 }}><FiMapPin size={24} /></div>
-                          <div>
-                            <h3 style={{ margin:0, fontSize:18, fontWeight:900 }}>{clg.collegeName}</h3>
-                            <div style={{ fontSize:13, color:'#64748b' }}><FiMapPin size={12} /> {clg.location}, {clg.district}</div>
-                          </div>
-                        </div>
-                        
-                        <div style={{ background:'#f8fafc', borderRadius:16, padding:16 }}>
-                          <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Courses Available</div>
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                            {clg.coursesOffered && clg.coursesOffered.map(c => (
-                              <span key={c._id} style={{ background:'#fff', border:'1px solid #e2e8f0', padding:'6px 12px', borderRadius:8, fontSize:13, fontWeight:600 }}>
-                                {c.courseName}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div style={{ marginTop:20, display:'flex', justifyContent:'flex-end' }}>
-                          <SBtn variant="outline" size="sm" onClick={() => navigate(`/student/colleges/${clg._id}`)}>View College Details</SBtn>
-                        </div>
-                      </div>
-                    ))
-                  )
+                ) : activeSec === 'College Mapping' || (activeSec === 'Colleges' && (cleanLevel === '10' || cleanLevel === '12')) ? (
+                  <CollegesPage
+                    colleges={mappingData}
+                    loading={mappingLoading}
+                    streamScope={cleanLevel === '10' ? ['Diploma', 'Polytechnic'] : undefined}
+                    defaultDegree={cleanLevel === '10' ? 'Diploma' : undefined}
+                    title={activeSec === 'College Mapping' ? 'College Mapping Insight' : 'Colleges Insight'}
+                    subtitle="Browse admin-verified colleges and their confirmed courses. Pick a degree type, district, or search to filter instantly."
+                  />
                 ) : activeSec === 'Entrance Exams' && cleanLevel === '12' ? (
                   <div style={{ gridColumn: '1/-1' }}>
                      {/* Stream Mapping */}

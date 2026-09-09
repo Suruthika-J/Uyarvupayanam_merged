@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiUploadCloud, FiCheckCircle, FiBookmark } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiCalendar, FiDollarSign, FiAward, FiExternalLink, FiBookmark } from 'react-icons/fi';
 import { scholarshipService } from '../../services';
-import { adminService } from '../../../services/adminService';
 import { userActionService } from '../../../services/userActionService';
 import { useStudentAuth } from '../../context/StudentAuthContext';
 import { SLoader, SBadge } from '../../components/ui';
-import axiosInstance from '../../../config/axios';
 import { fmtName, fmtProvider, fmtAmount, fmtDeadline, fmtEligibilityShort, fmtClasses } from './scholarshipText';
 
 export default function ScholarshipsPage() {
@@ -22,15 +20,6 @@ export default function ScholarshipsPage() {
 
   const [savedIds, setSavedIds] = useState(new Set());
   const { isAuthenticated } = useStudentAuth();
-
-
-  // For Admin/Bonus Import Feature
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState(null);
-
-  // Determine if user is admin based on current token type (Bonus)
-  const isAdmin = !!localStorage.getItem('adminToken');
 
   useEffect(() => {
     fetchScholarships();
@@ -93,41 +82,6 @@ export default function ScholarshipsPage() {
       console.error("Save error:", err);
     }
   };
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-    setUploading(true);
-    setUploadMessage(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const res = await axiosInstance.post('/scholarships/import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      setUploadMessage({
-        type: 'success',
-        text: `Success! Imported ${res.data?.summary?.inserted || 0} scholarships, skipped ${res.data?.summary?.skipped || 0}.`
-      });
-      setFile(null);
-      // Automatically refresh the list!
-      fetchScholarships();
-    } catch (err) {
-      console.error("Upload error:", err);
-      setUploadMessage({ type: 'error', text: err.response?.data?.message || 'Failed to upload CSV file.' });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   // Filter Logic
 
@@ -157,29 +111,6 @@ export default function ScholarshipsPage() {
              Discover and apply for scholarships to support your educational journey.
            </p>
         </div>
-
-        {/* Bonus: Admin Upload Section (Only visible to admins via the same component for testing) */}
-        {isAdmin && (
-          <div style={{ background: '#fff', padding: 24, borderRadius: 16, marginBottom: 32, border: '1px solid var(--s-border)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 0 }}><FiUploadCloud /> Admin: Import Scholarships CSV</h3>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <input type="file" accept=".csv, .xlsx" onChange={handleFileChange} style={{ flex: 1, padding: 8, border: '1px dashed #ccc', borderRadius: 8 }} />
-              <button 
-                onClick={handleUpload} 
-                className="s-btn s-btn-primary" 
-                disabled={!file || uploading}
-              >
-                {uploading ? 'Importing...' : 'Upload & Import'}
-              </button>
-            </div>
-            {uploadMessage && (
-              <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: uploadMessage.type === 'success' ? '#d1fae5' : '#fee2e2', color: uploadMessage.type === 'success' ? '#047857' : '#b91c1c', display: 'flex', alignItems: 'center', gap: 8 }}>
-                {uploadMessage.type === 'success' && <FiCheckCircle />}
-                {uploadMessage.text}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Filters */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>

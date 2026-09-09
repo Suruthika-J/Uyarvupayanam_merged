@@ -3,18 +3,8 @@ import { SCard as Card, CardHeader, SBtn, SLoader } from '../../components/UI'
 import { adminService } from '../../../services/adminService'
 import axiosInstance from '../../../config/axios'
 import BulkCollegeCourseMapperModal from './BulkCollegeCourseMapperModal'
-
-const STREAMS = [
-  "Engineering",
-  "Medical",
-  "Arts & Science",
-  "Law",
-  "Diploma",
-  "Media & Journalism",
-  "Polytechnic",
-  "Agriculture",
-  "Others",
-]
+import { normalizeCourseName } from '../../../utils/courseNormalizer'
+import { STREAMS } from '../../../utils/streamOptions'
 
 export default function CollegeCourseMappingPage() {
   const [colleges, setColleges] = useState([])
@@ -33,6 +23,8 @@ export default function CollegeCourseMappingPage() {
   const [collegeDetails, setCollegeDetails] = useState(null)
   const [scanning, setScanning] = useState(false)
   const [manualWebsite, setManualWebsite] = useState('')
+  // courseId -> { degreePrefix, canonicalName } — admin-confirmed degree tags
+  const [degreeOverrides, setDegreeOverrides] = useState({})
 
   useEffect(() => {
     fetchInitialData()
@@ -78,6 +70,7 @@ export default function CollegeCourseMappingPage() {
       setSelectedCourses([])
       setSuggestedCourses([])
       setCollegeDetails(null)
+      setDegreeOverrides({})
       return
     }
 
@@ -162,9 +155,20 @@ export default function CollegeCourseMappingPage() {
 
     try {
       setSubmitting(true)
+      // Persist the verified stream on the college too (`streamsOffered`) — the
+      // student page filters/discoverability is driven by college.stream /
+      // college.streamsOffered, so a verified mapping under the selected stream
+      // must be tagged there or it never surfaces for students in any district.
+      const existingStreams = (collegeDetails?.streamsOffered || []).filter(Boolean)
+      const streamsOffered = selectedStream
+        ? Array.from(new Set([...existingStreams, selectedStream]))
+        : existingStreams
+
       const res = await axiosInstance.post('/college-courses', {
         collegeId: selectedCollege,
-        coursesOffered: selectedCourses
+        coursesOffered: selectedCourses,
+        courseTagOverrides: degreeOverrides,
+        streamsOffered
       })
 
       if (res.data.success) {
@@ -219,6 +223,53 @@ export default function CollegeCourseMappingPage() {
       default:
         return <span style={{ fontSize: 10, background: '#f3f4f6', color: '#4b5563', padding: '4px 10px', borderRadius: 8, fontWeight: 900 }}>🔍 FETCHED</span>;
     }
+  }
+
+  // One-click degree-prefix confirmation for a prefix-less course.
+  const applyDegreeTag = (course, prefix, info) => {
+    const p = String(prefix || '').trim()
+    if (!p) return
+    setDegreeOverrides(prev => ({
+      ...prev,
+      [String(course._id)]: {
+        degreePrefix: p,
+        canonicalName: `${p} ${info.canonicalName}`.replace(/\s+/g, ' ').trim(),
+      },
+    }))
+  }
+
+  const handleDegreeTagSelect = (course, value, info) => {
+    if (value === '__custom') {
+      const custom = window.prompt('Enter degree prefix (e.g. B.E., B.Sc., Diploma):', info.suggestedPrefixes[0] || 'B.E.')
+      if (custom && custom.trim()) applyDegreeTag(course, custom.trim(), info)
+      return
+    }
+    if (value) applyDegreeTag(course, value, info)
+  }
+
+  // Degree-tag review control shown on prefix-less (needsReview) course rows.
+  const renderDegreeTagControl = (course, info) => {
+    const override = degreeOverrides[String(course._id)]
+    if (override) {
+      return <span style={{ background: '#d1fae5', color: '#065f46', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 800 }}>✓ Tagged {override.degreePrefix}</span>
+    }
+    return (
+      <>
+        <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 800, whiteSpace: 'nowrap' }}>⚠ Needs degree tag</span>
+        <select
+          value=""
+          onChange={e => handleDegreeTagSelect(course, e.target.value, info)}
+          title="Accept a suggested degree prefix or type a custom one"
+          style={{ border: '1.5px solid #f59e0b', borderRadius: 8, padding: '4px 8px', fontSize: 11, fontWeight: 700, background: '#fff', color: '#92400e', cursor: 'pointer', maxWidth: 160 }}
+        >
+          <option value="" disabled>Add prefix…</option>
+          {info.suggestedPrefixes.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+          <option value="__custom">Custom…</option>
+        </select>
+      </>
+    )
   }
 
   if (loading) return <SLoader />
@@ -447,6 +498,9 @@ export default function CollegeCourseMappingPage() {
                   ) : (
                     finalSuggestedFiltered.map(c => {
                       const isSelected = selectedCourses.some(sc => String(sc) === String(c._id));
+                      const info = normalizeCourseName(c.courseName, { stream: collegeDetails?.stream || selectedStream });
+                      const override = degreeOverrides[String(c._id)];
+                      const displayName = override ? override.canonicalName : c.courseName;
                       return (
                         <label key={c._id} 
                           style={{ 
@@ -466,17 +520,25 @@ export default function CollegeCourseMappingPage() {
                             style={{ width: 22, height: 22, accentColor: 'var(--primary)', cursor: 'pointer' }}
                           />
                           <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{c.courseName}</div>
-                              <div style={{ display: 'flex', gap: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', minWidth: 0 }}>{displayName}</div>
+                              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                                 {getSourceBadge(c.source)}
+                                {!info.needsReview && info.degreePrefix && (
+                                  <span style={{ fontSize: 10, background: '#e2e8f0', color: '#334155', padding: '4px 10px', borderRadius: 8, fontWeight: 900 }}>🎓 {info.degreePrefix}</span>
+                                )}
                               </div>
                             </div>
-                            <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
+                            <div style={{ display: 'flex', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, opacity: 0.8 }}>⏱️ {c.duration}</span>
                               <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, opacity: 0.8 }}>🎓 {c.level}</span>
                               <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, opacity: 0.8 }}>📁 {c.category}</span>
                             </div>
+                            {info.needsReview && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                                {renderDegreeTagControl(c, info)}
+                              </div>
+                            )}
                           </div>
                         </label>
                       );

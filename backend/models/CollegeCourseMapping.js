@@ -40,6 +40,19 @@ const collegeCourseMappingSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Canonical, student-safe course name confirmed by an admin (e.g. "B.E. Mechanical Engineering").
+    // When empty, the student page falls back to the client-side normalizer and
+    // flags prefix-less / all-caps names as needing review.
+    canonicalName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    degreePrefix: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     degree: {
       type: String,
       trim: true,

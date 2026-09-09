@@ -214,7 +214,7 @@ exports.bulkAutoMap = async (req, res) => {
 // @access  Admin
 exports.saveMapping = async (req, res) => {
   try {
-    const { collegeId, streamsOffered, coursesOffered } = req.body;
+    const { collegeId, streamsOffered, coursesOffered, courseTagOverrides } = req.body;
 
     if (!collegeId) {
       return res.status(400).json({ success: false, message: "College ID is required" });
@@ -233,12 +233,22 @@ exports.saveMapping = async (req, res) => {
       
       // Sync dedicated Mapping table - remove old manual/import ones and set new verified ones
       await CollegeCourseMapping.deleteMany({ collegeId });
-      const mappingOps = uniqueCourseIds.map(cId => ({
-        collegeId,
-        courseId: cId,
-        source: "Manual Verification",
-        isVerified: true
-      }));
+      const mappingOps = uniqueCourseIds.map(cId => {
+        const op = {
+          collegeId,
+          courseId: cId,
+          source: "Manual Verification",
+          isVerified: true,
+        };
+        // Admin-confirmed degree tag for this course (e.g. "B.E.") — stored so
+        // the student page renders the canonical name instead of hiding it.
+        const tag = (courseTagOverrides || {})[String(cId)];
+        if (tag && tag.degreePrefix) {
+          op.degreePrefix = String(tag.degreePrefix).trim();
+          op.canonicalName = tag.canonicalName ? String(tag.canonicalName).trim() : "";
+        }
+        return op;
+      });
       if (mappingOps.length > 0) await CollegeCourseMapping.insertMany(mappingOps);
     }
 
@@ -271,7 +281,32 @@ exports.getMappings = async (req, res) => {
 
     const colleges = await College.find(filter)
       .populate("coursesOffered")
-      .sort({ collegeName: 1 });
+      .sort({ collegeName: 1 })
+      .lean();
+
+    // Enrich every mapped course with the admin-confirmed canonical name /
+    // degree prefix stored on the dedicated mapping record. Courses the admin
+    // tagged with a degree prefix become student-visible under that canonical
+    // name; untagged (prefix-less / all-caps) courses stay hidden client-side.
+    const mappings = await CollegeCourseMapping.find({ isActive: true })
+      .select("collegeId courseId canonicalName degreePrefix")
+      .lean();
+
+    const metaByCollegeAndCourse = new Map();
+    for (const m of mappings) {
+      if (!m.canonicalName && !m.degreePrefix) continue;
+      metaByCollegeAndCourse.set(`${String(m.collegeId)}::${String(m.courseId)}`, {
+        canonicalName: m.canonicalName || "",
+        degreePrefix: m.degreePrefix || "",
+      });
+    }
+
+    for (const college of colleges) {
+      college.coursesOffered = (college.coursesOffered || []).map(course => {
+        const meta = metaByCollegeAndCourse.get(`${String(college._id)}::${String(course._id)}`);
+        return meta ? { ...course, canonicalName: meta.canonicalName, degreePrefix: meta.degreePrefix } : course;
+      });
+    }
 
     res.status(200).json({
       success: true,
