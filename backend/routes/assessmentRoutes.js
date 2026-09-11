@@ -5,6 +5,7 @@ const verifyAdmin = require("../middleware/verifyAdmin");
 
 // Student Routes
 router.get("/questions/:classLevel", assessmentController.getQuestionsByLevel);
+router.post("/reassessment/questions", assessmentController.getReassessmentQuestions);
 router.post("/submit", assessmentController.submitAssessment);
 router.get("/result/:userId", assessmentController.getLatestResult);
 

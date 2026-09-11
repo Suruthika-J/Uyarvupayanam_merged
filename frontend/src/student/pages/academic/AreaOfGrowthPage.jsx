@@ -331,6 +331,12 @@ export default function AreaOfGrowthPage() {
               <>This is your first assessment — a baseline has been set.</>
             )}
           </div>
+          <div className={s.heroCta}>
+            <SBtn variant="white" onClick={() => navigate('/student/check-your-progress')}>
+              <FiTarget size={16} /> Check Your Progress
+            </SBtn>
+            <span className={s.heroCtaHint}>Short retest · new score · updated plan</span>
+          </div>
         </div>
 
         <div className={s.heroRight}>
@@ -453,6 +459,12 @@ export default function AreaOfGrowthPage() {
           </div>
         )}
         {data.topicsNote && <p className={s.footNote}>{data.topicsNote}</p>}
+        <div className={s.catFoot}>
+          <p>Re-take a short check-up to lock in your progress and refresh your plan with a new score.</p>
+          <SBtn variant="outline" size="sm" onClick={() => navigate('/student/check-your-progress')}>
+            <FiTarget size={15} /> Take a Short Check-up
+          </SBtn>
+        </div>
       </section>
 
       {/* ── D. Personalized Study Plan ─────────────────────────────────── */}

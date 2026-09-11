@@ -237,3 +237,89 @@ exports.deleteQuestion = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to delete question" });
     }
 };
+
+// POST /api/assessment/reassessment/questions
+//
+// Short re-assessment ("Check Your Progress") question preparation. Uses the
+// student's current academic recommendation to target the weakest subjects and
+// topics, then REUSES questions already stored in AssessmentQuestion; any
+// remaining questions are generated dynamically and persisted through the same
+// AssessmentQuestion model (so later check-ups reuse them). Submission stays on
+// the existing POST /api/assessment/submit flow.
+exports.getReassessmentQuestions = async (req, res) => {
+    try {
+        const { userId, classLevel, count } = req.body;
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "userId is required" });
+        }
+
+        const {
+            buildAcademicRecommendations,
+        } = require("../services/academicRecommendationService");
+        const {
+            buildReassessmentPlan,
+            fetchOrGenerateQuestions,
+            normalizeClass,
+        } = require("../services/schoolReassessmentService");
+
+        const styleLevel = normalizeClass(classLevel || req.query.classLevel);
+        const rec = await buildAcademicRecommendations({ userId });
+
+        if (!rec || !rec.data || !rec.data.hasAssessment) {
+            return res.status(404).json({
+                success: false,
+                code: "NO_ASSESSMENT",
+                message: "Complete the Area of Growth assessment first to build a baseline.",
+            });
+        }
+
+        const plan = buildReassessmentPlan({
+            weakSubjects: rec.data.weakSubjects || [],
+            weakTopics: rec.data.weakTopics || [],
+            questions: count,
+        });
+
+        if (!plan.length) {
+            return res.json({
+                success: true,
+                questions: [],
+                plan: [],
+                message: "No weak areas to re-assess right now.",
+            });
+        }
+
+        const settled = await Promise.all(
+            plan.map((item) =>
+                fetchOrGenerateQuestions({
+                    classLevel: styleLevel,
+                    category: item.category,
+                    topic: item.topic,
+                    count: item.count,
+                })
+            )
+        );
+
+        const allQuestions = settled.flatMap((r) => r.questions || []);
+        const questions = allQuestions
+            .sort(() => Math.random() - 0.5)
+            .slice(0, Number(count) || 8);
+
+        return res.json({
+            success: true,
+            questions,
+            plan: plan.map((p) => ({ subject: p.subject, topic: p.topic, count: p.count })),
+            sources: plan.map((p, i) => ({
+                subject: p.subject,
+                topic: p.topic,
+                category: p.category,
+                requestCount: p.count,
+                servedCount: settled[i].questions?.length || 0,
+                generatedCount: settled[i].generatedCount || 0,
+            })),
+            totalCount: questions.length,
+        });
+    } catch (error) {
+        console.error("Get reassessment questions error:", error);
+        res.status(500).json({ success: false, message: "Failed to prepare re-assessment questions" });
+    }
+};

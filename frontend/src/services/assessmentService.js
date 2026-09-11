@@ -25,6 +25,10 @@ const assessmentService = {
         const response = await axiosInstance.get(`/assessment/questions/${classLevel}`);
         return response.data;
     },
+    getReassessmentQuestions: async (data) => {
+        const response = await axiosInstance.post('/assessment/reassessment/questions', data);
+        return response.data;
+    },
     submitAssessment: async (data) => {
         const response = await axiosInstance.post('/assessment/submit', data);
         return response.data;

@@ -66,6 +66,7 @@ import CollegeScholarshipsPage from './pages/scholarships/CollegeScholarshipsPag
 import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
 import CollegePracticePage from './pages/study-tools/CollegePracticePage'
 import AreaOfGrowthPage from './pages/academic/AreaOfGrowthPage'
+import CheckYourProgressPage from './pages/academic/CheckYourProgressPage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 
@@ -200,6 +201,8 @@ export default function StudentRoutes() {
             <Route path="student/dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
             <Route path="area-of-growth" element={<StudentProtectedRoute><AreaOfGrowthPage /></StudentProtectedRoute>} />
             <Route path="student/area-of-growth" element={<StudentProtectedRoute><AreaOfGrowthPage /></StudentProtectedRoute>} />
+            <Route path="check-your-progress" element={<StudentProtectedRoute><CheckYourProgressPage /></StudentProtectedRoute>} />
+            <Route path="student/check-your-progress" element={<StudentProtectedRoute><CheckYourProgressPage /></StudentProtectedRoute>} />
             <Route path="bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
             <Route path="student/bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
             <Route path="notifications" element={<StudentProtectedRoute><NotificationsPage /></StudentProtectedRoute>} />

@@ -6,6 +6,36 @@
   padding: 28px 32px 48px;
 }
 
+/* ── Check Your Progress CTA (hero + section C) ─────────────────────────── */
+
+.heroCta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.heroCtaHint {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.catFoot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+  text-align: center;
+}
+
+.catFoot p {
+  font-size: 13px;
+  color: var(--s-text3);
+  margin: 0 0 8px;
+}
+
 /* ── Header ──────────────────────────────────────────────────────────────── */
 
 .pageHeader {
