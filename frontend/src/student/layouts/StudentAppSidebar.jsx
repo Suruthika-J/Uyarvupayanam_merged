@@ -3,21 +3,20 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../context/StudentAuthContext'
 import { notificationService } from '../services'
 import {
-  FiGrid, FiBookOpen, FiMapPin, FiFileText, FiAward,
-  FiBell, FiUser, FiSettings, FiLogOut, FiMenu, FiX,
+  FiGrid, FiFileText, FiAward,
+  FiBell, FiUser, FiSettings, FiLogOut, FiMenu, FiX, FiTrendingUp,
 } from 'react-icons/fi'
 import s from '../pages/dashboard/DashboardPage.module.css'
 
 const SIDEBAR_NAV = [
-  { id: 'dashboard',     icon: FiGrid,     label: 'Dashboard',      to: '/student/dashboard' },
-  { id: 'bookmarks',     icon: FiAward,    label: 'My Bookmarks',   to: '/student/bookmarks' },
-  { id: 'courses',       icon: FiBookOpen, label: 'Courses',        to: '/student/courses' },
-  { id: 'colleges',      icon: FiMapPin,   label: 'Colleges',       to: '/student/colleges' },
-  { id: 'exams',         icon: FiFileText, label: 'Entrance Exams', to: '/student/careers' },
-  { id: 'scholarships',  icon: FiAward,    label: 'Scholarships',   to: '/student/scholarships' },
-  { id: 'notifications', icon: FiBell,     label: 'Notifications',  to: '/student/notifications' },
-  { id: 'profile',       icon: FiUser,     label: 'Profile',        to: '/student/profile' },
-  { id: 'settings',      icon: FiSettings, label: 'Settings',       to: '/student/profile' },
+  { id: 'dashboard',      icon: FiGrid,       label: 'Dashboard',       to: '/student/dashboard' },
+  { id: 'area-of-growth', icon: FiTrendingUp, label: 'Area of Growth',  to: '/student/area-of-growth' },
+  { id: 'bookmarks',      icon: FiAward,      label: 'My Bookmarks',    to: '/student/bookmarks' },
+  { id: 'exams',          icon: FiFileText,   label: 'Entrance Exams',  to: '/student/careers' },
+  { id: 'scholarships',   icon: FiAward,      label: 'Scholarships',    to: '/student/scholarships' },
+  { id: 'notifications',  icon: FiBell,       label: 'Notifications',   to: '/student/notifications' },
+  { id: 'profile',        icon: FiUser,       label: 'Profile',         to: '/student/profile' },
+  { id: 'settings',       icon: FiSettings,   label: 'Settings',        to: '/student/profile' },
 ]
 
 export default function StudentAppSidebar() {
@@ -54,11 +53,7 @@ export default function StudentAppSidebar() {
       <aside className={`${s.sidebar} ${open ? s.sidebarOpen : ''}`}>
         <div className={s.sidebarLabel}>Menu</div>
 
-        {SIDEBAR_NAV.filter((item) => {
-          const isJunior = ['5', '8', '5th', '8th'].includes(String(student?.classLevel));
-          if (isJunior && ['courses', 'colleges'].includes(item.id)) return false;
-          return true;
-        }).map((item) => {
+        {SIDEBAR_NAV.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.to || (item.to !== '/student/dashboard' && location.pathname.startsWith(item.to))
           return (

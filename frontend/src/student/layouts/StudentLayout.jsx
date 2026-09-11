@@ -9,6 +9,7 @@ import { useStudentAuth } from '../context/StudentAuthContext'
 // Public/marketing, auth, and onboarding pages stay navbar-only.
 const APP_PREFIXES = [
   '/student/dashboard',
+  '/student/area-of-growth',
   '/student/bookmarks',
   '/student/notifications',
   '/student/profile',
@@ -37,12 +38,12 @@ export default function StudentLayout() {
       {showSidebar ? (
         <div style={{ display: 'flex', flex: 1, minHeight: 0, paddingTop: 64 }}>
           <StudentAppSidebar />
-          <main style={{ flex: 1, minWidth: 0 }}>
+          <main className="s-app-main">
             <Outlet />
           </main>
         </div>
       ) : (
-        <main style={{ flex: 1, paddingTop: 64 }}>
+        <main className="s-app-main" style={{ paddingTop: 64 }}>
           <Outlet />
         </main>
       )}

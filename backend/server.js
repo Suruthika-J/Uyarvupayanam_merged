@@ -148,6 +148,7 @@ app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
+app.use("/api/recommendations", require("./routes/recommendationRoutes"));
 app.use("/api/college-onboarding", require("./routes/collegeOnboardingRoutes"));
 app.use("/api/graduate", require("./routes/graduateRoutes"));
 app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));

@@ -179,7 +179,8 @@
   flex: 1;
   min-width: 0;
   padding: 28px 32px 48px;
-  max-width: 960px;
+  width: 100%;
+  max-width: none;
 }
 
 /* ── Welcome Banner ──────────────────────────────────────── */

@@ -48,6 +48,14 @@
   line-height: 1.6;
 }
 
+/* ── Student app shell: main content beside the fixed sidebar ────────────── */
+/* Full available width after the sidebar; pages handle their own padding. */
+.s-app-main {
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
 .s-navbar {
   position: fixed;

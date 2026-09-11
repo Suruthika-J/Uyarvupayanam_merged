@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { StudentAuthProvider, useStudentAuth } from './context/StudentAuthContext'
 import StudentLayout from './layouts/StudentLayout'
 import CollegeStudentLayout from './layouts/CollegeStudentLayout'
@@ -65,6 +65,7 @@ import NotesSummarizerPage from './pages/study-tools/NotesSummarizerPage'
 import CollegeScholarshipsPage from './pages/scholarships/CollegeScholarshipsPage'
 import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
 import CollegePracticePage from './pages/study-tools/CollegePracticePage'
+import AreaOfGrowthPage from './pages/academic/AreaOfGrowthPage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 
@@ -197,6 +198,8 @@ export default function StudentRoutes() {
             {/* School Dashboard — redirects college students to /college/dashboard */}
             <Route path="dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
             <Route path="student/dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
+            <Route path="area-of-growth" element={<StudentProtectedRoute><AreaOfGrowthPage /></StudentProtectedRoute>} />
+            <Route path="student/area-of-growth" element={<StudentProtectedRoute><AreaOfGrowthPage /></StudentProtectedRoute>} />
             <Route path="bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
             <Route path="student/bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
             <Route path="notifications" element={<StudentProtectedRoute><NotificationsPage /></StudentProtectedRoute>} />

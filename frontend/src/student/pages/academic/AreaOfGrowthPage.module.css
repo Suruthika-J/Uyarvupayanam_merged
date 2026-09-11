@@ -1,0 +1,1031 @@
+/* ── Area of Growth page ─────────────────────────────────────────────────── */
+
+.page {
+  width: 100%;
+  max-width: none;
+  padding: 28px 32px 48px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 3vw, 28px);
+  color: var(--s-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.headerIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageSub {
+  font-size: 13.5px;
+  color: var(--s-text3);
+  margin: 0;
+}
+
+.minutesLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--s-text2);
+  font-family: var(--s-font-display);
+}
+
+.minutesLabel select {
+  font-family: var(--s-font-body);
+  background: var(--s-surface);
+  border: 1.5px solid var(--s-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: var(--s-text);
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── Loading / error / no-assessment states ─────────────────────────────── */
+
+.stateCard {
+  max-width: 500px;
+  margin: 40px auto 0;
+  text-align: center;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 20px;
+  padding: 48px 32px;
+  box-shadow: var(--s-shadow);
+}
+
+.stateIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.stateTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--s-text);
+  margin: 0 0 8px;
+}
+
+.stateDesc {
+  font-size: 13.5px;
+  color: var(--s-text3);
+  max-width: 380px;
+  margin: 0 auto 22px;
+  line-height: 1.65;
+}
+
+/* ── A. Overall performance hero ─────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: center;
+  background: linear-gradient(135deg, #1a7a50 0%, #2d9d6a 55%, #1a6845 100%);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  padding: 28px 30px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+}
+
+.heroLeft,
+.heroRight {
+  position: relative;
+  z-index: 1;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.heroRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.heroEyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.heroScore {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 46px;
+  line-height: 1;
+}
+
+.heroScorePct {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.heroBandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.heroMessage {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.heroDelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.heroPrev {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.heroMetaRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.heroMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.heroChipsTitle {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.summaryChips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.sumChipUp,
+.sumChipDown,
+.sumChipNew {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 99px;
+}
+
+.sumChipUp {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.sumChipDown {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.sumChipNew {
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+}
+
+.sparkline {
+  display: block;
+  max-width: 240px;
+  width: 100%;
+  height: 48px;
+  margin-top: 4px;
+}
+
+.sparkCaption {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0 16px;
+}
+
+.sectionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--s-text);
+  margin: 0;
+}
+
+.sectionSub {
+  font-size: 12.5px;
+  color: var(--s-text3);
+  margin: 3px 0 0;
+}
+
+/* ── B. Subject-wise analysis ────────────────────────────────────────────── */
+
+.subjectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.subjectCard {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: var(--s-shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subjectTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.subjectName {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--s-text);
+}
+
+.subjectScore {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 26px;
+  color: var(--s-text);
+  line-height: 1;
+}
+
+.subjectFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--s-text3);
+}
+
+.subjectPrev {
+  opacity: 0.85;
+}
+
+/* ── Progress bar (shared) ───────────────────────────────────────────────── */
+
+.bar {
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ── Delta chips (chip + plain caption variants) ─────────────────────────── */
+
+.deltaChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.deltaUp,
+.deltaCapUp {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.deltaDown,
+.deltaCapDown {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.deltaFlat,
+.deltaCapFlat {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.deltaNew,
+.deltaCapNew {
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+}
+
+.deltaCap {
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+/* ── C + D: two-column split (Top Areas + Study Plan) ────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 0 20px;
+}
+
+.split > * {
+  min-width: 0;
+}
+
+/* ── C. Top areas to improve ─────────────────────────────────────────────── */
+
+.weakList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weakCard {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: var(--s-shadow);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.weakRank {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.weakBody {
+  flex: 1;
+  min-width: 260px;
+}
+
+.weakTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weakStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.weakStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weakStatLabel {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+}
+
+.weakStatValue {
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--s-text);
+}
+
+.priorityTag {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.topicRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.topicLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+}
+
+.topicChip {
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--s-surface2);
+  color: var(--s-text2);
+  border: 1px solid var(--s-border);
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.weakActions {
+  flex-shrink: 0;
+}
+
+.footNote {
+  font-size: 12px;
+  color: var(--s-text3);
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+
+.allGood {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.allGoodTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--s-text);
+  margin: 0 0 4px;
+}
+
+/* ── D. Personalized study plan ──────────────────────────────────────────── */
+
+.planSummary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: var(--s-surface2);
+  border: 1px solid var(--s-border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.planSummaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planSummaryLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+}
+
+.planSummaryValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--s-text);
+}
+
+.planBarWrap {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.planBar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--s-border);
+  overflow: hidden;
+}
+
+.planBarFill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--s-primary);
+  transition: width 0.4s ease;
+}
+
+.planBarLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--s-text3);
+}
+
+.planList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.planCard {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: var(--s-shadow);
+  padding: 18px;
+}
+
+.planHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.planSubjectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.minutesBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--s-primary);
+  background: var(--s-primary-l);
+  padding: 5px 11px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.planTopics {
+  margin-top: 12px;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.activityRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.activityRow:hover {
+  background: var(--s-surface2);
+}
+
+.activityRow input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--s-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.activityIcon {
+  color: var(--s-text2);
+  font-size: 15px;
+  display: flex;
+}
+
+.activityName {
+  font-family: var(--s-font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--s-text);
+  flex: 1;
+}
+
+.activityPct {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--s-text3);
+  text-align: right;
+}
+
+.activityMin {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--s-text2);
+  min-width: 46px;
+  text-align: right;
+}
+
+.activityDone {
+  opacity: 0.6;
+}
+
+.activityDone .activityName {
+  text-decoration: line-through;
+}
+
+.sectionCardTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--s-text);
+  margin: 0 0 6px;
+}
+
+/* ── E. Recommended learning resources ───────────────────────────────────── */
+
+.resGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resCard {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: var(--s-shadow);
+  padding: 18px;
+}
+
+.resHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.resBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.resBlock + .resBlock {
+  border-top: 1px solid var(--s-border);
+}
+
+.resBlockIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.resBlockBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.resBlockTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--s-text);
+}
+
+.resBlockMeta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--s-text3);
+  background: var(--s-surface2);
+  border: 1px solid var(--s-border);
+  padding: 1px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.resBlockDesc {
+  font-size: 12.5px;
+  color: var(--s-text3);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.resBlockBody button {
+  margin-top: 8px;
+}
+
+/* ── F. Progress tracking ────────────────────────────────────────────────── */
+
+.progList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.progRow {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 14px;
+  box-shadow: var(--s-shadow);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 1.3fr 1.5fr auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.progInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.progLevel {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--s-text);
+}
+
+.progSource {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--s-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.progCompare {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progCol {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.progColValue {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--s-text);
+}
+
+.progColLabel {
+  font-size: 11px;
+  color: var(--s-text3);
+}
+
+.progArrow {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.progTrend {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.progDeltaText {
+  font-size: 11px;
+  color: var(--s-text3);
+}
+
+/* ── Generic card (empty states) ─────────────────────────────────────────── */
+
+.card {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: var(--s-shadow);
+  padding: 20px;
+}
+
+.mutedText {
+  font-size: 13px;
+  color: var(--s-text3);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 20px 16px 48px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px 20px;
+  }
+
+  .heroScore {
+    font-size: 38px;
+  }
+
+  .heroRight {
+    align-items: flex-start;
+  }
+
+  .heroMetaRow,
+  .summaryChips {
+    justify-content: flex-start;
+  }
+
+  .progRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .progTrend {
+    justify-self: start;
+    align-items: flex-start;
+  }
+
+  .weakCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .weakBody {
+    min-width: 0;
+  }
+
+  .weakActions {
+    width: 100%;
+  }
+
+  .weakActions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .subjectGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .planList {
+    grid-template-columns: 1fr;
+  }
+
+  .weakStats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
