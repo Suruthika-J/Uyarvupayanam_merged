@@ -45,6 +45,17 @@ import Class5CommunicationPage from './pages/careers/Class5CommunicationPage'
 import Class5PassportPage from './pages/careers/Class5PassportPage'
 import PatternMasterPage from './pages/careers/PatternMasterPage'
 
+// Class 5 career-discovery redesign (Uyarvu Payanam)
+import Class5Dashboard from './pages/class5/Class5Dashboard'
+import DiscoverMePage from './pages/class5/DiscoverMePage'
+import SkillQuestsPage from './pages/class5/SkillQuestsPage'
+import SquadPage from './pages/class5/SquadPage'
+import RealWorldPage from './pages/class5/RealWorldPage'
+import TrophyRoomPage from './pages/class5/TrophyRoomPage'
+import ScholarshipsSection from './pages/class5/ScholarshipsSection'
+import SortingQuizPage from './pages/class5/SortingQuizPage'
+import GameDetailPage from './pages/class5/GameDetailPage'
+
 // College student pages
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
 import CollegeProfilePage from './pages/profile/CollegeProfilePage'
@@ -128,7 +139,17 @@ export default function StudentRoutes() {
             <Route path="onboarding/result" element={<Navigate to="/student/onboarding/result" replace />} />
 
             {/* School class routes — canonical /student/classX */}
-            <Route path="student/class5" element={<ClassLevelPage level="5" />} />
+            <Route path="student/class5" element={<Class5Dashboard />}>
+              <Route index element={<Navigate to="discover-me" replace />} />
+              <Route path="discover-me" element={<DiscoverMePage />} />
+              <Route path="skill-quests" element={<SkillQuestsPage />} />
+              <Route path="squad" element={<SquadPage />} />
+              <Route path="real-world" element={<RealWorldPage />} />
+              <Route path="trophy-room" element={<TrophyRoomPage />} />
+              <Route path="scholarships" element={<ScholarshipsSection />} />
+              <Route path="quiz" element={<SortingQuizPage />} />
+              <Route path="games/:key" element={<GameDetailPage />} />
+            </Route>
             <Route path="class5" element={<Navigate to="/student/class5" replace />} />
             <Route path="student/class5/content/:slug" element={<ContentDetailPage />} />
             <Route path="class5/content/:slug" element={<PreserveParamRedirect to="/student/class5/content/:slug" />} />

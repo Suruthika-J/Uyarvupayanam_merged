@@ -46,6 +46,22 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run seeders on startup:", err);
   }
+  try {
+    const { seedClass5Discovery } = require("./seeders/seedClass5Discovery");
+    seedClass5Discovery()
+      .then((results) => {
+        console.log("Class 5 discovery seed:", results);
+      })
+      .catch(err => console.error("Error in Class 5 discovery seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Class 5 discovery seeding:", err);
+  }
+  try {
+    const { startScheduler } = require("./services/class5EngineService");
+    startScheduler();
+  } catch (err) {
+    console.error("Failed to start Class 5 scheduler:", err);
+  }
 });
 
 const app = express();
@@ -152,6 +168,10 @@ app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));
 app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 app.use("/api/class5-communication", require("./routes/class5CommunicationRoutes"));
 app.use("/api/communication-content", require("./routes/communicationContentRoutes"));
+
+// Class 5 career-discovery feature (Discover Me, Skill Quests, Squad, Real World, Trophy Room)
+// Note: endpoints live under /api/class5/* so the existing /api/scholarships service stays untouched.
+app.use("/api/class5", require("./routes/class5DiscoveryRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;
