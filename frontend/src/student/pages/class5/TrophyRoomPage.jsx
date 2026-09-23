@@ -3,6 +3,7 @@ import SectionHeader, { SubSection } from '../../components/class5/redesign/Sect
 import StreakWidget from '../../components/class5/redesign/StreakWidget'
 import BadgeShelf from '../../components/class5/redesign/BadgeShelf'
 import { getStreak, getBadges, getCertificates, getCertificatePdfUrl } from '../../services/class5DiscoveryService'
+import { ICONS } from '../../components/class5/redesign/class5Theme'
 import { SLoader, SAlert, SEmpty } from '../../components/ui'
 
 export default function TrophyRoomPage() {
@@ -21,7 +22,7 @@ export default function TrophyRoomPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🏆 Trophy Room"
+        eyebrow="Trophy Room"
         title="Your growth, celebrated"
         subtitle="Your keepsakes: streaks, badges and certificates. Every one is yours — earned by effort, never by beating someone else."
       />
@@ -38,8 +39,8 @@ export default function TrophyRoomPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <span style={{ width: 46, height: 46, borderRadius: 16, background: 'linear-gradient(135deg,#fff0f6,#ffe4ef)', display: 'grid', placeItems: 'center', fontSize: 24 }} aria-hidden="true">
-              📜
+            <span style={{ width: 46, height: 46, borderRadius: 16, background: 'linear-gradient(135deg,#fff0f6,#ffe4ef)', display: 'grid', placeItems: 'center', color: '#be185d' }} aria-hidden="true">
+              <ICONS.fileText size={22} />
             </span>
             <div>
               <div style={{ fontSize: 17, fontWeight: 900, color: '#1e293b' }}>Certificates</div>
@@ -76,7 +77,7 @@ export default function TrophyRoomPage() {
               ))}
             </div>
           ) : (
-            <SEmpty icon="🖨️" title="No certificates yet" desc="Your Future Map and badge certificates will appear here as downloadable PDFs." />
+            <SEmpty icon={<ICONS.printer size={40} />} title="No certificates yet" desc="Your Future Map and badge certificates will appear here as downloadable PDFs." />
           )}
         </div>
       </div>
@@ -87,7 +88,7 @@ export default function TrophyRoomPage() {
 
       <div style={{ marginTop: 22 }}>
         <SAlert type="info">
-          💡 Progress here is about your personal growth — streaks, effort and new skills. No one is ranked or compared.
+          Progress here is about your personal growth — streaks, effort and new skills. No one is ranked or compared.
         </SAlert>
       </div>
     </div>

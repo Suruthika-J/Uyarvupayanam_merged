@@ -21,6 +21,16 @@ router.post(
   c.submitChallenge
 );
 
+// ── Discover Me · quest cards (question bank, JSON-driven) ─────────────
+router.get("/discover/progress", verifyStudent, c.getDiscoverProgress);
+router.get("/discover/questions", verifyStudent, c.getNextQuestions);
+router.post(
+  "/discover/questions/complete",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `discover:${req.student._id}`, max: 30, windowMs: 60000 }),
+  c.completeQuestion
+);
+
 // ── Skill Quests ────────────────────────────────────────────────────────
 router.get("/games", verifyStudent, c.listGames);
 router.get("/games/:id", verifyStudent, c.getGame);

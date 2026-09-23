@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { C5, worldColor } from './class5Theme'
+import { C5, worldColor, worldIcon, ICONS } from './class5Theme'
 import { SBadge, SAlert } from '../../ui'
 import StrengthRadar from './StrengthRadar'
 import { getQuizQuestions, submitQuiz, scoreQuizLocally } from '../../../services/class5DiscoveryService'
@@ -36,17 +36,31 @@ export default function SortingQuiz({ initialProfile, onCompleted }) {
       const res = await submitQuiz(next)
       // Prefer local scoring so the reveal is instant even when offline.
       const local = scoreQuizLocally(next, questions)
-      setResult({ world: res?.topWorld || local.topWorld, radar: res?.radar || local.radar })
+      setResult({ world: res?.resultWorld || res?.topWorld || local.topWorld, radar: res?.radar || local.radar })
       setBusy(false)
       setStage('result')
-      onCompleted?.(res || { topWorld: local.topWorld, radar: local.radar })
+      onCompleted?.(res || { resultWorld: local.topWorld, topWorld: local.topWorld, radar: local.radar })
     }
   }
 
   if (stage === 'intro') {
     return (
       <div style={{ textAlign: 'center', padding: '40px 24px', maxWidth: 520, margin: '0 auto' }}>
-        <div style={{ fontSize: 64 }} aria-hidden="true">🧭</div>
+        <div
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: 28,
+            background: 'linear-gradient(135deg,#e6f0f7,#dbeafe)',
+            display: 'grid',
+            placeItems: 'center',
+            color: C5.navy,
+            margin: '0 auto',
+          }}
+          aria-hidden="true"
+        >
+          <ICONS.compass size={44} strokeWidth={2} />
+        </div>
         <h2 style={{ fontSize: 24, fontWeight: 900, color: C5.ink, margin: '16px 0 8px', letterSpacing: '-0.01em' }}>
           Pick your starting world
         </h2>
@@ -89,8 +103,24 @@ export default function SortingQuiz({ initialProfile, onCompleted }) {
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: '12px 8px 20px' }}>
-          <div style={{ fontSize: 54 }} aria-hidden="true">{q.emoji}</div>
-          <h3 style={{ fontSize: 22, fontWeight: 900, color: C5.ink, lineHeight: 1.3, margin: '10px 0 22px', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+          <span
+            style={{
+              display: 'inline-grid',
+              placeItems: 'center',
+              width: 46,
+              height: 46,
+              borderRadius: 16,
+              background: C5.navy,
+              color: '#fff',
+              fontSize: 15,
+              fontWeight: 900,
+              fontFamily: 'var(--s-font-display)',
+            }}
+            aria-hidden="true"
+          >
+            {idx + 1}
+          </span>
+          <h3 style={{ fontSize: 22, fontWeight: 900, color: C5.ink, lineHeight: 1.3, margin: '12px 0 22px', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
             {q.text}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 440, margin: '0 auto' }}>
@@ -117,7 +147,23 @@ export default function SortingQuiz({ initialProfile, onCompleted }) {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = C5.navy; e.currentTarget.style.transform = 'translateY(-1px)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = C5.line; e.currentTarget.style.transform = 'none' }}
               >
-                <span style={{ fontSize: 26, flexShrink: 0 }} aria-hidden="true">{opt.emoji}</span>
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 10,
+                    background: '#eef3f8',
+                    color: C5.muted,
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0,
+                  }}
+                  aria-hidden="true"
+                >
+                  {opt.index + 1}
+                </span>
                 {opt.label}
               </button>
             ))}
@@ -128,16 +174,24 @@ export default function SortingQuiz({ initialProfile, onCompleted }) {
   }
 
   if (stage === 'result' && result) {
+    const w = result.world || {}
+    const resultIcon = React.createElement(worldIcon(w.key || 'ocean-explorer'), { size: 42, strokeWidth: 2 })
     return (
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
           <SBadge color="blue" dot>Your starting world</SBadge>
-          <div style={{ fontSize: 60, margin: '14px 0 6px' }} aria-hidden="true">{result.world?.emoji || '🌍'}</div>
-          <h2 style={{ fontSize: 30, fontWeight: 900, color: result.world?.colorTag ? worldColor(result.world.colorTag) : C5.navy, margin: 0, letterSpacing: '-0.02em' }}>
-            {result.world?.name}
+          <div style={{ margin: '14px auto 6px', width: 92, height: 92, borderRadius: 30, overflow: 'hidden', background: `linear-gradient(135deg, ${worldColor(w.colorTag || 'navy')} 0%, ${C5.navy} 150%)`, display: 'grid', placeItems: 'center', color: '#fff' }} aria-hidden="true">
+            {w.image ? (
+              <span style={{ width: '100%', height: '100%', backgroundImage: `url(${w.image})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'block' }} />
+            ) : (
+              resultIcon
+            )}
+          </div>
+          <h2 style={{ fontSize: 30, fontWeight: 900, color: worldColor(w.colorTag || 'navy'), margin: 0, letterSpacing: '-0.02em' }}>
+            {w.name}
           </h2>
           <p style={{ fontSize: 14.5, color: C5.muted, maxWidth: 460, margin: '10px auto 0', lineHeight: 1.65 }}>
-            {result.world?.tagline}. {result.world?.description}
+            {w.tagline}. {w.description}
           </p>
         </div>
 

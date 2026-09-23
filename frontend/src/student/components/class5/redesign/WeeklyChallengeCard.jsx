@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { C5, worldColor } from './class5Theme'
+import { C5, worldColor, worldImage, ICONS } from './class5Theme'
 import { WhyItMatters } from './SectionHeader'
 import { SAlert } from '../../ui'
 import { submitChallenge } from '../../../services/class5DiscoveryService'
@@ -16,6 +16,7 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
   if (!challenge) return null
   const submitted = challenge.submitted || done
   const col = worldColor(worldTag || 'navy')
+  const photo = challenge.image || worldImage(challenge.worldTag)
 
   const submit = async () => {
     if (challenge.taskType === 'choose' && selected == null) {
@@ -42,6 +43,10 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
     }
   }
 
+  const watermark = photo
+    ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { background: `linear-gradient(135deg, ${col}, ${C5.navy})` }
+
   return (
     <div
       style={{
@@ -54,23 +59,34 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
         overflow: 'hidden',
       }}
     >
-      <div aria-hidden="true" style={{ position: 'absolute', right: -16, top: -26, fontSize: 110, opacity: 0.12, transform: 'rotate(-10deg)' }}>
-        {challenge.emoji || '⭐'}
-      </div>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          right: -24,
+          top: -30,
+          width: 150,
+          height: 150,
+          borderRadius: 40,
+          opacity: 0.18,
+          transform: 'rotate(8deg)',
+          ...watermark,
+        }}
+      />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative', zIndex: 1 }}>
         <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ffe7b3' }}>
           This week's try-it · 5 minutes
         </span>
         {submitted && (
-          <span style={{ fontSize: 11.5, fontWeight: 800, background: '#34d399', color: '#053b2a', padding: '3px 10px', borderRadius: 99 }}>
-            ✓ Done
+          <span style={{ fontSize: 11.5, fontWeight: 800, background: '#34d399', color: '#053b2a', padding: '3px 10px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <ICONS.check size={12} strokeWidth={3} /> Done
           </span>
         )}
       </div>
 
       <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2, position: 'relative', zIndex: 1 }}>
-        {challenge.emoji} {challenge.title}
+        {challenge.title}
       </div>
 
       <div style={{ background: 'rgba(255,255,255,0.14)', borderRadius: 14, padding: '12px 14px', marginTop: 14, position: 'relative', zIndex: 1 }}>
@@ -139,11 +155,11 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
               <span style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: col }}>
                 Weekly challenge
               </span>
-              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C5.faint }} aria-label="Close">
-                ✕
+              <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C5.faint, display: 'grid', placeItems: 'center' }} aria-label="Close">
+                <ICONS.close size={20} />
               </button>
             </div>
-            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.25 }}>{challenge.emoji} {challenge.title}</div>
+            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.25 }}>{challenge.title}</div>
             <p style={{ fontSize: 14, color: C5.muted, lineHeight: 1.6, margin: '10px 0' }}>{challenge.taskPrompt}</p>
 
             {challenge.options?.length > 0 ? (
@@ -163,9 +179,13 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
                       fontWeight: selected === i ? 800 : 600,
                       cursor: 'pointer',
                       fontFamily: 'var(--s-font-body)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
                     }}
                   >
-                    {selected === i ? '✓ ' : ''}{opt}
+                    {selected === i ? <ICONS.check size={15} strokeWidth={2.6} color={col} /> : <span style={{ width: 15 }} />}
+                    {opt}
                   </button>
                 ))}
               </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FiArrowLeft, FiCheckCircle } from 'react-icons/fi'
 import MiniPlay from '../../components/class5/redesign/MiniPlay'
-import { C5 } from '../../components/class5/redesign/class5Theme'
+import { C5, categoryIcon } from '../../components/class5/redesign/class5Theme'
 import { CATEGORY_META } from '../../services/class5SeedData'
 import { getGame } from '../../services/class5DiscoveryService'
 import { SLoader, SAlert } from '../../components/ui'
@@ -21,7 +21,7 @@ export default function GameDetailPage() {
 
   if (!game) return <SLoader />
 
-  const cat = CATEGORY_META[game.category] || { label: game.category, emoji: '🎯', color: C5.navy }
+  const cat = CATEGORY_META[game.category] || { label: game.category, color: C5.navy }
 
   return (
     <div>
@@ -68,11 +68,19 @@ export default function GameDetailPage() {
             }}
             aria-hidden="true"
           >
-            {game.emoji}
+            {game.image ? (
+              <img
+                src={game.image}
+                alt=""
+                style={{ width: 68, height: 68, objectFit: 'cover', borderRadius: 22, flexShrink: 0, display: 'block' }}
+              />
+            ) : (
+              <span style={{ color: '#fff' }}>{categoryIcon(game.category)}</span>
+            )}
           </div>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85 }}>
-              {cat.emoji} {cat.label} Quest
+              {categoryIcon(game.category)} {cat.label} Quest
             </div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>{game.title}</h1>
             <p style={{ margin: '6px 0 0', fontSize: 13.5, opacity: 0.92, lineHeight: 1.55, maxWidth: 520 }}>

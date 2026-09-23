@@ -1,0 +1,1273 @@
+/* ─────────────────────────────────────────────────────────────
+   Math Adventure World — maths.css
+   All .mth-* classes are data-driven: palette values come from the
+   world theme (CSS custom props set by TopicWorld / MathWorldMap):
+     --mth-sky-top, --mth-sky-bottom, --mth-ground,
+     --mth-accent, --mth-card-bg, --mth-card-accent
+   Touch-first: every interactive control is 56px+ on mobile.
+
+   ── World page (TopicWorld) ──────────────────────────────────
+   ──────────────────────────────────────────────────────────── */
+
+.mth-root {
+  position: relative;
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(180deg, var(--mth-sky-top) 0%, var(--mth-sky-bottom) 100%);
+}
+
+.mth-scene {
+  position: absolute;
+  inset: 0;
+  min-height: 100%;
+  overflow: hidden;
+  animation: mthFadeIn 0.4s ease both;
+  pointer-events: none;
+}
+
+.mth-bg-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--mth-sky-top) 0%, var(--mth-sky-bottom) 100%);
+}
+
+.mth-bg-scene {
+  position: absolute;
+  inset: 0;
+}
+.mth-bg-scene svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mth-char-mount {
+  position: absolute;
+  right: clamp(16px, 5vw, 60px);
+  bottom: 8px;
+  width: 120px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.18));
+  z-index: 1;
+}
+.mth-char-mount svg {
+  width: 100%;
+  height: auto;
+}
+.mth-explorer-figure {
+  animation: mthSway 3.6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* ── Content surface ───────────────────────────────────────── */
+.mth-content {
+  position: relative;
+  z-index: 2;
+  padding: clamp(18px, 3.6vw, 34px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mth-intro {
+  background: var(--mth-card-bg);
+  border: 2px solid color-mix(in srgb, var(--mth-card-accent) 30%, transparent);
+  border-radius: 22px;
+  padding: clamp(16px, 3vw, 24px);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.28);
+}
+
+.mth-intro-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mth-intro-eyebrow {
+  display: inline-block;
+  font-family: var(--s-font-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--mth-card-accent);
+  background: color-mix(in srgb, var(--mth-card-accent) 14%, transparent);
+  padding: 5px 12px;
+  border-radius: 99px;
+  margin-bottom: 8px;
+}
+
+.mth-intro-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: color-mix(in srgb, var(--mth-card-accent) 12%, transparent);
+  padding: 4px 10px;
+  border-radius: 99px;
+  margin-bottom: 8px;
+}
+.mth-intro-progress-slash {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  color: var(--mth-card-accent);
+}
+
+.mth-intro-title {
+  margin: 0;
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: clamp(24px, 4vw, 36px);
+  letter-spacing: -0.02em;
+  color: #1e293b;
+  line-height: 1.08;
+}
+
+.mth-intro-text {
+  margin: 12px 0 0;
+  font-family: var(--s-font-body);
+  font-size: clamp(15px, 2.2vw, 17px);
+  line-height: 1.6;
+  color: #334155;
+  max-width: 720px;
+  font-weight: 600;
+}
+
+/* ── Question stage ─────────────────────────────────────────── */
+.mth-stage {
+  background: color-mix(in srgb, var(--mth-card-bg) 88%, rgba(255, 255, 255, 0.86));
+  border: 2px solid color-mix(in srgb, var(--mth-card-accent) 24%, transparent);
+  border-radius: 22px;
+  padding: clamp(16px, 3vw, 26px);
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.3);
+}
+
+.mth-stage > * {
+  min-width: 0;
+}
+
+/* ── Shared interactive controls (56px+ targets) ────────────── */
+.mth-tile,
+.mth-opt,
+.mth-drag-slot,
+.mth-shape-tap,
+.mth-frac-tap,
+.mth-chart-btn,
+.mth-frac-confirm,
+.mth-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mth-opt {
+  min-height: 64px;
+  border-radius: 18px;
+  border: 2.5px solid color-mix(in srgb, var(--mth-card-accent) 40%, transparent);
+  background: #ffffff;
+  color: #1e293b;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 17px;
+  padding: 10px 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.25);
+}
+.mth-opt:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.mth-opt.is-picked {
+  border-color: var(--mth-card-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mth-card-accent) 22%, transparent);
+}
+.mth-opt.is-correct {
+  border-color: #37a96e;
+  background: #e9f9ef;
+  color: #1d6b44;
+}
+.mth-opt.is-wrong {
+  border-color: #e0866f;
+  background: #fdf0eb;
+  color: #b0503a;
+}
+.mth-opt-text {
+  font-size: 18px;
+}
+
+/* object tiles */
+.mth-tile-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mth-tile {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 2.5px solid color-mix(in srgb, var(--mth-card-accent) 34%, transparent);
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.4s ease, background 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 8px 14px -8px rgba(0, 0, 0, 0.22);
+}
+.mth-tile:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.mth-tile.is-done {
+  background: #fff6dc;
+  border-color: var(--mth-accent, #ffd166);
+  animation: mthPopIn 0.28s ease both;
+}
+.mth-tile.is-gone {
+  opacity: 0;
+  transform: translateY(-18px) scale(0.6);
+  pointer-events: none;
+}
+.mth-tile.is-carried {
+  border-color: var(--mth-accent, #ffd166);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--mth-accent, #ffd166) 45%, transparent);
+  transform: translateY(-12px);
+}
+
+.mth-obj {
+  display: grid;
+  place-items: center;
+  color: var(--mth-accent, #ffcf6b);
+}
+.mth-obj svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── NumberChar ─────────────────────────────────────────────── */
+.mth-num {
+  display: inline-grid;
+  place-items: center;
+  width: var(--nsize, 44px);
+  height: var(--nsize, 44px);
+  border-radius: 50%;
+  background: var(--ncolor, #ffcf6b);
+  color: #ffffff;
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: calc(var(--nsize, 44px) * 0.52);
+  line-height: 1;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.14), 0 6px 12px -6px rgba(0, 0, 0, 0.35);
+  animation: mthNumPop 0.34s ease both;
+}
+
+.mth-num-word {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* tiny personality animations - each runs once, never loops */
+.mth-num-wobble { animation: mthWobble 0.6s ease both; }
+.mth-num-stamp { animation: mthStamp 0.4s ease both; }
+.mth-num-hop { animation: mthHop 0.55s ease both; }
+.mth-num-bounce { animation: mthBounce 0.6s ease both; }
+.mth-num-thump { animation: mthThump 0.45s ease both; }
+.mth-num-pop { animation: mthPop 0.4s ease both; }
+.mth-num-spin { animation: mthSpin 0.6s ease both; }
+.mth-num-slide { animation: mthSlide 0.5s ease both; }
+.mth-num-hang { animation: mthHang 0.6s ease both; }
+
+/* ── Visual count (join / take-away) ────────────────────────── */
+.mth-vc-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.mth-vc.is-add .mth-vc-cols {
+  grid-template-columns: 1fr 1fr;
+}
+.mth-vc-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mth-vc-col-label {
+  font-family: var(--s-font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--mth-card-accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mth-vc-counter {
+  margin-top: 4px;
+  background: color-mix(in srgb, var(--mth-card-bg) 70%, #ffffff);
+  border: 2px dashed color-mix(in srgb, var(--mth-card-accent) 38%, transparent);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+}
+.mth-vc-counter-label {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: #1e293b;
+}
+.mth-vc-counter-hint {
+  grid-column: 1 / -1;
+  font-family: var(--s-font-body);
+  font-size: 13px;
+  color: #64748b;
+}
+
+.mth-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  background: var(--mth-card-bg);
+  border-radius: 16px;
+  padding: 10px 14px;
+  border: 2px solid color-mix(in srgb, var(--mth-card-accent) 26%, transparent);
+  animation: mthEqIn 0.4s ease both;
+}
+.mth-eq-num.is-hot {
+  background: color-mix(in srgb, var(--mth-accent, #ffd166) 22%, transparent);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+.mth-eq-sign {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 26px;
+  color: var(--mth-card-accent);
+}
+
+/* ── Multiple choice ────────────────────────────────────────── */
+.mth-mc {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.mth-mc-leadin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.mth-mc-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(130px, 100%), 1fr));
+  gap: 12px;
+}
+
+/* ── Drag / share groups ────────────────────────────────────── */
+.mth-drag-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(96px, 100%), 1fr));
+  gap: 10px;
+}
+.mth-drag-slot {
+  min-height: 88px;
+  border-radius: 16px;
+  border: 2.5px dashed color-mix(in srgb, var(--mth-card-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--mth-card-bg) 75%, #ffffff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px 10px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+.mth-drag-slot.is-least {
+  border-color: var(--mth-accent, #ffd166);
+  background: color-mix(in srgb, var(--mth-accent, #ffd166) 14%, #ffffff);
+  animation: mthGlowPulse 1.4s ease-in-out infinite;
+}
+.mth-drag-slot.is-full {
+  border-style: solid;
+  border-color: #37a96e;
+  background: #e9f9ef;
+}
+.mth-drag-slot-count {
+  display: inline-flex;
+}
+.mth-drag-slot-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.mth-drag-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ── Clock question ─────────────────────────────────────────── */
+.mth-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.mth-clock-face {
+  max-width: 240px;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.2));
+}
+.mth-clock-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.mth-clock-opt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.mth-clock-opt-colon {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--mth-card-accent);
+}
+
+/* ── Shape touch ────────────────────────────────────────────── */
+.mth-shape {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mth-shape-svg {
+  max-width: 300px;
+}
+.mth-shape-count {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin-top: -12px;
+}
+.mth-shape-tap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 32% 30%, #ffffff, color-mix(in srgb, var(--mth-accent, #ffd166) 62%, #ffffff));
+  box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.mth-shape-tap:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.86);
+}
+.mth-shape-tap.is-lit {
+  background: var(--mth-accent, #ffd166);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--mth-accent, #ffd166) 40%, transparent);
+}
+.mth-shape-count-badge {
+  display: inline-grid;
+  place-items: center;
+  margin: 0 auto;
+  width: fit-content;
+  margin-top: 150px;
+}
+
+/* ── Fraction slice ─────────────────────────────────────────── */
+.mth-frac-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mth-frac-plate svg {
+  max-width: 300px;
+}
+.mth-frac-taps {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+.mth-frac-tap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, var(--mth-card-accent) 45%, transparent);
+  background: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.mth-frac-tap:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.86);
+}
+.mth-frac-tap.is-lit {
+  background: var(--mth-accent, #ff8f70);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--mth-accent, #ff8f70) 40%, transparent);
+  border-color: var(--mth-accent, #ff8f70);
+}
+.mth-frac-tap.is-eaten {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.7;
+}
+.mth-frac-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 150px;
+}
+.mth-frac-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mth-card-bg);
+  border-radius: 16px;
+  padding: 6px 14px;
+}
+.mth-frac-bar {
+  width: 26px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--mth-card-accent);
+}
+.mth-frac-confirm {
+  min-height: 56px;
+  border-radius: 16px;
+  border: none;
+  background: var(--mth-card-accent);
+  color: #ffffff;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: 0 10px 20px -10px var(--mth-card-accent);
+}
+.mth-frac-confirm:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.mth-frac-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Chart build ────────────────────────────────────────────── */
+.mth-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mth-chart-tally {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mth-chart-tally-col {
+  background: color-mix(in srgb, var(--mth-card-bg) 70%, #ffffff);
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: center;
+}
+.mth-chart-tally-val {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--mth-card-accent);
+  display: block;
+}
+.mth-chart-tally-label {
+  font-family: var(--s-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mth-chart-area {
+  position: relative;
+}
+.mth-chart-svg {
+  height: 220px;
+}
+.mth-chart-bar {
+  animation: mthBarGrow 0.7s ease both;
+  transform-origin: bottom;
+}
+.mth-chart-labels {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: -8px;
+}
+.mth-chart-btn {
+  min-height: 62px;
+  border-radius: 16px;
+  border: 2.5px solid color-mix(in srgb, var(--mth-card-accent) 38%, transparent);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: #1e293b;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+.mth-chart-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.mth-chart-btn.is-correct {
+  border-color: #37a96e;
+  background: #e9f9ef;
+}
+.mth-chart-btn.is-wrong {
+  border-color: #e0866f;
+  background: #fdf0eb;
+}
+.mth-chart-btn-count {
+  display: inline-flex;
+}
+
+/* ── Feedback ───────────────────────────────────────────────── */
+.mth-feedback {
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-family: var(--s-font-body);
+  animation: mthEqIn 0.32s ease both;
+}
+.mth-feedback strong {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 16px;
+}
+.mth-feedback p {
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.mth-feedback-retry {
+  background: #fdf3e0;
+  border: 2px solid #f0c670;
+  color: #7a5514;
+}
+.mth-feedback-correct {
+  position: relative;
+  background: #e9f9ef;
+  border: 2px solid #6dcd97;
+  color: #1d6b44;
+  overflow: hidden;
+}
+.mth-feedback-reveal {
+  background: #fdf0eb;
+  border: 2px solid #e6a08c;
+  color: #8a3a27;
+  flex-direction: column;
+}
+.mth-fb-explanation {
+  color: inherit;
+  opacity: 0.92;
+}
+.mth-fb-burst {
+  position: absolute;
+  top: -22px;
+  right: -22px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, color-mix(in srgb, var(--mth-accent, #ffd166) 55%, #ffffff) 45%, transparent 70%);
+  animation: mthBurst 1.1s ease-out 1;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.mth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.mth-actions-end {
+  justify-content: flex-end;
+}
+.mth-btn {
+  min-height: 56px;
+  border: none;
+  border-radius: 16px;
+  padding: 12px 22px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 15.5px;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+  white-space: nowrap;
+}
+.mth-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.mth-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.mth-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.mth-btn-primary {
+  color: #ffffff;
+  background: var(--mth-card-accent);
+  box-shadow: 0 12px 22px -12px var(--mth-card-accent);
+}
+.mth-btn-ghost {
+  background: color-mix(in srgb, var(--mth-card-accent) 14%, transparent);
+  color: var(--mth-card-accent);
+}
+
+/* ── World transitions + done state ─────────────────────────── */
+.mth-root.is-fading .mth-scene {
+  animation: mthFadeOut 0.34s ease forwards;
+}
+.mth-root.is-done .mth-intro {
+  border-color: color-mix(in srgb, #37a96e 55%, var(--mth-card-accent));
+}
+
+/* ── Skeleton ───────────────────────────────────────────────── */
+.mth-skeleton {
+  position: relative;
+  width: 100%;
+  min-height: 640px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--mth-sky-top) 0%, var(--mth-sky-bottom) 100%);
+}
+.mth-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.22) 50%, transparent 80%);
+  animation: mthShimmer 1.6s ease-in-out infinite;
+}
+.mth-skel-block {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Math World Map (winding trail)
+   ──────────────────────────────────────────────────────────── */
+.mth-map-root {
+  width: 100%;
+}
+.mth-map-header {
+  text-align: center;
+  padding: 8px 4px 18px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.mth-map-h1 {
+  margin: 4px 0 8px;
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: clamp(26px, 4.4vw, 40px);
+  letter-spacing: -0.02em;
+  color: #1e293b;
+}
+.mth-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 560;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.7) 0 6px, transparent 7px),
+    radial-gradient(circle at 64% 68%, rgba(255, 255, 255, 0.55) 0 4px, transparent 5px),
+    radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.65) 0 5px, transparent 6px),
+    linear-gradient(160deg, #eef6d8 0%, #dff2e2 34%, #d5ecf0 70%, #f2ecd8 100%);
+  background-size: 90px 90px, 110px 110px, 80px 80px, 100% 100%;
+  border: 3px solid rgba(120, 150, 130, 0.5);
+  box-shadow: inset 0 0 60px rgba(255, 255, 255, 0.45), 0 24px 48px -26px rgba(40, 80, 90, 0.5);
+  overflow: hidden;
+}
+.mth-map-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mth-map-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+.mth-map-badge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  width: 108px;
+  transition: transform 0.18s ease;
+}
+.mth-map-badge:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+.mth-map-thumb {
+  position: relative;
+  width: 96px;
+  height: 64px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid var(--badge-accent);
+  box-shadow: 0 14px 22px -12px rgba(30, 50, 60, 0.5);
+  background: linear-gradient(180deg, var(--n-top), var(--n-bottom));
+}
+.mth-map-thumb-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--n-top) 0%, var(--n-bottom) 100%);
+}
+.mth-map-thumb-art {
+  position: absolute;
+  inset: 0;
+}
+.mth-map-thumb-art svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mth-map-name {
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #24404a;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 3px 10px;
+  border-radius: 99px;
+  box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.25);
+}
+.mth-map-done {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #37a96e;
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+.mth-map-start,
+.mth-map-finish {
+  position: absolute;
+  bottom: -14px;
+  font-family: var(--s-font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2c5a67;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.mth-map-explorer {
+  position: absolute;
+  bottom: 40px;
+  right: -34px;
+  width: 64px;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25));
+  animation: mthExplorer 2.6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.mth-map-explorer svg {
+  width: 100%;
+  height: auto;
+}
+.mth-map-skeleton {
+  width: 100%;
+  aspect-ratio: 1000 / 560;
+  border-radius: 26px;
+  background: linear-gradient(160deg, #eef6d8, #d5ecf0);
+  animation: mthShimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Map actions (Continue Learning + guest note) ───────────── */
+.mth-map-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -6px 0 16px;
+}
+.mth-map-continue {
+  min-height: 56px;
+  box-shadow: 0 14px 26px -14px var(--mth-card-accent);
+}
+.mth-map-actions-done {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  color: #2c5a67;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid #bfe3c9;
+  border-radius: 99px;
+  padding: 10px 18px;
+  font-size: 14px;
+}
+.mth-map-guest-note {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: #5b7a84;
+  font-weight: 600;
+}
+
+/* ── Locked worlds ──────────────────────────────────────────── */
+.mth-map-node.is-locked .mth-map-badge {
+  cursor: default;
+}
+.mth-map-node.is-locked .mth-map-badge:hover {
+  transform: none;
+}
+.mth-map-thumb-locked {
+  filter: grayscale(0.85) brightness(0.94);
+}
+.mth-map-thumb-locked .mth-map-lock {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.34);
+  color: #3c5a66;
+}
+.mth-map-locknote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fdf3e0;
+  border: 2px dashed #e2b45c;
+  color: #6b4d14;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  max-width: 640px;
+  text-align: center;
+  animation: mthEqIn 0.24s ease both;
+}
+.mth-map-locknote-icon {
+  color: #c98a1b;
+  display: grid;
+  place-items: center;
+}
+
+/* progress chip on open worlds */
+.mth-map-chip {
+  position: absolute;
+  bottom: -12px;
+  left: -4px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 10.5px;
+  color: #24404a;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid var(--badge-accent);
+  border-radius: 99px;
+  padding: 1px 7px;
+  box-shadow: 0 3px 6px -3px rgba(0, 0, 0, 0.25);
+}
+.mth-map-chip-full {
+  background: #37a96e;
+  color: #fff;
+  border-color: #37a96e;
+}
+
+/* ── Today's Math Challenge card ────────────────────────────── */
+.mth-daily-card {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #fff8e8 0%, #ffffff 60%);
+  border: 3px solid #f2cf8a;
+  border-radius: 24px;
+  padding: 20px 24px;
+  box-shadow: 0 18px 38px -22px rgba(120, 90, 20, 0.45);
+}
+.mth-daily-card-art {
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: linear-gradient(160deg, #ffd27a, #ff9f6b);
+  color: #fff;
+  box-shadow: 0 10px 18px -8px rgba(200, 110, 40, 0.55);
+}
+.mth-daily-card-sun {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+}
+.mth-daily-card-num {
+  animation: none;
+}
+.mth-daily-card-body {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+.mth-daily-card-title {
+  margin: 2px 0 6px;
+  font-family: var(--s-font-display);
+  font-weight: 900;
+  font-size: clamp(20px, 3vw, 26px);
+  letter-spacing: -0.02em;
+  color: #1e293b;
+}
+.mth-daily-card-text {
+  margin: 0 0 12px;
+  font-family: var(--s-font-body);
+  font-size: 14.5px;
+  color: #4a6172;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+/* ── World-complete feedback ────────────────────────────────── */
+.mth-feedback-complete {
+  position: relative;
+  overflow: hidden;
+  background: #f0f7ff;
+  border: 2px solid #7fb3e6;
+  color: #14406b;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.mth-feedback-complete .mth-fb-burst-two {
+  top: -30px;
+  right: 34px;
+  width: 64px;
+  height: 64px;
+}
+.mth-feedback-complete .mth-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+.mth-fb-hint {
+  color: inherit;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+@keyframes mthFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mthFadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.99); } }
+@keyframes mthShimmer {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(60%); }
+}
+@keyframes mthSway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes mthExplorer {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes mthEqIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mthPopIn {
+  0% { transform: scale(0.6); }
+  70% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes mthNumPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes mthWobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+  75% { transform: rotate(-5deg); }
+}
+@keyframes mthStamp {
+  0% { transform: translateY(-14px) scaleY(1.2); }
+  60% { transform: translateY(2px) scaleY(0.9); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+@keyframes mthHop {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-12px); }
+  55% { transform: translateY(0); }
+  75% { transform: translateY(-5px); }
+}
+@keyframes mthBounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-16px) rotate(-6deg); }
+  60% { transform: translateY(2px) rotate(4deg); }
+}
+@keyframes mthThump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25) translateY(4px); }
+  100% { transform: scale(1); }
+}
+@keyframes mthPop {
+  0% { transform: scale(0.4); }
+  70% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+@keyframes mthSpin {
+  0% { transform: rotate(0deg) scale(0.6); }
+  70% { transform: rotate(20deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes mthSlide {
+  0% { transform: translateX(-22px); opacity: 0; }
+  60% { transform: translateX(2px); opacity: 1; }
+  100% { transform: translateX(0); }
+}
+@keyframes mthHang {
+  0% { transform: translateY(-16px) rotate(8deg); opacity: 0; }
+  60% { transform: translateY(2px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(0); }
+}
+@keyframes mthGlowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--mth-accent, #ffd166) 45%, transparent); }
+  50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--mth-accent, #ffd166) 10%, transparent); }
+}
+@keyframes mthBarGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes mthBurst {
+  0% { transform: scale(0.2); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ── Reduced motion: keep concept animation but one-shot + instant ─
+   The animations ABOVE are the explanation (objects joining, good groups
+   glowing), so we keep them but make them non-looping and near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  .mth-explorer-figure,
+  .mth-map-explorer,
+  .mth-drag-slot.is-least,
+  .mth-char-mount {
+    animation: none !important;
+    transition: none !important;
+  }
+  .mth-num,
+  .mth-num-wobble,
+  .mth-num-stamp,
+  .mth-num-hop,
+  .mth-num-bounce,
+  .mth-num-thump,
+  .mth-num-pop,
+  .mth-num-spin,
+  .mth-num-slide,
+  .mth-num-hang {
+    animation-duration: 0.001s !important;
+    transition: none !important;
+  }
+  .mth-tile.is-done,
+  .mth-fb-burst,
+  .mth-chart-bar,
+  .mth-equation,
+  .mth-feedback,
+  .mth-scene,
+  .mth-skeleton::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .mth-opt:hover,
+  .mth-btn:hover,
+  .mth-map-badge:hover {
+    transform: none !important;
+  }
+}
+
+/* ── Smaller screens: one big touch target per row ──────────── */
+@media (max-width: 620px) {
+  .mth-char-mount {
+    width: 84px;
+    right: 12px;
+  }
+  .mth-mc-opts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .mth-map-badge {
+    width: 82px;
+  }
+  .mth-map-thumb {
+    width: 72px;
+    height: 48px;
+    border-radius: 12px;
+  }
+  .mth-map-name {
+    font-size: 10.5px;
+    padding: 2px 6px;
+  }
+  .mth-map-explorer {
+    width: 48px;
+    right: -26px;
+  }
+  .mth-vc.is-add .mth-vc-cols {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

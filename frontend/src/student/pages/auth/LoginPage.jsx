@@ -6,18 +6,19 @@ import { SBtn, SInput, SAlert, SCard, SDivider } from '../../components/ui'
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi'
 
 export default function LoginPage() {
-  const { login, isAuthenticated, student }  = useStudentAuth()
+  const { login, isAuthenticated } = useStudentAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   let from       = location.state?.from?.pathname || '/student/dashboard'
   if (from === '/signin' || from === '/signup') from = '/student/dashboard'
 
-  // If already authenticated, redirect to dashboard
+  // Already signed in? Go straight to where the student was heading (the
+  // game/world they tapped, or the dashboard), not a hard-coded dashboard.
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/student/dashboard', { replace: true })
+      navigate(from, { replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, from])
 
   const [form,     setForm]     = useState({ email: '', password: '' })
   const [errors,   setErrors]   = useState({})
@@ -43,7 +44,7 @@ export default function LoginPage() {
       const res = await axiosInstance.post('/students/login', form)
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
-      navigate('/student/dashboard', { replace: true })
+      navigate(from, { replace: true })
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Check your credentials.'
       setApiError(msg)

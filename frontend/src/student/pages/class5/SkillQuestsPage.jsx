@@ -18,7 +18,7 @@ export default function SkillQuestsPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🎯 Skill Quests"
+        eyebrow="Skill Quests"
         title="Level up one small skill at a time"
         subtitle="Five-minute challenges and playable quests — each one grows the strengths on your radar."
       />

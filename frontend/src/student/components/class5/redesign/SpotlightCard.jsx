@@ -1,9 +1,10 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 
 // Readable, positive "star student" note (effort, not ranking — no numbers).
 export default function SpotlightCard({ spotlight }) {
   if (!spotlight) return null
+  const photo = spotlight.image || ''
   return (
     <div
       style={{
@@ -18,20 +19,38 @@ export default function SpotlightCard({ spotlight }) {
         marginBottom: 24,
       }}
     >
-      <div
-        style={{
-          borderRadius: 18,
-          background: '#fff',
-          fontSize: 28,
-          padding: 10,
-          lineHeight: 1,
-          boxShadow: '0 6px 12px -4px rgba(217,119,6,0.35)',
-          flexShrink: 0,
-        }}
-        aria-hidden="true"
-      >
-        {spotlight.emoji || '🌟'}
-      </div>
+      {photo ? (
+        <div
+          role="presentation"
+          aria-hidden="true"
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 18,
+            backgroundImage: `url(${photo})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            flexShrink: 0,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            borderRadius: 18,
+            background: '#fff',
+            color: '#b45309',
+            padding: 12,
+            lineHeight: 1,
+            boxShadow: '0 6px 12px -4px rgba(217,119,6,0.35)',
+            flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
+          }}
+          aria-hidden="true"
+        >
+          <ICONS.star size={26} strokeWidth={2.2} />
+        </div>
+      )}
       <div>
         <span
           style={{

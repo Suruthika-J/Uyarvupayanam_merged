@@ -15,6 +15,8 @@ import {
   seedBadgesShelf,
   seedCertificates,
   seedSkillProfile,
+  seedDiscoverQuestions,
+  seedDiscoverProgress,
 } from './class5SeedData'
 
 // Dedicated instance WITHOUT the 401-redirect interceptor used by studentApi:
@@ -84,28 +86,62 @@ export function scoreQuizLocally(answers, questions) {
     leadership: 55 + Math.min(40, axes.leadership * 5),
     focus: 55 + Math.min(40, axes.focus * 5),
   }
-  return { topWorld: world, counts, axes, radar }
+  return { resultWorld: world, topWorld: world, counts, axes, radar }
 }
 
 export async function submitQuiz(answers) {
   const student = getStudent()
-  if (!student) {
-    const local = scoreQuizLocally(answers)
-    const result = {
-      topWorld: local.topWorld,
-      radar: local.radar,
-      updatedProfile: { skills: local.radar, updatedAt: new Date().toISOString(), lastWorld: { key: local.topWorld.key, name: local.topWorld.name } },
-    }
-    return result
+  const fallbackDefault = seedCareerWorlds[0]
+  const local = scoreQuizLocally(answers)
+  const fallback = {
+    resultWorld: local.resultWorld,
+    topWorld: local.topWorld,
+    radar: local.radar,
+    updatedProfile: { skills: local.radar, updatedAt: new Date().toISOString(), lastWorld: { key: local.topWorld.key, name: local.topWorld.name } },
   }
-  return call(
-    '/class5/quiz/submit',
-    { topWorld: seedCareerWorlds[0], radar: seedSkillProfile.skills, updatedProfile: seedSkillProfile },
-    { method: 'post', body: { answers } }
-  )
+  if (!student) return fallback
+  const data = await call('/class5/quiz/submit', fallback, { method: 'post', body: { answers } })
+  const resultWorld = data.resultWorld || data.topWorld || fallbackDefault
+  const skills = data.skills || (data.updatedProfile && data.updatedProfile.skills) || local.radar
+  return {
+    ...data,
+    resultWorld,
+    topWorld: data.topWorld || resultWorld,
+    radar: skills,
+    updatedProfile: data.updatedProfile || { skills, updatedAt: new Date().toISOString(), lastWorld: { key: resultWorld.key, name: resultWorld.name } },
+  }
 }
 
 export const getSkillProfile = () => call('/class5/skill-profile', seedSkillProfile)
+
+// ── Discover Me · quest cards (JSON question bank) ──────────────
+export const getDiscoverProgress = () => call('/class5/discover/progress', seedDiscoverProgress)
+
+export const getDiscoverQuestions = (worldId, count = 3) => {
+  const seed = seedDiscoverQuestions
+    .filter((q) => q.worldId === worldId)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count)
+  return call(
+    `/class5/discover/questions?worldId=${encodeURIComponent(worldId)}&count=${count}`,
+    {
+      world: seedCareerWorlds.find((w) => w.key === worldId) || seedCareerWorlds[0],
+      progress: seedDiscoverProgress.worlds.find((w) => w.worldId === worldId),
+      questions: seed,
+    }
+  )
+}
+
+export function completeDiscoverQuestion(questionId, solved) {
+  const fallback = { progress: null, xpEarned: solved ? 6 : 0 }
+  const student = getStudent()
+  if (!student) return Promise.resolve(fallback)
+  return call(
+    '/class5/discover/questions/complete',
+    fallback,
+    { method: 'post', body: { questionId, solved } }
+  )
+}
 
 // ── Skill Quests ────────────────────────────────────────────
 export const getCurrentChallenge = () => {
@@ -235,6 +271,9 @@ export default {
   scoreQuizLocally,
   submitQuiz,
   getSkillProfile,
+  getDiscoverProgress,
+  getDiscoverQuestions,
+  completeDiscoverQuestion,
   getCurrentChallenge,
   submitChallenge,
   getGames,

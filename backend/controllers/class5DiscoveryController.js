@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const CareerWorld = require("../models/CareerWorld");
 const SortingQuizQuestion = require("../models/SortingQuizQuestion");
+const DiscoverQuestion = require("../models/DiscoverQuestion");
+const StudentDiscoverProgress = require("../models/StudentDiscoverProgress");
 const QuizResult = require("../models/QuizResult");
 const SkillProfile = require("../models/SkillProfile");
 const WeeklyChallenge = require("../models/WeeklyChallenge");
@@ -49,6 +51,203 @@ const WORLD_AXES = {
 const worldAxes = (worldKey) => WORLD_AXES[worldKey] || { logic: 2, creativity: 2, empathy: 1, leadership: 1, focus: 2 };
 
 const dayKey = () => new Date().toISOString().split("T")[0];
+
+// ─── DISCOVER ME · quest cards ──────────────────────────────────────────
+
+const shuffleArr = (arr) => {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+const shapeQuestion = (q) => ({
+  id: q.questionId,
+  worldId: q.worldKey,
+  type: q.type,
+  prompt: q.prompt,
+  hint: q.hint || "",
+  feedback: q.feedback || "",
+  assets: q.assets || {},
+  options: q.options || [],
+  targets: q.targets || [],
+  buckets: q.buckets || [],
+  correctAnswer: q.correctAnswer,
+  difficulty: q.difficulty || 1,
+});
+
+const worldStars = (done, total) => {
+  if (!total || done <= 0) return 0;
+  const step = Math.ceil(total / 3);
+  return Math.min(3, 1 + Math.floor((done - 1) / step));
+};
+
+// Per-world progress summary for the quest-card home screen.
+exports.getDiscoverProgress = async (req, res) => {
+  try {
+    const { studentId, classId } = getScope(req);
+    const [worlds, progressDocs, totals] = await Promise.all([
+      CareerWorld.find({ classId }).lean(),
+      StudentDiscoverProgress.find({ studentId, solved: true }).lean(),
+      DiscoverQuestion.aggregate([
+        { $match: { classId } },
+        { $group: { _id: "$worldKey", n: { $sum: 1 } } },
+      ]),
+    ]);
+    const totalByWorld = {};
+    totals.forEach((t) => { totalByWorld[t._id] = t.n; });
+    const doneByWorld = {};
+    progressDocs.forEach((d) => { doneByWorld[d.worldKey] = (doneByWorld[d.worldKey] || 0) + 1; });
+
+    const worldsData = worlds.map((w) => {
+      const total = totalByWorld[w.worldKey] || 0;
+      const done = Math.min(doneByWorld[w.worldKey] || 0, total);
+      return {
+        worldId: w.worldKey,
+        name: w.name,
+        colorTag: w.colorTag,
+        image: w.image || "",
+        completed: done,
+        total,
+        stars: worldStars(done, total),
+      };
+    });
+
+    const earnedCount = await StudentCareerBadge.countDocuments({ studentId });
+    res.status(200).json({
+      success: true,
+      data: {
+        worlds: worldsData,
+        totalSolved: progressDocs.length,
+        badgesCount: earnedCount,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error loading quest progress", error: error.message });
+  }
+};
+
+// Fetch a fresh batch of questions for one world. Unseen questions first;
+// reviewed ones only loop back once the bank for that world is exhausted.
+exports.getNextQuestions = async (req, res) => {
+  try {
+    const { studentId, classId } = getScope(req);
+    const worldId = req.query.worldId || "";
+    const count = Math.min(4, Math.max(1, Number(req.query.count) || 3));
+
+    const [solvedDocs, worlds] = await Promise.all([
+      StudentDiscoverProgress.find({ studentId }).lean(),
+      CareerWorld.find({ worldKey: worldId, classId }).lean(),
+    ]);
+    const solvedIds = new Set(solvedDocs.map((d) => d.questionId));
+    const world = worlds[0] || { worldKey: worldId, name: worldId, colorTag: "navy", image: "" };
+
+    const baseQuery = { classId, worldKey: worldId };
+    const fresh = await DiscoverQuestion.find({ ...baseQuery, questionId: { $nin: [...solvedIds] } }).lean();
+    let pool = fresh;
+    if (pool.length < count) {
+      const seen = await DiscoverQuestion.find(baseQuery).then((docs) =>
+        docs.filter((x) => solvedIds.has(x.questionId))
+      );
+      seen.sort((a, b) => String(a.questionId).localeCompare(String(b.questionId)));
+      pool = pool.concat(seen);
+    }
+    pool = shuffleArr(pool).slice(0, count);
+
+    const total = await DiscoverQuestion.countDocuments(baseQuery);
+    const done = solvedDocs.filter((d) => d.worldKey === worldId && d.solved).length;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        world: {
+          key: world.worldKey,
+          name: world.name,
+          colorTag: world.colorTag,
+          image: world.image || "",
+        },
+        progress: { completed: Math.min(done, total), total, stars: worldStars(done, total) },
+        questions: pool.map(shapeQuestion),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error loading quest questions", error: error.message });
+  }
+};
+
+// Record a solved/attempted question and grow the student's profile.
+exports.completeQuestion = async (req, res) => {
+  try {
+    const { studentId, classId } = getScope(req);
+    const { questionId, solved } = req.body || {};
+    if (!questionId) {
+      return res.status(400).json({ success: false, message: "questionId is required." });
+    }
+    const question = await DiscoverQuestion.findOne({ questionId, classId }).lean();
+    if (!question) {
+      return res.status(404).json({ success: false, message: "Question not found." });
+    }
+
+    const existing = await StudentDiscoverProgress.findOne({ studentId, questionId });
+    const firstSolve = Boolean(solved) && (!existing || !existing.solved);
+
+    await StudentDiscoverProgress.findOneAndUpdate(
+      { studentId, questionId },
+      {
+        $set: { worldKey: question.worldKey, solved: Boolean(existing && existing.solved) || firstSolve },
+        $push: { attempts: { correct: Boolean(solved), at: new Date() } },
+        $inc: { attemptCount: 1 },
+      },
+      { upsert: true, new: true }
+    );
+
+    let xpEarned = 0;
+    let skills = null;
+    let streak = null;
+    let newBadge = null;
+
+    if (solved && firstSolve) {
+      xpEarned = { 1: 5, 2: 8, 3: 12 }[question.difficulty] || 8;
+      const gains = worldAxes(question.worldKey);
+      const scaled = {};
+      ["creativity", "logic", "empathy", "leadership", "focus"].forEach((axis) => {
+        scaled[axis] = Math.round(Number(gains[axis]) || 0);
+      });
+      const profile = await engine.applyProfileUpdate(studentId, scaled, { classId });
+      skills = {
+        creativity: profile.creativity,
+        logic: profile.logic,
+        empathy: profile.empathy,
+        leadership: profile.leadership,
+        focus: profile.focus,
+      };
+      streak = await engine.touchStreak(studentId, { classId });
+      await engine.contributeToExpedition(studentId, xpEarned, "discover", { classId });
+      const awarded = await engine.awardBadge(studentId, "first-discover");
+      if (awarded) newBadge = { key: awarded.badgeKey, name: awarded.name, emoji: awarded.emoji };
+    }
+
+    const doneDocs = await StudentDiscoverProgress.find({ studentId, worldKey: question.worldKey, solved: true }).lean();
+    const done = doneDocs.length;
+    const total = await DiscoverQuestion.countDocuments({ classId, worldKey: question.worldKey });
+
+    res.status(200).json({
+      success: true,
+      message: solved ? "Nice solving!" : "Progress saved.",
+      data: {
+        progress: { worldId: question.worldKey, completed: Math.min(done, total), total, stars: worldStars(done, total) },
+        xpEarned,
+        skills,
+        streak: streak ? streak.currentStreak : null,
+        newBadge,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error saving question progress", error: error.message });
+  }
+};
 
 // ─── DISCOVER ME ─────────────────────────────────────────────────────────
 
@@ -138,7 +337,7 @@ exports.submitQuiz = async (req, res) => {
         resultWorld: {
           key: world ? world.worldKey : resultWorldKey,
           name: (world && world.name) || resultWorldKey,
-          emoji: (world && world.emoji) || "🌍",
+          image: (world && world.image) || "",
           colorTag: (world && world.colorTag) || "blue",
           tagline: (world && world.tagline) || "",
           description: (world && world.description) || "",
@@ -205,9 +404,9 @@ exports.getCurrentChallenge = async (req, res) => {
       // Self-healing: whenever the seeded window rolls over, spin up the next
       // challenge so the weekly "Try it" card is never empty.
       const pool = [
-        { title: "Design a rocket fin", emoji: "🚀", worldTag: "space-engineer", oneLiner: "why it matters: engineers test mini ideas before big builds.", description: "A rocket needs a fin to fly straight! Sketch one shape that could keep a paper rocket steady.", taskType: "open", taskPrompt: "Draw or describe your rocket fin. What shape is it? Why would it help?", options: [] },
-        { title: "Write today's headline", emoji: "📰", worldTag: "story-weaver", oneLiner: "why it matters: headlines catch attention — a journalist's superpower.", description: "Something amazing happened at your school today. Write one headline.", taskType: "open", taskPrompt: "Write one fun headline about today at school.", options: [] },
-        { title: "Balance the shop's sales", emoji: "🧾", worldTag: "money-master", oneLiner: "why it matters: counting money carefully builds trust.", description: "Your stall sold 4 snacks at 5 coins each. How many coins are in the tin?", taskType: "choose", taskPrompt: "Pick the right total.", options: ["15", "20", "25", "30"] },
+        { title: "Design a rocket fin", worldTag: "space-engineer", oneLiner: "why it matters: engineers test mini ideas before big builds.", description: "A rocket needs a fin to fly straight! Sketch one shape that could keep a paper rocket steady.", taskType: "open", taskPrompt: "Draw or describe your rocket fin. What shape is it? Why would it help?", options: [] },
+        { title: "Write today's headline", worldTag: "story-weaver", oneLiner: "why it matters: headlines catch attention — a journalist's superpower.", description: "Something amazing happened at your school today. Write one headline.", taskType: "open", taskPrompt: "Write one fun headline about today at school.", options: [] },
+        { title: "Balance the shop's sales", worldTag: "money-master", oneLiner: "why it matters: counting money carefully builds trust.", description: "Your stall sold 4 snacks at 5 coins each. How many coins are in the tin?", taskType: "choose", taskPrompt: "Pick the right total.", options: ["15", "20", "25", "30"] },
       ];
       const pick = pool[Math.floor(Math.random() * pool.length)];
       const created = await WeeklyChallenge.create({
@@ -227,7 +426,7 @@ exports.getCurrentChallenge = async (req, res) => {
         title: challenge.title,
         description: challenge.description,
         oneLiner: challenge.oneLiner,
-        emoji: challenge.emoji,
+        image: challenge.image || "",
         taskType: challenge.taskType,
         taskPrompt: challenge.taskPrompt,
         options: challenge.options || [],
@@ -683,6 +882,7 @@ exports.listEvents = async (req, res) => {
         id: e._id,
         title: e.title,
         description: e.description,
+        coverImage: e.coverImage || "",
         dateTime: e.dateTime,
         durationMin: e.durationMin,
         type: e.type,
@@ -850,7 +1050,7 @@ exports.getSeasonalEvents = async (req, res) => {
         id: e._id,
         title: e.title,
         description: e.description,
-        emoji: e.emoji,
+        image: e.image || "",
         worldKey: e.worldKey,
         worldName: e.worldName,
         endsAt: e.endsAt,

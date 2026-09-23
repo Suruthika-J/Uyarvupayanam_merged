@@ -2,24 +2,25 @@ import React from 'react'
 import { C5, worldColor } from './class5Theme'
 import { SBadge } from '../../ui'
 
-// Standard card: image tab (gradient, emoji, tag pills, oneLiner chip),
-// then title + description + full-width navy CTA button.
-// The oneLiner chip is the "why it matters" callback every card must repeat.
+// Standard card: photo header (or gradient + icon block), tag pills,
+// oneLiner chip, then title + description + full-width navy CTA button.
+// The oneLiner chip is the "why it matters" callback every card repeats.
 export default function Class5Card({
   title,
   tag = 'Skill',
   tagColor = 'blue',
   description,
   oneLiner,
-  emoji,
+  icon: Icon,
   gradient,
   imageUrl,
   cta = 'Start',
-  ctaIcon: Icon,
+  ctaIcon: CtaIcon,
   onClick,
   footer,
   style = {},
 }) {
+  const showPhoto = Boolean(imageUrl)
   return (
     <div
       className="c5-card hover-lift"
@@ -35,7 +36,7 @@ export default function Class5Card({
         ...style,
       }}
     >
-      {imageUrl ? (
+      {showPhoto ? (
         <div
           role="presentation"
           aria-hidden="true"
@@ -59,7 +60,7 @@ export default function Class5Card({
             position: 'relative',
           }}
         >
-          {emoji && (
+          {Icon && (
             <div
               style={{
                 width: 56,
@@ -68,11 +69,10 @@ export default function Class5Card({
                 background: 'rgba(255,255,255,0.22)',
                 display: 'grid',
                 placeItems: 'center',
-                fontSize: 30,
                 flexShrink: 0,
               }}
             >
-              {emoji}
+              <Icon size={28} strokeWidth={2.2} />
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
@@ -143,7 +143,7 @@ export default function Class5Card({
           onMouseEnter={(e) => (e.currentTarget.style.background = C5.navyDeep)}
           onMouseLeave={(e) => (e.currentTarget.style.background = C5.navy)}
         >
-          {Icon ? <Icon size={16} /> : null}
+          {CtaIcon ? <CtaIcon size={16} /> : null}
           {cta}
         </button>
       </div>

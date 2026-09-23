@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { StudentAuthProvider, useStudentAuth } from './context/StudentAuthContext'
 import StudentLayout from './layouts/StudentLayout'
 import CollegeStudentLayout from './layouts/CollegeStudentLayout'
@@ -55,6 +55,12 @@ import TrophyRoomPage from './pages/class5/TrophyRoomPage'
 import ScholarshipsSection from './pages/class5/ScholarshipsSection'
 import SortingQuizPage from './pages/class5/SortingQuizPage'
 import GameDetailPage from './pages/class5/GameDetailPage'
+import AdhikaramPickerPage from './pages/class5/AdhikaramPickerPage'
+import AdhikaramPage from './components/adhikaram/AdhikaramPage'
+import MathWorldMap from './components/maths/MathWorldMap'
+import TopicWorld from './components/maths/TopicWorld'
+import DailyChallenge from './components/maths/DailyChallenge'
+import RequireMathsLogin from './components/maths/RequireMathsLogin'
 
 // College student pages
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
@@ -147,6 +153,11 @@ export default function StudentRoutes() {
               <Route path="real-world" element={<RealWorldPage />} />
               <Route path="trophy-room" element={<TrophyRoomPage />} />
               <Route path="scholarships" element={<ScholarshipsSection />} />
+              <Route path="adhikaram" element={<AdhikaramPickerPage />} />
+              <Route path="adhikaram/:id" element={<AdhikaramPage />} />
+              <Route path="maths" element={<MathWorldMap />} />
+              <Route path="maths/daily" element={<RequireMathsLogin><DailyChallenge /></RequireMathsLogin>} />
+              <Route path="maths/:topic" element={<RequireMathsLogin><TopicWorld /></RequireMathsLogin>} />
               <Route path="quiz" element={<SortingQuizPage />} />
               <Route path="games/:key" element={<GameDetailPage />} />
             </Route>

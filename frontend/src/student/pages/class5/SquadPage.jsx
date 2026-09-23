@@ -48,7 +48,7 @@ export default function SquadPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="👫 Squad"
+        eyebrow="Squad"
         title="Grow together, not against each other"
         subtitle="Your class works as one crew. Every quest you play moves the whole group closer to unlocking fresh career worlds."
       />

@@ -7,7 +7,7 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from 'recharts'
-import { AXIS_LABELS, C5, axisColor } from './class5Theme'
+import { AXIS_LABELS, C5, axisColor, axisIcon } from './class5Theme'
 
 // Animated strength radar. Skills map is { logic, creativity, empathy, leadership, focus }.
 export default function StrengthRadar({ skills, height = 300, showLegend = true }) {
@@ -30,12 +30,15 @@ export default function StrengthRadar({ skills, height = 300, showLegend = true 
       </div>
       {showLegend && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 6 }}>
-          {Object.keys(AXIS_LABELS).map((key) => (
-            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C5.muted }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: axisColor(key) }} />
-              {AXIS_LABELS[key].label} · {Math.round(skills?.[key] ?? 40)}
-            </span>
-          ))}
+          {Object.keys(AXIS_LABELS).map((key) => {
+            const Icon = axisIcon(key)
+            return (
+              <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C5.muted }}>
+                <Icon size={13} strokeWidth={2.3} color={axisColor(key)} />
+                {AXIS_LABELS[key].label} · {Math.round(skills?.[key] ?? 40)}
+              </span>
+            )
+          })}
         </div>
       )}
     </div>

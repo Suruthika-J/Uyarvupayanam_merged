@@ -41,7 +41,7 @@ export default function RealWorldPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🌍 Real World"
+        eyebrow="Real World"
         title="Real people, real work, real stories"
         subtitle="Watch short stories from real careers, catch live events, and learn why every skill you play matters in the real world."
       />

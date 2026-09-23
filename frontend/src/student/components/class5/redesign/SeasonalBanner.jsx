@@ -1,16 +1,18 @@
 import React from 'react'
+import { FiClock, FiShield } from 'react-icons/fi'
 import { C5, worldColor, timeLeftLabel } from './class5Theme'
 
-// Limited-time celebration strip for seasonal events.
+// Limited-time celebration strip for seasonal events (photo backdrop).
 export default function SeasonalBanner({ event, onExplore }) {
   if (!event) return null
+  const photo = event.image || ''
   return (
     <div
       style={{
         position: 'relative',
         overflow: 'hidden',
         borderRadius: C5.radiusLg,
-        background: 'linear-gradient(120deg, #0f4c75 0%, #1d5f96 55%, #2f7bb5 100%)',
+        background: `linear-gradient(120deg, rgba(8,41,64,0.92) 0%, rgba(15,76,117,0.88) 55%, rgba(47,123,181,0.82) 100%), url(${photo}) center/cover no-repeat`,
         color: '#fff',
         padding: '20px 24px',
         display: 'flex',
@@ -22,19 +24,6 @@ export default function SeasonalBanner({ event, onExplore }) {
         marginBottom: 28,
       }}
     >
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          right: -30,
-          top: -40,
-          fontSize: 120,
-          opacity: 0.14,
-          transform: 'rotate(-12deg)',
-        }}
-      >
-        {event.emoji || '🎪'}
-      </div>
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div
           style={{
@@ -44,11 +33,11 @@ export default function SeasonalBanner({ event, onExplore }) {
             background: 'rgba(255,255,255,0.18)',
             display: 'grid',
             placeItems: 'center',
-            fontSize: 30,
+            border: '1px solid rgba(255,255,255,0.3)',
           }}
           aria-hidden="true"
         >
-          {event.emoji || '🎪'}
+          <FiShield size={26} strokeWidth={2.2} />
         </div>
         <div>
           <div
@@ -80,9 +69,13 @@ export default function SeasonalBanner({ event, onExplore }) {
           fontSize: 12.5,
           fontWeight: 800,
           border: '1px solid rgba(255,255,255,0.35)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
         }}
       >
-        ⏳ {timeLeftLabel(event.endsAt, event.timeLeftMs)}
+        <FiClock size={14} aria-hidden="true" />
+        {timeLeftLabel(event.endsAt, event.timeLeftMs)}
       </span>
       {onExplore && (
         <button

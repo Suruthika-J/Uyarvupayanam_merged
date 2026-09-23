@@ -1,5 +1,5 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 
 // 7-day streak grid + read-only counters.
 export default function StreakWidget({ streak, compact = false }) {
@@ -26,11 +26,11 @@ export default function StreakWidget({ streak, compact = false }) {
             background: 'linear-gradient(135deg,#fff7ed,#ffedd5)',
             display: 'grid',
             placeItems: 'center',
-            fontSize: 26,
+            color: '#c2410c',
           }}
           aria-hidden="true"
         >
-          🔥
+          <ICONS.activity size={24} strokeWidth={2.3} />
         </div>
         <div>
           <div style={{ fontSize: 22, fontWeight: 900, color: C5.ink, lineHeight: 1 }}>
@@ -46,7 +46,7 @@ export default function StreakWidget({ streak, compact = false }) {
 
       <div style={{ display: 'flex', gap: 6 }}>
         {days.map((d, i) => (
-          <div key={i} title={d.day}>
+          <div key={i} title={d.day} style={{ flex: 1 }}>
             <div
               style={{
                 width: '100%',
@@ -75,7 +75,7 @@ export default function StreakWidget({ streak, compact = false }) {
 
       {activeCount >= 5 && (
         <p style={{ margin: '12px 0 0', fontSize: 12.5, color: '#b45309', fontWeight: 700 }}>
-          🎉 You stayed active {activeCount} days this week — steady wins!
+          You stayed active {activeCount} days this week — steady wins!
         </p>
       )}
     </div>

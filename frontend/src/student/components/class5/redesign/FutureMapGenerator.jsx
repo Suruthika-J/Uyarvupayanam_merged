@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { C5, worldColor } from './class5Theme'
+import { C5, worldColor, worldIcon, ICONS } from './class5Theme'
 import { seedWorldByKey } from '../../../services/class5SeedData'
 import { generateFutureMap } from '../../../services/class5DiscoveryService'
 import { SAlert } from '../../ui'
@@ -38,6 +38,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
   }
 
   const home = seedWorldByKey[homeKey] || seedWorldByKey['ocean-explorer']
+  const HomeIcon = worldIcon(home.key)
 
   return (
     <div
@@ -58,11 +59,11 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
             background: '#e6f0f7',
             display: 'grid',
             placeItems: 'center',
-            fontSize: 22,
+            color: C5.navy,
           }}
           aria-hidden="true"
         >
-          🗺️
+          <ICONS.map size={22} strokeWidth={2.2} />
         </span>
         <div>
           <div style={{ fontSize: 16, fontWeight: 900, color: C5.ink }}>My Future Map</div>
@@ -75,6 +76,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
         {Object.keys(seedWorldByKey).map((key) => {
           const w = seedWorldByKey[key]
           const sel = key === homeKey
+          const WIco = worldIcon(key)
           return (
             <button
               key={key}
@@ -89,9 +91,12 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
                 fontWeight: 700,
                 fontFamily: 'var(--s-font-display)',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              {w.emoji} {w.name}
+              <WIco size={13} strokeWidth={2.3} /> {w.name}
             </button>
           )
         })}
@@ -104,6 +109,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
         {Object.keys(seedWorldByKey).map((key) => {
           const w = seedWorldByKey[key]
           const sel = explored.includes(key)
+          const WIco = worldIcon(key)
           return (
             <button
               key={key}
@@ -118,9 +124,12 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
                 fontWeight: 700,
                 fontFamily: 'var(--s-font-display)',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              {sel ? '✓ ' : ''}{w.emoji} {w.name}
+              {sel ? <ICONS.check size={13} strokeWidth={2.6} /> : <WIco size={13} strokeWidth={2} />} {w.name}
             </button>
           )
         })}
@@ -138,7 +147,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
           style={{
             background: `linear-gradient(135deg, ${worldColor(home.colorTag)} 0%, ${C5.navy} 140%)`,
             color: '#fff',
-            padding: '26px 22px',
+            padding: '24px 22px',
             display: 'grid',
             gridTemplateColumns: '1fr auto',
             gap: 12,
@@ -150,11 +159,23 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
               My Future Map · Class 5
             </div>
             <div style={{ fontSize: 24, fontWeight: 900, marginTop: 6, lineHeight: 1.1 }}>
-              {home.emoji} {home.name}
+              {home.name}
             </div>
             <div style={{ fontSize: 13, opacity: 0.92, marginTop: 6 }}>{home.tagline}</div>
           </div>
-          <div style={{ fontSize: 48 }} aria-hidden="true">{home.emoji}</div>
+          <div
+            style={{
+              width: 58,
+              height: 58,
+              borderRadius: 18,
+              background: 'rgba(255,255,255,0.22)',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+            aria-hidden="true"
+          >
+            <HomeIcon size={30} strokeWidth={2.2} />
+          </div>
         </div>
         <div style={{ padding: 16, background: '#fbfdff' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: C5.faint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
@@ -164,10 +185,11 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
             {explored.length ? (
               explored.map((k) => {
                 const w = seedWorldByKey[k]
+                const WIco = worldIcon(k)
                 return (
                   w && (
-                    <span key={k} style={{ fontSize: 12, fontWeight: 700, background: '#eef3f8', color: C5.muted, padding: '6px 10px', borderRadius: 99 }}>
-                      {w.emoji} {w.name}
+                    <span key={k} style={{ fontSize: 12, fontWeight: 700, background: '#eef3f8', color: C5.muted, padding: '6px 10px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <WIco size={12} strokeWidth={2.3} /> {w.name}
                     </span>
                   )
                 )

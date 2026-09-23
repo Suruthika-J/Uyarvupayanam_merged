@@ -1,5 +1,5 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 
 // Big tab hero: eyebrow + punchy title + subtitle + optional right-side action.
 export default function SectionHeader({ eyebrow, title, subtitle, children, align = 'left' }) {
@@ -99,7 +99,9 @@ export function WhyItMatters({ text }) {
         marginBottom: 12,
       }}
     >
-      <span aria-hidden="true" style={{ fontSize: 14 }}>💭</span>
+      <span aria-hidden="true" style={{ color: C5.navy, marginTop: 1 }}>
+        <ICONS.messageSquare size={14} strokeWidth={2.4} />
+      </span>
       <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: C5.muted }}>
         <strong style={{ color: C5.ink }}>Why it matters: </strong>
         {text}

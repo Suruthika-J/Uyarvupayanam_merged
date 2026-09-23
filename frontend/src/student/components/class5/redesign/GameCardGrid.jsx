@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { C5, worldColor } from './class5Theme'
+import { C5, ICONS, categoryIcon } from './class5Theme'
 import { CATEGORY_META } from '../../../services/class5SeedData'
 import { SLoader } from '../../ui'
 
@@ -31,8 +31,9 @@ export default function GameCardGrid({ games = [], loading }) {
         }}
       >
         {categories.map((c) => {
-          const meta = CATEGORY_META[c]
+          const meta = CATEGORY_META[c] || { label: c }
           const sel = filter === c
+          const CatIcon = c === 'all' ? ICONS.grid : categoryIcon(c)
           return (
             <button
               key={c}
@@ -52,7 +53,8 @@ export default function GameCardGrid({ games = [], loading }) {
                 gap: 6,
               }}
             >
-              {c === 'all' ? '✨ All' : `${meta?.emoji} ${meta?.label}`}
+              {CatIcon && <CatIcon size={13} strokeWidth={2.4} />}
+              {c === 'all' ? 'All' : meta.label}
             </button>
           )
         })}
@@ -60,8 +62,9 @@ export default function GameCardGrid({ games = [], loading }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
         {list.map((g) => {
-          const cat = CATEGORY_META[g.category] || { label: g.category, emoji: '🎯', color: C5.navy }
+          const cat = CATEGORY_META[g.category] || { label: g.category, color: C5.navy }
           const best = g.bestPct
+          const CatIcon = categoryIcon(g.category)
           return (
             <button
               key={g.id}
@@ -85,19 +88,36 @@ export default function GameCardGrid({ games = [], loading }) {
             >
               <div
                 style={{
-                  background: g.gradient || `linear-gradient(135deg, ${cat.color}, ${C5.navy})`,
-                  padding: '18px 18px 14px',
+                  background: g.image
+                    ? `linear-gradient(180deg, rgba(8,41,64,0.25) 0%, rgba(8,41,64,0.5) 100%), url(${g.image}) center/cover no-repeat`
+                    : g.gradient || `linear-gradient(135deg, ${cat.color}, ${C5.navy})`,
+                  height: 96,
+                  padding: '14px 16px',
                   color: '#fff',
                   position: 'relative',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
                 }}
               >
-                <div style={{ fontSize: 38, lineHeight: 1 }} aria-hidden="true">{g.emoji}</div>
                 <span
                   style={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    background: 'rgba(255,255,255,0.24)',
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    background: 'rgba(255,255,255,0.92)',
+                    color: C5.navy,
+                    display: 'grid',
+                    placeItems: 'center',
+                    boxShadow: '0 6px 14px -6px rgba(8,30,48,0.5)',
+                  }}
+                  aria-hidden="true"
+                >
+                  <CatIcon size={22} strokeWidth={2.2} />
+                </span>
+                <span
+                  style={{
+                    background: 'rgba(255,255,255,0.22)',
                     color: '#fff',
                     fontSize: 10.5,
                     fontWeight: 800,
@@ -105,7 +125,7 @@ export default function GameCardGrid({ games = [], loading }) {
                     borderRadius: 99,
                   }}
                 >
-                  {cat.emoji} {cat.label}
+                  {cat.label}
                 </span>
                 {g.featured && (
                   <span
@@ -116,9 +136,15 @@ export default function GameCardGrid({ games = [], loading }) {
                       color: '#fff',
                       fontSize: 11,
                       fontWeight: 800,
+                      background: 'rgba(0,0,0,0.35)',
+                      padding: '2px 8px',
+                      borderRadius: 99,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
                     }}
                   >
-                    ⭐ Featured
+                    <ICONS.star size={11} strokeWidth={2.6} /> Featured
                   </span>
                 )}
               </div>
@@ -148,7 +174,7 @@ export default function GameCardGrid({ games = [], loading }) {
                   style={{
                     fontSize: 12.5,
                     fontWeight: 800,
-                    color: worldColor('navy'),
+                    color: C5.navy,
                     background: '#e6f0f7',
                     padding: '6px 14px',
                     borderRadius: 99,

@@ -62,6 +62,26 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to start Class 5 scheduler:", err);
   }
+  try {
+    const { seedAdhikarams } = require("./seeders/seedAdhikarams");
+    seedAdhikarams()
+      .then(results => {
+        console.log("Adhikaram seed:", results);
+      })
+      .catch(err => console.error("Error in Adhikaram seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Adhikaram seeding:", err);
+  }
+  try {
+    const { seedMaths } = require("./seeders/seedMaths");
+    seedMaths()
+      .then(results => {
+        console.log("Math Adventure seed:", results);
+      })
+      .catch(err => console.error("Error in Math Adventure seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Math Adventure seeding:", err);
+  }
 });
 
 const app = express();
@@ -172,6 +192,12 @@ app.use("/api/communication-content", require("./routes/communicationContentRout
 // Class 5 career-discovery feature (Discover Me, Skill Quests, Squad, Real World, Trophy Room)
 // Note: endpoints live under /api/class5/* so the existing /api/scholarships service stays untouched.
 app.use("/api/class5", require("./routes/class5DiscoveryRoutes"));
+
+// Thirukkural Adhikaram Cartoon Theme System
+app.use("/api/tamil", require("./routes/tamilRoutes"));
+
+// Math Adventure Worlds (Class 5 maths)
+app.use("/api/maths", require("./routes/mathsRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;

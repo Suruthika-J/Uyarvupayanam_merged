@@ -13,9 +13,13 @@ export default function Class5Dashboard() {
     'skill-quests': 'skill-quests',
     squad: 'squad',
     'real-world': 'real-world',
+    adhikaram: 'adhikaram',
+    maths: 'maths',
     'trophy-room': 'trophy-room',
     scholarships: 'scholarships',
-  }[segment]
+  }[segment] ||
+    (/^\d+$/.test(segment) ? 'adhikaram' : undefined) ||
+    (pathname.includes('/maths/') ? 'maths' : undefined)
 
   return (
     <div className="student-root" style={{ background: '#fbfdff', minHeight: '100vh', paddingBottom: 100 }}>
@@ -46,7 +50,7 @@ export default function Class5Dashboard() {
               marginBottom: 12,
             }}
           >
-            🚀 Uyarvu Payanam · Class 5
+            Uyarvu Payanam · Class 5
           </span>
           <h1
             style={{

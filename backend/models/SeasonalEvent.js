@@ -5,7 +5,8 @@ const seasonalEventSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, default: "" },
-    emoji: { type: String, default: "🎪" },
+    emoji: { type: String, default: "" },
+    image: { type: String, default: "" },
     worldKey: { type: String, default: "" },
     worldName: { type: String, default: "" },
     startsAt: { type: Date, required: true },

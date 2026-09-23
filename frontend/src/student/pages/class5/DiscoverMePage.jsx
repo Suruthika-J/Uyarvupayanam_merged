@@ -5,7 +5,7 @@ import StrengthRadar from '../../components/class5/redesign/StrengthRadar'
 import SortingQuiz from '../../components/class5/redesign/SortingQuiz'
 import SectionHeader, { SubSection } from '../../components/class5/redesign/SectionHeader'
 import Class5Card from '../../components/class5/redesign/Class5Card'
-import { worldColor } from '../../components/class5/redesign/class5Theme'
+import { worldColor, worldIcon } from '../../components/class5/redesign/class5Theme'
 import { getCareerWorlds, getSkillProfile } from '../../services/class5DiscoveryService'
 import { SLoader } from '../../components/ui'
 
@@ -27,7 +27,7 @@ export default function DiscoverMePage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🧭 Discover Me"
+        eyebrow="Discover Me"
         title="Who are you becoming?"
         subtitle="Take the sort quiz once; your career world and strength radar keep growing with every quest you play."
       />
@@ -55,7 +55,7 @@ export default function DiscoverMePage() {
         )}
         {strengthLabel && (
           <p style={{ textAlign: 'center', fontSize: 13.5, fontWeight: 700, color: worldColor('navy'), margin: '6px 0 0' }}>
-            🌟 Early super-strength: {strengthLabel}
+            Early super-strength: {strengthLabel}
           </p>
         )}
       </div>
@@ -77,7 +77,8 @@ export default function DiscoverMePage() {
               tagColor={w.colorTag}
               description={`${w.tagline}. ${w.description}`}
               oneLiner={w.tagline}
-              emoji={w.emoji}
+              icon={worldIcon(w.key)}
+              imageUrl={w.image}
               gradient={`linear-gradient(135deg, ${worldColor(w.colorTag)} 0%, #0f4c75 120%)`}
               footer={
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, marginTop: -2 }}>

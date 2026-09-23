@@ -1,5 +1,5 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 
 // Parent/mentor conversation starters — always positive, effort-based.
 export default function NudgeFeed({ nudges = [], compact = false }) {
@@ -26,7 +26,7 @@ export default function NudgeFeed({ nudges = [], compact = false }) {
           gap: 8,
         }}
       >
-        <span aria-hidden="true">💬</span>
+        <ICONS.messageSquare size={15} aria-hidden="true" color={C5.navy} strokeWidth={2.3} />
         <span style={{ fontSize: 13.5, fontWeight: 800, color: C5.ink, fontFamily: 'var(--s-font-display)' }}>
           Ask your child about…
         </span>

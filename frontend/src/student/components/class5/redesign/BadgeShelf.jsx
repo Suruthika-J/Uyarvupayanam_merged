@@ -1,11 +1,19 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 import { fmtDate } from './class5Theme'
 
 const CATEGORY_COLORS = {
   skill: { bg: '#e6f0f7', text: C5.navy },
   streak: { bg: '#fff7ed', text: '#b45309' },
   seasonal: { bg: '#fdf2f8', text: '#be185d' },
+}
+
+// Feather icon per badge category (locked badges show a lock).
+const CATEGORY_ICON = {
+  skill: ICONS.star,
+  streak: ICONS.trendingUp,
+  seasonal: ICONS.sparkle,
+  event: ICONS.radio,
 }
 
 // Badge grid: earned (colored) vs sealed (grey). Rewards by effort, not rank.
@@ -27,6 +35,7 @@ export default function BadgeShelf({ shelf = {} }) {
         {badges.map((b) => {
           const earned = Boolean(b.earnedAt)
           const c = CATEGORY_COLORS[b.category] || CATEGORY_COLORS.skill
+          const BadgeIcon = CATEGORY_ICON[b.category] || ICONS.award
           return (
             <div
               key={b.key}
@@ -53,16 +62,16 @@ export default function BadgeShelf({ shelf = {} }) {
                   background: earned ? c.bg : '#eef3f8',
                   display: 'grid',
                   placeItems: 'center',
-                  fontSize: 28,
+                  color: earned ? c.text : '#94a3b8',
                   boxShadow: earned ? `0 0 0 5px ${c.bg}` : 'none',
                 }}
                 aria-hidden="true"
               >
-                {earned ? b.emoji : '🔒'}
+                {earned ? <BadgeIcon size={26} strokeWidth={2.2} /> : <ICONS.lock size={22} strokeWidth={2.2} />}
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: earned ? C5.ink : C5.faint }}>{b.name}</div>
-                <div style={{ fontSize: 11.5, color: earned ? C5.faint : C5.faint, marginTop: 2, lineHeight: 1.45, minHeight: 32 }}>
+                <div style={{ fontSize: 11.5, color: C5.faint, marginTop: 2, lineHeight: 1.45, minHeight: 32 }}>
                   {b.description}
                 </div>
               </div>

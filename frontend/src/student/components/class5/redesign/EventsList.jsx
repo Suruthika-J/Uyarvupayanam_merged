@@ -1,5 +1,5 @@
 import React from 'react'
-import { C5 } from './class5Theme'
+import { C5, ICONS } from './class5Theme'
 import { SAlert } from '../../ui'
 
 export default function EventsList({ events = [], onAttend, attendedState }) {
@@ -12,6 +12,7 @@ export default function EventsList({ events = [], onAttend, attendedState }) {
         const date = new Date(ev.dateTime)
         const attended = attendedState?.[ev.id] ?? ev.attended
         const isLive = ev.type === 'live'
+        const TypeIcon = isLive ? ICONS.radio : ICONS.film
         return (
           <div
             key={ev.id}
@@ -29,22 +30,35 @@ export default function EventsList({ events = [], onAttend, attendedState }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 220 }}>
-              <span
+              <div
                 style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 9,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 13,
                   display: 'grid',
                   placeItems: 'center',
-                  fontSize: 13,
                   color: '#fff',
                   background: isLive ? C5.navy : '#64748b',
                   flexShrink: 0,
+                  overflow: 'hidden',
                 }}
                 aria-hidden="true"
               >
-                {isLive ? '●' : '▶'}
-              </span>
+                {ev.coverImage ? (
+                  <span
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage: `url(${ev.coverImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <TypeIcon size={20} strokeWidth={2.2} />
+                )}
+              </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 15, fontWeight: 800, color: C5.ink }}>{ev.title}</span>
@@ -79,9 +93,13 @@ export default function EventsList({ events = [], onAttend, attendedState }) {
                   borderRadius: 99,
                   padding: '8px 14px',
                   whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                ✓ Attended
+                <ICONS.check size={14} strokeWidth={2.6} />
+                Attended
               </span>
             ) : (
               <button

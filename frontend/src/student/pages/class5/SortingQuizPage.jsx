@@ -9,7 +9,7 @@ export default function SortingQuizPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🧭 Discover Me · Sort Quiz"
+        eyebrow="Discover Me · Sort Quiz"
         title="Which career world suits you?"
         subtitle="Answer honestly — this quiz tunes your starting world and strength radar."
       />

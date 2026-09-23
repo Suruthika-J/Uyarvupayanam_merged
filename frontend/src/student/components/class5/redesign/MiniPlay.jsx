@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { C5, worldColor } from './class5Theme'
+import { FiZap } from 'react-icons/fi'
+import { C5, ICONS } from './class5Theme'
 import { submitGameAttempt } from '../../../services/class5DiscoveryService'
 
 // Playable mini interaction per game category:
@@ -15,7 +16,7 @@ export default function MiniPlay({ game, onComplete }) {
   const [result, setResult] = useState(null)
 
   const play = game?.play
-  const col = worldColor('navy')
+  const col = C5.navy
 
   if (!play) return null
 
@@ -58,9 +59,32 @@ export default function MiniPlay({ game, onComplete }) {
   if (step === 'intro') {
     return (
       <div style={{ textAlign: 'center', padding: '26px 18px' }}>
-        <div style={{ fontSize: 46 }} aria-hidden="true">{game.emoji}</div>
-        <h3 style={{ fontSize: 20, fontWeight: 900, color: C5.ink, margin: '10px 0 6px' }}>{play.prompt}</h3>
-        {play.hint && <p style={{ fontSize: 13, color: C5.faint, margin: '0 auto 18px', maxWidth: 380, lineHeight: 1.55 }}>💡 {play.hint}</p>}
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 24,
+            overflow: 'hidden',
+            margin: '0 auto 12px',
+            background: `linear-gradient(135deg, ${C5.navy}, #3b82f6)`,
+            display: 'grid',
+            placeItems: 'center',
+            color: '#fff',
+          }}
+          aria-hidden="true"
+        >
+          {game.image ? (
+            <span style={{ width: '100%', height: '100%', backgroundImage: `url(${game.image})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'block' }} />
+          ) : (
+            <ICONS.play size={30} strokeWidth={2} />
+          )}
+        </div>
+        <h3 style={{ fontSize: 20, fontWeight: 900, color: C5.ink, margin: '8px 0 6px' }}>{play.prompt}</h3>
+        {play.hint && (
+          <p style={{ fontSize: 13, color: C5.faint, margin: '0 auto 18px', maxWidth: 380, lineHeight: 1.55, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 6 }}>
+            <FiZap size={14} style={{ marginTop: 2, flexShrink: 0 }} aria-hidden="true" /> {play.hint}
+          </p>
+        )}
         <button
           onClick={startPlay}
           style={{
@@ -111,10 +135,14 @@ export default function MiniPlay({ game, onComplete }) {
                     color: C5.ink,
                     cursor: revealed ? 'default' : 'pointer',
                     fontFamily: 'var(--s-font-body)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
                     ...extra,
                   }}
                 >
-                  {revealed && i === play.correctIndex ? '✓ ' : ''}{opt}
+                  {revealed && i === play.correctIndex ? <ICONS.check size={15} strokeWidth={2.8} /> : null}
+                  {opt}
                 </button>
               )
             })}
@@ -195,7 +223,11 @@ export default function MiniPlay({ game, onComplete }) {
       return (
         <div>
           <p style={{ fontSize: 15, fontWeight: 700, color: C5.ink, lineHeight: 1.55, margin: '0 0 12px' }}>{play.prompt}</p>
-          {play.hint && <p style={{ fontSize: 12.5, color: C5.faint, margin: '0 0 12px' }}>💡 {play.hint}</p>}
+          {play.hint && (
+            <p style={{ fontSize: 12.5, color: C5.faint, margin: '0 0 12px', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <FiZap size={13} style={{ marginTop: 2, flexShrink: 0 }} aria-hidden="true" /> {play.hint}
+            </p>
+          )}
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -241,14 +273,28 @@ export default function MiniPlay({ game, onComplete }) {
   if (step === 'result') {
     return (
       <div style={{ textAlign: 'center', padding: '18px 12px' }}>
-        <div style={{ fontSize: 54 }} aria-hidden="true">{result.correct ? '🎉' : '💪'}</div>
-        <h3 style={{ fontSize: 20, fontWeight: 900, color: C5.ink, margin: '10px 0 4px' }}>
+        <div
+          style={{
+            width: 76,
+            height: 76,
+            borderRadius: '50%',
+            margin: '0 auto 12px',
+            display: 'grid',
+            placeItems: 'center',
+            color: result.correct ? '#059669' : '#c2410c',
+            background: result.correct ? '#ecfdf5' : '#fff7ed',
+          }}
+          aria-hidden="true"
+        >
+          {result.correct ? <ICONS.checkCircle size={40} strokeWidth={2} /> : <ICONS.refresh size={36} strokeWidth={2} />}
+        </div>
+        <h3 style={{ fontSize: 20, fontWeight: 900, color: C5.ink, margin: '8px 0 4px' }}>
           {result.correct ? 'Nice work!' : 'Great try!'}
         </h3>
         <p style={{ color: C5.muted, fontSize: 14, margin: '0 0 8px' }}>Score {result.pct}% · +{result.xp} XP</p>
         <p style={{ color: C5.faint, fontSize: 12.5, margin: '0 0 16px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
           {result.correct
-            ? 'You nailed this one — your {axis} skills just grew!'
+            ? 'You nailed this one — your skills just grew!'
             : 'The best creators try again. Play once more to level up your skills!'}
         </p>
         <button

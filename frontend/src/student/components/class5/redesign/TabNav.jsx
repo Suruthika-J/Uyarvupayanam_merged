@@ -1,15 +1,17 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { C5 } from './class5Theme'
+import { C5, TAB_ICONS } from './class5Theme'
 
 export default function TabNav({ active = 'discover-me' }) {
   const CLASS5_TABS = [
-    { path: '/student/class5/discover-me', label: 'Discover Me', emoji: '🧭', tab: 'discover-me' },
-    { path: '/student/class5/skill-quests', label: 'Skill Quests', emoji: '🎯', tab: 'skill-quests' },
-    { path: '/student/class5/squad', label: 'Squad', emoji: '👫', tab: 'squad' },
-    { path: '/student/class5/real-world', label: 'Real World', emoji: '🌍', tab: 'real-world' },
-    { path: '/student/class5/trophy-room', label: 'Trophy Room', emoji: '🏆', tab: 'trophy-room' },
-    { path: '/student/class5/scholarships', label: 'Scholarships', emoji: '🎓', tab: 'scholarships' },
+    { path: '/student/class5/discover-me', label: 'Discover Me', tab: 'discover-me' },
+    { path: '/student/class5/skill-quests', label: 'Skill Quests', tab: 'skill-quests' },
+    { path: '/student/class5/squad', label: 'Squad', tab: 'squad' },
+    { path: '/student/class5/real-world', label: 'Real World', tab: 'real-world' },
+    { path: '/student/class5/adhikaram', label: 'Kural Worlds', tab: 'adhikaram' },
+    { path: '/student/class5/maths', label: 'Math Adventure', tab: 'maths' },
+    { path: '/student/class5/trophy-room', label: 'Trophy Room', tab: 'trophy-room' },
+    { path: '/student/class5/scholarships', label: 'Scholarships', tab: 'scholarships' },
   ]
 
   return (
@@ -29,6 +31,7 @@ export default function TabNav({ active = 'discover-me' }) {
     >
       {CLASS5_TABS.map((t) => {
         const selected = t.tab === active
+        const TabIcon = TAB_ICONS[t.tab]
         return (
           <NavLink
             key={t.tab}
@@ -50,7 +53,7 @@ export default function TabNav({ active = 'discover-me' }) {
               whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ fontSize: 16 }} aria-hidden="true">{t.emoji}</span>
+            {TabIcon && <TabIcon size={16} strokeWidth={2.4} aria-hidden="true" />}
             {t.label}
           </NavLink>
         )

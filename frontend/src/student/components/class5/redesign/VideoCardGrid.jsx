@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { C5, worldColor } from './class5Theme'
+import { C5, worldColor, worldImage, ICONS } from './class5Theme'
 import { SLoader } from '../../ui'
 
 // Career-story video grid. Tapping opens a full-screen player overlay.
@@ -15,6 +15,7 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
       {list.map((v) => {
         const col = worldColor(v.world?.colorTag)
+        const thumb = v.thumbnail || worldImage(v.careerWorldKey)
         return (
           <button
             key={v.id}
@@ -38,12 +39,28 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
               style={{
                 position: 'relative',
                 height: 120,
-                background: `linear-gradient(135deg, ${col}22 0%, ${C5.navy} 130%)`,
+                background: thumb
+                  ? `linear-gradient(180deg, rgba(15,76,117,0.1) 0%, rgba(8,41,64,0.35) 100%), url(${thumb}) center/cover no-repeat`
+                  : `linear-gradient(135deg, ${col}22 0%, ${C5.navy} 130%)`,
                 display: 'grid',
                 placeItems: 'center',
               }}
             >
-              <span style={{ fontSize: 40 }} aria-hidden="true">{v.world?.emoji || '🎬'}</span>
+              <span
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.92)',
+                  color: C5.navy,
+                  display: 'grid',
+                  placeItems: 'center',
+                  boxShadow: '0 8px 18px -6px rgba(8,30,48,0.6)',
+                }}
+                aria-hidden="true"
+              >
+                <ICONS.play size={20} strokeWidth={2.4} style={{ marginLeft: 2 }} />
+              </span>
               <span
                 style={{
                   position: 'absolute',
@@ -67,8 +84,8 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 800, color: C5.ink, marginTop: 3, lineHeight: 1.4 }}>{v.title}</div>
               {v.featured && (
-                <span style={{ fontSize: 10.5, fontWeight: 800, color: '#d97706', background: '#fff7ed', padding: '2px 8px', borderRadius: 99, display: 'inline-block', marginTop: 8 }}>
-                  ⭐ Featured
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: '#d97706', background: '#fff7ed', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                  <ICONS.star size={11} strokeWidth={2.6} /> Featured
                 </span>
               )}
             </div>
@@ -117,16 +134,15 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
                 width: 34,
                 height: 34,
                 cursor: 'pointer',
-                fontSize: 16,
               }}
             >
-              ✕
+              <ICONS.close size={18} />
             </button>
             <video
               src={active.url}
               controls
               autoPlay
-              poster={active.thumbnail || undefined}
+              poster={active.thumbnail || worldImage(active.careerWorldKey) || undefined}
               style={{ width: '100%', maxHeight: '76vh', display: 'block', background: '#000' }}
             >
               {active.subtitlesUrl && <track kind="captions" src={active.subtitlesUrl} />}

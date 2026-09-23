@@ -84,7 +84,7 @@ export default function ScholarshipsSection() {
       } else {
         await userActionService.saveItem(item._id, 'Scholarship')
         setSavedIds(new Set([...savedIds, item._id]))
-        setAlert({ type: 'success', text: 'Saved to success path! ✨' })
+        setAlert({ type: 'success', text: 'Saved to success path!' })
       }
       setTimeout(() => setAlert({ type: '', text: '' }), 3000)
     } catch {
@@ -100,7 +100,7 @@ export default function ScholarshipsSection() {
   return (
     <div>
       <SectionHeader
-        eyebrow="🎓 Funding your dreams"
+        eyebrow="Funding your dreams"
         title="Scholarships"
         subtitle="Explore available scholarships you are eligible for."
       />

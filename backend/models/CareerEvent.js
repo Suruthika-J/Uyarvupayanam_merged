@@ -5,6 +5,7 @@ const careerEventSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, default: "" },
+    coverImage: { type: String, default: "" },
     dateTime: { type: Date, required: true },
     durationMin: { type: Number, default: 30 },
     type: { type: String, enum: ["live", "recorded"], default: "live" },
