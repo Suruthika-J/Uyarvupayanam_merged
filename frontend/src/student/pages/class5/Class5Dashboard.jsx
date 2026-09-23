@@ -13,12 +13,14 @@ export default function Class5Dashboard() {
     maths: 'maths',
     social: 'social',
     science: 'science',
+    english: 'english',
     scholarships: 'scholarships',
   }[segment] ||
     (/^\d+$/.test(segment) ? 'adhikaram' : undefined) ||
     (pathname.includes('/maths/') ? 'maths' : undefined) ||
     (pathname.includes('/social/') ? 'social' : undefined) ||
-    (pathname.includes('/science/') ? 'science' : undefined)
+    (pathname.includes('/science/') ? 'science' : undefined) ||
+    (pathname.includes('/english/') ? 'english' : undefined)
 
   return (
     <div className="student-root" style={{ background: '#fbfdff', minHeight: '100vh', paddingBottom: 100 }}>

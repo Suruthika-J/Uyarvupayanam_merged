@@ -8,6 +8,7 @@ export default function TabNav({ active = 'adhikaram' }) {
     { path: '/student/class5/maths', label: 'Math Adventure', tab: 'maths' },
     { path: '/student/class5/social', label: 'World Explorer', tab: 'social' },
     { path: '/student/class5/science', label: 'Science World', tab: 'science' },
+    { path: '/student/class5/english', label: 'English Adventure', tab: 'english' },
     { path: '/student/class5/scholarships', label: 'Scholarships', tab: 'scholarships' },
   ]
 

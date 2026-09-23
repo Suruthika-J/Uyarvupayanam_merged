@@ -225,6 +225,9 @@ app.use("/api/social", require("./routes/socialRoutes"));
 // Cartoon Science Adventure World (Class 5 science)
 app.use("/api/science", require("./routes/scienceRoutes"));
 
+// English Adventure (Class 5)
+app.use("/api/english", require("./routes/englishRoutes"));
+
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>

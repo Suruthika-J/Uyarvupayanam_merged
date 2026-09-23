@@ -65,6 +65,19 @@ import ScienceWorld from './components/science/ScienceWorld'
 import ScienceDaily from './components/science/ScienceDaily'
 import RequireScienceLogin from './components/science/RequireScienceLogin'
 
+// English Adventure (Class 5)
+import EnglishAdventure from './components/english/EnglishAdventure'
+import StoryWriter from './components/english/StoryWriter'
+import SpeakAndTell from './components/english/SpeakAndTell'
+import EnglishBasics from './components/english/EnglishBasics'
+import GrammarTopicWorld from './components/english/GrammarTopicWorld'
+import WordExplorer from './components/english/WordExplorer'
+import SentenceBuilder from './components/english/SentenceBuilder'
+import ListenSpeak from './components/english/ListenSpeak'
+import DailyEnglishChallenge from './components/english/DailyEnglishChallenge'
+import MyEnglishProgress from './components/english/MyEnglishProgress'
+import RequireEnglishLogin from './components/english/RequireEnglishLogin'
+
 // College student pages
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
 import CollegeProfilePage from './pages/profile/CollegeProfilePage'
@@ -162,6 +175,16 @@ export default function StudentRoutes() {
               <Route path="science" element={<ScienceAdventureWorld />} />
               <Route path="science/daily" element={<RequireScienceLogin><ScienceDaily /></RequireScienceLogin>} />
               <Route path="science/:world" element={<RequireScienceLogin><ScienceWorld /></RequireScienceLogin>} />
+              <Route path="english" element={<EnglishAdventure />} />
+              <Route path="english/writing" element={<RequireEnglishLogin><StoryWriter /></RequireEnglishLogin>} />
+              <Route path="english/speaking" element={<RequireEnglishLogin><SpeakAndTell /></RequireEnglishLogin>} />
+              <Route path="english/basics" element={<EnglishBasics />} />
+              <Route path="english/basics/:topicId" element={<RequireEnglishLogin><GrammarTopicWorld /></RequireEnglishLogin>} />
+              <Route path="english/vocabulary" element={<RequireEnglishLogin><WordExplorer /></RequireEnglishLogin>} />
+              <Route path="english/sentence-builder" element={<RequireEnglishLogin><SentenceBuilder /></RequireEnglishLogin>} />
+              <Route path="english/listen-speak" element={<RequireEnglishLogin><ListenSpeak /></RequireEnglishLogin>} />
+              <Route path="english/daily-challenge" element={<RequireEnglishLogin><DailyEnglishChallenge /></RequireEnglishLogin>} />
+              <Route path="english/progress" element={<RequireEnglishLogin><MyEnglishProgress /></RequireEnglishLogin>} />
               <Route path="quiz" element={<SortingQuizPage />} />
               <Route path="games/:key" element={<GameDetailPage />} />
             </Route>
