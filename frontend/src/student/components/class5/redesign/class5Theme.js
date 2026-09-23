@@ -43,6 +43,7 @@ import {
   FiTrendingUp,
   FiX,
   FiDivide,
+  FiAperture,
   FiStar as FiSparkle,
 } from 'react-icons/fi'
 
@@ -137,6 +138,7 @@ export const TAB_ICONS = {
   'adhikaram': FiFeather,
   'maths': FiDivide,
   'social': FiGlobe,
+  'science': FiAperture,
   'trophy-room': FiAward,
   'scholarships': FiBookOpen,
 }

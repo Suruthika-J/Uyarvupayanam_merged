@@ -65,6 +65,10 @@ import WorldExplorer from './components/social/WorldExplorer'
 import SocialWorld from './components/social/SocialWorld'
 import SocialDaily from './components/social/SocialDaily'
 import RequireSocialLogin from './components/social/RequireSocialLogin'
+import ScienceAdventureWorld from './components/science/ScienceAdventureWorld'
+import ScienceWorld from './components/science/ScienceWorld'
+import ScienceDaily from './components/science/ScienceDaily'
+import RequireScienceLogin from './components/science/RequireScienceLogin'
 
 // College student pages
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
@@ -165,6 +169,9 @@ export default function StudentRoutes() {
               <Route path="social" element={<WorldExplorer />} />
               <Route path="social/daily" element={<RequireSocialLogin><SocialDaily /></RequireSocialLogin>} />
               <Route path="social/:world" element={<RequireSocialLogin><SocialWorld /></RequireSocialLogin>} />
+              <Route path="science" element={<ScienceAdventureWorld />} />
+              <Route path="science/daily" element={<RequireScienceLogin><ScienceDaily /></RequireScienceLogin>} />
+              <Route path="science/:world" element={<RequireScienceLogin><ScienceWorld /></RequireScienceLogin>} />
               <Route path="quiz" element={<SortingQuizPage />} />
               <Route path="games/:key" element={<GameDetailPage />} />
             </Route>
