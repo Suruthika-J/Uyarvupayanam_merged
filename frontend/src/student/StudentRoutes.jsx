@@ -61,6 +61,10 @@ import MathWorldMap from './components/maths/MathWorldMap'
 import TopicWorld from './components/maths/TopicWorld'
 import DailyChallenge from './components/maths/DailyChallenge'
 import RequireMathsLogin from './components/maths/RequireMathsLogin'
+import WorldExplorer from './components/social/WorldExplorer'
+import SocialWorld from './components/social/SocialWorld'
+import SocialDaily from './components/social/SocialDaily'
+import RequireSocialLogin from './components/social/RequireSocialLogin'
 
 // College student pages
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
@@ -158,6 +162,9 @@ export default function StudentRoutes() {
               <Route path="maths" element={<MathWorldMap />} />
               <Route path="maths/daily" element={<RequireMathsLogin><DailyChallenge /></RequireMathsLogin>} />
               <Route path="maths/:topic" element={<RequireMathsLogin><TopicWorld /></RequireMathsLogin>} />
+              <Route path="social" element={<WorldExplorer />} />
+              <Route path="social/daily" element={<RequireSocialLogin><SocialDaily /></RequireSocialLogin>} />
+              <Route path="social/:world" element={<RequireSocialLogin><SocialWorld /></RequireSocialLogin>} />
               <Route path="quiz" element={<SortingQuizPage />} />
               <Route path="games/:key" element={<GameDetailPage />} />
             </Route>

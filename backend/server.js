@@ -82,6 +82,16 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run Math Adventure seeding:", err);
   }
+  try {
+    const { seedSocial } = require("./seeders/seedSocial");
+    seedSocial()
+      .then(results => {
+        console.log("World Explorer seed:", results);
+      })
+      .catch(err => console.error("Error in World Explorer seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run World Explorer seeding:", err);
+  }
 });
 
 const app = express();
@@ -198,6 +208,9 @@ app.use("/api/tamil", require("./routes/tamilRoutes"));
 
 // Math Adventure Worlds (Class 5 maths)
 app.use("/api/maths", require("./routes/mathsRoutes"));
+
+// World Explorer (Class 5 social science)
+app.use("/api/social", require("./routes/socialRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;

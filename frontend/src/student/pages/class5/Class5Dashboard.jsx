@@ -15,11 +15,13 @@ export default function Class5Dashboard() {
     'real-world': 'real-world',
     adhikaram: 'adhikaram',
     maths: 'maths',
+    social: 'social',
     'trophy-room': 'trophy-room',
     scholarships: 'scholarships',
   }[segment] ||
     (/^\d+$/.test(segment) ? 'adhikaram' : undefined) ||
-    (pathname.includes('/maths/') ? 'maths' : undefined)
+    (pathname.includes('/maths/') ? 'maths' : undefined) ||
+    (pathname.includes('/social/') ? 'social' : undefined)
 
   return (
     <div className="student-root" style={{ background: '#fbfdff', minHeight: '100vh', paddingBottom: 100 }}>

@@ -136,6 +136,7 @@ export const TAB_ICONS = {
   'real-world': FiGlobe,
   'adhikaram': FiFeather,
   'maths': FiDivide,
+  'social': FiGlobe,
   'trophy-room': FiAward,
   'scholarships': FiBookOpen,
 }

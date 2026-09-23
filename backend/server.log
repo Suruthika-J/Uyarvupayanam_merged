@@ -1,0 +1,28 @@
+[dotenv@17.3.1] injecting env (6) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+ðŸš€ Server + Socket.io running on port 5000
+MongoDB Connected
+[Polytechnic CSV Import] Starting Diploma/Polytechnic College-Course Mapping import from college.csv ...
+[Polytechnic CSV Import] CSV file unchanged. Skipping database synchronization.
+[Arts & Science Import] Starting Arts & Science College-Course Mapping import...
+[Arts & Science Import] Excel file unchanged. Skipping database synchronization.
+[Medical Import] Starting Medical College-Course Mapping import...
+[Medical Import] Excel file unchanged. Skipping.
+[Siddha Import] Starting Siddha Medical College-Course Mapping import...
+[Siddha Import] Excel file unchanged. Skipping.
+[Ayurveda Import] Starting Ayurveda Medical College-Course Mapping import...
+[Ayurveda Import] Excel file unchanged. Skipping.
+Adhikaram seed: { skipped: 'Adhikaram', count: 6 }
+✅ Academic taxonomy synced: 0 new field(s) added, 13 updated.
+Math Adventure seed: { worlds: 0, questions: 0, skipped: true }
+World Explorer seed: { worlds: 8, questions: 56, seeded: true }
+Class 5 discovery seed: [
+  { skipped: 'CareerWorld' },
+  { skipped: 'SortingQuizQuestion' },
+  { skipped: 'DiscoverQuestion' },
+  { skipped: 'MiniGame' },
+  { skipped: 'WeeklyChallenge' },
+  { skipped: 'CareerVideo' },
+  { skipped: 'CareerEvent' },
+  { skipped: 'Badge' },
+  { skipped: 'SeasonalEvent' }
+]

@@ -10,6 +10,7 @@ export default function TabNav({ active = 'discover-me' }) {
     { path: '/student/class5/real-world', label: 'Real World', tab: 'real-world' },
     { path: '/student/class5/adhikaram', label: 'Kural Worlds', tab: 'adhikaram' },
     { path: '/student/class5/maths', label: 'Math Adventure', tab: 'maths' },
+    { path: '/student/class5/social', label: 'World Explorer', tab: 'social' },
     { path: '/student/class5/trophy-room', label: 'Trophy Room', tab: 'trophy-room' },
     { path: '/student/class5/scholarships', label: 'Scholarships', tab: 'scholarships' },
   ]
