@@ -7,12 +7,8 @@ import { C5 } from '../../components/class5/redesign/class5Theme'
 // Active tab is derived from the current route path.
 export default function Class5Dashboard() {
   const { pathname } = useLocation()
-  const segment = pathname.split('/').filter(Boolean).pop() || 'discover-me'
+  const segment = pathname.split('/').filter(Boolean).pop() || 'adhikaram'
   const active = {
-    'discover-me': 'discover-me',
-    'skill-quests': 'skill-quests',
-    squad: 'squad',
-    'real-world': 'real-world',
     adhikaram: 'adhikaram',
     maths: 'maths',
     social: 'social',
@@ -66,11 +62,11 @@ export default function Class5Dashboard() {
               letterSpacing: '-0.02em',
             }}
           >
-            Discover what makes <span style={{ color: C5.navy }}>you</span>, you
+            Explore, play and <span style={{ color: C5.navy }}>grow</span> your strengths
           </h1>
           <p style={{ fontSize: 15.5, color: C5.muted, maxWidth: 620, margin: '0 auto 0', lineHeight: 1.6 }}>
-            Play, think and try real things from real careers. Every step you take grows your own strength map — there's
-            no first or last, only your journey.
+            Jump into Kural Worlds, Math, Social and Science adventures. Every step you take is your own journey — there's no
+            first or last, only your curiosity.
           </p>
           <div style={{ padding: '26px 0 0' }}>
             <TabNav active={active} />

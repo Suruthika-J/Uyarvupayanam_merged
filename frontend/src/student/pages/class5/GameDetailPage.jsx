@@ -26,7 +26,7 @@ export default function GameDetailPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/student/class5/skill-quests')}
+        onClick={() => navigate('/student/class5')}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -41,7 +41,7 @@ export default function GameDetailPage() {
           marginBottom: 18,
         }}
       >
-        <FiArrowLeft /> Back to Skill Quests
+        <FiArrowLeft /> Back to Class 5
       </button>
 
       <div

@@ -2,12 +2,8 @@ import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { C5, TAB_ICONS } from './class5Theme'
 
-export default function TabNav({ active = 'discover-me' }) {
+export default function TabNav({ active = 'adhikaram' }) {
   const CLASS5_TABS = [
-    { path: '/student/class5/discover-me', label: 'Discover Me', tab: 'discover-me' },
-    { path: '/student/class5/skill-quests', label: 'Skill Quests', tab: 'skill-quests' },
-    { path: '/student/class5/squad', label: 'Squad', tab: 'squad' },
-    { path: '/student/class5/real-world', label: 'Real World', tab: 'real-world' },
     { path: '/student/class5/adhikaram', label: 'Kural Worlds', tab: 'adhikaram' },
     { path: '/student/class5/maths', label: 'Math Adventure', tab: 'maths' },
     { path: '/student/class5/social', label: 'World Explorer', tab: 'social' },

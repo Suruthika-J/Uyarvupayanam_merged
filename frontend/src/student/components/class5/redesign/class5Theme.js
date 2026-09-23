@@ -5,7 +5,6 @@
 
 import {
   FiCompass,
-  FiZap,
   FiUsers,
   FiGlobe,
   FiAward,
@@ -131,10 +130,6 @@ export const CATEGORY_ICONS = {
 export const categoryIcon = (cat) => CATEGORY_ICONS[cat] || FiPlay
 
 export const TAB_ICONS = {
-  'discover-me': FiCompass,
-  'skill-quests': FiZap,
-  'squad': FiUsers,
-  'real-world': FiGlobe,
   'adhikaram': FiFeather,
   'maths': FiDivide,
   'social': FiGlobe,
