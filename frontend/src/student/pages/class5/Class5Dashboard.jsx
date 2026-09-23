@@ -13,7 +13,6 @@ export default function Class5Dashboard() {
     maths: 'maths',
     social: 'social',
     science: 'science',
-    'trophy-room': 'trophy-room',
     scholarships: 'scholarships',
   }[segment] ||
     (/^\d+$/.test(segment) ? 'adhikaram' : undefined) ||

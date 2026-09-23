@@ -47,7 +47,6 @@ import PatternMasterPage from './pages/careers/PatternMasterPage'
 
 // Class 5 career-discovery redesign (Uyarvu Payanam)
 import Class5Dashboard from './pages/class5/Class5Dashboard'
-import TrophyRoomPage from './pages/class5/TrophyRoomPage'
 import ScholarshipsSection from './pages/class5/ScholarshipsSection'
 import SortingQuizPage from './pages/class5/SortingQuizPage'
 import GameDetailPage from './pages/class5/GameDetailPage'
@@ -151,7 +150,6 @@ export default function StudentRoutes() {
             {/* School class routes — canonical /student/classX */}
             <Route path="student/class5" element={<Class5Dashboard />}>
               <Route index element={<Navigate to="adhikaram" replace />} />
-              <Route path="trophy-room" element={<TrophyRoomPage />} />
               <Route path="scholarships" element={<ScholarshipsSection />} />
               <Route path="adhikaram" element={<AdhikaramPickerPage />} />
               <Route path="adhikaram/:id" element={<AdhikaramPage />} />

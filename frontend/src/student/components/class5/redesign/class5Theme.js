@@ -134,7 +134,6 @@ export const TAB_ICONS = {
   'maths': FiDivide,
   'social': FiGlobe,
   'science': FiAperture,
-  'trophy-room': FiAward,
   'scholarships': FiBookOpen,
 }
 
