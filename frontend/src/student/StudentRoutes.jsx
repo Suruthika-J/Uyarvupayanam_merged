@@ -95,6 +95,7 @@ import CollegeScholarshipsPage from './pages/scholarships/CollegeScholarshipsPag
 import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
+import CollegeSettingsPage from './pages/settings/CollegeSettingsPage'
 
 import './student.css'
 
@@ -294,6 +295,7 @@ export default function StudentRoutes() {
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="bookmarks" element={<BookmarksPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="settings" element={<CollegeSettingsPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
