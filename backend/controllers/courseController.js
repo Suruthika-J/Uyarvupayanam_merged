@@ -3,6 +3,7 @@ const College = require("../models/College");
 const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const mongoose = require("mongoose");
 const { allSourceCourses, SOURCE_URL, SOURCE_NAME } = require("../data/sourceCoursesAfter12th");
+const collegesInsightCache = require("../services/collegesInsightCache");
 
 // ─── Normalize helper for duplicate checking ──────────────────────
 const normalize = (str) => String(str || "").trim().toLowerCase();
@@ -17,6 +18,7 @@ const uniqueKey = (c) =>
 exports.createCourse = async (req, res) => {
   try {
     const course = await Course.create(req.body);
+    collegesInsightCache.bust(); // course writes must refresh the student page
     res.status(201).json({
       success: true,
       message: "Course created successfully",
@@ -154,6 +156,8 @@ exports.updateCourse = async (req, res) => {
       });
     }
 
+    collegesInsightCache.bust(); // course writes must refresh the student page
+
     res.status(200).json({
       success: true,
       message: "Course updated successfully",
@@ -181,6 +185,8 @@ exports.deleteCourse = async (req, res) => {
         message: "Course not found",
       });
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,
@@ -229,6 +235,8 @@ exports.bulkImportCourses = async (req, res) => {
         skippedCount++;
       }
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,
@@ -383,6 +391,8 @@ exports.importFromSource = async (req, res) => {
       insertedCount++;
       existingKeys.add(key); // prevent within-batch duplicates
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,

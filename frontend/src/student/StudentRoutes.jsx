@@ -36,6 +36,7 @@ import CollegeCourseExplorer from './pages/colleges/CollegeCourseExplorer'
 import TneaCutoffPage from './pages/colleges/TneaCutoffPage'
 import CollegeDetailPage from './pages/colleges/CollegeDetailPage'
 import CollegeCategoryPage from './pages/colleges/CollegeCategoryPage'
+import CollegesCategoryPage from './pages/colleges/CollegesCategoryPage'
 import ScholarshipDetailPage from './pages/scholarships/ScholarshipDetailPage'
 import OnboardingPage from './pages/onboarding/OnboardingPage'
 import CollegeOnboardingPage from './pages/onboarding/CollegeOnboardingPage'
@@ -207,6 +208,8 @@ export default function StudentRoutes() {
             <Route path="class10/content/:slug" element={<PreserveParamRedirect to="/student/class10/content/:slug" />} />
             <Route path="student/class12" element={<ClassLevelPage level="12" />} />
             <Route path="class12" element={<Navigate to="/student/class12" replace />} />
+            <Route path="student/class12/colleges/:category" element={<CollegesCategoryPage />} />
+            <Route path="class12/colleges/:category" element={<PreserveParamRedirect to="/student/class12/colleges/:category" />} />
             <Route path="student/class12/content/:slug" element={<ContentDetailPage />} />
             <Route path="class12/content/:slug" element={<PreserveParamRedirect to="/student/class12/content/:slug" />} />
             <Route path="student/career-path/class-5/:slug" element={<ContentDetailPage />} />

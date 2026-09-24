@@ -102,6 +102,16 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run Science Adventure seeding:", err);
   }
+  try {
+    const { seedStreams } = require("./seeders/seedStreams");
+    seedStreams()
+      .then(results => {
+        console.log("Streams After 10th seed:", results);
+      })
+      .catch(err => console.error("Error in Streams seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Streams seeding:", err);
+  }
 });
 
 const app = express();
@@ -227,6 +237,12 @@ app.use("/api/science", require("./routes/scienceRoutes"));
 
 // English Adventure (Class 5)
 app.use("/api/english", require("./routes/englishRoutes"));
+
+// Streams After 10th (Class 10 HSC groups & vocational courses)
+app.use("/api/streams", require("./routes/streamRoutes"));
+
+// Colleges Insight (Class 12) — public read API over the admin College-Course Mapping data
+app.use("/api/colleges-insight", require("./routes/collegesInsightRoutes"));
 
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;

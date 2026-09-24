@@ -10,6 +10,7 @@ import uyarvuLogo from '../../uyarvu-logo.png'
 import Dashboard from './admin/Dashboard'
 import UsersPage from './admin/UsersPage'
 import CareersPage from './admin/CareersPage'
+import StreamsPage from './admin/StreamsPage'
 import ClassDashboardPage from './admin/ClassDashboardPage'
 import ClassFormPage from './admin/ClassFormPage'
 import CoursesPage from './admin/CoursesPage'
@@ -42,6 +43,7 @@ const NAV = [
   { id: 'admission-help', icon: '🎓', label: 'Admission Help', path: 'admission-help' },
   { id: 'mentor', icon: '🤝', label: 'Guidance Requests', path: 'mentor-requests' },
   { id: 'careers', icon: '🎯', label: 'Career Paths', path: 'careers' },
+  { id: 'streams', icon: '🧭', label: 'Streams After 10th', path: 'streams' },
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
   { id: 'colleges', icon: '🏫', label: 'College Management', path: 'colleges' },
@@ -65,6 +67,7 @@ const PAGE_META = {
   'admission-help': { title: 'Admission Help Requests', sub: 'Manage college admission assistance' },
   'mentor-requests': { title: 'Guidance Requests', sub: 'Manage student-mentor interactions' },
   'careers': { title: 'Career Paths', sub: 'Hub for academic roadmaps' },
+  'streams': { title: 'Streams After 10th', sub: 'HSC groups, vocational & polytechnic diploma courses' },
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
   'colleges': { title: 'College Management', sub: 'College database' },
@@ -178,6 +181,7 @@ export default function AdminLayout() {
             
             {/* Career Path Module */}
             <Route path="careers" element={<CareersPage />} />
+            <Route path="streams" element={<StreamsPage />} />
             <Route path="career-paths/:level" element={<ClassDashboardPage />} />
             <Route path="career-paths/:level/new" element={<ClassFormPage />} />
             <Route path="career-paths/:level/edit/:id" element={<ClassFormPage />} />

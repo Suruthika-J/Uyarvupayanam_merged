@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
-  FiAward, FiActivity, FiVideo, FiBriefcase, FiInfo,
-  FiBookmark, FiCompass, FiSearch, FiLayers, FiDollarSign,
+  FiAward, FiVideo, FiBriefcase,
+  FiBookmark, FiCompass, FiLayers, FiDollarSign,
   FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin
 } from 'react-icons/fi'
 import { classContentService } from '../../../services/classContentService'
@@ -11,12 +11,13 @@ import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
 import ActivityCard from '../../components/class5/activities/ActivityCard'
-import { scholarshipService, careerService } from '../../services'
+import { careerService } from '../../services'
 import { examService } from '../../../services/examService'
 import AuthModal from '../../components/ui/AuthModal'
 import { courseService } from '../../../services/courseService'
-import { collegeService } from '../../services/index'
 import axiosInstance from '../../../config/axios'
+import StreamsInsight from '../../components/streams/StreamsInsight'
+import CollegesInsight from '../../components/colleges/CollegesInsight'
 
 const CLASS_SECTIONS = {
   default: [
@@ -43,7 +44,7 @@ const CLASS_SECTIONS = {
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
   "10": [
-    { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#f59e0b' },
+    { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#16A34A' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
   ],
@@ -73,25 +74,6 @@ const EXAM_TABS = {
   "10": [],
   "12": CATEGORY_TABS,
   "default": ["Scholarship Exam", "Skill Exams", "Government Job", "Defence Career", "Future Goals"]
-};
-
-const CLASS_10_STREAMS_DATA = {
-    Science: [
-        { title: "1️⃣ Maths + Biology (PCMB)", subjects: ["Physics", "Chemistry", "Maths", "Biology"], bestFor: "Students who want both Engineering + Medical options", warning: "Heavy workload" },
-        { title: "2️⃣ Maths + Computer Science (PCM + CS)", subjects: ["Physics", "Chemistry", "Maths", "Computer Science"], bestFor: "Engineering, IT / Software, Coding careers" },
-        { title: "3️⃣ Biology + Nursing Track (PCB)", subjects: ["Physics", "Chemistry", "Biology"], bestFor: "Nursing, Medical field, Paramedical courses", note: "“Nursing” is not always a subject in school, but a career path after PCB" },
-        { title: "4️⃣ Maths + Business Maths", subjects: ["Maths / Applied Maths", "Commerce OR Science mix"], bestFor: "Data analysis, Finance + Tech careers" }
-    ],
-    Commerce: [
-        { title: "5️⃣ Accountancy + Business Studies + Economics", subjects: ["Accountancy", "Business Studies", "Economics", "Maths (optional)"], bestFor: "CA / CMA / CS, Business, Banking" },
-        { title: "6️⃣ Commerce + Computer Science", subjects: ["Accountancy", "Business Studies", "Computer Science", "Economics"], bestFor: "FinTech, Business + IT combination" },
-        { title: "7️⃣ Commerce + Business Maths", subjects: ["Accountancy", "Economics", "Business Maths"], bestFor: "Finance, Analytics, Banking exams" }
-    ],
-    Arts: [
-        { title: "8️⃣ History + Political Science + Geography", subjects: [], bestFor: "Government exams, UPSC / TNPSC, Teaching" },
-        { title: "9️⃣ Psychology + Sociology + English", subjects: [], bestFor: "Psychology, HR, Social work" },
-        { title: "🔟 Arts + Computer Applications", subjects: [], bestFor: "Media, Digital careers, Design" }
-    ]
 };
 
 const ExamCardDetails = ({ exam }) => {
@@ -155,13 +137,12 @@ export default function ClassLevelPage(props) {
   const { isAuthenticated } = useStudentAuth()
   const [savedIds, setSavedIds] = useState(new Set())
   const [alert, setAlert] = useState({ type: '', text: '' })
-  const [searchQuery, setSearchQuery] = useState('')
-  const [courses, setCourses] = useState([])
-  const [colleges, setColleges] = useState([]) 
+  const [searchQuery] = useState('')
+  const [, setCourses] = useState([])
+  const [, setColleges] = useState([]) 
   const [exams, setExams] = useState([]) 
   const [explorerData, setExplorerData] = useState([])
   const [explorerLoading, setExplorerLoading] = useState(false)
-  const [expandedCourseCat, setExpandedCourseCat] = useState(null)
   const [mappingData, setMappingData] = useState([])
   const [mappingLoading, setMappingLoading] = useState(false)
   
@@ -183,6 +164,10 @@ export default function ClassLevelPage(props) {
 
   useEffect(() => {
     if (!['Careers', 'Colleges', 'Streams'].includes(activeSec)) return;
+    // Class 10 Streams is now served by the dedicated /api/streams dataset
+    if (cleanLevel === '10' && activeSec === 'Streams') return;
+    // Class 12 Colleges now uses the dedicated /api/colleges-insight dataset
+    if (cleanLevel === '12' && activeSec === 'Colleges') return;
     
     const fetchExplorerData = async () => {
       // Explorer data (Engineering, Medical, etc.) is only for 12th or 10th Streams
@@ -330,7 +315,7 @@ export default function ClassLevelPage(props) {
         setScholarships(mappedScholarships)
       }
 
-    } catch (err) {
+    } catch {
       setAlert({ type: 'error', text: 'Failed to load content.' })
     } finally {
       setLoading(false)
@@ -377,7 +362,7 @@ export default function ClassLevelPage(props) {
         setAlert({ type: 'success', text: 'Saved to success path! ✨' })
       }
       setTimeout(() => setAlert({ type: '', text: '' }), 3000)
-    } catch (err) {
+    } catch {
       setAlert({ type: 'error', text: 'Action failed.' })
     }
   }
@@ -504,7 +489,7 @@ export default function ClassLevelPage(props) {
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
-        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && (
+        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && !(cleanLevel === '10' && activeSec === 'Streams') && (
           <div style={{ 
             display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 10px 30px', 
             marginBottom: 30, justifyContent:'center', flexWrap:'wrap'
@@ -581,58 +566,19 @@ export default function ClassLevelPage(props) {
                       </div>
                    </div>
                 )}
-               {/* --- CLASS 10 STREAMS LOGIC (STATIC CONTENT) --- */}
-               {activeSec === 'Streams' && cleanLevel === '10' && activeSubTab !== 'Diploma' && (
-                  <div style={{ gridColumn: '1/-1', marginBottom: 40 }}>
-                    {Object.entries(CLASS_10_STREAMS_DATA)
-                       .filter(([groupName]) => activeSubTab === 'All' || groupName === activeSubTab)
-                       .map(([groupName, courses]) => (
-                         <div key={groupName} style={{ marginBottom: 40 }}>
-                            <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: groupName === 'Science' ? 'var(--s-blue)' : groupName === 'Commerce' ? 'var(--s-green)' : groupName === 'Arts' ? 'var(--s-purple)' : 'var(--s-orange)', marginBottom: 20, borderBottom: `2px solid ${groupName === 'Science' ? 'var(--s-blue-l)' : groupName === 'Commerce' ? 'var(--s-green-l)' : groupName === 'Arts' ? 'var(--s-purple-l)' : 'var(--s-orange-l)'}`, paddingBottom: 10 }}>
-                                {groupName === 'Science' ? "🔬 SCIENCE GROUP COURSES" : groupName === 'Commerce' ? "💼 COMMERCE GROUP COURSES" : groupName === 'Arts' ? "🎨 ARTS / HUMANITIES COURSES" : "🔧 VOCATIONAL / DIPLOMA COURSES"}
-                            </h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-                                {courses.map((course, cIdx) => (
-                                    <div key={cIdx} style={{ background: '#fff', borderRadius: 24, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, borderTop: `4px solid ${groupName === 'Science' ? 'var(--s-blue)' : groupName === 'Commerce' ? 'var(--s-green)' : groupName === 'Arts' ? 'var(--s-purple)' : 'var(--s-orange)'}`, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-                                        <h4 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>{course.title}</h4>
-                                        
-                                        {course.subjects.length > 0 && (
-                                            <div>
-                                                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1 }}>👉 Subjects</span>
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                                                    {course.subjects.map((sub, i) => <SBadge key={i} color="gray">{sub}</SBadge>)}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div style={{ background: 'var(--s-surface2)', padding: '12px 16px', borderRadius: 12 }}>
-                                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-primary)', textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                <FiActivity /> Best For
-                                            </span>
-                                            <p style={{ fontSize: 14, fontWeight: 600, margin: '6px 0 0', color: 'var(--s-text)' }}>{course.bestFor}</p>
-                                        </div>
-
-                                        {course.warning && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#d97706', fontSize: 13, fontWeight: 600, background: '#fef3c7', padding: '8px 12px', borderRadius: 8 }}>
-                                                ⚠️ {course.warning}
-                                            </div>
-                                        )}
-
-                                        {course.note && (
-                                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, color: 'var(--s-text2)', fontSize: 13, background: 'var(--s-surface2)', padding: '8px 12px', borderRadius: 8 }}>
-                                                💡 {course.note}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                         </div>
-                    ))}
+               {/* --- CLASS 10 STREAMS (data-driven flip cards from /api/streams) --- */}
+               {activeSec === 'Streams' && cleanLevel === '10' && (
+                  <div style={{ gridColumn: '1/-1' }}>
+                     <StreamsInsight />
                   </div>
                )}
 
-               {/* --- CLASS 12 & DIPLOMA LOGIC (uses explorerData) --- */}
-               {((activeSec === 'Careers' || activeSec === 'Colleges') && cleanLevel === '12') || (activeSec === 'Streams' && cleanLevel === '10' && (activeSubTab === 'All' || activeSubTab === 'Diploma')) ? (
+               {/* --- CLASS 12 COLLEGES INSIGHT (live counts from /api/colleges-insight) --- */}
+               {activeSec === 'Colleges' && cleanLevel === '12' ? (
+                  <div style={{ gridColumn: '1/-1' }}>
+                     <CollegesInsight />
+                  </div>
+               ) : (activeSec === 'Careers') && cleanLevel === '12' ? (
                   explorerLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : explorerData.length === 0 ? (
@@ -813,7 +759,8 @@ export default function ClassLevelPage(props) {
                         )}
                      </div>
                   </div>
-                ) : filteredContent.length === 0 ? (
+                ) : activeSec === 'Streams' && cleanLevel === '10' ? null
+                : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
                   <SEmpty title="Nothing found yet" desc={`We haven't added items to ${activeSec} for Class ${cleanLevel} yet.`} />
                 </div>
