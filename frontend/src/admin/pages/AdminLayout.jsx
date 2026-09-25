@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import styles from './AdminLayout.module.css'
 import NotificationBell from '../components/NotificationBell'
 import uyarvuLogo from '../../uyarvu-logo.png'
+import { streamLabel } from '../../services/seatMatrixService'
 
 // Pages
 import Dashboard from './admin/Dashboard'
@@ -16,6 +17,9 @@ import ClassFormPage from './admin/ClassFormPage'
 import CoursesPage from './admin/CoursesPage'
 import ExamsPage from './admin/ExamsPage'
 import CollegesPage from './admin/CollegesPage'
+import CoursesCollegesPage from './admin/CoursesCollegesPage'
+import CourseCollegesAdminPage from './admin/CourseCollegesAdminPage'
+import StreamSelectorPage from './admin/StreamSelectorPage'
 import ScholarshipsPage from './admin/ScholarshipsPage'
 import CutoffPage from './admin/CutoffPage'
 import NotificationsPage from './admin/NotificationsPage'
@@ -47,6 +51,7 @@ const NAV = [
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
   { id: 'colleges', icon: '🏫', label: 'College Management', path: 'colleges' },
+  { id: 'courses-colleges', icon: '📚', label: 'Courses & Colleges', path: 'courses-colleges' },
   { id: 'scholarships', icon: '🎓', label: 'School Scholarships', path: 'scholarships' },
   { id: 'college-scholarships', icon: '🏆', label: 'College Scholarships', path: 'college-scholarships' },
   { id: 'cutoff', icon: '📈', label: 'Cutoff Management', path: 'cutoff' },
@@ -71,6 +76,7 @@ const PAGE_META = {
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
   'colleges': { title: 'College Management', sub: 'College database' },
+  'courses-colleges': { title: 'Courses & Colleges', sub: 'Select a stream to view its courses and colleges' },
   'scholarships': { title: 'School Scholarships', sub: 'School scholarship listings & deadlines' },
   'college-scholarships': { title: 'College Scholarship Management', sub: 'Higher Education Financial Schemes & AI Eligibility' },
   'cutoff': { title: 'Cutoff Management', sub: 'Year-wise cutoff data' },
@@ -90,7 +96,14 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const currentPath = location.pathname.replace('/admin/', '').replace('/admin', '')
-  const meta = PAGE_META[currentPath] || PAGE_META['']
+  // Nested "courses-colleges/:stream[/:courseId]" pages keep the stream label
+  // in the header subtitle so the breadcrumb context is clear.
+  const nestedStream = currentPath.startsWith('courses-colleges/')
+    ? currentPath.replace('courses-colleges/', '').split('/')[0]
+    : null
+  const meta = nestedStream
+    ? { title: PAGE_META['courses-colleges'].title, sub: `${streamLabel(nestedStream)} — courses, colleges & seats` }
+    : (PAGE_META[currentPath] || PAGE_META[''])
 
   const go = (path) => navigate(path ? `/admin/${path}` : '/admin')
 
@@ -116,7 +129,7 @@ export default function AdminLayout() {
         <nav className={styles.nav}>
           <div className={styles.navLabel}>{sidebarOpen && 'MAIN MENU'}</div>
           {NAV.map(n => {
-            const isActive = currentPath === n.path || (n.id === 'careers' && currentPath.includes('career-paths'))
+            const isActive = currentPath === n.path || (n.id === 'careers' && currentPath.includes('career-paths')) || (n.id === 'courses-colleges' && currentPath.startsWith('courses-colleges'))
             return (
               <button key={n.id}
                 className={`${styles.navItem} ${isActive ? styles.navActive : ''}`}
@@ -191,6 +204,9 @@ export default function AdminLayout() {
             <Route path="courses/edit/:id" element={<CourseDetailsEditPage />} />
             <Route path="exams" element={<ExamsPage />} />
             <Route path="colleges" element={<CollegesPage />} />
+            <Route path="courses-colleges" element={<StreamSelectorPage />} />
+            <Route path="courses-colleges/:stream" element={<CoursesCollegesPage />} />
+            <Route path="courses-colleges/:stream/:courseId" element={<CourseCollegesAdminPage />} />
             <Route path="scholarships" element={<ScholarshipsPage />} />
             <Route path="college-scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="cutoff" element={<CutoffPage />} />

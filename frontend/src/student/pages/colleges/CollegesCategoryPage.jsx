@@ -1,110 +1,175 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  FiArrowLeft, FiSearch, FiClock, FiHome, FiX, FiChevronRight,
+  FiArrowLeft, FiSearch, FiClock, FiHome,
   FiMapPin, FiRefreshCw, FiBookOpen
 } from 'react-icons/fi'
 import { SBtn, SEmpty } from '../../components/ui'
+import InsightRow, { StatusBadge, TypeBadge, Chip } from '../../components/colleges/InsightRow'
 import { collegesInsightService } from '../../../services/collegesInsightService'
+import { getInsightStyle, getInsightShortLabel, getLevelLabel } from '../../../constants/collegesInsightTheme'
 
-const STATUS_BADGE_COLOR = {
-  Verified: 'green',
-  Imported: 'blue',
-  Manual: 'purple',
-}
+const COLLEGE_PAGE_SIZE = 100
 
-const TYPE_BADGE_COLOR = {
-  Government: 'blue',
-  Private: 'green',
-  Aided: 'orange',
-}
+/** Normalize a string for search matching (lowercase, collapse whitespace). */
+const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim()
 
 /**
  * /student/class12/colleges/:category
- * Drill-down from a "Colleges Insight" summary card: lists the category's
- * published courses with a live "X colleges offer this" count, plus a search
- * box. Clicking a course opens the colleges modal for that course.
+ * Step 2 — stream drill-down with a "By Course" (default) / "By College"
+ * toggle. Courses and colleges are both fetched in full (all pages) so every
+ * item is visible at once; search filters client-side over the complete list.
+ * Tapping any row routes to the matching detail view (Step 3a / Step 3b).
  */
 export default function CollegesCategoryPage() {
   const { category } = useParams()
   const navigate = useNavigate()
 
+  const [tab, setTab] = useState('courses') // 'courses' | 'colleges'
   const [label, setLabel] = useState('')
-  const [courses, setCourses] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
+  const [levelFilter, setLevelFilter] = useState('') // '' = all levels
+  const [districtFilter, setDistrictFilter] = useState('') // '' = all districts
 
-  // Colleges modal state
-  const [modalCourse, setModalCourse] = useState(null)
+  // Category totals from the summary endpoint, shown on the toggle pills.
+  const [summaryCounts, setSummaryCounts] = useState(null)
+
+  // —— By Course state ——
+  const [courses, setCourses] = useState([])
+  const [coursesLoading, setCoursesLoading] = useState(true)
+  const [coursesError, setCoursesError] = useState(false)
+
+  // —— By College state (fetched in full, client-side search) ——
   const [colleges, setColleges] = useState([])
+  const [collegeCount, setCollegeCount] = useState(0)
   const [collegesLoading, setCollegesLoading] = useState(false)
   const [collegesError, setCollegesError] = useState(false)
 
-  const load = useCallback(async () => {
+  const loadCourses = useCallback(async () => {
     if (!category) return
-    setLoading(true)
-    setError(false)
+    setCoursesLoading(true)
+    setCoursesError(false)
     try {
       const res = await collegesInsightService.getCourses(category)
       if (res.success) {
         setLabel(res.label || '')
         setCourses(res.data || [])
       } else {
-        setError(true)
+        setCoursesError(true)
       }
     } catch (err) {
       console.error('Error fetching category courses', err)
-      setError(true)
+      setCoursesError(true)
     } finally {
-      setLoading(false)
+      setCoursesLoading(false)
     }
   }, [category])
 
   useEffect(() => {
-    load()
-  }, [load])
+    loadCourses()
+  }, [loadCourses])
 
+  // Reset filters whenever the stream changes (fresh start per category).
   useEffect(() => {
-    if (modalCourse) {
-      loadColleges(modalCourse)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalCourse])
+    setSearch('')
+    setLevelFilter('')
+    setDistrictFilter('')
+  }, [category])
 
-  const loadColleges = useCallback(async (course) => {
-    setColleges([])
-    setCollegesError(false)
+  // Fetch the category's live totals for the toggle pill counts.
+  useEffect(() => {
+    let cancelled = false
+    collegesInsightService.getSummary()
+      .then((res) => {
+        if (cancelled || !res.success) return
+        const row = (res.data || []).find((r) => r.category === category)
+        if (row) setSummaryCounts({ courseCount: row.courseCount, collegeCount: row.collegeCount })
+      })
+      .catch(() => { /* non-fatal — pills fall back to local counts */ })
+    return () => { cancelled = true }
+  }, [category])
+
+  const filtered = useMemo(() => {
+    const q = norm(search)
+    let list = courses
+    if (levelFilter) list = list.filter((c) => (c.level || '') === levelFilter)
+    if (!q) return list
+    return list.filter((c) => norm(c.name).includes(q))
+  }, [courses, search, levelFilter])
+
+  // Distinct level values present in this stream (single source of truth:
+  // comes from the API, so an admin adding a new level shows automatically).
+  const levels = useMemo(() => {
+    const set = new Set()
+    for (const c of courses) if (c.level) set.add(c.level)
+    return [...set].sort()
+  }, [courses])
+
+  // Fetch EVERY college in the category (walks all server pages) so the
+  // complete list is available for instant client-side search.
+  const loadAllColleges = useCallback(async () => {
     setCollegesLoading(true)
+    setCollegesError(false)
     try {
-      const res = await collegesInsightService.getColleges(category, course.id)
-      if (res.success) setColleges(res.data || [])
-      else setCollegesError(true)
+      const all = []
+      let total = 0
+      let page = 1
+      let totalPages = 1
+      do {
+        const res = await collegesInsightService.getStreamColleges(category, { page, limit: COLLEGE_PAGE_SIZE })
+        if (!res.success) throw new Error('load failed')
+        total = res.count || 0
+        totalPages = res.totalPages || 0
+        all.push(...(res.data || []))
+        page += 1
+      } while (page <= totalPages)
+      setColleges(all)
+      setCollegeCount(total)
     } catch (err) {
-      console.error('Error fetching colleges for course', err)
+      console.error('Error fetching category colleges', err)
       setCollegesError(true)
     } finally {
       setCollegesLoading(false)
     }
   }, [category])
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return courses
-    return courses.filter((c) => (c.name || '').toLowerCase().includes(q))
-  }, [courses, search])
+  useEffect(() => {
+    if (tab !== 'colleges') return
+    loadAllColleges()
+  }, [tab, loadAllColleges])
 
-  const title = label.replace(/\s+Insight$/i, '') || 'Courses'
+  const filteredColleges = useMemo(() => {
+    const q = norm(search)
+    let list = colleges
+    if (districtFilter) list = list.filter((c) => (c.district || '') === districtFilter)
+    if (!q) return list
+    return list.filter(
+      (c) =>
+        norm(c.name).includes(q) ||
+        norm(c.location).includes(q)
+    )
+  }, [colleges, search, districtFilter])
 
-  const closeModal = () => {
-    setModalCourse(null)
-    setColleges([])
+  // Distinct districts in this stream, derived from the fetched data.
+  const districts = useMemo(() => {
+    const set = new Set()
+    for (const c of colleges) if (c.district) set.add(c.district)
+    return [...set].sort((a, b) => a.localeCompare(b))
+  }, [colleges])
+
+  const switchTab = (next) => {
+    if (next === tab) return
+    setTab(next)
+    setSearch('')
   }
+
+  const style = getInsightStyle(category)
+  const shortLabel = getInsightShortLabel(category, label)
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 0 80px', fontFamily: 'var(--s-font-display)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <button
           onClick={() => navigate('/student/class12?section=Colleges')}
           aria-label="Back to Colleges"
@@ -116,14 +181,59 @@ export default function CollegesCategoryPage() {
         >
           <FiArrowLeft size={20} />
         </button>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-            {title} Courses
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 800,
+              color: style.color, background: style.bg, padding: '4px 12px', borderRadius: 99,
+            }}>
+              {style.icon} {style.short}
+            </span>
+          </div>
+          <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
+            {shortLabel}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 14, color: '#64748b' }}>
-            Explore the courses in this category and the colleges that offer them
+            Pick a course to see its colleges, or browse the colleges in this stream
           </p>
         </div>
+      </div>
+
+      {/* By Course / By College toggle */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+        {[
+          { key: 'courses', label: 'By Course', icon: <FiBookOpen size={15} />, count: summaryCounts ? summaryCounts.courseCount : filtered.length },
+          { key: 'colleges', label: 'By College', icon: <FiMapPin size={15} />, count: summaryCounts ? summaryCounts.collegeCount : (tab === 'colleges' ? collegeCount : null) },
+        ].map((t) => {
+          const active = tab === t.key
+          return (
+            <button
+              key={t.key}
+              onClick={() => switchTab(t.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px', borderRadius: 99,
+                border: active ? '1.5px solid #1e293b' : '1.5px solid #e2e8f0',
+                background: active ? '#1e293b' : '#fff',
+                color: active ? '#fff' : '#475569',
+                fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--s-font-display)',
+                boxShadow: active ? '0 8px 16px -6px rgba(15,23,42,0.35)' : '0 2px 6px -1px rgba(0,0,0,0.04)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {t.icon}
+              {t.label}
+              {t.count !== null && (
+                <span style={{
+                  fontSize: 12, fontWeight: 800, padding: '2px 9px', borderRadius: 99,
+                  background: active ? 'rgba(255,255,255,0.18)' : '#f1f5f9',
+                  color: active ? '#fff' : '#64748b',
+                }}>
+                  {t.count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Search */}
@@ -132,7 +242,9 @@ export default function CollegesCategoryPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search ${title.toLowerCase()} courses...`}
+          placeholder={tab === 'courses'
+            ? `Search ${shortLabel.toLowerCase()} courses...`
+            : 'Search colleges by name or location...'}
           style={{
             width: '100%', padding: '14px 18px 14px 46px', borderRadius: 14,
             border: '1.5px solid #e2e8f0', fontSize: 15, outline: 'none', background: '#fff',
@@ -142,164 +254,164 @@ export default function CollegesCategoryPage() {
         />
       </div>
 
-      {/* Body */}
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '24px 28px' }}>
-              <div style={{ width: '55%', height: 18, borderRadius: 8, background: '#f1f5f9', marginBottom: 10 }} />
-              <div style={{ width: '80%', height: 13, borderRadius: 8, background: '#f8fafc', marginBottom: 14 }} />
-              <div style={{ width: 160, height: 26, borderRadius: 99, background: '#eef2ff' }} />
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
-          <div style={{ fontSize: 40, marginBottom: 12, color: '#94a3b8' }}><FiBookOpen /></div>
-          <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#334155' }}>Couldn't load these courses</p>
-          <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748b' }}>Please try again in a moment.</p>
-          <SBtn variant="outline" size="sm" onClick={load}><FiRefreshCw size={14} /> Retry</SBtn>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
-          <SEmpty
-            icon={<FiBookOpen size={48} />}
-            title={search ? 'No matching courses' : 'No courses added yet for this category'}
-            desc={search ? 'Try a different search term.' : 'Ask your admin to add courses for this category — they will appear here automatically.'}
-          />
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>
-            {filtered.length} {filtered.length === 1 ? 'course' : 'courses'}
+      {/* —— By Course body —— */}
+      {tab === 'courses' && (
+        coursesLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '24px 28px' }}>
+                <div style={{ width: '55%', height: 18, borderRadius: 8, background: '#f1f5f9', marginBottom: 10 }} />
+                <div style={{ width: '80%', height: 13, borderRadius: 8, background: '#f8fafc', marginBottom: 14 }} />
+                <div style={{ width: 160, height: 26, borderRadius: 99, background: '#eef2ff' }} />
+              </div>
+            ))}
           </div>
-          {filtered.map((course) => (
-            <div
-              key={course.id}
-              onClick={() => setModalCourse(course)}
-              className="insight-header-hover hover-lift"
-              style={{
-                background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '24px 28px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
-                boxShadow: '0 8px 12px -3px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.25s ease',
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#1e293b' }}>{course.name}</h3>
-                {course.description && (
-                  <p style={{
-                    margin: '6px 0 0', fontSize: 13.5, color: '#64748b', maxWidth: 640, overflow: 'hidden',
-                    textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  }}>
-                    {course.description}
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {course.duration && (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700,
-                      color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 10px', borderRadius: 99,
-                    }}>
-                      <FiClock size={13} /> {course.duration}
-                    </span>
-                  )}
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700,
-                    color: '#4f46e5', background: '#eef2ff', padding: '4px 10px', borderRadius: 99,
-                  }}>
-                    <FiHome size={13} /> {course.collegeCount} college{course.collegeCount === 1 ? '' : 's'} offer this
-                  </span>
-                </div>
+        ) : coursesError ? (
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
+            <div style={{ fontSize: 40, marginBottom: 12, color: '#94a3b8' }}><FiBookOpen /></div>
+            <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#334155' }}>Couldn't load these courses</p>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748b' }}>Please try again in a moment.</p>
+            <SBtn variant="outline" size="sm" onClick={loadCourses}><FiRefreshCw size={14} /> Retry</SBtn>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
+            <SEmpty
+              icon={<FiBookOpen size={48} />}
+              title={search ? 'No matching courses' : 'No courses added yet for this category'}
+              desc={search ? 'Try a different search term.' : 'Ask your admin to add courses for this category — they will appear here automatically.'}
+            />
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {levels.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['', ...levels].map((lv) => {
+                  const active = (levelFilter || '') === lv
+                  return (
+                    <button
+                      key={lv || 'all-levels'}
+                      onClick={() => setLevelFilter(lv)}
+                      style={{
+                        padding: '7px 14px', borderRadius: 99, border: active ? '1.5px solid #1e293b' : '1.5px solid #e2e8f0',
+                        background: active ? '#1e293b' : '#fff', color: active ? '#fff' : '#475569',
+                        fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--s-font-display)',
+                      }}
+                    >
+                      {lv ? getLevelLabel(lv) : 'All levels'}
+                    </button>
+                  )
+                })}
               </div>
-              <div style={{ background: '#f8fafc', width: 42, height: 42, borderRadius: 12, display: 'grid', placeItems: 'center', color: '#64748b', flexShrink: 0 }}>
-                <FiChevronRight size={20} />
-              </div>
+            )}
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>
+              {search || levelFilter
+                ? `${filtered.length} of ${courses.length} courses`
+                : `${filtered.length} ${filtered.length === 1 ? 'course' : 'courses'}`}
             </div>
-          ))}
-        </div>
+            {filtered.map((course) => (
+              <InsightRow
+                key={course.id}
+                title={course.name}
+                subtitle={course.description || undefined}
+                onOpen={() => navigate(`/student/class12/colleges/${category}/course/${course.id}`)}
+                accentColor={style.color}
+                accentBg={style.bg}
+                footer={
+                  <>
+                    {course.level && (
+                      <Chip>{getLevelLabel(course.level)}</Chip>
+                    )}
+                    {course.duration && (
+                      <Chip icon={<FiClock size={13} color="#94a3b8" />}>{course.duration}</Chip>
+                    )}
+                    <Chip icon={<FiHome size={13} color="#4f46e5" />}>
+                      {course.collegeCount} college{course.collegeCount === 1 ? '' : 's'} offer this
+                    </Chip>
+                  </>
+                }
+              />
+            ))}
+          </div>
+        )
       )}
 
-      {/* Colleges modal */}
-      {modalCourse && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-            backdropFilter: 'blur(4px)', animation: 'fadeIn 0.18s ease',
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#fff', borderRadius: 24, width: '100%', maxWidth: 680, maxHeight: '80vh',
-              display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-              animation: 'slideUp 0.22s ease',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '24px 28px 16px', borderBottom: '1px solid #f1f5f9' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 19, fontWeight: 900, color: '#1e293b', letterSpacing: '-0.01em' }}>{modalCourse.name}</h2>
-                <p style={{ margin: '4px 0 0', fontSize: 13.5, color: '#64748b' }}>
-                  Colleges offering this course
-                </p>
+      {/* —— By College body —— */}
+      {tab === 'colleges' && (
+        collegesLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 20, border: '1px solid #f1f5f9', padding: '24px 28px' }}>
+                <div style={{ width: '55%', height: 18, borderRadius: 8, background: '#f1f5f9', marginBottom: 10 }} />
+                <div style={{ width: '70%', height: 13, borderRadius: 8, background: '#f8fafc', marginBottom: 14 }} />
+                <div style={{ width: 200, height: 26, borderRadius: 99, background: '#eef2ff' }} />
               </div>
-              <button
-                onClick={closeModal}
-                aria-label="Close"
-                style={{
-                  width: 34, height: 34, borderRadius: 10, border: '1px solid #e2e8f0', background: '#f8fafc',
-                  color: '#64748b', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0,
-                }}
-              >
-                <FiX size={17} />
-              </button>
-            </div>
-
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px 28px' }}>
-              {collegesLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} style={{ borderRadius: 16, border: '1px solid #f1f5f9', padding: 18 }}>
-                      <div style={{ width: '50%', height: 15, borderRadius: 8, background: '#f1f5f9', marginBottom: 8 }} />
-                      <div style={{ width: '70%', height: 12, borderRadius: 8, background: '#f8fafc' }} />
-                    </div>
-                  ))}
-                </div>
-              ) : collegesError ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-                  <p style={{ margin: '0 0 14px', fontSize: 14.5, fontWeight: 700, color: '#334155' }}>Couldn't load the college list</p>
-                  <SBtn variant="outline" size="sm" onClick={() => loadColleges(modalCourse)}><FiRefreshCw size={14} /> Retry</SBtn>
-                </div>
-              ) : colleges.length === 0 ? (
-                <SEmpty
-                  icon={<FiMapPin size={44} />}
-                  title="No colleges mapped yet"
-                  desc="Ask your admin to verify a mapping for this course — colleges will appear here."
-                />
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {colleges.map((col) => (
-                    <div key={col.id} style={{ borderRadius: 16, border: '1px solid #f1f5f9', padding: 18, background: '#fcfdff' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                        <h3 style={{ margin: 0, fontSize: 15.5, fontWeight: 800, color: '#1e293b' }}>{col.name}</h3>
-                        <SBadge color={STATUS_BADGE_COLOR[col.status] || 'gray'} style={{ flexShrink: 0 }}>{col.status}</SBadge>
-                      </div>
-                      <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {col.location && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#64748b' }}>
-                            <FiMapPin size={13} color="#f59e0b" /> {col.location}
-                          </span>
-                        )}
-                        <SBadge color={TYPE_BADGE_COLOR[col.type] || 'gray'}>{col.type}</SBadge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        </div>
+        ) : collegesError ? (
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
+            <div style={{ fontSize: 40, marginBottom: 12, color: '#94a3b8' }}><FiMapPin /></div>
+            <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#334155' }}>Couldn't load these colleges</p>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748b' }}>Please try again in a moment.</p>
+            <SBtn variant="outline" size="sm" onClick={loadAllColleges}><FiRefreshCw size={14} /> Retry</SBtn>
+          </div>
+        ) : filteredColleges.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#fff', borderRadius: 32, border: '1px dashed #cbd5e1' }}>
+            <SEmpty
+              icon={<FiMapPin size={48} />}
+              title={search ? 'No matching colleges' : 'No colleges mapped yet in this stream'}
+              desc={search ? 'Try a different search term.' : 'Ask your admin to map courses to colleges — they will appear here automatically.'}
+            />
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {districts.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['', ...districts].map((d) => {
+                  const active = (districtFilter || '') === d
+                  return (
+                    <button
+                      key={d || 'all-districts'}
+                      onClick={() => setDistrictFilter(d)}
+                      style={{
+                        padding: '7px 14px', borderRadius: 99, border: active ? '1.5px solid #1e293b' : '1.5px solid #e2e8f0',
+                        background: active ? '#1e293b' : '#fff', color: active ? '#fff' : '#475569',
+                        fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--s-font-display)',
+                      }}
+                    >
+                      {d || 'All districts'}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>
+              {search || districtFilter
+                ? `${filteredColleges.length} of ${collegeCount} colleges match`
+                : `${collegeCount} college${collegeCount === 1 ? '' : 's'} in this stream`}
+            </div>
+            {filteredColleges.map((col) => (
+              <InsightRow
+                key={col.id}
+                title={col.name}
+                onOpen={() => navigate(`/student/class12/colleges/${category}/college/${col.id}`)}
+                accentColor={style.color}
+                accentBg={style.bg}
+                footer={
+                  <>
+                    {col.location && (
+                      <Chip icon={<FiMapPin size={13} color="#f59e0b" />}>{col.location}</Chip>
+                    )}
+                    <TypeBadge type={col.type} />
+                    <StatusBadge status={col.status} />
+                    <Chip icon={<FiBookOpen size={13} color="#6366f1" />}>
+                      {col.courseCount} course{col.courseCount === 1 ? '' : 's'}
+                    </Chip>
+                  </>
+                }
+              />
+            ))}
+          </div>
+        )
       )}
     </div>
   )

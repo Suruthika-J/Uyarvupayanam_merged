@@ -244,6 +244,9 @@ app.use("/api/streams", require("./routes/streamRoutes"));
 // Colleges Insight (Class 12) — public read API over the admin College-Course Mapping data
 app.use("/api/colleges-insight", require("./routes/collegesInsightRoutes"));
 
+// Admin-only TNEA seat-matrix import + "Courses & Colleges" explorers
+app.use("/api/admin/seat-matrix", require("./routes/seatMatrixRoutes"));
+
 // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
