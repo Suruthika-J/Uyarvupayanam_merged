@@ -489,7 +489,7 @@ export default function ClassLevelPage(props) {
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
-        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && !(cleanLevel === '10' && activeSec === 'Streams') && (
+        {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && !(cleanLevel === '10' && activeSec === 'Streams') && !(cleanLevel === '12' && activeSec === 'Entrance Exams') && (
           <div style={{ 
             display: 'flex', gap: 10, overflowX: 'auto', padding: '10px 10px 30px', 
             marginBottom: 30, justifyContent:'center', flexWrap:'wrap'
@@ -664,60 +664,44 @@ export default function ClassLevelPage(props) {
                   )
                 ) : activeSec === 'Entrance Exams' && cleanLevel === '12' ? (
                   <div style={{ gridColumn: '1/-1' }}>
-                     {/* Stream Mapping */}
-                     <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', padding: 32, borderRadius: 24, color: '#fff', marginBottom: 32 }}>
-                        <h3 style={{ fontSize: 24, fontWeight: 900, margin: '0 0 20px' }}>🎓 Stream → Career Mapping</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
-                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#93c5fd' }}>Science (PCM)</strong>
-                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Engineering, Architecture, Defence, Data Science</span>
-                           </div>
-                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
-                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#86efac' }}>Science (PCB)</strong>
-                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Medical, Pharmacy, Nursing, Biotechnology</span>
-                           </div>
-                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
-                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#fcd34d' }}>Commerce</strong>
-                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>CA, CS, B.Com, BBA, Banking & Finance</span>
-                           </div>
-                           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
-                              <strong style={{ display: 'block', fontSize: 16, marginBottom: 8, color: '#fbcfe8' }}>Arts & Humanities</strong>
-                              <span style={{ fontSize: 13, lineHeight: 1.5 }}>Law, Civil Services, Design, Journalism, Teaching</span>
-                           </div>
-                        </div>
-                     </div>
+                      {/* Stream → Career Mapping (clean white card, professional) */}
+                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 28, marginBottom: 24, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+                         <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', margin: '0 0 4px' }}>Stream → Career Mapping</h3>
+                         <p style={{ margin: '0 0 20px', fontSize: 13.5, fontWeight: 600, color: '#64748b' }}>Career directions your Class 12 stream opens up.</p>
+                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                            {[
+                               { name: 'Science (PCM)', careers: 'Engineering, Architecture, Defence, Data Science', tone: '#2563eb' },
+                               { name: 'Science (PCB)', careers: 'Medical, Pharmacy, Nursing, Biotechnology', tone: '#059669' },
+                               { name: 'Commerce', careers: 'CA, CS, B.Com, BBA, Banking & Finance', tone: '#d97706' },
+                               { name: 'Arts & Humanities', careers: 'Law, Civil Services, Design, Journalism, Teaching', tone: '#7c3aed' },
+                            ].map((s) => (
+                               <div key={s.name} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: '14px 16px' }}>
+                                  <div style={{ fontWeight: 800, fontSize: 14.5, color: s.tone, marginBottom: 6 }}>{s.name}</div>
+                                  <div style={{ fontSize: 13, lineHeight: 1.5, color: '#475569' }}>{s.careers}</div>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
 
-                     {/* Decision Support & TN Info */}
-                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 40 }}>
-                        <div style={{ background: '#eff6ff', padding: 24, borderRadius: 24 }}>
-                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e3a8a', marginBottom: 12 }}>💡 Smart Decision Support</h3>
-                          <ul style={{ margin: 0, paddingLeft: 20, color: '#1e40af', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
-                            <li><strong>Like Maths?</strong> Engineering / Data fields.</li>
-                            <li><strong>Like Biology?</strong> Medical / Pharma fields.</li>
-                            <li><strong>Like Business?</strong> Commerce / Management paths.</li>
-                            <li><strong>Creative?</strong> Design / Architecture / Arts.</li>
-                          </ul>
-                        </div>
-                        <div style={{ background: '#fef2f2', padding: 24, borderRadius: 24 }}>
-                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#991b1b', marginBottom: 12 }}>❌ Common Mistakes to Avoid</h3>
-                          <ul style={{ margin: 0, paddingLeft: 20, color: '#b91c1c', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
-                            <li>Choosing a course based on others' opinions.</li>
-                            <li>Ignoring your own interests.</li>
-                            <li>Not checking eligibility criteria early.</li>
-                            <li>Late preparation & lack of mock tests.</li>
-                          </ul>
-                        </div>
-                     </div>
-
-                     {/* Tamil Nadu Priority Info */}
-                     <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: 24, borderRadius: 24, marginBottom: 40 }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#166534', marginBottom: 12 }}>🗺️ Tamil Nadu Important Info</h3>
-                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                           <SBadge color="green"><strong>Engineering:</strong> TNEA (No entrance, marks based)</SBadge>
-                           <SBadge color="green"><strong>Medical:</strong> NEET is compulsory</SBadge>
-                           <SBadge color="green"><strong>Arts & Science:</strong> Merit or CUET</SBadge>
-                        </div>
-                     </div>
+                      {/* Tamil Nadu Entrance Facts (clean white card, professional) */}
+                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, marginBottom: 36, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+                         <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', margin: '0 0 16px' }}>Tamil Nadu Entrance Facts</h3>
+                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                            {[
+                               { label: 'Engineering', fact: 'TNEA — marks based, no entrance test', tone: '#2563eb' },
+                               { label: 'Medical', fact: 'NEET compulsory', tone: '#059669' },
+                               { label: 'Arts & Science', fact: 'Merit or CUET', tone: '#7c3aed' },
+                            ].map((f) => (
+                               <div key={f.label} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                                  <div style={{ marginTop: 4, width: 8, height: 8, borderRadius: 99, background: f.tone, flexShrink: 0 }} />
+                                  <div>
+                                     <div style={{ fontWeight: 800, fontSize: 13, color: '#334155' }}>{f.label}</div>
+                                     <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>{f.fact}</div>
+                                  </div>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
 
                      {/* Exams List */}
                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 32 }}>

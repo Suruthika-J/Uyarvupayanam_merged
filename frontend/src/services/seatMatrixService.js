@@ -6,37 +6,42 @@ import axiosInstance from '../config/axios'
  * data never reaches public/student routes.
  */
 
-/** Fixed stream catalogue (matches the backend STREAMS list). */
-export const SEAT_MATRIX_STREAMS = [
-  'Engineering',
-  'Medical',
-  'Arts & Science',
-  'Law',
-  'Commerce',
-  'Management',
-  'IT & Computer',
-  'Agriculture',
-  'Architecture',
-  'Design',
-  'Hotel Management',
-  'ITI',
-  'Polytechnic',
-  'Media & Journalism',
-  'Others',
+/**
+ * The 9 "school" categories, mirroring the public Colleges Insight taxonomy
+ * (backend config/collegesInsightCategories). Legacy raw course categories
+ * such as "Architecture", "IT & Computer" or "ITI" are folded into these, so
+ * the stream selector counts and the student-facing Colleges page agree.
+ * The `key` is also the /:stream URL segment.
+ */
+export const STREAM_OPTIONS = [
+  { key: 'engineering', label: 'Engineering', icon: '⚙️' },
+  { key: 'medical', label: 'Medical', icon: '🩺' },
+  { key: 'arts-science', label: 'Arts & Science', icon: '🎨' },
+  { key: 'law', label: 'Law', icon: '⚖️' },
+  { key: 'diploma', label: 'Diploma', icon: '🎓' },
+  { key: 'media-journalism', label: 'Media & Journalism', icon: '📰' },
+  { key: 'polytechnic', label: 'Polytechnic', icon: '🛠️' },
+  { key: 'agriculture', label: 'Agriculture', icon: '🌾' },
+  { key: 'others', label: 'Others', icon: '🗂️' },
 ]
 
-/** "Arts & Science" -> "arts-science", for the /:stream URL segment. */
-export const streamSlug = (name) =>
-  String(name || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
+const normId = (s = '') => String(s).toLowerCase().replace(/[^a-z0-9]/g, '').trim()
 
-/** "arts-science" -> "Arts & Science" (falls back to the raw slug). */
-export const streamLabel = (slug) =>
-  SEAT_MATRIX_STREAMS.find((s) => streamSlug(s) === String(slug || '').trim().toLowerCase()) ||
-  String(slug || '').trim()
+/** Map a stream label ("Arts & Science") or key ("arts-science") to its key. */
+export const streamSlug = (name) => {
+  const v = String(name || '').trim()
+  if (!v) return 'engineering'
+  const n = normId(v)
+  const found = STREAM_OPTIONS.find((s) => normId(s.key) === n || normId(s.label) === n)
+  return found ? found.key : 'engineering'
+}
+
+/** "arts-science" -> "Arts & Science" (falls back to the raw input). */
+export const streamLabel = (slug) => {
+  const v = String(slug || '')
+  const found = STREAM_OPTIONS.find((s) => normId(s.key) === normId(v) || normId(s.label) === normId(v))
+  return found ? found.label : v
+}
 
 export const seatMatrixService = {
   /**

@@ -99,17 +99,45 @@ export default function CourseCollegesAdminPage() {
         <Link to={`/admin/courses-colleges/${stream}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>{streamName}</Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-        <ActionBtn onClick={() => navigate(`/admin/courses-colleges/${stream}`)}>← Courses</ActionBtn>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <h2 style={{ margin: 0, fontFamily: 'Nunito', fontSize: 20, fontWeight: 900, color: 'var(--text)' }}>
-              {course?.courseName || 'Loading…'}
-            </h2>
-            {course?.branchCode && <LevelBadge level={course.branchCode} />}
-          </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text3)', marginTop: 2, fontWeight: 600 }}>
-            {count} college{count !== 1 ? 's' : ''} offering this course · {course?.duration || ''}
+      {/* Compact hero (Class 10 Guidance theme) */}
+      <div style={{
+        background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
+        borderRadius: 24, padding: '24px 26px', color: '#fff', marginBottom: 18,
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: 999, background: 'rgba(255,255,255,0.08)', top: -80, right: -50 }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => navigate(`/admin/courses-colleges/${stream}`)}
+            style={{
+              background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.35)',
+              color: '#fff', borderRadius: 14, padding: '10px 16px', fontWeight: 800, fontSize: 13,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'background 0.2s', flexShrink: 0,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.28)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.16)')}
+          >
+            ← Courses
+          </button>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h2 style={{ margin: 0, fontFamily: 'var(--s-font-display, Outfit, sans-serif)', fontSize: 'clamp(19px, 2.5vw, 24px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.01em' }}>
+                {course?.courseName || 'Loading…'}
+              </h2>
+              {course?.branchCode && (
+                <span style={{
+                  background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)',
+                  color: '#fff', padding: '3px 11px', borderRadius: 99, fontSize: 11.5, fontWeight: 800,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {course.branchCode}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 12.5, color: '#e0e7ff', marginTop: 3, fontWeight: 600 }}>
+              {count} college{count !== 1 ? 's' : ''} offering this course{course?.duration ? ` · ${course.duration}` : ''}
+            </div>
           </div>
         </div>
       </div>
