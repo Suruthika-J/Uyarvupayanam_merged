@@ -243,6 +243,13 @@ export default function ExplorePage() {
     setShowAuthModal(true)
   }
 
+  React.useEffect(() => {
+    if (!showAuthModal) return
+    const onKey = (e) => { if (e.key === 'Escape') setShowAuthModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showAuthModal])
+
   const scrollToSection = (id) => {
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ behavior: 'smooth' })

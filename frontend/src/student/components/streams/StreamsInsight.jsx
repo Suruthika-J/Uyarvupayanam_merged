@@ -1,22 +1,39 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   FiLayers, FiBookOpen, FiCheckCircle, FiArrowLeft, FiRotateCcw,
-  FiBox, FiPlus, FiInbox, FiChevronRight,
+  FiBox, FiPlus, FiInbox, FiChevronRight, FiBriefcase, FiGrid, FiTool, FiTag,
 } from 'react-icons/fi'
 import { streamService } from '../../../services/streamService'
 import { STREAM_CATEGORIES, DIPLOMA_SUB_CATEGORIES } from '../../../constants/streamThemes'
-import StreamBackdrop from './StreamBackdrop'
 import './streams.css'
 
 const PAGE_SIZE = 12
 
 const TAB_BLURBS = {
-  all: 'Every HSC group, vocational diploma and polytechnic course you can take up after Class 10.',
+  all: 'Pick the broad direction that fits you, then explore the exact subject groups inside it.',
   science: 'Core science groups — engineering, medical, research and analytics pathways.',
   commerce: 'Commerce groups — finance, management, accountancy and business pathways.',
   arts: 'Arts & humanities groups — civil services, law, media and liberal studies.',
   diploma: 'Vocational diploma courses across eight practical, career-ready fields.',
   polytechnic: 'Three-year standalone diploma courses in engineering, technology and design fields.',
+}
+
+// Category names for the per-card badge (gives each card a meaningful label).
+const CATEGORY_LABELS = {
+  science: 'Science',
+  commerce: 'Commerce',
+  arts: 'Arts',
+  diploma: 'Diploma',
+  polytechnic: 'Polytechnic',
+}
+
+// Guided "choose a path" step — each broad direction becomes a card.
+const PATH_META = {
+  science: { icon: FiLayers, blurb: 'Core science groups — engineering, medical, research and analytics pathways.' },
+  commerce: { icon: FiBriefcase, blurb: 'Commerce groups — finance, management, accountancy and business pathways.' },
+  arts: { icon: FiBookOpen, blurb: 'Arts & humanities groups — civil services, law, media and liberal studies.' },
+  diploma: { icon: FiGrid, blurb: 'Vocational diploma courses across eight practical, career-ready fields.' },
+  polytechnic: { icon: FiTool, blurb: 'Three-year standalone diploma courses in engineering, technology and design.' },
 }
 
 function StreamCard({ stream, flipped, onFlip }) {
@@ -32,10 +49,9 @@ function StreamCard({ stream, flipped, onFlip }) {
         {/* ── Front face ── */}
         <div className="stream-flip-face stream-flip-front">
           <div className="stream-front-media">
-            <StreamBackdrop themeKey={stream.backgroundTheme} height={168} />
-            <div className="stream-front-overlay" />
+            <div className="stream-banner" aria-hidden="true" />
             <span className="stream-code-badge">
-              <FiBox size={13} /> Group {stream.code}
+              <FiTag size={13} /> {CATEGORY_LABELS[stream.category] || 'Group'} · Group {stream.code}
             </span>
             <h3 className="stream-group-name">{stream.groupName}</h3>
           </div>
@@ -56,10 +72,7 @@ function StreamCard({ stream, flipped, onFlip }) {
             </div>
             <p className="stream-best-for">{stream.bestFor}</p>
             <div className="stream-front-caption">
-              <span className="stream-cap-desktop">
-                <FiRotateCcw size={13} /> Hover to see details
-              </span>
-              <span className="stream-cap-mobile">
+              <span className="stream-cap-caption">
                 <FiRotateCcw size={13} /> Tap to see details
               </span>
             </div>
@@ -131,6 +144,15 @@ export default function StreamsInsight() {
   // by the public API so the sections always reflect the published data.
   useEffect(() => {
     let alive = true
+    if (activeTab === 'all') {
+      // Step 1 is the guided path chooser — no need to pull all groups yet.
+      setData([])
+      setError('')
+      setLoading(false)
+      setVisible(PAGE_SIZE)
+      setFlippedIds(new Set())
+      return () => { alive = false }
+    }
     const load = async () => {
       setLoading(true)
       setVisible(PAGE_SIZE)
@@ -186,7 +208,10 @@ export default function StreamsInsight() {
           {activeBlurb}
         </p>
         <div className="streams-summary">
-          <FiLayers size={15} color="#16A34A" /> {data.length} group{data.length === 1 ? '' : 's'}
+          <FiLayers size={15} color="#7C3AED" />{' '}
+          {activeTab === 'all'
+            ? `${tabs.filter((t) => t.key !== 'all').length} career paths · ${facets?.total ?? '…'} groups total`
+            : `${data.length} group${data.length === 1 ? '' : 's'}`}
         </div>
       </div>
 
@@ -227,7 +252,30 @@ export default function StreamsInsight() {
       )}
 
       {/* Content */}
-      {loading ? (
+      {activeTab === 'all' ? (
+        <div className="streams-path-grid">
+          {tabs.filter((t) => t.key !== 'all').map((p) => {
+            const meta = PATH_META[p.key] || {}
+            const PIcon = meta.icon || FiLayers
+            return (
+              <button
+                key={p.key}
+                type="button"
+                className="streams-path-card"
+                onClick={() => { setActiveTab(p.key); setActiveChip('all-diploma'); }}
+              >
+                <span className="streams-path-icon"><PIcon size={22} /></span>
+                <span className="streams-path-name">{p.label}</span>
+                <span className="streams-path-blurb">{meta.blurb || ''}</span>
+                <span className="streams-path-meta">
+                  {p.count !== undefined ? `${p.count} group${p.count === 1 ? '' : 's'} inside` : 'Explore'}
+                  <FiChevronRight size={15} />
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ) : loading ? (
         <div className="streams-skeleton-grid">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="stream-skeleton-card" />
@@ -245,6 +293,9 @@ export default function StreamsInsight() {
         </div>
       ) : (
         <>
+          <button type="button" className="streams-back-path" onClick={() => setActiveTab('all')}>
+            <FiArrowLeft size={14} /> Choose another stream path
+          </button>
           <div className="streams-grid">
             {data.slice(0, visible).map((stream) => (
               <StreamCard

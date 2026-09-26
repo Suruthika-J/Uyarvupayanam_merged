@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SBtn, SInput } from '../ui'
 import { FiX, FiMail, FiLock, FiUser, FiInfo } from 'react-icons/fi'
 import { useStudentAuth } from '../../context/StudentAuthContext'
@@ -9,6 +9,24 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, message }) 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, signup } = useStudentAuth()
+
+  // Reset internal state every time the modal opens, so a stale error / loading /
+  // login-tab from a previous use can never linger on top of the next session.
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ email: '', password: '', name: '' })
+      setError('')
+      setLoading(false)
+    }
+  }, [isOpen])
+
+  // Escape closes the modal. Guarded by isOpen so onClose is never fired while hidden.
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -44,18 +62,24 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, message }) 
   }
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 10000, padding: 20
-    }}>
-      <div style={{
-        background: '#fff', width: '100%', maxWidth: 420,
-        borderRadius: 24, padding: 32, position: 'relative',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        animation: 'fadeUp 0.3s ease-out'
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      style={{
+        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 10000, padding: 20
       }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff', width: '100%', maxWidth: 420,
+          borderRadius: 24, padding: 32, position: 'relative',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          animation: 'fadeUp 0.3s ease-out'
+        }}>
         <button 
           onClick={onClose}
           style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}

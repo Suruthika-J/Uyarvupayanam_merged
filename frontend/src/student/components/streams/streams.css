@@ -1,10 +1,10 @@
-/* ── Streams After 10th — professional flip-card section (Green & White) ── */
+/* ── Streams After 10th — professional flip-card section (Purple & White) ── */
 
 .streams-root {
-  /* Brand green & white design tokens, scoped to the Streams section */
-  --brand-green: #16A34A;
-  --brand-green-dark: #15803D;
-  --brand-green-light: #DCFCE7;
+  /* Brand purple & white design tokens — matches the Journey Explorer School track (#7C3AED) */
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #6D28D9;
+  --brand-purple-light: #F3E8FF;
   --brand-white: #FFFFFF;
   --text-dark: #1F2937;
   --text-muted: #6B7280;
@@ -34,19 +34,19 @@
   gap: 8px;
 }
 .streams-tab:hover {
-  background: var(--brand-green-light);
-  border-color: var(--brand-green-dark);
-  color: var(--brand-green-dark);
+  background: var(--brand-purple-light);
+  border-color: var(--brand-purple-dark);
+  color: var(--brand-purple-dark);
 }
 .streams-tab.is-active {
-  background: var(--brand-green);
-  border-color: var(--brand-green);
+  background: var(--brand-purple);
+  border-color: var(--brand-purple);
   color: var(--brand-white);
-  box-shadow: 0 8px 16px -6px rgba(22, 163, 74, 0.35);
+  box-shadow: 0 8px 16px -6px rgba(124, 58, 237, 0.35);
 }
 .streams-tab.is-active:hover {
-  background: var(--brand-green-dark);
-  border-color: var(--brand-green-dark);
+  background: var(--brand-purple-dark);
+  border-color: var(--brand-purple-dark);
   color: var(--brand-white);
 }
 .streams-tab-count {
@@ -59,7 +59,7 @@
 }
 .streams-tab.is-active .streams-tab-count {
   background: var(--brand-white);
-  color: var(--brand-green-dark);
+  color: var(--brand-purple-dark);
 }
 
 /* Diploma sub-category chips */
@@ -83,13 +83,13 @@
   transition: all 0.18s ease;
 }
 .streams-chip:hover {
-  border-color: var(--brand-green-dark);
-  color: var(--brand-green-dark);
-  background: var(--brand-green-light);
+  border-color: var(--brand-purple-dark);
+  color: var(--brand-purple-dark);
+  background: var(--brand-purple-light);
 }
 .streams-chip.is-active {
-  background: var(--brand-green);
-  border-color: var(--brand-green);
+  background: var(--brand-purple);
+  border-color: var(--brand-purple);
   color: var(--brand-white);
 }
 
@@ -159,32 +159,28 @@
 }
 .stream-flip-back {
   transform: rotateY(180deg);
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #FAF5FF;
+  border: 1px solid #E9D5FF;
 }
 
-/* Front face — photo keeps a neutral dark overlay (no green tint) */
+/* Front face — purple banner that shows the group's real subjects (no abstract art) */
 .stream-front-media {
   position: relative;
   height: 168px;
   flex-shrink: 0;
+  overflow: hidden;
 }
-.stream-front-overlay {
+.stream-banner {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(17, 24, 39, 0.08) 0%,
-    rgba(17, 24, 39, 0.55) 55%,
-    rgba(17, 24, 39, 0.88) 100%
-  );
+  background: linear-gradient(135deg, #7C3AED 0%, #a855f7 55%, #c4b5fd 135%);
 }
 .stream-code-badge {
   position: absolute;
   top: 12px;
   left: 14px;
   background: rgba(255, 255, 255, 0.95);
-  color: var(--brand-green-dark);
+  color: var(--brand-purple-dark);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.4px;
@@ -200,7 +196,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--brand-green);
+  background: var(--brand-purple);
   flex-shrink: 0;
 }
 .stream-group-name {
@@ -241,8 +237,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--brand-green-light);
-  color: var(--brand-green-dark);
+  background: var(--brand-purple-light);
+  color: var(--brand-purple-dark);
   font-size: 12px;
   font-weight: 700;
   border-radius: 7px;
@@ -271,13 +267,10 @@
   font-size: 12px;
   font-weight: 700;
 }
-.stream-cap-desktop {
+.stream-cap-caption {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-}
-.stream-cap-mobile {
-  display: none;
 }
 
 /* Back face */
@@ -286,7 +279,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  color: #e2e8f0;
+  color: var(--text-dark);
   overflow-y: auto;
   flex: 1;
 }
@@ -294,7 +287,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 800;
-  color: var(--brand-white);
+  color: var(--text-dark);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -304,13 +297,13 @@
   font-weight: 800;
   letter-spacing: 1.1px;
   text-transform: uppercase;
-  color: #6ee7b7;
+  color: var(--brand-purple-dark);
 }
 .stream-back-chip {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #e2e8f0;
+  background: var(--brand-purple-light);
+  border: 1px solid #E9D5FF;
+  color: var(--brand-purple-dark);
   font-size: 12px;
   font-weight: 600;
   border-radius: 7px;
@@ -329,20 +322,20 @@
   align-items: flex-start;
   gap: 9px;
   font-size: 13px;
-  color: #cbd5e1;
+  color: #475569;
   font-weight: 600;
   line-height: 1.45;
 }
 .stream-back-list li svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--brand-green);
+  color: var(--brand-purple);
 }
 .stream-back-flip {
   margin-top: auto;
-  background: rgba(22, 163, 74, 0.16);
-  border: 1px solid rgba(22, 163, 74, 0.45);
-  color: #bbf7d0;
+  background: var(--brand-white);
+  border: 1.5px solid var(--brand-purple);
+  color: var(--brand-purple-dark);
   font-weight: 700;
   font-size: 13px;
   border-radius: 10px;
@@ -356,7 +349,7 @@
   gap: 8px;
 }
 .stream-back-flip:hover {
-  background: rgba(22, 163, 74, 0.32);
+  background: var(--brand-purple);
   color: var(--brand-white);
 }
 
@@ -397,8 +390,8 @@
   align-items: center;
   gap: 8px;
   background: var(--brand-white);
-  border: 1.5px solid var(--brand-green);
-  color: var(--brand-green-dark);
+  border: 1.5px solid var(--brand-purple);
+  color: var(--brand-purple-dark);
   font-weight: 800;
   font-size: 13.5px;
   padding: 11px 26px;
@@ -407,8 +400,91 @@
   transition: all 0.2s ease;
 }
 .streams-show-more:hover {
-  background: var(--brand-green);
+  background: var(--brand-purple);
   color: var(--brand-white);
+}
+
+/* Guided entry — broad career paths first (step 1 of the funnel) */
+.streams-path-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+}
+.streams-path-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: var(--brand-white);
+  border: 1px solid #e8ecf1;
+  border-radius: 18px;
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 14px 30px -18px rgba(17, 24, 39, 0.2);
+  font-family: inherit;
+  color: inherit;
+}
+.streams-path-card:hover,
+.streams-path-card:focus-visible {
+  border-color: var(--brand-purple);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px -10px var(--brand-purple);
+  outline: none;
+}
+.streams-path-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-purple-light);
+  color: var(--brand-purple-dark);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.streams-path-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+.streams-path-blurb {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  flex: 1;
+}
+.streams-path-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--brand-purple);
+}
+
+/* Back to broad paths (step 1 of the funnel) */
+.streams-back-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--brand-white);
+  border: 1.5px solid var(--border-light);
+  color: var(--brand-purple-dark);
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  margin: 0 0 18px;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+.streams-back-path:hover,
+.streams-back-path:focus-visible {
+  border-color: var(--brand-purple);
+  background: var(--brand-purple-light);
+  outline: none;
 }
 
 @media (max-width: 640px) {
@@ -424,13 +500,5 @@
   }
   .stream-flip-card.flipped .stream-flip-inner {
     transform: rotateY(180deg);
-  }
-  .stream-cap-desktop {
-    display: none;
-  }
-  .stream-cap-mobile {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
   }
 }

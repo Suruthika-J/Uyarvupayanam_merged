@@ -47,7 +47,7 @@ const USER_TYPE_OPTIONS = [
 ]
 
 export default function SignupPage() {
-  const { login, isAuthenticated, student } = useStudentAuth()
+  const { isAuthenticated, student } = useStudentAuth()
   const navigate = useNavigate()
 
   // Auto-redirect if already authenticated
@@ -119,7 +119,8 @@ export default function SignupPage() {
     setApiError('')
 
     try {
-      // Step 3: Call backend registration API passing userType
+      // Step 3: Call backend registration API passing userType.
+      // The account is created UNVERIFIED — we now move to the OTP step.
       await axiosInstance.post('/students/register', {
         name: form.name,
         email: form.email,
@@ -129,26 +130,11 @@ export default function SignupPage() {
         district: form.district
       })
 
-      // Auto-login after successful registration
-      const loginRes = await axiosInstance.post('/students/login', {
-        email: form.email,
-        password: form.password
-      })
-
-      const token = loginRes.data.token
-      const studentData = loginRes.data.student || loginRes.data.user
-      
-      // Update Auth Context
-      login(token, studentData)
-
-      // Step 4: Route user to appropriate onboarding based on userType
-      if (selectedUserType === 'college_student') {
-        navigate('/student/onboarding/college', { replace: true })
-      } else if (selectedUserType === 'graduate') {
-        navigate('/student/onboarding/graduate', { replace: true })
-      } else {
-        navigate('/student/onboarding', { replace: true })
-      }
+      // Step 4: Hand the email to the OTP verification screen (router state +
+      // sessionStorage so a refresh doesn't lose the flow). The user is logged
+      // in only after the code is verified, then routed to onboarding.
+      sessionStorage.setItem('pendingSignupEmail', form.email)
+      navigate('/student/signup/verify', { state: { email: form.email } })
 
     } catch (err) {
       setApiError(err.response?.data?.message || 'Registration failed. Please try again.')

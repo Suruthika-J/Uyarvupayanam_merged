@@ -48,6 +48,16 @@
   line-height: 1.6;
 }
 
+/* OTP digit boxes — visible slot + focus ring (border-color/box-shadow must
+   beat the inline styles set by OtpInput, hence !important). */
+.s-otp-input {
+  caret-color: var(--s-primary);
+}
+.s-otp-input:focus {
+  border-color: var(--s-primary) !important;
+  box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.14) !important;
+}
+
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
 .s-navbar {
   position: fixed;
@@ -1043,4 +1053,14 @@
   transform: translateY(-8px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
   border-color: #e2e8f0 !important;
+}
+
+/* ── Overlay safety ─────────────────────────────────────────────────────────
+   Decorative full-section layers must never intercept clicks, even if they
+   remain mounted for any reason. Real dialogs (AuthModal, .s-modal-overlay,
+   ExplorePage restricted-feature modal, etc.) are conditional in JSX and
+   unmount completely on close, so they are not affected by this rule. */
+.s-hero-bg,
+.s-hero-overlay {
+  pointer-events: none;
 }

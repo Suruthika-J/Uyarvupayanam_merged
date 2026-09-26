@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema(
     status: { type: String, enum: ["active", "blocked"], default: "active" },
     onboardingCompleted: { type: Boolean, default: false },
     recommendationGenerated: { type: Boolean, default: false },
+    // Email-verification gate for new sign-ups. Accounts created before this
+    // field existed have no value (undefined !== false), so nothing is locked out.
+    isVerified: { type: Boolean, default: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },

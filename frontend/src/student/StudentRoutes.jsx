@@ -13,6 +13,8 @@ import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+import VerifyOtpPage from './pages/auth/VerifyOtpPage'
+import SignupOtpPage from './pages/auth/SignupOtpPage'
 
 // School student pages
 import DashboardPage from './pages/dashboard/DashboardPage'
@@ -152,6 +154,10 @@ export default function StudentRoutes() {
             <Route path="forgot-password" element={<Navigate to="/student/forgot-password" replace />} />
             <Route path="student/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path="reset-password/:token" element={<PreserveParamRedirect to="/student/reset-password/:token" />} />
+            <Route path="student/verify-otp" element={<VerifyOtpPage />} />
+            <Route path="verify-otp" element={<Navigate to="/student/verify-otp" replace />} />
+            <Route path="student/signup/verify" element={<SignupOtpPage />} />
+            <Route path="signup/verify" element={<Navigate to="/student/signup/verify" replace />} />
 
             {/* Onboarding — open, canonical /student/onboarding ... */}
             <Route path="student/onboarding" element={<StudentProtectedRoute><OnboardingPage /></StudentProtectedRoute>} />

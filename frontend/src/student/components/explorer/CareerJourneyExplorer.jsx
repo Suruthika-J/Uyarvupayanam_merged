@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   FiArrowRight, FiCheckCircle, FiChevronDown, FiLayers, FiExternalLink
 } from 'react-icons/fi'
-import { SBadge } from '../ui'
 import JOURNEY_DATA from '../../../data/journeyData'
 import styles from './CareerJourneyExplorer.module.css'
 
@@ -199,16 +198,6 @@ export default function CareerJourneyExplorer() {
   const track = TRACKS.find((t) => t.id === activeTrackId) || TRACKS[0]
   const stages = track.stages
   const isSchool = track.id === 'school'
-  const openStage = stages.find((s) => s.id === openStageId) || null
-
-  const currentStage = stages.find((s) => s.id === openStageId) || stages[0]
-
-  // TODO: replace with real user progress from dashboard API
-  const totalItems = currentStage
-    ? currentStage.activities?.length || currentStage.tags?.length || 4
-    : 0
-  const doneItems = Math.min(2, totalItems)
-  const pct = totalItems ? Math.round((doneItems / totalItems) * 100) : 0
 
   const switchTrack = (id) => {
     setActiveTrackId(id)
@@ -269,64 +258,36 @@ export default function CareerJourneyExplorer() {
         <div className={styles.comingSoon}>This journey is coming soon — check back shortly.</div>
       ) : (
         <>
-          {/* ── Your current stage ── */}
-          <div className={styles.currentCard} style={{ '--j-acc': currentStage.accent || track.accent }}>
-            <div className={styles.currentText}>
-              <SBadge color={track.badgeColor}>{track.badgeText}</SBadge>
-              <span className={styles.currentLabel}>Your current stage</span>
-              <span className={styles.currentTitle}>{currentStage.title}</span>
-            </div>
-            <div className={styles.currentProgress}>
-              <span>
-                {doneItems} of {totalItems} activities completed
-              </span>
-              <span className={styles.progressTrack} aria-hidden="true">
-                <span className={styles.progressFill} style={{ width: `${pct}%` }} />
-              </span>
-            </div>
-          </div>
-
-          {/* ── School: horizontal milestone cards + shared detail panel below ── */}
+          {/* ── School: horizontal milestone cards, each linking to its class page ── */}
           {isSchool ? (
             <>
               <div className={styles.milestoneGrid}>
-                {stages.map((stage, i) => {
-                  const open = openStageId === stage.id
-                  return (
-                    <button
-                      key={stage.id}
-                      type="button"
-                      aria-expanded={open}
-                      className={`${styles.milestoneCard} ${open ? styles.milestoneCardOpen : ''}`}
-                      style={{ '--acc': stage.accent }}
-                      onClick={() => toggleStage(stage.id)}
-                    >
-                      <span className={styles.cardArt}>
-                        {stage.art ? (
-                          <img src={stage.art} alt={stage.alt || `${stage.label} illustration`} loading="lazy" />
-                        ) : (
-                          <span className={styles.cardFallback}>{stage.label.replace('Class ', '')}</span>
-                        )}
-                      </span>
-                      <span className={styles.cardLabel}>{stage.label}</span>
-                      <span className={styles.cardTitle}>{stage.title}</span>
-                      <span className={styles.cardDesc}>{stage.desc}</span>
-                    </button>
-                  )
-                })}
+                {stages.map((stage) => (
+                  <Link
+                    key={stage.id}
+                    to={stage.link}
+                    className={`${styles.milestoneCard} ${styles.milestoneLink}`}
+                    style={{ '--acc': stage.accent }}
+                  >
+                    <span className={styles.cardArt}>
+                      {stage.art ? (
+                        <img
+                          src={stage.art}
+                          alt={stage.alt || `${stage.label} illustration`}
+                          loading="lazy"
+                          draggable={false}
+                          onDragStart={(e) => e.preventDefault()}
+                        />
+                      ) : (
+                        <span className={styles.cardFallback}>{stage.label.replace('Class ', '')}</span>
+                      )}
+                    </span>
+                    <span className={styles.cardLabel}>{stage.label}</span>
+                    <span className={styles.cardTitle}>{stage.title}</span>
+                    <span className={styles.cardDesc}>{stage.desc}</span>
+                  </Link>
+                ))}
               </div>
-
-              {openStage && (
-                <div
-                  key={openStage.id}
-                  className={styles.detailPanel}
-                  role="region"
-                  aria-label={`${openStage.label} details`}
-                  style={{ '--acc': openStage.accent }}
-                >
-                  <StageDetail stage={openStage} stages={stages} onOpenNext={setOpenStageId} />
-                </div>
-              )}
             </>
           ) : (
             /* ── College / Graduate: vertical accordion timeline (unchanged) ── */

@@ -10,6 +10,7 @@ import { classContentService } from '../../../services/classContentService'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
+import { C5 } from '../../components/class5/redesign/class5Theme'
 import ActivityCard from '../../components/class5/activities/ActivityCard'
 import { careerService } from '../../services'
 import { examService } from '../../../services/examService'
@@ -18,6 +19,9 @@ import { courseService } from '../../../services/courseService'
 import axiosInstance from '../../../config/axios'
 import StreamsInsight from '../../components/streams/StreamsInsight'
 import CollegesInsight from '../../components/colleges/CollegesInsight'
+
+// Accent for the Class N pages — matches the Journey Explorer's School track (purple).
+const ACCENT = '#7C3AED'
 
 const CLASS_SECTIONS = {
   default: [
@@ -84,8 +88,8 @@ const ExamCardDetails = ({ exam }) => {
         {['Prep', 'Careers', 'Resources'].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ 
             background: 'none', border: 'none', padding: '4px 8px', cursor: 'pointer',
-            fontSize: 13, fontWeight: 700, color: tab === t ? '#3b82f6' : '#94a3b8',
-            borderBottom: tab === t ? '2px solid #3b82f6' : '2px solid transparent'
+            fontSize: 13, fontWeight: 700, color: tab === t ? ACCENT : '#94a3b8',
+            borderBottom: tab === t ? `2px solid ${ACCENT}` : '2px solid transparent'
           }}>
             {t}
           </button>
@@ -120,6 +124,145 @@ const ExamCardDetails = ({ exam }) => {
   );
 };
 
+/* ---------------------------------------------------------------------------
+ * Class 10 Entrance Exams — curated cards (purple Streams theme)
+ * Maintains the accuracy notes: TRUSTS is a Class 9 window; Police Constable
+ * and Army GD are future options (minimum age rules), not apply-now steps.
+ * ------------------------------------------------------------------------ */
+const CLASS10_FLAG_TONES = {
+  amber: { light: '#FEF3C7', border: '#FDE68A', text: '#B45309' },
+  blue: { light: '#EFF6FF', border: '#DBEAFE', text: '#1D4ED8' },
+  purple: { light: '#F5ECFF', border: '#E9D5FF', text: '#6D28D9' },
+}
+
+const CLASS10_EXAMS = [
+  {
+    id: 'ntse',
+    name: 'National Talent Search Examination',
+    abbr: 'NTSE',
+    category: 'Scholarship Exam',
+    conducting: 'NCERT — state stage via SCERT Tamil Nadu',
+    rows: [
+      { label: 'Eligibility', value: 'Currently studying in Class 10' },
+      { label: 'Stages', value: 'Stage 1 (state level) ~ November → Stage 2 (national level) ~ following May' },
+      { label: 'Remember', value: 'It is a scholarship exam, not a course-admission test.' },
+    ],
+  },
+  {
+    id: 'trusts',
+    name: 'Tamil Nadu Rural Talent Search',
+    abbr: 'TRUSTS',
+    category: 'Scholarship Exam',
+    conducting: 'Directorate of Government Examinations (DGE), Tamil Nadu',
+    flag: { tone: 'amber', text: 'Class 9 window only' },
+    rows: [
+      { label: 'When', value: 'Taken while studying in Class 9 — if you are in Class 10 now, this window has already passed.' },
+      { label: 'Eligibility', value: 'Rural government/aided school only; parental income ≤ ₹1,00,000 per year' },
+      { label: 'Award', value: '₹1,000/year for 4 years (Class 9–12) · 50 boys + 50 girls selected per revenue district' },
+      { label: 'Timeline', value: 'Exam ~August–December · results ~January–March' },
+    ],
+  },
+  {
+    id: 'tn-technical',
+    name: 'Government Technical & Vocational Exams',
+    category: 'Skill Certification',
+    conducting: 'Directorate of Technical Education / Tamil Nadu Govt exam boards',
+    rows: [
+      { label: 'Covers', value: 'Drawing, Typewriting, Shorthand, Commercial Practice, Sewing, Music grade certificates' },
+      { label: 'Eligibility', value: 'Open entry — no fixed class requirement; skill-grade certifications, not competitive admission exams' },
+      { label: 'Purpose', value: 'Adds a certified skill credential beside your SSLC — useful for vocational and commercial career tracks' },
+      { label: 'Dates', value: 'No fixed national date — exams run in cycles through the year, per subject' },
+    ],
+  },
+  {
+    id: 'tnusrb',
+    name: 'TNUSRB Police Constable',
+    category: 'Government Job',
+    conducting: 'Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)',
+    flag: { tone: 'blue', text: 'Future option — apply at 18+' },
+    rows: [
+      { label: 'Eligibility', value: '10th Standard/SSLC pass — note: a qualification higher than 10th disqualifies you for Constable specifically' },
+      { label: 'Age', value: '18–26 years (relaxed for reserved categories)' },
+      { label: 'Selection', value: 'Written exam → physical measurement → physical efficiency test → medical test' },
+      { label: 'Timeline', value: 'Notifications appear periodically through the year (2025 cycle: applications closed Sep 21, exam held Nov 9)' },
+    ],
+  },
+  {
+    id: 'army',
+    name: 'Indian Army — Soldier GD / Agniveer',
+    category: 'Defence Career',
+    conducting: 'Indian Army, under the Agnipath Scheme',
+    flag: { tone: 'purple', text: 'Future option — apply at 17.5+' },
+    rows: [
+      { label: 'Eligibility', value: 'Class 10 pass with 45% aggregate and minimum 33% in each subject' },
+      { label: 'Age', value: '17.5–21 years' },
+      { label: 'Selection', value: 'Common Entrance Test (General Knowledge, General Science, Maths, Logical Reasoning) → physical test → medical test' },
+      { label: 'Timeline', value: 'Assumed 2026: notification ~Feb, registration Feb–Mar, written exam (CEE) ~Jun–Jul, recruitment rallies from ~Aug' },
+      { label: 'Remember', value: 'This is a 4-year short-term Agniveer engagement, not a permanent-cadre enrollment.' },
+    ],
+  },
+  {
+    id: 'railway-post',
+    name: 'Railway & Post Office Recruitment',
+    category: 'Government Job',
+    conducting: 'Railway Recruitment Boards (RRB) · Department of Posts (India Post GDS)',
+    rows: [
+      { label: 'Eligibility', value: '10th pass (varies slightly by specific post)' },
+      { label: 'Selection', value: 'Computer-based test; RRB Group D also has a physical efficiency test' },
+      { label: 'Timeline', value: 'Notification cycles vary year to year — no fixed annual date, so watch for periodic notifications' },
+    ],
+  },
+]
+
+const Class10ExamPanel = () => (
+  <div style={{ gridColumn: '1/-1' }}>
+    {/* Context callout */}
+    <div style={{ background: '#fff', border: '1px solid #eaf0f6', borderRadius: 24, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 14, background: '#F5ECFF', color: ACCENT, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+        <FiFileText size={20} />
+      </div>
+      <div>
+        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>Entrance exams, scholarships & recruitments around Class 10</h3>
+        <p style={{ margin: '6px 0 0', fontSize: 13.5, lineHeight: 1.6, color: '#475569' }}>
+          NTSE rewards top Class 10 students, technical exams add certified skills beside your SSLC, and the police &amp; army entries have
+          minimum-age rules — treat those as <strong style={{ color: '#334155' }}>future options to plan for</strong>, not apply-now steps.
+        </p>
+      </div>
+    </div>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 28 }}>
+      {CLASS10_EXAMS.map(e => (
+        <div key={e.id} style={{ background: '#fff', borderRadius: 28, border: '1px solid #eaf0f6', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="hover-lift">
+          <div style={{ height: 6, background: 'linear-gradient(90deg, #7C3AED 0%, #a855f7 100%)' }} />
+          <div style={{ padding: '20px 22px 14px' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <SBadge color="purple">{e.category}</SBadge>
+              {e.flag && (
+                <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', padding: '5px 10px', borderRadius: 99, background: CLASS10_FLAG_TONES[e.flag.tone].light, color: CLASS10_FLAG_TONES[e.flag.tone].text, border: `1px solid ${CLASS10_FLAG_TONES[e.flag.tone].border}` }}>
+                  {e.flag.text}
+                </span>
+              )}
+            </div>
+            <h3 style={{ margin: '12px 0 2px', fontSize: 19, fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
+              {e.name}
+              {e.abbr && <span style={{ color: ACCENT, fontWeight: 800, fontSize: 12.5, letterSpacing: '0.04em', marginLeft: 6 }}>({e.abbr})</span>}
+            </h3>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#64748b' }}>{e.conducting}</div>
+          </div>
+          <div style={{ padding: '4px 22px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {e.rows.map(r => (
+              <div key={r.label} style={{ borderTop: '1px solid #f1f5f9', padding: '10px 0', display: 'flex', gap: 12 }}>
+                <span style={{ width: 84, flexShrink: 0, fontSize: 10.5, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: 2 }}>{r.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.55 }}>{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)
+
 export default function ClassLevelPage(props) {
   const params = useParams()
   const navigate = useNavigate()
@@ -131,7 +274,7 @@ export default function ClassLevelPage(props) {
   const [contents, setContents] = useState([])
   const [scholarships, setScholarships] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeSec, setActiveSec] = useState('Basics')
+  const [activeSec, setActiveSec] = useState(cleanLevel === '10' ? 'Streams' : 'Basics')
   const [activeSubTab, setActiveSubTab] = useState('All') 
   const [authData, setAuthData] = useState({ isOpen: false, message: '', pendingAction: null })
   const { isAuthenticated } = useStudentAuth()
@@ -157,7 +300,7 @@ export default function ClassLevelPage(props) {
     if (sec && sections.some(s => s.id === sec)) {
       setActiveSec(sec);
     } else {
-      setActiveSec('Basics');
+      setActiveSec(cleanLevel === '10' ? 'Streams' : 'Basics');
     }
     setActiveSubTab('All');
   }, [cleanLevel, location.search]);
@@ -432,60 +575,97 @@ export default function ClassLevelPage(props) {
     }
   }
 
+  const activeSecLabel = sections.find(s => s.id === activeSec)?.label || ''
+
   return (
-    <div className="student-root" style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 100 }}>
-      {/* Header Section */}
-      <section style={{ 
-        padding: '50px 24px', textAlign: 'center', 
-        background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', color: '#fff',
-        borderBottom: '1px solid #f1f5f9', marginBottom: 40,
+    <div className="student-root" style={{ background: '#fbfdff', minHeight: '100vh', paddingBottom: 100 }}>
+      {/* Header Section (Class 5 UI theme) */}
+      <section style={{
+        padding: '34px 24px 0',
+        textAlign: 'center',
+        background: 'linear-gradient(180deg, #eaf3fb 0%, #fbfdff 100%)',
+        borderBottom: '1px solid #eef3f8',
+        marginBottom: 30,
       }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h1 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 'clamp(32px, 5vw, 48px)', margin: '0 0 16px', color: '#fff', letterSpacing: '-0.02em' }}>
-            Class {cleanLevel} Guidance
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: ACCENT, background: '#fff', border: '1px solid #dbe7f1',
+            borderRadius: 99, padding: '6px 14px', marginBottom: 12,
+          }}>
+            Uyarvu Payanam · Class {cleanLevel}
+          </span>
+          <h1 style={{
+            fontFamily: 'var(--s-font-display)', fontWeight: 900,
+            fontSize: 'clamp(28px, 4vw, 40px)', margin: '0 0 8px',
+            color: C5.ink, letterSpacing: '-0.02em',
+          }}>
+            Class {cleanLevel} <span style={{ color: ACCENT }}>Guidance</span>
           </h1>
-          <p style={{ fontSize: 18, color: '#e0e7ff', maxWidth: 650, margin: '0 auto 24px' }}>
-            Explore scholarships, skills, exams, habits, and future opportunities.
+          <p style={{ fontSize: 15.5, color: C5.muted, maxWidth: 620, margin: '0 auto 0', lineHeight: 1.6 }}>
+            Explore scholarships, skills, exams, habits, and the future opportunities this stage opens up.
           </p>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+          <div style={{ padding: '26px 0 0', display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {Number(cleanLevel) === 12 && (
-              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
-                 🏫 Explore Colleges
+              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: ACCENT, color: '#fff', border: 'none', borderRadius: 14, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <FiMapPin size={16} /> Explore Colleges
               </SBtn>
             )}
-            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ borderRadius: 14, padding: '12px 28px', fontWeight: 800 }}>
-               🚀 Start Exploring
+            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ background: '#fff', color: ACCENT, border: '1px solid #dbe7f1', borderRadius: 14, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <FiChevronDown size={16} /> Start Exploring
             </SBtn>
           </div>
         </div>
       </section>
 
       {/* Main Container */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-        
-        {/* Section Tabs */}
-        <div style={{ 
-          display: 'flex', gap: 6, overflowX: 'auto', padding: '8px', 
-          backgroundColor:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px)', borderRadius:24, boxShadow:'0 20px 25px -5px rgba(0,0,0,0.05)',
-          marginBottom: activeSec === 'Streams' ? 20 : 50, border:'1px solid rgba(255,255,255,0.5)', position:'sticky', top:20, zIndex:100
+      <section id="explorer-start" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
+
+        {/* Breadcrumb back to the journey */}
+        <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#94a3b8', marginBottom: 22, flexWrap: 'wrap' }}>
+          <Link to="/explore" style={{ color: ACCENT, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <FiArrowLeft size={13} /> Career Journey
+          </Link>
+          <span aria-hidden="true">›</span>
+          <span>Class {cleanLevel}</span>
+          {activeSecLabel && (
+            <React.Fragment>
+              <span aria-hidden="true">›</span>
+              <span style={{ color: '#334155' }}>{activeSecLabel}</span>
+            </React.Fragment>
+          )}
+        </nav>
+
+        {/* Section Tabs (Class 5 pill nav) */}
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 8,
+          background: '#f7fafc', border: '1px solid #eaf0f6',
+          borderRadius: 99, padding: 6,
+          marginBottom: activeSec === 'Streams' ? 20 : 36,
+          position: 'sticky', top: 20, zIndex: 100,
         }}>
-          {availableSections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
-              style={{
-                flexShrink: 0, padding: '14px 24px', borderRadius: 18, border: 'none',
-                background: activeSec === s.id ? s.color : 'transparent',
-                color: activeSec === s.id ? '#fff' : '#475569',
-                display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800, fontSize:14,
-                cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: activeSec === s.id ? `0 10px 15px -3px ${s.color}44` : 'none',
-                transform: activeSec === s.id ? 'scale(1.02)' : 'scale(1)'
-              }}
-            >
-              <s.icon size={18} style={{ opacity: activeSec === s.id ? 1 : 0.7 }} /> {s.label}
-            </button>
-          ))}
+          {availableSections.map(s => {
+            const selected = activeSec === s.id
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
+                style={{
+                  flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '10px 16px', borderRadius: 99, fontSize: 13.5, fontWeight: 700,
+                  fontFamily: 'var(--s-font-display)', cursor: 'pointer', whiteSpace: 'nowrap',
+                  color: selected ? '#fff' : C5.muted,
+                  background: selected ? ACCENT : 'transparent',
+                  boxShadow: selected ? '0 6px 14px -6px rgba(124,58,237,0.55)' : 'none',
+                  transition: 'all 0.18s ease',
+                }}
+              >
+                <s.icon size={16} strokeWidth={2.4} style={{ opacity: selected ? 1 : 0.75, color: selected ? '#fff' : s.color }} />
+                {s.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* Sub-Tabs for Targeted Sections */}
@@ -505,9 +685,9 @@ export default function ClassLevelPage(props) {
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
                 style={{
-                  padding: '8px 24px', borderRadius: 99, border: activeSubTab === tab ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                  background: activeSubTab === tab ? '#eff6ff' : '#fff',
-                  color: activeSubTab === tab ? '#3b82f6' : '#64748b',
+                  padding: '8px 24px', borderRadius: 99, border: activeSubTab === tab ? `2px solid ${ACCENT}` : '1px solid #e2e8f0',
+                  background: activeSubTab === tab ? '#F5ECFF' : '#fff',
+                  color: activeSubTab === tab ? ACCENT : '#64748b',
                   fontWeight: 700, fontSize:13, cursor: 'pointer', transition: 'all 0.2s', whiteSpace:'nowrap'
                 }}
               >
@@ -523,7 +703,7 @@ export default function ClassLevelPage(props) {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
                <div>
-                 <h2 style={{ fontSize:28, fontWeight:900 }}>
+                 <h2 style={{ fontSize:28, fontWeight:900, color: C5.ink, letterSpacing: '-0.02em' }}>
                    {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
                     activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
                     activeSec === 'Skills' ? `Skills to Build in Class ${cleanLevel}` : `${activeSec} Insight`}
@@ -602,9 +782,9 @@ export default function ClassLevelPage(props) {
                           <div style={{ display:'flex', alignItems:'center', gap:24 }}>
                              <div style={{ 
                                width:64, height:64, borderRadius:20, 
-                               background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', 
+                               background: `linear-gradient(135deg, ${ACCENT} 0%, #a855f7 100%)`, 
                                color:'#fff', display:'grid', placeItems:'center', fontWeight:900, fontSize:24,
-                               boxShadow: '0 10px 20px -5px rgba(59, 130, 246, 0.4)'
+                               boxShadow: '0 10px 20px -5px rgba(124, 58, 237, 0.4)'
                              }}>
                                 {group.categoryName.substring(0, 1).toUpperCase()}
                              </div>
@@ -743,6 +923,8 @@ export default function ClassLevelPage(props) {
                         )}
                      </div>
                   </div>
+                ) : activeSec === 'Entrance Exams' && cleanLevel === '10' ? (
+                  <Class10ExamPanel />
                 ) : activeSec === 'Streams' && cleanLevel === '10' ? null
                 : filteredContent.length === 0 ? (
                 <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
@@ -820,7 +1002,7 @@ export default function ClassLevelPage(props) {
                           
                           <SBtn 
                              variant="outline"
-                             style={{ width:'100%', borderRadius:16, padding:'14px 0', border: '2px solid #3b82f6', color: '#3b82f6' }} 
+                             style={{ width:'100%', borderRadius:16, padding:'14px 0', border: `2px solid ${ACCENT}`, color: ACCENT }} 
                              onClick={() => handleCardClick(item)}
                           >
                              Apply / View Details ↗
