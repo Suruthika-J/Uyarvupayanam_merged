@@ -9,6 +9,7 @@ import {
   FiLock, FiX, FiCheck, FiCpu, FiMonitor, FiCode
 } from 'react-icons/fi'
 import { SBadge } from '../../components/ui'
+import SchoolJourneyCards from '../../components/explorer/SchoolJourneyCards'
 
 // ── Demo Data for Interactive Academic Advisor ────────────────────────────────
 const ADVISOR_DOMAINS = {
@@ -656,10 +657,10 @@ export default function ExplorePage() {
         </section>
 
         {/* ── SECTION 2: CHOOSE YOUR JOURNEY ── */}
-        <section className="s-section" id="choose-journey" style={{ background: 'var(--s-bg)' }}>
+        <section className="s-section" id="choose-journey" style={{ background: '#FAF7F2' }}>
           <div style={{ maxWidth: 1160, margin: '0 auto', padding: '0 20px' }}>
-            <div className="s-section-header" style={{ textAlign: 'center', marginBottom: 40 }}>
-              <div className="s-section-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <div className="s-section-header" style={{ textAlign: 'center', marginBottom: 48 }}>
+              <div className="s-section-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#EDE6FB', color: '#7C3AED', border: '1px solid #E3D7F8', padding: '8px 20px', borderRadius: 999 }}>
                 <FiLayers size={14} /> Guided Progression
               </div>
               <h2 className="s-section-title" style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.4rem)', margin: '8px 0' }}>
@@ -713,24 +714,8 @@ export default function ExplorePage() {
                   <SBadge color="purple">School Pathway</SBadge>
                 </div>
 
-                {/* Progression Stepper */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginTop: 24 }}>
-                  {[
-                    { step: 'Class 5', title: 'Curiosity & Basic Skills', desc: 'Gamified logic, drawing, song maker & communication passport.', link: '/student/class5' },
-                    { step: 'Class 8', title: 'Subject-to-Stream Pre-Selection', desc: 'Connecting school subjects to future professions & talent exams.', link: '/student/class8' },
-                    { step: 'Class 10', title: 'Stream & Diploma Decision', desc: 'Math/Bio vs Commerce vs 3-Year Polytechnic Diploma choice.', link: '/student/class10' },
-                    { step: 'Class 12', title: 'Higher Ed & TNEA Cutoffs', desc: 'TNEA Engineering cutoff analyzer, entrance exams & degree finder.', link: '/student/class12' }
-                  ].map((st, i) => (
-                    <div key={i} style={{ background: 'var(--s-bg)', borderRadius: 14, padding: 20, border: '1px solid var(--s-border)', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#6d28d9', textTransform: 'uppercase', marginBottom: 6 }}>{st.step}</div>
-                      <h4 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px', color: 'var(--s-text)' }}>{st.title}</h4>
-                      <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, flex: 1, marginBottom: 16 }}>{st.desc}</p>
-                      <Link to={st.link} style={{ fontSize: 13, fontWeight: 700, color: '#6d28d9', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        Explore {st.step} <FiArrowRight size={14} />
-                      </Link>
-                    </div>
-                  ))}
-                </div>
+                {/* Progression Cards — premium journey (Class 5 → 12) */}
+                <SchoolJourneyCards />
               </div>
             )}
 

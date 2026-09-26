@@ -3,51 +3,56 @@ const College = require("../models/College");
 const Course = require("../models/Course");
 const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const { parseSeatMatrixPdf } = require("../utils/seatMatrixParser");
+const {
+  INSIGHT_CATEGORIES,
+  categoryToInsightKey,
+} = require("../config/collegesInsightCategories");
 
 const STREAM = "Engineering";
 const SOURCE = "TNEA Seat Matrix 2026";
 const DEFAULT_LEVEL = "after12th";
 const DEFAULT_DURATION = "4 Years";
 
-// The fixed stream catalogue shown on the admin stream-selector page. Empty
-// streams (no imported data yet) are still listed so admins know they exist.
-const STREAMS = [
-  "Engineering",
-  "Medical",
-  "Arts & Science",
-  "Law",
-  "Commerce",
-  "Management",
-  "IT & Computer",
-  "Agriculture",
-  "Architecture",
-  "Design",
-  "Hotel Management",
-  "ITI",
-  "Polytechnic",
-  "Media & Journalism",
-  "Others",
-];
+// The admin "Courses & Colleges" browser mirrors the public Colleges Insight
+// taxonomy: 9 stable school keys. Raw course categories ("Arts", "Science",
+// "Commerce", "Architecture", "IT & Computer", "ITI", ...) are folded into
+// those keys via categoryToInsightKey(), so the selector counts are computed
+// exactly like the student-facing page — no fake zeros for Medical / Arts &
+// Science, which already carry real course/college/mapping data.
 
-/** "Arts & Science" -> "arts-science", "Media & Journalism" -> "media-journalism". */
-function streamSlug(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+/** Lowercase alphanumeric normalization for tolerant name matching. */
+function normText(s = "") {
+  return String(s).toLowerCase().replace(/[^a-z0-9]/g, "").trim();
 }
 
 /**
- * Accepts a canonical name ("Arts & Science") or its URL slug ("arts-science")
- * and returns the canonical stream name. Falls back to Engineering when the
- * param is missing; unknown values pass through unchanged (future-proof).
+ * Accept an insight key slug ("arts-science") or any display variant
+ * ("Arts & Science") and return the canonical key. Default: engineering.
  */
-function normalizeStream(raw) {
-  const value = String(raw || "").trim();
-  if (!value) return STREAM;
-  const slug = streamSlug(value);
-  return STREAMS.find((s) => streamSlug(s) === slug) || value;
+function keyFromParam(raw) {
+  const v = normText(raw);
+  if (!v) return "engineering";
+  const found = INSIGHT_CATEGORIES.find(
+    (c) => normText(c.key) === v || normText(c.label) === v
+  );
+  return found ? found.key : "engineering";
+}
+
+/** Canonical raw category for the import's `stream` field ("Medical" ->
+ *  "Medical"); unknown values fall back to Engineering. */
+function rawCategoryFromParam(raw) {
+  const v = String(raw || "").trim();
+  if (!v) return STREAM;
+  const n = normText(v);
+  const hit = INSIGHT_CATEGORIES.flatMap((c) => c.raw).find(
+    (r) => normText(r) === n
+  );
+  return hit || STREAM;
+}
+
+/** Escape a user string for use inside a RegExp. */
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 const DEFAULT_ELIGIBILITY =
   "Passed 10+2 or equivalent examination with Physics, Chemistry and Mathematics from a recognized board.";
@@ -117,7 +122,7 @@ exports.importSeatMatrix = async (req, res) => {
     const fileName = req.file.originalname || "TNEA_Seat_Matrix.pdf";
     const adminId = req.admin ? req.admin._id : null;
     // Optional multipart field; defaults to Engineering for the TNEA dataset.
-    const stream = normalizeStream(req.body.stream);
+    const stream = rawCategoryFromParam(req.body.stream);
 
     // Preload existing colleges (keyed by collegeCode) and courses (keyed by
     // branchCode) within the target stream so the upsert is O(rows) without
@@ -268,38 +273,36 @@ function readListParams(query) {
 
 /**
  * GET /api/admin/seat-matrix/courses
- * Engineering courses that appear in the seat matrix, each with the number of
- * colleges offering it (collegeCount) built from active mappings.
+ * Every non-archived course in a stream (?stream=<insight key>, default
+ * engineering), each with its college count (distinct active mappings).
+ * Course membership uses the same category fold as the public Colleges
+ * Insight page, so legacy streams (Medical, Arts & Science, ...) are real.
  */
 exports.listCourses = async (req, res) => {
   try {
     const { search, page, limit } = readListParams(req.query);
-    const stream = normalizeStream(req.query.stream);
+    const key = keyFromParam(req.query.stream);
 
-    // Seat-matrix courses are keyed by branch code; require the field to exist.
-    const filter = {
-      category: stream,
-      status: { $ne: "archived" },
-      branchCode: { $exists: true, $nin: ["", null] },
-    };
-    if (search) {
-      filter.$or = [
-        { courseName: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
-        { branchCode: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
-      ];
-    }
-
-    const total = await Course.countDocuments(filter);
-    let courses = await Course.find(filter)
-      .select("_id courseName branchCode duration level")
-      .sort({ courseName: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const all = await Course.find({ status: { $ne: "archived" } })
+      .select("_id courseName branchCode duration level category")
       .lean();
 
+    let courses = all.filter((c) => categoryToInsightKey(c.category) === key);
+
+    if (search) {
+      const re = new RegExp(escapeRegExp(search), "i");
+      courses = courses.filter(
+        (c) => re.test(c.courseName) || re.test(c.branchCode || "")
+      );
+    }
+    courses.sort((a, b) => String(a.courseName).localeCompare(String(b.courseName)));
+
+    const total = courses.length;
+    const pageRows = courses.slice((page - 1) * limit, (page - 1) * limit + limit);
+
     let collegeCounts = new Map();
-    if (courses.length) {
-      const courseIds = courses.map((c) => c._id);
+    if (pageRows.length) {
+      const courseIds = pageRows.map((c) => c._id);
       const groups = await CollegeCourseMapping.aggregate([
         { $match: { courseId: { $in: courseIds }, isActive: true } },
         { $group: { _id: "$courseId", collegeIds: { $addToSet: "$collegeId" } } },
@@ -307,7 +310,7 @@ exports.listCourses = async (req, res) => {
       collegeCounts = new Map(groups.map((g) => [g._id.toString(), g.collegeIds.length]));
     }
 
-    const data = courses.map((c) => ({
+    const data = pageRows.map((c) => ({
       id: c._id,
       courseName: c.courseName,
       branchCode: c.branchCode || "",
@@ -318,7 +321,7 @@ exports.listCourses = async (req, res) => {
 
     res.json({ success: true, count: total, page, limit, totalPages: Math.ceil(total / limit), data });
   } catch (error) {
-    console.error("❌ Error listing seat-matrix courses:", error);
+    console.error("❌ Error loading stream courses:", error);
     res.status(500).json({ success: false, message: "Failed to load courses" });
   }
 };
@@ -326,7 +329,8 @@ exports.listCourses = async (req, res) => {
 /**
  * GET /api/admin/seat-matrix/courses/:courseId/colleges
  * Colleges offering the course, each with the full OC/BC/BCM/MBC/SC/SCA/ST
- * seat breakdown from the TNEA seat matrix. Supports ?search=&page=&limit=.
+ * seat breakdown (from the TNEA seat matrix) when seat data exists, or no
+ * seat data for legacy courses. Supports ?stream=&search=&page=&limit=.
  * Seat fields are ADMIN-ONLY — this router is mounted behind verifyAdmin.
  */
 exports.getCourseColleges = async (req, res) => {
@@ -336,12 +340,15 @@ exports.getCourseColleges = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid course id" });
     }
 
-    const courseFilter = { _id: courseId };
-    if (req.query.stream) courseFilter.category = normalizeStream(req.query.stream);
-    const course = await Course.findOne(courseFilter)
-      .select("_id courseName branchCode duration level")
+    const course = await Course.findOne({ _id: courseId, status: { $ne: "archived" } })
+      .select("_id courseName branchCode duration level category")
       .lean();
+    // When a stream is specified, the course must belong to that stream's fold.
+    const key = keyFromParam(req.query.stream);
     if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+    if (categoryToInsightKey(course.category) !== key) {
       return res.status(404).json({ success: false, message: "Course not found in this stream" });
     }
 
@@ -351,30 +358,37 @@ exports.getCourseColleges = async (req, res) => {
       .select("collegeId seatsOC seatsBC seatsBCM seatsMBC seatsSC seatsSCA seatsST seatsTotal")
       .lean();
 
+    // Every mapped college is listed; seats attach only when the mapping has
+    // seat fields (TNEA rows). Legacy mappings have none -> seats: null.
     const seatsByCollege = new Map();
+    const collegeIds = new Set();
     for (const m of mappings) {
-      const key = m.collegeId && m.collegeId.toString();
-      if (!key) continue;
-      seatsByCollege.set(key, {
-        oc: m.seatsOC || 0,
-        bc: m.seatsBC || 0,
-        bcm: m.seatsBCM || 0,
-        mbc: m.seatsMBC || 0,
-        sc: m.seatsSC || 0,
-        sca: m.seatsSCA || 0,
-        st: m.seatsST || 0,
-        total: m.seatsTotal || 0,
-      });
+      const cid = m.collegeId && m.collegeId.toString();
+      if (!cid) continue;
+      collegeIds.add(cid);
+      const hasSeats =
+        m.seatsTotal !== undefined || m.seatsOC !== undefined || m.seatsBC !== undefined;
+      if (hasSeats) {
+        seatsByCollege.set(cid, {
+          oc: m.seatsOC || 0,
+          bc: m.seatsBC || 0,
+          bcm: m.seatsBCM || 0,
+          mbc: m.seatsMBC || 0,
+          sc: m.seatsSC || 0,
+          sca: m.seatsSCA || 0,
+          st: m.seatsST || 0,
+          total: m.seatsTotal || 0,
+        });
+      }
     }
 
     let colleges = [];
-    if (seatsByCollege.size) {
-      const collegeIds = [...seatsByCollege.keys()];
-      const collegeFilter = { _id: { $in: collegeIds } };
+    if (collegeIds.size) {
+      const collegeFilter = { _id: { $in: [...collegeIds] } };
       if (search) {
         collegeFilter.$or = [
-          { collegeName: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
-          { collegeCode: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } },
+          { collegeName: { $regex: escapeRegExp(search), $options: "i" } },
+          { collegeCode: { $regex: escapeRegExp(search), $options: "i" } },
         ];
       }
       colleges = (await College.find(collegeFilter)
@@ -416,80 +430,94 @@ exports.getCourseColleges = async (req, res) => {
 };
 
 /**
+ * Fold the whole stream catalogue in one pass (non-archived courses + active
+ * verified mappings), keyed by insight key. Shared by summary + streams-summary.
+ */
+async function loadStreamBuckets() {
+  const [courses, mappings] = await Promise.all([
+    Course.find({ status: { $ne: "archived" } }).select("_id category").lean(),
+    CollegeCourseMapping.find({ isActive: true, isVerified: true })
+      .select("courseId collegeId seatsTotal")
+      .lean(),
+  ]);
+
+  const courseKeyByCourseId = new Map();
+  const courseCounts = new Map();
+  for (const c of courses) {
+    const id = c._id.toString();
+    const key = categoryToInsightKey(c.category);
+    courseKeyByCourseId.set(id, key);
+    courseCounts.set(key, (courseCounts.get(key) || 0) + 1);
+  }
+
+  const collegesByKey = new Map(); // key -> Set of college ids
+  const mappingByKey = new Map(); // key -> { n, seats }
+  for (const m of mappings) {
+    const cid = m.courseId && m.courseId.toString();
+    if (!cid || !courseKeyByCourseId.has(cid)) continue; // mapped to an archived course
+    const key = courseKeyByCourseId.get(cid);
+    if (m.collegeId) {
+      if (!collegesByKey.has(key)) collegesByKey.set(key, new Set());
+      collegesByKey.get(key).add(m.collegeId.toString());
+    }
+    if (!mappingByKey.has(key)) mappingByKey.set(key, { n: 0, seats: 0 });
+    const rec = mappingByKey.get(key);
+    rec.n += 1;
+    rec.seats += m.seatsTotal || 0;
+  }
+
+  return { courseCounts, collegesByKey, mappingByKey };
+}
+
+/**
  * GET /api/admin/seat-matrix/summary
- * Lightweight stream-scoped counts to power the admin import summary panel.
- * ?stream= defaults to Engineering.
+ * Stream-scoped counts for the Level-2 stat panel. ?stream=<insight key>,
+ * default engineering.
  */
 exports.getSummary = async (req, res) => {
   try {
-    const stream = normalizeStream(req.query.stream);
-    const [courseCount, mappingCount, totalSeats] = await Promise.all([
-      Course.countDocuments({
-        category: stream,
-        status: { $ne: "archived" },
-        branchCode: { $exists: true, $nin: ["", null] },
-      }),
-      CollegeCourseMapping.countDocuments({ stream, isActive: true, isVerified: true }),
-      CollegeCourseMapping.aggregate([
-        { $match: { stream, isActive: true, isVerified: true } },
-        { $group: { _id: null, seatsTotal: { $sum: { $ifNull: ["$seatsTotal", 0] } } } },
-      ]),
-    ]);
+    const key = keyFromParam(req.query.stream);
+    const { courseCounts, collegesByKey, mappingByKey } = await loadStreamBuckets();
+    const mapRec = mappingByKey.get(key) || { n: 0, seats: 0 };
+    const meta = INSIGHT_CATEGORIES.find((c) => c.key === key) || { label: key };
 
     res.json({
       success: true,
       data: {
-        stream,
-        courseCount,
-        mappingCount,
-        totalSeats: totalSeats.length ? totalSeats[0].seatsTotal : 0,
+        stream: key,
+        label: meta.label,
+        courseCount: courseCounts.get(key) || 0,
+        collegeCount: (collegesByKey.get(key) || new Set()).size,
+        mappingCount: mapRec.n,
+        totalSeats: mapRec.seats,
       },
     });
   } catch (error) {
-    console.error("❌ Error loading seat-matrix summary:", error);
+    console.error("❌ Error loading stream summary:", error);
     res.status(500).json({ success: false, message: "Failed to load summary" });
   }
 };
 
 /**
  * GET /api/admin/seat-matrix/streams-summary
- * Course/college/mapping counts for EVERY known stream (zero-data streams are
- * still returned so the admin stream-selector can show them as "no data").
+ * Course/college/mapping/seats counts for every insight key (zero-data keys
+ * like Diploma are still returned so the selector shows them as "no data").
  */
 exports.getStreamsSummary = async (req, res) => {
   try {
-    const [courseGroups, collegeGroups, mappingGroups] = await Promise.all([
-      Course.aggregate([
-        {
-          $match: {
-            category: { $in: STREAMS },
-            status: { $ne: "archived" },
-            branchCode: { $exists: true, $nin: ["", null] },
-          },
-        },
-        { $group: { _id: "$category", n: { $sum: 1 } } },
-      ]),
-      College.aggregate([
-        { $match: { stream: { $in: STREAMS } } },
-        { $group: { _id: "$stream", n: { $sum: 1 } } },
-      ]),
-      CollegeCourseMapping.aggregate([
-        { $match: { stream: { $in: STREAMS }, isActive: true, isVerified: true } },
-        { $group: { _id: "$stream", n: { $sum: 1 } } },
-      ]),
-    ]);
+    const { courseCounts, collegesByKey, mappingByKey } = await loadStreamBuckets();
 
-    const toMap = (groups) => new Map(groups.map((g) => [g._id, g.n]));
-    const courseCounts = toMap(courseGroups);
-    const collegeCounts = toMap(collegeGroups);
-    const mappingCounts = toMap(mappingGroups);
-
-    const data = STREAMS.map((stream) => ({
-      stream,
-      courseCount: courseCounts.get(stream) || 0,
-      collegeCount: collegeCounts.get(stream) || 0,
-      mappingCount: mappingCounts.get(stream) || 0,
-    }));
+    const data = INSIGHT_CATEGORIES.map(({ key, label }) => {
+      const mapRec = mappingByKey.get(key) || { n: 0, seats: 0 };
+      return {
+        stream: key,
+        label,
+        courseCount: courseCounts.get(key) || 0,
+        collegeCount: (collegesByKey.get(key) || new Set()).size,
+        mappingCount: mapRec.n,
+        totalSeats: mapRec.seats,
+      };
+    });
 
     res.json({ success: true, data });
   } catch (error) {
