@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const OtpCode = require("../models/OtpCode");
-const { transporter } = require("../config/mailer");
+const { transporter, defaultFrom } = require("../config/mailer");
 
 // One active code per email+purpose. Sign-in codes are valid for 5 minutes;
 // sign-up verification and password-reset codes get the longer 10-minute window.
@@ -41,7 +41,7 @@ const sendOtpEmail = async ({ email, otp, purpose }) => {
   const label = PURPOSE_EMAIL[purpose] || PURPOSE_EMAIL.login;
   const validForMin = purpose === "login" ? 5 : 10;
   await transporter.sendMail({
-    from: `"Uyarvu Payanam" <${process.env.EMAIL_USER}>`,
+    from: `"Uyarvu Payanam" <${defaultFrom}>`,
     to: email,
     subject: label.subject,
     text: `Your Uyarvu Payanam verification code is: ${otp}\n\nThis OTP is valid for ${validForMin} minutes.\n\nIf you did not request this code, please ignore this email.`,

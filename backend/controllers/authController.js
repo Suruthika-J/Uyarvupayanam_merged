@@ -6,7 +6,7 @@ const crypto = require("crypto");
 
 // Reuse the project's shared Gmail transporter (see config/mailer.js). Credentials
 // come from environment variables only — never hardcoded.
-const { transporter } = require("../config/mailer");
+const { transporter, defaultFrom } = require("../config/mailer");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -321,7 +321,7 @@ const resetPassword = async (req, res) => {
     // Send confirmation email
     try {
       await transporter.sendMail({
-        from: `"Uyarvu Payanam" <${process.env.EMAIL_USER}>`,
+        from: `"Uyarvu Payanam" <${defaultFrom}>`,
         to: user.email,
         subject: "Password Changed Successfully - Uyarvu Payanam",
         html: `

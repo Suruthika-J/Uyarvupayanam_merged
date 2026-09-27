@@ -147,6 +147,9 @@ export default function VerifyOtpPage() {
             We sent a 6-digit verification code to{' '}
             <strong style={{ color: 'var(--s-text)' }}>{maskEmail(email)}</strong>
           </p>
+          <p style={{ fontSize: 13, color: 'var(--s-text3)', textAlign: 'center', marginBottom: 20, lineHeight: 1.6 }}>
+            Didn't see it? Check your <strong>Spam / Promotions</strong> folder, then use Resend below.
+          </p>
 
           {notice && (
             <div style={{ marginBottom: 18 }}>

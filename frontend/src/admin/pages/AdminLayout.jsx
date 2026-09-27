@@ -32,6 +32,7 @@ import MentorRequestsPage from './admin/MentorRequestsPage'
 import OnboardingManagementPage from './admin/OnboardingManagementPage'
 import AssessmentManagementPage from './admin/AssessmentManagementPage'
 import AdmissionHelpRequestsPage from './admin/AdmissionHelpRequestsPage'
+import RecommendationRulesPage from './admin/RecommendationRulesPage'
 
 import AcademicTaxonomyManagementPage from './admin/AcademicTaxonomyManagementPage'
 import CollegeCareerCatalogManagementPage from './admin/CollegeCareerCatalogManagementPage'
@@ -60,6 +61,7 @@ const NAV = [
   { id: 'mapping', icon: '🔗', label: 'Course offered colleges', path: 'mapping' },
   { id: 'assessment', icon: '🧠', label: 'Assessment Management', path: 'assessment' },
   { id: 'onboarding', icon: '📝', label: 'Onboarding Management', path: 'onboarding' },
+  { id: 'recommendation-rules', icon: '🧩', label: 'Recommendation Rules', path: 'recommendation-rules' },
   { id: 'settings', icon: '⚙️', label: 'Settings', path: 'settings' },
 ]
 
@@ -85,6 +87,7 @@ const PAGE_META = {
   'mapping': { title: 'College-Course Mapping', sub: 'Connect courses to colleges' },
   'assessment': { title: 'Assessment Management', sub: 'Psychometric test questions' },
   'onboarding': { title: 'Onboarding Management', sub: 'Initial setup questions' },
+  'recommendation-rules': { title: 'Recommendation Rules', sub: 'Assessment engine rules & guideline messages' },
   'settings': { title: 'Settings', sub: 'System configuration' },
 }
 
@@ -215,6 +218,7 @@ export default function AdminLayout() {
             <Route path="mapping" element={<CollegeCourseMappingPage />} />
             <Route path="assessment" element={<AssessmentManagementPage />} />
             <Route path="onboarding" element={<OnboardingManagementPage />} />
+            <Route path="recommendation-rules" element={<RecommendationRulesPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Routes>
         </main>
