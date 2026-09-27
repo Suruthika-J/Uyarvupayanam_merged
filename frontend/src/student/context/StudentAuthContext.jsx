@@ -6,13 +6,15 @@ export function StudentAuthProvider({ children }) {
   const [student, setStudent] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [token, setToken] = useState(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('studentToken')
+    const savedToken = localStorage.getItem('studentToken')
     const saved = localStorage.getItem('studentData')
-    if (token && saved) {
+    if (savedToken && saved) {
       try {
         setStudent(JSON.parse(saved))
+        setToken(savedToken)
         setIsAuthenticated(true)
       } catch {
         localStorage.removeItem('studentToken')
@@ -22,10 +24,11 @@ export function StudentAuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  const login = (token, data) => {
-    localStorage.setItem('studentToken', token)
+  const login = (tok, data) => {
+    localStorage.setItem('studentToken', tok)
     localStorage.setItem('studentData', JSON.stringify(data))
     setStudent(data)
+    setToken(tok)
     setIsAuthenticated(true)
   }
 
@@ -33,6 +36,7 @@ export function StudentAuthProvider({ children }) {
     localStorage.removeItem('studentToken')
     localStorage.removeItem('studentData')
     setStudent(null)
+    setToken(null)
     setIsAuthenticated(false)
   }
 
@@ -43,7 +47,7 @@ export function StudentAuthProvider({ children }) {
   }
 
   return (
-    <StudentAuthCtx.Provider value={{ student, isAuthenticated, loading, login, logout, updateStudent }}>
+    <StudentAuthCtx.Provider value={{ student, token, isAuthenticated, loading, login, logout, updateStudent }}>
       {children}
     </StudentAuthCtx.Provider>
   )

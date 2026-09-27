@@ -40,13 +40,9 @@ export function CollegeProfileProvider({ children }) {
 
   // Partial update — call PUT /api/college-profile/patch with field subset
   const patchProfile = useCallback(async (fields) => {
-    if (!token) return
+    if (!token) return { success: false }
     try {
-      const res = await axios.put(
-        `${API_BASE}/api/college-profile/patch`,
-        fields,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const res = await axiosInstance.put('/college-profile/patch', fields)
       if (res.data?.success) {
         setProfile(res.data.profile)
       }
@@ -55,7 +51,7 @@ export function CollegeProfileProvider({ children }) {
       console.error('CollegeProfileContext: patch failed', err.message)
       return { success: false }
     }
-  }, [token, API_BASE])
+  }, [token])
 
   return (
     <CollegeProfileContext.Provider value={{ profile, loading, refetch: fetchProfile, patchProfile }}>

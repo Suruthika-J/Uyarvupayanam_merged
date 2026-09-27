@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import axiosInstance from '../../../config/axios'
 import { SBtn, SCard, SBadge, SLoader } from '../../components/ui'
 import {
@@ -10,10 +11,12 @@ import {
 
 export default function CollegeProfilePage() {
   const { student } = useStudentAuth()
+  const { theme, themeKey } = useCollegeTheme()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState('')
+  const isGamified = themeKey === 'gamified'
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -103,7 +106,15 @@ export default function CollegeProfilePage() {
       </SCard>
 
       {/* Student Identity Card */}
-      <SCard style={{ padding: '28px 32px', borderRadius: 20, marginBottom: 28, background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', color: '#fff' }}>
+      <SCard style={{
+        padding: '28px 32px', borderRadius: 20, marginBottom: 28,
+        background: isGamified
+          ? 'linear-gradient(135deg, #0f2044 0%, #080d1f 100%)'
+          : 'linear-gradient(135deg, #1a6fc4 0%, #0ea5e9 100%)',
+        color: '#fff',
+        border: isGamified ? '1px solid rgba(0,245,212,0.2)' : 'none',
+        boxShadow: isGamified ? '0 0 24px rgba(0,245,212,0.1)' : 'none',
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 28, flexShrink: 0 }}>
             {student?.name?.[0]?.toUpperCase() || 'S'}

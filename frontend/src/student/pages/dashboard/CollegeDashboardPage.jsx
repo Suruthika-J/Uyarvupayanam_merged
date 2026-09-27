@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import { getCollegeFeatureEligibility, getDashboardWidgetPriority } from '../../services/collegeFeatureEligibilityEngine'
 import { getCollegePracticeConfig } from '../../services/collegePracticeEngine'
 import axios from 'axios'
@@ -17,7 +18,9 @@ import {
 export default function CollegeDashboardPage() {
   const { student } = useStudentAuth()
   const { profile } = useCollegeProfile()
+  const { theme, themeKey } = useCollegeTheme()
   const navigate = useNavigate()
+  const isGamified = themeKey === 'gamified'
 
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
@@ -77,10 +80,13 @@ export default function CollegeDashboardPage() {
 
       {/* ── DASHBOARD HEADER WITH DEGREE/DOMAIN TAG ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+        background: isGamified
+          ? 'linear-gradient(135deg, #0f2044 0%, #080d1f 100%)'
+          : 'linear-gradient(135deg, #1a6fc4 0%, #0ea5e9 100%)',
         color: '#fff', padding: '32px 36px', borderRadius: 24,
-        boxShadow: '0 10px 30px rgba(4, 120, 87, 0.2)', marginBottom: 28,
-        position: 'relative'
+        boxShadow: isGamified ? '0 10px 30px rgba(0,245,212,0.1)' : '0 10px 30px rgba(4, 120, 87, 0.2)', marginBottom: 28,
+        position: 'relative',
+        border: isGamified ? '1px solid rgba(0,245,212,0.15)' : 'none',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>

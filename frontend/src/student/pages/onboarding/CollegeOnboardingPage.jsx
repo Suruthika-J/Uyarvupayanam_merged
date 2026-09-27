@@ -5,6 +5,7 @@ import axiosInstance from '../../../config/axios'
 import { SBtn, SCard, SInput, SSelect, SAlert, SLoader } from '../../components/ui'
 import { taxonomyService } from '../../services/taxonomyService'
 import { COLLEGE_FIELDS_DATA } from '../../config/collegeFieldsData'
+import { TN_COLLEGES_BY_DISTRICT, TN_DISTRICTS_ORDERED } from '../../data/tnCollegesByDistrict'
 import {
   FiArrowRight, FiArrowLeft, FiSave, FiCheckCircle,
   FiBookOpen, FiHome, FiCpu, FiHeart, FiFeather, FiShield,
@@ -17,12 +18,7 @@ const ICON_MAP = {
   FiUsers, FiZap, FiSun, FiBook, FiDollarSign, FiRadio
 }
 
-const TN_DISTRICTS = [
-  'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Erode',
-  'Tirunelveli', 'Vellore', 'Thanjavur', 'Dindigul', 'Kanchipuram', 'Namakkal',
-  'Dharmapuri', 'Krishnagiri', 'Karur', 'Thoothukudi', 'Tiruppur',
-  'Tiruvannamalai', 'Cuddalore', 'Nagapattinam', 'Others'
-]
+const TN_DISTRICTS = TN_DISTRICTS_ORDERED
 
 const SKILLS_OPTIONS = [
   // Engineering & Technology
@@ -71,6 +67,197 @@ const CAREER_INTEREST_OPTIONS = [
   // Agriculture
   'Agricultural Scientist / Agronomist', 'Food Technology & Processing'
 ]
+
+// ── Step 1 sub-component with district-first + filtered college picker ────────
+function Step1InstitutionBlock({ profile, setProfile }) {
+  const [collegeSearch, setCollegeSearch] = React.useState('')
+  const districtColleges = TN_COLLEGES_BY_DISTRICT[profile.institutionDistrict] || []
+  const filtered = districtColleges.filter(c =>
+    c.toLowerCase().includes(collegeSearch.toLowerCase())
+  )
+  const isCustom = profile.institution && !districtColleges.includes(profile.institution)
+
+  const selectCollege = (college) => {
+    setProfile(prev => ({ ...prev, institution: college }))
+    setCollegeSearch('')
+  }
+
+  const changeDistrict = (newDistrict) => {
+    setProfile(prev => ({ ...prev, institutionDistrict: newDistrict, institution: '' }))
+    setCollegeSearch('')
+  }
+
+  return (
+    <div className="s-anim-up">
+      <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
+        Step 1: Institution &amp; Academic Level
+      </h3>
+      <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
+        Where are you currently pursuing your college education?
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+        {/* 1. DISTRICT FIRST */}
+        <SSelect
+          label="District Location of College *"
+          value={profile.institutionDistrict}
+          onChange={e => changeDistrict(e.target.value)}
+          options={[
+            { value: '', label: '— Select District —' },
+            ...TN_DISTRICTS_ORDERED.map(d => ({ value: d, label: d }))
+          ]}
+        />
+
+        {/* 2. COLLEGE PICKER (only when district is selected) */}
+        {profile.institutionDistrict ? (
+          <div>
+            <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 8, color: 'var(--s-text)' }}>
+              College / Institution Name *
+              <span style={{ fontWeight: 600, fontSize: 11, color: 'var(--s-text3)', marginLeft: 8 }}>
+                ({districtColleges.length} colleges in {profile.institutionDistrict})
+              </span>
+            </label>
+
+            {/* Search + list box */}
+            <div style={{
+              border: '1px solid var(--s-border)', borderRadius: 12,
+              overflow: 'hidden', background: '#fff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+            }}>
+              {/* Search bar inside the box */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px',
+                borderBottom: '1px solid var(--s-border)',
+                background: '#f8fafc',
+              }}>
+                <span style={{ fontSize: 16 }}>🔍</span>
+                <input
+                  type="text"
+                  placeholder={`Search in ${profile.institutionDistrict} colleges...`}
+                  value={collegeSearch}
+                  onChange={e => setCollegeSearch(e.target.value)}
+                  style={{
+                    border: 'none', outline: 'none', background: 'none',
+                    fontSize: 13, flex: 1, color: 'var(--s-text)',
+                    fontFamily: 'inherit'
+                  }}
+                />
+                {collegeSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setCollegeSearch('')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', fontSize: 16, lineHeight: 1 }}
+                  >✕</button>
+                )}
+              </div>
+
+              {/* Scrollable college list */}
+              <div style={{ maxHeight: 260, overflowY: 'auto', padding: '4px 0' }}>
+                {filtered.length === 0 ? (
+                  <div style={{ padding: '16px 14px', fontSize: 13, color: 'var(--s-text3)', textAlign: 'center' }}>
+                    No colleges found. Type your college name in the manual field below.
+                  </div>
+                ) : (
+                  filtered.map(college => {
+                    const isSelected = profile.institution === college
+                    return (
+                      <button
+                        key={college}
+                        type="button"
+                        onClick={() => selectCollege(college)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '9px 16px', border: 'none',
+                          background: isSelected ? 'var(--s-primary-l)' : 'transparent',
+                          color: isSelected ? 'var(--s-primary)' : 'var(--s-text)',
+                          fontSize: 13, fontWeight: isSelected ? 800 : 500,
+                          cursor: 'pointer',
+                          borderLeft: isSelected ? '3px solid var(--s-primary)' : '3px solid transparent',
+                          transition: 'background 0.12s',
+                        }}
+                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#f1f5f9' }}
+                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {isSelected && '✓ '}{college}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Selected college display */}
+            {profile.institution && (
+              <div style={{
+                marginTop: 10, padding: '10px 14px',
+                background: isCustom ? '#fffbeb' : '#f0fdf4',
+                border: `1px solid ${isCustom ? '#fcd34d' : '#86efac'}`,
+                borderRadius: 10, fontSize: 13, fontWeight: 700,
+                color: isCustom ? '#b45309' : '#166534',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span>{isCustom ? '✏️ Custom:' : '🎓'}</span>
+                <span style={{ flex: 1 }}>{profile.institution}</span>
+                <button
+                  type="button"
+                  onClick={() => setProfile(prev => ({ ...prev, institution: '' }))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8', lineHeight: 1 }}
+                >✕</button>
+              </div>
+            )}
+
+            {/* Manual type option */}
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '0 0 6px' }}>
+                Can't find your college in the list? Type it manually:
+              </p>
+              <input
+                type="text"
+                placeholder="Type your college name..."
+                value={isCustom ? profile.institution : ''}
+                onChange={e => setProfile(prev => ({ ...prev, institution: e.target.value }))}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 10,
+                  border: '1px dashed var(--s-border)', fontSize: 13,
+                  outline: 'none', fontFamily: 'inherit',
+                  background: '#f8fafc', color: 'var(--s-text)',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Show prompt when no district selected yet */
+          <div style={{
+            padding: '16px 20px', background: '#eff6ff',
+            border: '1px solid #bfdbfe', borderRadius: 12,
+            fontSize: 13, color: '#1d4ed8', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 10
+          }}>
+            <span style={{ fontSize: 20 }}>📍</span>
+            Select your district above to see colleges in your area.
+          </div>
+        )}
+
+        {/* 3. ACADEMIC YEAR */}
+        <SSelect
+          label="Current Academic Year"
+          value={profile.currentYear}
+          onChange={e => setProfile(prev => ({ ...prev, currentYear: e.target.value }))}
+          options={[
+            { value: '1st Year', label: '1st Year (Freshman)' },
+            { value: '2nd Year', label: '2nd Year (Sophomore)' },
+            { value: '3rd Year', label: '3rd Year (Junior)' },
+            { value: '4th Year', label: '4th Year (Senior)' },
+            { value: 'Postgraduate / Master', label: 'Postgraduate / Master Degree' }
+          ]}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function CollegeOnboardingPage() {
   const { student, updateStudent } = useStudentAuth()
@@ -297,8 +484,12 @@ export default function CollegeOnboardingPage() {
 
   const handleNextStep = async () => {
     setError('')
+    if (step === 1 && !profile.institutionDistrict) {
+      setError('Please select your district first')
+      return
+    }
     if (step === 1 && !profile.institution.trim()) {
-      setError('Please enter your college or institution name')
+      setError('Please enter or select your college / institution name')
       return
     }
 
@@ -371,48 +562,12 @@ export default function CollegeOnboardingPage() {
 
         <SCard style={{ borderRadius: 24, padding: 36, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow-md)' }}>
 
-          {/* STEP 1: Basic Profile */}
+          {/* STEP 1: Institution & Academic Level */}
           {step === 1 && (
-            <div className="s-anim-up">
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-                Step 1: Institution & Academic Level
-              </h3>
-              <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
-                Where are you currently pursuing your college education?
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <SInput
-                  label="College / Institution Name *"
-                  placeholder="e.g. PSG College of Technology, Anna University Campus"
-                  value={profile.institution}
-                  onChange={e => setProfile({ ...profile, institution: e.target.value })}
-                  required
-                />
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-                  <SSelect
-                    label="District Location of College"
-                    value={profile.institutionDistrict}
-                    onChange={e => setProfile({ ...profile, institutionDistrict: e.target.value })}
-                    options={TN_DISTRICTS.map(d => ({ value: d, label: d }))}
-                  />
-
-                  <SSelect
-                    label="Current Academic Year"
-                    value={profile.currentYear}
-                    onChange={e => setProfile({ ...profile, currentYear: e.target.value })}
-                    options={[
-                      { value: '1st Year', label: '1st Year (Freshman)' },
-                      { value: '2nd Year', label: '2nd Year (Sophomore)' },
-                      { value: '3rd Year', label: '3rd Year (Junior)' },
-                      { value: '4th Year', label: '4th Year (Senior)' },
-                      { value: 'Postgraduate / Master', label: 'Postgraduate / Master Degree' }
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
+            <Step1InstitutionBlock
+              profile={profile}
+              setProfile={setProfile}
+            />
           )}
 
           {/* STEP 2: Major Field */}
