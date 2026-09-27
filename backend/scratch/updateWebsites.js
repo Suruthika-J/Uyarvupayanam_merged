@@ -1,7 +1,14 @@
 const mongoose = require('mongoose');
 const College = require('../models/College');
+const dotenv = require('dotenv');
 
-const uri = 'mongodb+srv://uyarvupayanam_db_user:UyarvuPayanam1234@cluster0.i0sep1t.mongodb.net/uyarvuPayanam?retryWrites=true&w=majority';
+dotenv.config({ path: '../.env' });
+
+const uri = process.env.MONGO_URI;
+if (!uri) {
+  console.error("MONGO_URI is not set. Add it to your environment (e.g. backend/.env) before running this script.");
+  process.exit(1);
+}
 
 async function run() {
   try {
