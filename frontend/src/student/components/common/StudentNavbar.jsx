@@ -89,7 +89,7 @@ export default function StudentNavbar() {
           />
           <div className="s-nav-logo-text" style={{ marginLeft: 8 }}>
             <span className="s-nav-logo-title" style={{ fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--s-primary)' }}>Uyarvu Payanam</span>
-            <span className="s-nav-logo-sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, opacity: 0.6 }}>Career Platform</span>
+            <span className="s-nav-logo-sub" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, opacity: 0.6 }}>Career Platform</span>
           </div>
         </Link>
 

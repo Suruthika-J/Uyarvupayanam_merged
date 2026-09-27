@@ -84,7 +84,7 @@ export default function Class5Card({
                   color: '#fff',
                   padding: '3px 10px',
                   borderRadius: 99,
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: 700,
                   maxWidth: '100%',
                   overflow: 'hidden',
@@ -102,7 +102,7 @@ export default function Class5Card({
                 alignSelf: 'flex-start',
                 padding: '2px 10px',
                 borderRadius: 99,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 800,
               }}
             >

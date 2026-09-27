@@ -117,7 +117,7 @@ export default function CareerClassPage() {
   // invalid class key
   if (!config) {
     return (
-      <div className="student-root" style={{ padding: '40px 20px', maxWidth: 1080, margin: '0 auto' }}>
+      <div className="student-root" style={{ padding: '40px 20px', maxWidth: 1100, margin: '0 auto' }}>
         <SEmpty
           icon={<FiCompass size={48} />}
           title="Class not found"
@@ -135,7 +135,7 @@ export default function CareerClassPage() {
   const { accent, badgeColor } = config
 
   return (
-    <div className="student-root" style={{ padding: '32px 20px 48px', maxWidth: 1180, margin: '0 auto' }}>
+    <div className="student-root" style={{ padding: '32px 20px 48px', maxWidth: 1100, margin: '0 auto' }}>
 
       {/* hero banner */}
       <div className="s-anim-up" style={{

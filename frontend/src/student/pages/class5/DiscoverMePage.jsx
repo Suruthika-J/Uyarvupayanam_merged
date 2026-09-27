@@ -83,7 +83,7 @@ export default function DiscoverMePage() {
               footer={
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, marginTop: -2 }}>
                   {(w.skillTags || []).map((t) => (
-                    <span key={t} style={{ fontSize: 10.5, fontWeight: 800, color: worldColor(w.colorTag), background: `${worldColor(w.colorTag)}14`, padding: '3px 9px', borderRadius: 99 }}>
+                    <span key={t} style={{ fontSize: 12, fontWeight: 800, color: worldColor(w.colorTag), background: `${worldColor(w.colorTag)}14`, padding: '3px 9px', borderRadius: 99 }}>
                       {t}
                     </span>
                   ))}

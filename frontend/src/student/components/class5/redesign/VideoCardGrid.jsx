@@ -68,7 +68,7 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
                   right: 12,
                   background: 'rgba(0,0,0,0.45)',
                   color: '#fff',
-                  fontSize: 10.5,
+                  fontSize: 12,
                   fontWeight: 800,
                   padding: '3px 8px',
                   borderRadius: 99,
@@ -79,12 +79,12 @@ export default function VideoCardGrid({ videos = [], worldId, loading }) {
               </span>
             </div>
             <div style={{ padding: '12px 16px 14px' }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: col, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: col, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {v.world?.name}
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 800, color: C5.ink, marginTop: 3, lineHeight: 1.4 }}>{v.title}</div>
               {v.featured && (
-                <span style={{ fontSize: 10.5, fontWeight: 800, color: '#d97706', background: '#fff7ed', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#d97706', background: '#fff7ed', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
                   <ICONS.star size={11} strokeWidth={2.6} /> Featured
                 </span>
               )}

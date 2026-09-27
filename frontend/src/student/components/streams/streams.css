@@ -50,7 +50,7 @@
   color: var(--brand-white);
 }
 .streams-tab-count {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   background: rgba(148, 163, 184, 0.25);
   color: inherit;
@@ -224,7 +224,7 @@
   flex: 1;
 }
 .stream-subjects-title {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.1px;
   text-transform: uppercase;
@@ -293,7 +293,7 @@
   gap: 8px;
 }
 .stream-back-sub {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.1px;
   text-transform: uppercase;

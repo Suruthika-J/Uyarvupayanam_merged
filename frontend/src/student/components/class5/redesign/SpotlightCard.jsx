@@ -54,7 +54,7 @@ export default function SpotlightCard({ spotlight }) {
       <div>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 800,
             textTransform: 'uppercase',
             letterSpacing: '0.12em',

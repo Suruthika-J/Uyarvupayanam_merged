@@ -105,7 +105,7 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
             <div style={{ fontSize: 17, fontWeight: 900, color: '#1e293b', lineHeight: 1.1, minHeight: 20 }}>
               {s.value}
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
               {s.label}
             </div>
           </div>

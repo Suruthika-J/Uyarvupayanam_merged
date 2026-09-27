@@ -75,11 +75,11 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative', zIndex: 1 }}>
-        <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ffe7b3' }}>
+        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ffe7b3' }}>
           This week's try-it · 5 minutes
         </span>
         {submitted && (
-          <span style={{ fontSize: 11.5, fontWeight: 800, background: '#34d399', color: '#053b2a', padding: '3px 10px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 12, fontWeight: 800, background: '#34d399', color: '#053b2a', padding: '3px 10px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             <ICONS.check size={12} strokeWidth={3} /> Done
           </span>
         )}
@@ -152,7 +152,7 @@ export default function WeeklyChallengeCard({ challenge, worldTag }) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: col }}>
+              <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: col }}>
                 Weekly challenge
               </span>
               <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C5.faint, display: 'grid', placeItems: 'center' }} aria-label="Close">

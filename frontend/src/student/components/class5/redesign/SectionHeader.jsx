@@ -20,7 +20,7 @@ export default function SectionHeader({ eyebrow, title, subtitle, children, alig
           <span
             style={{
               display: 'inline-block',
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: 800,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
@@ -34,7 +34,7 @@ export default function SectionHeader({ eyebrow, title, subtitle, children, alig
             {eyebrow}
           </span>
         )}
-        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: C5.ink, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: C5.ink, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
           {title}
         </h1>
         {subtitle && (

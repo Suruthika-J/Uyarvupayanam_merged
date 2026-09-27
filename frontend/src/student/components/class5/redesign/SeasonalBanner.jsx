@@ -42,7 +42,7 @@ export default function SeasonalBanner({ event, onExplore }) {
         <div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.1em',

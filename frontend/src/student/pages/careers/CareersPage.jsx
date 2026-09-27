@@ -105,7 +105,7 @@ export default function CareersPage() {
       }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, background: 'linear-gradient(90deg, var(--s-primary-d), var(--s-primary), #2d9d6a)' }} />
         
-        <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
           <SBadge color="green" style={{ marginBottom: 20 }}>Career Roadmap Hub</SBadge>
           <h1 style={{ 
             fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 'clamp(34px, 4.5vw, 48px)', 
@@ -132,7 +132,7 @@ export default function CareersPage() {
       </section>
 
       {/* Main Grid */}
-      <section style={{ maxWidth: 1200, margin: '-40px auto 0', padding: '0 24px', position: 'relative', zIndex: 10 }}>
+      <section style={{ maxWidth: 1100, margin: '-40px auto 0', padding: '0 24px', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
           {CAREER_CLASS_CONFIGS.map((item, index) => (
             <ProfessionalClassCard key={item.key} item={item} index={index} />
@@ -142,7 +142,7 @@ export default function CareersPage() {
 
       {/* Extra Info / Call to Action */}
       {!isAuthenticated && (
-        <section style={{ maxWidth: 1000, margin: '80px auto 0', padding: '0 24px' }}>
+        <section style={{ maxWidth: 1100, margin: '80px auto 0', padding: '0 24px' }}>
           <div style={{
             background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
             borderRadius: 28,

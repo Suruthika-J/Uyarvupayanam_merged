@@ -11,6 +11,7 @@ import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SLoader, SBtn, SBadge, SAlert } from '../../components/ui'
 import AuthModal from '../../components/ui/AuthModal'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
+import s from './ContentDetailPage.module.css'
 
 export default function ContentDetailPage() {
   const { slug } = useParams()
@@ -136,7 +137,7 @@ export default function ContentDetailPage() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 40px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 60 }}>
+      <div className={s.layout} style={{ maxWidth: 1100, margin: '0 auto' }}>
         
         <article>
           {/* Metadata Row */}

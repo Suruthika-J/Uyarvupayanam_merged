@@ -88,7 +88,7 @@ export function SCard({ children, variant = 'default', hover = false, style = {}
       style={{
         background: 'var(--s-surface)',
         border: '1px solid var(--s-border)',
-        borderRadius: 'var(--s-radius)',
+        borderRadius: 'var(--s-radius-lg)',
         padding: 20,
         boxShadow: hov && lift ? 'var(--s-shadow-lg)' : 'var(--s-shadow)',
         transform: hov && lift ? 'translateY(-3px)' : 'none',

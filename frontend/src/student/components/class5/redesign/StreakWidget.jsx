@@ -59,7 +59,7 @@ export default function StreakWidget({ streak, compact = false }) {
             {!compact && (
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                   color: C5.faint,
                   textAlign: 'center',

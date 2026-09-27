@@ -71,13 +71,13 @@ export default function BadgeShelf({ shelf = {} }) {
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: earned ? C5.ink : C5.faint }}>{b.name}</div>
-                <div style={{ fontSize: 11.5, color: C5.faint, marginTop: 2, lineHeight: 1.45, minHeight: 32 }}>
+                <div style={{ fontSize: 12, color: C5.faint, marginTop: 2, lineHeight: 1.45, minHeight: 32 }}>
                   {b.description}
                 </div>
               </div>
               <span
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 12,
                   fontWeight: 800,
                   padding: '2px 9px',
                   borderRadius: 99,

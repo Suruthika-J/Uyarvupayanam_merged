@@ -260,7 +260,7 @@ export default function JourneyStepper({
                 {/* desc */}
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     color: "#94a3b8",
                     marginTop: 3,
                     textAlign: "center",

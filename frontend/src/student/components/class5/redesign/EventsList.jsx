@@ -64,7 +64,7 @@ export default function EventsList({ events = [], onAttend, attendedState }) {
                   <span style={{ fontSize: 15, fontWeight: 800, color: C5.ink }}>{ev.title}</span>
                   <span
                     style={{
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: 800,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
@@ -78,7 +78,7 @@ export default function EventsList({ events = [], onAttend, attendedState }) {
                   </span>
                 </div>
                 <p style={{ margin: '3px 0 0', fontSize: 12.5, color: C5.faint }}>{ev.description}</p>
-                <div style={{ fontSize: 11.5, color: C5.faint, marginTop: 4, fontWeight: 700 }}>
+                <div style={{ fontSize: 12, color: C5.faint, marginTop: 4, fontWeight: 700 }}>
                   {date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} · {ev.durationMin} min
                 </div>
               </div>

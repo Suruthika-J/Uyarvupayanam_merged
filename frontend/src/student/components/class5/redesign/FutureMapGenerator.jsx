@@ -155,7 +155,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
           }}
         >
           <div>
-            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', opacity: 0.85 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', opacity: 0.85 }}>
               My Future Map · Class 5
             </div>
             <div style={{ fontSize: 24, fontWeight: 900, marginTop: 6, lineHeight: 1.1 }}>
@@ -178,7 +178,7 @@ export default function FutureMapGenerator({ profile, explorerWorlds = [] }) {
           </div>
         </div>
         <div style={{ padding: 16, background: '#fbfdff' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: C5.faint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: C5.faint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
             Explored with my squad
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

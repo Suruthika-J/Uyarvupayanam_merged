@@ -540,7 +540,7 @@ export default function EmotionDetective({ questions, onComplete }) {
                   <div>
                     <div
                       style={{
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 800,
                         textTransform: "uppercase",
                         letterSpacing: 1.5,

@@ -176,7 +176,7 @@ export default function ScholarshipsSection() {
                 <div style={{ background: '#f8fafc', borderRadius: 16, padding: 16, marginBottom: 20, flex: 1 }}>
                   {item.benefit && (
                     <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
                         Benefit
                       </div>
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#10b981' }}>{item.benefit}</div>
@@ -184,7 +184,7 @@ export default function ScholarshipsSection() {
                   )}
                   {item.eligibility && (
                     <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
                         Eligibility
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.5 }}>{item.eligibility}</div>
@@ -192,7 +192,7 @@ export default function ScholarshipsSection() {
                   )}
                   {item.deadline && (
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
                         Last Date
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{item.deadline}</div>

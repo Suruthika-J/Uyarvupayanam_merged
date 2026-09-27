@@ -113,7 +113,7 @@ export default function AdhikaramPickerPage() {
                 <span
                   style={{
                     display: 'inline-block',
-                    fontSize: 10.5,
+                    fontSize: 12,
                     fontWeight: 800,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',

@@ -230,7 +230,7 @@ const Class10ExamPanel = () => (
       </div>
     </div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 28 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap: 28 }}>
       {CLASS10_EXAMS.map(e => (
         <div key={e.id} style={{ background: '#fff', borderRadius: 20, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="hover-lift">
           <div style={{ height: 6, background: 'linear-gradient(90deg, #1a7a50 0%, #2d9d6a 100%)' }} />
@@ -238,7 +238,7 @@ const Class10ExamPanel = () => (
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <SBadge color="green">{e.category}</SBadge>
               {e.flag && (
-                <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', padding: '5px 10px', borderRadius: 99, background: CLASS10_FLAG_TONES[e.flag.tone].light, color: CLASS10_FLAG_TONES[e.flag.tone].text, border: `1px solid ${CLASS10_FLAG_TONES[e.flag.tone].border}` }}>
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', padding: '5px 10px', borderRadius: 99, background: CLASS10_FLAG_TONES[e.flag.tone].light, color: CLASS10_FLAG_TONES[e.flag.tone].text, border: `1px solid ${CLASS10_FLAG_TONES[e.flag.tone].border}` }}>
                   {e.flag.text}
                 </span>
               )}
@@ -252,7 +252,7 @@ const Class10ExamPanel = () => (
           <div style={{ padding: '4px 22px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             {e.rows.map(r => (
               <div key={r.label} style={{ borderTop: '1px solid var(--s-border)', padding: '10px 0', display: 'flex', gap: 12 }}>
-                <span style={{ width: 84, flexShrink: 0, fontSize: 11, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: 2 }}>{r.label}</span>
+                <span style={{ width: 84, flexShrink: 0, fontSize: 12, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: 2 }}>{r.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.55 }}>{r.value}</span>
               </div>
             ))}
@@ -690,7 +690,7 @@ export default function ClassLevelPage(props) {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
                <div>
-                 <h2 style={{ fontSize:24, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>
+                 <h2 style={{ fontSize:28, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>
                    {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
                     activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
                     activeSec === 'Skills' ? `Skills to Build in Class ${cleanLevel}` : `${activeSec} Insight`}
@@ -707,10 +707,10 @@ export default function ClassLevelPage(props) {
                </div>
             </div>
 
-             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(340px, 1fr))' : '1fr', gap: 32 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))' : '1fr', gap: 32 }}>
                 {activeSec === 'Careers' && cleanLevel !== '12' && filteredContent.length > 0 && (
                    <div style={{ marginBottom: 40 }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap:32 }}>
                          {filteredContent.map(item => (
                             <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:20, border:'1px solid var(--s-border)', position: 'relative' }}>
                                <button 
@@ -871,7 +871,7 @@ export default function ClassLevelPage(props) {
                       </div>
 
                      {/* Exams List */}
-                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 32 }}>
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap: 32 }}>
                         {filteredExams.length === 0 ? (
                            <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'50px 0', background:'#fff', borderRadius:20, border:'1px dashed #cbd5e1' }}>
                              <SEmpty title="No exams found" desc="We couldn't find any exams matching your criteria." />
@@ -969,19 +969,19 @@ export default function ClassLevelPage(props) {
                           <div style={{ background:'#f8fafc', borderRadius:16, padding:16, marginBottom:20, flex:1 }}>
                              {item.benefit && (
                                 <div style={{ marginBottom:12 }}>
-                                  <div style={{ fontSize:11, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Benefit</div>
+                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Benefit</div>
                                   <div style={{ fontSize:15, fontWeight:800, color:'#10b981' }}>{item.benefit}</div>
                                 </div>
                              )}
                              {item.eligibility && (
                                 <div style={{ marginBottom:12 }}>
-                                  <div style={{ fontSize:11, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Eligibility</div>
+                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Eligibility</div>
                                   <div style={{ fontSize:13, fontWeight:600, color:'#334155', lineHeight: 1.5 }}>{item.eligibility}</div>
                                 </div>
                              )}
                              {item.deadline && (
                                 <div>
-                                  <div style={{ fontSize:11, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Last Date</div>
+                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Last Date</div>
                                   <div style={{ fontSize:13, fontWeight:700, color:'#ef4444' }}>{item.deadline}</div>
                                 </div>
                              )}

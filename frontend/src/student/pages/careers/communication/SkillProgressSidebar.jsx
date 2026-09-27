@@ -107,7 +107,7 @@ export default function SkillProgressSidebar({ student, progress, badges }) {
           <div>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "rgba(255,255,255,0.6)",
                 textTransform: "uppercase",
                 fontWeight: 800,
@@ -129,7 +129,7 @@ export default function SkillProgressSidebar({ student, progress, badges }) {
           <div style={{ textAlign: "right" }}>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "rgba(255,255,255,0.6)",
                 textTransform: "uppercase",
                 fontWeight: 800,

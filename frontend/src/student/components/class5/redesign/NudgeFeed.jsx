@@ -49,7 +49,7 @@ export default function NudgeFeed({ nudges = [], compact = false }) {
                 borderRadius: 8,
                 background: '#e6f0f7',
                 color: C5.navy,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 800,
                 display: 'grid',
                 placeItems: 'center',

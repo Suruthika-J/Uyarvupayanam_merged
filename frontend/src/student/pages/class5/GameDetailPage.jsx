@@ -79,7 +79,7 @@ export default function GameDetailPage() {
             )}
           </div>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85 }}>
               {categoryIcon(game.category)} {cat.label} Quest
             </div>
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>{game.title}</h1>

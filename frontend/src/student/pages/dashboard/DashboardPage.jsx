@@ -504,15 +504,15 @@ export default function DashboardPage() {
                     <div>
                       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
                         <div style={{ padding: '16px 20px', background: '#eff6ff', borderRadius: 18, border: '1px solid #bfdbfe', flex: 1, minWidth: 140 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Communication Level</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Communication Level</span>
                           <strong style={{ fontSize: 20, color: '#1e3a8a' }}>Level {commProgress.progress?.level || 1}</strong>
                         </div>
                         <div style={{ padding: '16px 20px', background: '#f0fdf4', borderRadius: 18, border: '1px solid #bbf7d0', flex: 1, minWidth: 140 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Total XP Earned</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Total XP Earned</span>
                           <strong style={{ fontSize: 20, color: '#14532d' }}>{commProgress.progress?.xp || 0} XP</strong>
                         </div>
                         <div style={{ padding: '16px 20px', background: '#fff7ed', borderRadius: 18, border: '1px solid #ffedd5', flex: 1, minWidth: 140 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Current Streak</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Current Streak</span>
                           <strong style={{ fontSize: 20, color: '#7c2d12' }}>{commProgress.progress?.streak || 0} Days</strong>
                         </div>
                       </div>

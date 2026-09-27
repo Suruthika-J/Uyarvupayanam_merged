@@ -77,7 +77,7 @@ function DeadlineBadge({ deadlineStr }) {
   const c = colors[d.type] || colors.normal
   return (
     <span style={{
-      fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10,
+      fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 10,
       background: c.bg, color: c.color
     }}>
       {d.text}
@@ -117,7 +117,7 @@ function ScholarshipCard({ sch, isSaved, appStatus, onSave, onOpen, onStatusChan
       {/* Header Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <span style={{
-          fontSize: 10.5, fontWeight: 800, color: '#047857',
+          fontSize: 12, fontWeight: 800, color: '#047857',
           background: '#d1fae5', padding: '3px 10px', borderRadius: 10,
           textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0
         }}>
@@ -127,7 +127,7 @@ function ScholarshipCard({ sch, isSaved, appStatus, onSave, onOpen, onStatusChan
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {sch.matchPercentage && (
             <span style={{
-              fontSize: 11, fontWeight: 800,
+              fontSize: 12, fontWeight: 800,
               color: sch.matchPercentage >= 85 ? '#047857' : '#2563eb',
               background: sch.matchPercentage >= 85 ? '#d1fae5' : '#eff6ff',
               padding: '2px 8px', borderRadius: 8
@@ -155,7 +155,7 @@ function ScholarshipCard({ sch, isSaved, appStatus, onSave, onOpen, onStatusChan
 
       {/* Benefit Box */}
       <div style={{ background: '#f0fdf4', padding: '10px 12px', borderRadius: 12 }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: 2 }}>Financial Benefit</div>
+        <div style={{ fontSize: 12, fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: 2 }}>Financial Benefit</div>
         <div style={{ fontSize: 14, fontWeight: 900, color: '#047857' }}>{sch.benefit}</div>
       </div>
 
@@ -163,7 +163,7 @@ function ScholarshipCard({ sch, isSaved, appStatus, onSave, onOpen, onStatusChan
       {sch.matchReasons && sch.matchReasons.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {sch.matchReasons.slice(0, 2).map((r, i) => (
-            <div key={i} style={{ fontSize: 11.5, color: '#15803d', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div key={i} style={{ fontSize: 12, color: '#15803d', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
               {r}
             </div>
           ))}
@@ -176,7 +176,7 @@ function ScholarshipCard({ sch, isSaved, appStatus, onSave, onOpen, onStatusChan
 
         {appStatus ? (
           <span style={{
-            fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 8,
+            fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 8,
             background: STATUS_CONFIG[appStatus]?.bg, color: STATUS_CONFIG[appStatus]?.color,
             border: `1px solid ${STATUS_CONFIG[appStatus]?.border}`
           }}>
@@ -224,7 +224,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
         }}>
           <div style={{ flex: 1 }}>
             <span style={{
-              fontSize: 10.5, fontWeight: 800, color: '#047857',
+              fontSize: 12, fontWeight: 800, color: '#047857',
               background: '#d1fae5', padding: '3px 10px', borderRadius: 8, textTransform: 'uppercase'
             }}>
               {sch.category}
@@ -246,7 +246,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
 
           {/* Benefit Banner */}
           <div style={{ background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)', color: '#fff', padding: '20px 24px', borderRadius: 18 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#a7f3d0', fontWeight: 800, marginBottom: 4 }}>Total Scheme Benefit</div>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#a7f3d0', fontWeight: 800, marginBottom: 4 }}>Total Scheme Benefit</div>
             <div style={{ fontSize: 24, fontWeight: 900 }}>{sch.benefit}</div>
             <div style={{ marginTop: 12 }}>
               <DeadlineBadge deadlineStr={sch.deadline} />
@@ -260,7 +260,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <FiCheckCircle size={15} /> Profile Match Score
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', fontStyle: 'italic' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', fontStyle: 'italic' }}>
                   Potentially Eligible — verify requirements
                 </span>
               </div>
@@ -274,9 +274,9 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
               )}
               {sch.unverifiedCriteria?.length > 0 && (
                 <div style={{ marginTop: 12, padding: '10px 14px', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#b45309', marginBottom: 4 }}>⚠️ Eligibility Cannot Be Fully Verified:</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#b45309', marginBottom: 4 }}>⚠️ Eligibility Cannot Be Fully Verified:</div>
                   {sch.unverifiedCriteria.map((c, i) => (
-                    <div key={i} style={{ fontSize: 11.5, color: '#92400e', fontWeight: 600 }}>• {c}</div>
+                    <div key={i} style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>• {c}</div>
                   ))}
                 </div>
               )}
@@ -317,7 +317,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
           {/* Additional Eligibility */}
           {sch.additionalEligibility && (
             <div style={{ padding: 16, background: '#eff6ff', borderRadius: 14, border: '1px solid #bfdbfe' }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', marginBottom: 6 }}>
                 <FiInfo size={12} style={{ marginRight: 4 }} />Additional Requirements
               </div>
               <div style={{ fontSize: 13, color: '#1e40af', fontWeight: 600, lineHeight: 1.5 }}>{sch.additionalEligibility}</div>
@@ -341,7 +341,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
           {/* Terms */}
           {sch.termsAndConditions && (
             <div style={{ padding: 14, background: '#f8fafc', borderRadius: 12, border: '1px solid var(--s-border)' }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', marginBottom: 6 }}>TERMS & CONDITIONS</div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)', marginBottom: 6 }}>TERMS & CONDITIONS</div>
               <div style={{ fontSize: 12.5, color: 'var(--s-text2)', lineHeight: 1.5 }}>{sch.termsAndConditions}</div>
             </div>
           )}
@@ -374,7 +374,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
                 )
               })}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--s-text3)', marginTop: 10 }}>
+            <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 10 }}>
               Click again on an active status to remove it. This only tracks your intent — it does not submit an application on your behalf.
             </div>
           </div>
@@ -382,7 +382,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
           {/* Footer Actions */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--s-border)' }}>
             <div>
-              <div style={{ fontSize: 10, color: 'var(--s-text3)', fontWeight: 800 }}>APPLICATION DEADLINE</div>
+              <div style={{ fontSize: 12, color: 'var(--s-text3)', fontWeight: 800 }}>APPLICATION DEADLINE</div>
               <div style={{ fontSize: 14, fontWeight: 900, color: '#047857', marginTop: 2 }}>{sch.deadline || 'Ongoing / Rolling Basis'}</div>
             </div>
 
@@ -421,7 +421,7 @@ function ScholarshipDetailModal({ sch, isSaved, appStatus, onClose, onSave, onSt
 function InfoBox({ label, value }) {
   return (
     <div style={{ background: 'var(--s-surface2)', padding: '12px 14px', borderRadius: 12 }}>
-      <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--s-text)' }}>{value}</div>
     </div>
   )
@@ -605,7 +605,7 @@ export default function CollegeScholarshipsPage() {
         <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
         <div style={{ position: 'absolute', right: 60, bottom: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', padding: '4px 14px', borderRadius: 20, fontSize: 11, fontWeight: 800, marginBottom: 14 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, marginBottom: 14 }}>
           <FiAward size={13} /> Higher Education Financial Assistance Portal
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 8px', fontFamily: 'var(--s-font-display)', color: '#fff', lineHeight: 1.2 }}>
@@ -625,7 +625,7 @@ export default function CollegeScholarshipsPage() {
           ].map(stat => (
             <div key={stat.label} style={{ background: 'rgba(255,255,255,0.12)', padding: '8px 16px', borderRadius: 12 }}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>{stat.icon} {stat.value}</div>
-              <div style={{ fontSize: 10.5, color: '#a7f3d0', fontWeight: 700 }}>{stat.label}</div>
+              <div style={{ fontSize: 12, color: '#a7f3d0', fontWeight: 700 }}>{stat.label}</div>
             </div>
           ))}
         </div>
@@ -672,7 +672,7 @@ export default function CollegeScholarshipsPage() {
               {tab.label}
               {tabCounts[tab.id] > 0 && (
                 <span style={{
-                  marginLeft: 6, fontSize: 10, fontWeight: 800,
+                  marginLeft: 6, fontSize: 12, fontWeight: 800,
                   background: isActive ? '#047857' : '#e2e8f0',
                   color: isActive ? '#fff' : '#64748b',
                   padding: '1px 6px', borderRadius: 6
@@ -893,7 +893,7 @@ export default function CollegeScholarshipsPage() {
                       <span style={{ fontSize: 16 }}>{cfg.icon}</span>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 900, color: cfg.color }}>{count}</div>
-                        <div style={{ fontSize: 10.5, fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
                       </div>
                     </div>
                   )

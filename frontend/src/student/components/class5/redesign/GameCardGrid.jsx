@@ -119,7 +119,7 @@ export default function GameCardGrid({ games = [], loading }) {
                   style={{
                     background: 'rgba(255,255,255,0.22)',
                     color: '#fff',
-                    fontSize: 10.5,
+                    fontSize: 12,
                     fontWeight: 800,
                     padding: '3px 9px',
                     borderRadius: 99,
@@ -134,7 +134,7 @@ export default function GameCardGrid({ games = [], loading }) {
                       bottom: 10,
                       right: 12,
                       color: '#fff',
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 800,
                       background: 'rgba(0,0,0,0.35)',
                       padding: '2px 8px',
@@ -153,7 +153,7 @@ export default function GameCardGrid({ games = [], loading }) {
                 <p style={{ fontSize: 12.5, color: C5.muted, lineHeight: 1.55, margin: '6px 0 10px' }}>{g.oneLiner}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                   {(g.skillTags || []).map((tag) => (
-                    <span key={tag} style={{ fontSize: 10.5, fontWeight: 800, background: '#eef3f8', color: C5.muted, padding: '3px 9px', borderRadius: 99 }}>
+                    <span key={tag} style={{ fontSize: 12, fontWeight: 800, background: '#eef3f8', color: C5.muted, padding: '3px 9px', borderRadius: 99 }}>
                       {tag}
                     </span>
                   ))}
@@ -169,7 +169,7 @@ export default function GameCardGrid({ games = [], loading }) {
                   justifyContent: 'space-between',
                 }}
               >
-                <span style={{ fontSize: 11.5, fontWeight: 800, color: C5.faint }}>+{g.xpValue} XP</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: C5.faint }}>+{g.xpValue} XP</span>
                 <span
                   style={{
                     fontSize: 12.5,
