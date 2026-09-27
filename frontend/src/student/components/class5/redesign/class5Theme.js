@@ -1,5 +1,5 @@
 // Shared visual tokens + tiny helpers for the Class 5 redesign.
-// Mirrors the navy visual language already used across the student UI.
+// Mirrors the green brand visual language used across the student UI.
 // Icons come from Feather (react-icons/fi). Real photos come from Unsplash
 // CDN URLs (stable) so the dashboard shows pictures instead of decorations.
 
@@ -47,8 +47,8 @@ import {
 } from 'react-icons/fi'
 
 export const C5 = {
-  navy: '#0f4c75',
-  navyDeep: '#083a5c',
+  navy: '#1a7a50',
+  navyDeep: '#145c3d',
   ink: '#1e293b',
   muted: '#5b6b80',
   faint: '#8ea0b4',
@@ -58,7 +58,7 @@ export const C5 = {
   radius: 24,
   radiusLg: 32,
   shadow: '0 10px 15px -3px rgba(0,0,0,0.02)',
-  shadowLg: '0 18px 40px -12px rgba(15,76,117,0.18)',
+  shadowLg: '0 18px 40px -12px rgba(26,122,80,0.18)',
 }
 
 export const WORLD_COLORS = {

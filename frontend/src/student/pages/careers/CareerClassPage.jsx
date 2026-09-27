@@ -44,7 +44,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
 
       {/* description */}
       <p style={{ margin: 0, fontSize: 14, color: 'var(--s-text3)', lineHeight: 1.75, flex: 1 }}>
-        {shortDesc.length > 180 ? shortDesc.slice(0, 180) + 'â€¦' : shortDesc}
+        {shortDesc.length > 180 ? shortDesc.slice(0, 180) + '…' : shortDesc}
       </p>
 
       {/* course tags */}
@@ -113,12 +113,12 @@ export default function CareerClassPage() {
     })
   }, [careers, interestFilter, search])
 
-  // â”€â”€ invalid class key â”€â”€
+  // invalid class key
   if (!config) {
     return (
       <div className="student-root" style={{ padding: '40px 20px', maxWidth: 1080, margin: '0 auto' }}>
         <SEmpty
-          icon="ðŸ§­"
+          icon="🧭"
           title="Class not found"
           desc="Choose one of the available class guidance categories to continue."
         />
@@ -136,7 +136,7 @@ export default function CareerClassPage() {
   return (
     <div className="student-root" style={{ padding: '32px 20px 48px', maxWidth: 1180, margin: '0 auto' }}>
 
-      {/* â”€â”€ hero banner â”€â”€ */}
+      {/* hero banner */}
       <div className="s-anim-up" style={{
         marginBottom: 28,
         padding: '28px clamp(20px, 4vw, 34px)',
@@ -187,7 +187,7 @@ export default function CareerClassPage() {
               fontFamily: 'var(--s-font-display)',
               fontSize: 34, fontWeight: 900, color: accent,
             }}>
-              {loading ? 'â€¦' : filteredCareers.length}
+              {loading ? '…' : filteredCareers.length}
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function CareerClassPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--s-text2)', fontWeight: 700 }}>
           <FiStar size={15} color={accent} />
-          {loading ? 'Loadingâ€¦' : `Showing ${filteredCareers.length} career path${filteredCareers.length === 1 ? '' : 's'}`}
+          {loading ? 'Loading…' : `Showing ${filteredCareers.length} career path${filteredCareers.length === 1 ? '' : 's'}`}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {CAREER_CLASS_CONFIGS.filter((c) => c.key !== config.key).map((c) => (
@@ -231,14 +231,14 @@ export default function CareerClassPage() {
         </div>
       </div>
 
-      {/* â”€â”€ career grid â”€â”€ */}
+      {/* career grid */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
           <SLoader />
         </div>
       ) : filteredCareers.length === 0 ? (
         <SEmpty
-          icon="ðŸ›¤ï¸"
+          icon="🛤️"
           title={`No career paths found for ${config.title}`}
           desc={search || interestFilter !== 'All'
             ? 'Try clearing your search or changing the interest filter.'

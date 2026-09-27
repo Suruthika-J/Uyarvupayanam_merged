@@ -67,14 +67,14 @@ export default function MentorRequestModal({ isOpen, onClose, initialInterest = 
         style={{ maxWidth: 500, width: '95%' }}
       >
         <div className="s-modal-header">
-          <h3 className="s-modal-title">🤝 Talk to a Mentor</h3>
+          <h3 className="s-modal-title">Talk to a Mentor</h3>
           <button className="s-modal-close" onClick={onClose}><FiX /></button>
         </div>
 
         {success ? (
           <div className="s-modal-body" style={{ textAlign: 'center', padding: '40px 20px' }}>
             <FiCheckCircle size={64} color="var(--s-success)" style={{ marginBottom: 20 }} />
-            <h2 style={{ marginBottom: 12, color: 'var(--s-text1)' }}>Request Submitted!</h2>
+            <h2 style={{ marginBottom: 12, color: 'var(--s-text)' }}>Request Submitted!</h2>
             <p style={{ color: 'var(--s-text3)', lineHeight: 1.6, marginBottom: 24 }}>
               Your guidance request has been submitted successfully. Our mentor/admin will contact you soon.
             </p>
@@ -187,11 +187,12 @@ export default function MentorRequestModal({ isOpen, onClose, initialInterest = 
             </div>
 
             <div style={{ marginTop: 24 }}>
-              <SBtn 
+              <SBtn
                 type="submit" variant="primary" style={{ width: '100%', height: 44 }}
-                disabled={loading}
+                loading={loading}
+                icon={<FiSend size={15} />}
               >
-                {loading ? <div className="s-btn-spinner" /> : <><FiSend /> Submit Request</>}
+                Submit Request
               </SBtn>
             </div>
           </form>

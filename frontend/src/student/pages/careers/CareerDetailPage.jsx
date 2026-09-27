@@ -85,7 +85,7 @@ function TagList({ items, accent }) {
 function NotFound({ id }) {
   return (
     <div style={{ padding: '60px 20px', maxWidth: 540, margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ fontSize: 56, marginBottom: 16 }}>ðŸ§­</div>
+      <div style={{ fontSize: 56, marginBottom: 16 }}>🧭</div>
       <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, color: 'var(--s-text)', margin: '0 0 10px' }}>
         Career Path Not Found
       </h2>

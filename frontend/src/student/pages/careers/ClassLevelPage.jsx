@@ -20,8 +20,8 @@ import axiosInstance from '../../../config/axios'
 import StreamsInsight from '../../components/streams/StreamsInsight'
 import CollegesInsight from '../../components/colleges/CollegesInsight'
 
-// Accent for the Class N pages — matches the Journey Explorer's School track (purple).
-const ACCENT = '#7C3AED'
+// Accent for the Class N pages — aligned with the green brand token (--s-primary).
+const ACCENT = '#1a7a50'
 
 const CLASS_SECTIONS = {
   default: [
@@ -29,7 +29,7 @@ const CLASS_SECTIONS = {
     { id: 'Exams', label: 'Exams', icon: FiAward, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
-    { id: 'Games', label: 'Games', icon: FiStar, color: '#8b5cf6' },
+    { id: 'Games', label: 'Games', icon: FiStar, color: '#0284c7' },
     { id: 'Videos', label: 'Videos', icon: FiVideo, color: '#ef4444' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
@@ -38,11 +38,11 @@ const CLASS_SECTIONS = {
     { id: 'Entrance Exams', label: 'Exams', icon: FiAward, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#10b981' },
-    { id: 'Games', label: 'Games', icon: FiStar, color: '#8b5cf6' },
+    { id: 'Games', label: 'Games', icon: FiStar, color: '#0284c7' },
   ],
   "8": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
-    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
+    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
@@ -50,14 +50,14 @@ const CLASS_SECTIONS = {
   "10": [
     { id: 'Streams', label: 'Streams', icon: FiLayers, color: '#16A34A' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
-    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
+    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#f59e0b' },
   ],
   "12": [
     { id: 'Basics', label: 'Basics', icon: FiFlag, color: '#6366f1' },
     { id: 'Careers', label: 'Careers', icon: FiBriefcase, color: '#3b82f6' },
     { id: 'Colleges', label: 'Colleges', icon: FiMapPin, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
-    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#8b5cf6' },
+    { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#f59e0b' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
     { id: 'FAQs', label: 'FAQs', icon: FiHelpCircle, color: '#334155' }
@@ -125,14 +125,14 @@ const ExamCardDetails = ({ exam }) => {
 };
 
 /* ---------------------------------------------------------------------------
- * Class 10 Entrance Exams — curated cards (purple Streams theme)
+ * Class 10 Entrance Exams — curated cards (brand-aligned)
  * Maintains the accuracy notes: TRUSTS is a Class 9 window; Police Constable
  * and Army GD are future options (minimum age rules), not apply-now steps.
  * ------------------------------------------------------------------------ */
 const CLASS10_FLAG_TONES = {
   amber: { light: '#FEF3C7', border: '#FDE68A', text: '#B45309' },
   blue: { light: '#EFF6FF', border: '#DBEAFE', text: '#1D4ED8' },
-  purple: { light: '#F5ECFF', border: '#E9D5FF', text: '#6D28D9' },
+  green: { light: '#D1FAE5', border: '#A7F3D0', text: '#047857' },
 }
 
 const CLASS10_EXAMS = [
@@ -192,7 +192,7 @@ const CLASS10_EXAMS = [
     name: 'Indian Army — Soldier GD / Agniveer',
     category: 'Defence Career',
     conducting: 'Indian Army, under the Agnipath Scheme',
-    flag: { tone: 'purple', text: 'Future option — apply at 17.5+' },
+    flag: { tone: 'green', text: 'Future option — apply at 17.5+' },
     rows: [
       { label: 'Eligibility', value: 'Class 10 pass with 45% aggregate and minimum 33% in each subject' },
       { label: 'Age', value: '17.5–21 years' },
@@ -218,7 +218,7 @@ const Class10ExamPanel = () => (
   <div style={{ gridColumn: '1/-1' }}>
     {/* Context callout */}
     <div style={{ background: '#fff', border: '1px solid #eaf0f6', borderRadius: 24, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
-      <div style={{ width: 44, height: 44, borderRadius: 14, background: '#F5ECFF', color: ACCENT, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+      <div style={{ width: 44, height: 44, borderRadius: 14, background: '#E6F4EC', color: ACCENT, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
         <FiFileText size={20} />
       </div>
       <div>
@@ -233,10 +233,10 @@ const Class10ExamPanel = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 28 }}>
       {CLASS10_EXAMS.map(e => (
         <div key={e.id} style={{ background: '#fff', borderRadius: 28, border: '1px solid #eaf0f6', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="hover-lift">
-          <div style={{ height: 6, background: 'linear-gradient(90deg, #7C3AED 0%, #a855f7 100%)' }} />
+          <div style={{ height: 6, background: 'linear-gradient(90deg, #1a7a50 0%, #2d9d6a 100%)' }} />
           <div style={{ padding: '20px 22px 14px' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <SBadge color="purple">{e.category}</SBadge>
+              <SBadge color="green">{e.category}</SBadge>
               {e.flag && (
                 <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', padding: '5px 10px', borderRadius: 99, background: CLASS10_FLAG_TONES[e.flag.tone].light, color: CLASS10_FLAG_TONES[e.flag.tone].text, border: `1px solid ${CLASS10_FLAG_TONES[e.flag.tone].border}` }}>
                   {e.flag.text}
@@ -657,7 +657,7 @@ export default function ClassLevelPage(props) {
                   fontFamily: 'var(--s-font-display)', cursor: 'pointer', whiteSpace: 'nowrap',
                   color: selected ? '#fff' : C5.muted,
                   background: selected ? ACCENT : 'transparent',
-                  boxShadow: selected ? '0 6px 14px -6px rgba(124,58,237,0.55)' : 'none',
+                  boxShadow: selected ? '0 6px 14px -6px rgba(26,122,80,0.45)' : 'none',
                   transition: 'all 0.18s ease',
                 }}
               >
@@ -686,7 +686,7 @@ export default function ClassLevelPage(props) {
                 onClick={() => setActiveSubTab(tab)}
                 style={{
                   padding: '8px 24px', borderRadius: 99, border: activeSubTab === tab ? `2px solid ${ACCENT}` : '1px solid #e2e8f0',
-                  background: activeSubTab === tab ? '#F5ECFF' : '#fff',
+                  background: activeSubTab === tab ? '#E6F4EC' : '#fff',
                   color: activeSubTab === tab ? ACCENT : '#64748b',
                   fontWeight: 700, fontSize:13, cursor: 'pointer', transition: 'all 0.2s', whiteSpace:'nowrap'
                 }}
@@ -782,9 +782,9 @@ export default function ClassLevelPage(props) {
                           <div style={{ display:'flex', alignItems:'center', gap:24 }}>
                              <div style={{ 
                                width:64, height:64, borderRadius:20, 
-                               background: `linear-gradient(135deg, ${ACCENT} 0%, #a855f7 100%)`, 
+                               background: `linear-gradient(135deg, ${ACCENT} 0%, #2d9d6a 100%)`, 
                                color:'#fff', display:'grid', placeItems:'center', fontWeight:900, fontSize:24,
-                               boxShadow: '0 10px 20px -5px rgba(124, 58, 237, 0.4)'
+                               boxShadow: '0 10px 20px -5px rgba(26, 122, 80, 0.4)'
                              }}>
                                 {group.categoryName.substring(0, 1).toUpperCase()}
                              </div>
@@ -853,7 +853,7 @@ export default function ClassLevelPage(props) {
                                { name: 'Science (PCM)', careers: 'Engineering, Architecture, Defence, Data Science', tone: '#2563eb' },
                                { name: 'Science (PCB)', careers: 'Medical, Pharmacy, Nursing, Biotechnology', tone: '#059669' },
                                { name: 'Commerce', careers: 'CA, CS, B.Com, BBA, Banking & Finance', tone: '#d97706' },
-                               { name: 'Arts & Humanities', careers: 'Law, Civil Services, Design, Journalism, Teaching', tone: '#7c3aed' },
+                               { name: 'Arts & Humanities', careers: 'Law, Civil Services, Design, Journalism, Teaching', tone: '#475569' },
                             ].map((s) => (
                                <div key={s.name} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: '14px 16px' }}>
                                   <div style={{ fontWeight: 800, fontSize: 14.5, color: s.tone, marginBottom: 6 }}>{s.name}</div>
@@ -870,7 +870,7 @@ export default function ClassLevelPage(props) {
                             {[
                                { label: 'Engineering', fact: 'TNEA — marks based, no entrance test', tone: '#2563eb' },
                                { label: 'Medical', fact: 'NEET compulsory', tone: '#059669' },
-                               { label: 'Arts & Science', fact: 'Merit or CUET', tone: '#7c3aed' },
+                               { label: 'Arts & Science', fact: 'Merit or CUET', tone: '#475569' },
                             ].map((f) => (
                                <div key={f.label} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                                   <div style={{ marginTop: 4, width: 8, height: 8, borderRadius: 99, background: f.tone, flexShrink: 0 }} />
@@ -942,7 +942,7 @@ export default function ClassLevelPage(props) {
                         difficulty="Beginner"
                         cta="Play Now"
                         emoji="🔍"
-                        gradient="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                        gradient="linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)"
                         onStart={() => navigate('/student/class5/games/pattern-master')}
                       />
                     </div>
@@ -971,7 +971,7 @@ export default function ClassLevelPage(props) {
                           <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', paddingRight: 50 }}>
                              <SBadge color="green">Scholarship</SBadge>
 
-                             {(item.grades || []).map(g => <SBadge key={g} color="purple">{g}</SBadge>)}
+                             {(item.grades || []).map(g => <SBadge key={g} color="gray">{g}</SBadge>)}
                           </div>
                           
                           <h3 style={{ fontSize:22, fontWeight:900, margin:'0 0 8px', lineHeight:1.3 }}>{item.scholarshipName}</h3>

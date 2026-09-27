@@ -124,7 +124,7 @@ export default function CollegeCourseExplorer() {
                 className="dropdown-item-hover"
               >
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s-primary-l)', color: 'var(--s-primary)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>
-                  ðŸ «
+                  🏫
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--s-text)' }}>{c.collegeName}</div>
@@ -151,7 +151,7 @@ export default function CollegeCourseExplorer() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
                 <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'grid', placeItems: 'center', fontSize: 28 }}>
-                  ðŸ «
+                  🏫
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>{selectedCollege.collegeName}</h2>
@@ -247,7 +247,7 @@ export default function CollegeCourseExplorer() {
             height: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
             background: 'var(--s-surface2)', borderRadius: 24, padding: 40, border: '2px dashed var(--s-border)', color: 'var(--s-text3)', textAlign: 'center'
           }}>
-            <div style={{ fontSize: 44, marginBottom: 16 }}>ðŸ”Ž</div>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🔎</div>
             <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Global College Course Lookup</h3>
             <p style={{ maxWidth: 400, margin: 0, fontSize: 14.5 }}>Find any institution above to see exactly what they offer. We use verified mapping data for 100% accuracy.</p>
           </div>

@@ -28,8 +28,8 @@ export default function Class5Dashboard() {
         style={{
           padding: '34px 24px 0',
           textAlign: 'center',
-          background: 'linear-gradient(180deg, #eaf3fb 0%, #fbfdff 100%)',
-          borderBottom: '1px solid #eef3f8',
+          background: 'linear-gradient(180deg, #eaf7f2 0%, #fbfdff 100%)',
+          borderBottom: '1px solid #e6f2ec',
           marginBottom: 30,
         }}
       >
@@ -45,7 +45,7 @@ export default function Class5Dashboard() {
               textTransform: 'uppercase',
               color: C5.navy,
               background: '#fff',
-              border: '1px solid #dbe7f1',
+              border: '1px solid #d8ece1',
               borderRadius: 99,
               padding: '6px 14px',
               marginBottom: 12,

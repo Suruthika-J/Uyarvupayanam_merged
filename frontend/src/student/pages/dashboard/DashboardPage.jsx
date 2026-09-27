@@ -14,7 +14,7 @@ import MentorRequestModal from '../../components/mentor/MentorRequestModal'
 import onboardingService from '../../../services/onboardingService'
 import class5CommunicationService from '../../../services/class5CommunicationService'
 
-/* â”€â”€ Sidebar navigation config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Sidebar navigation config ─────────────────────────────── */
 const SIDEBAR_NAV = [
   { id: 'dashboard',     icon: FiGrid,     label: 'Dashboard',      to: '/student/dashboard' },
   { id: 'bookmarks',     icon: FiAward,    label: 'My Bookmarks',   to: '/student/bookmarks' },
@@ -26,49 +26,52 @@ const SIDEBAR_NAV = [
   { id: 'profile',       icon: FiUser,     label: 'Profile',        to: '/student/profile' },
 ]
 
-/* â”€â”€ Stat card gradient presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-const STAT_GRADIENTS = [
-  'linear-gradient(135deg, #1d5fba 0%, #3b82f6 100%)',
-  'linear-gradient(135deg, #e17055 0%, #f97316 100%)',
-  'linear-gradient(135deg, #c48a1a 0%, #eab308 100%)',
-  'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-]
+/* Removed: stat card gradients (Phase 1K — green-on-white surface cards) */
 
 /* ── Recommended careers (static fallback & dynamic mapping) ──────── */
 const CAREER_CARDS = [
-  { icon: '⚙️', title: 'Engineering',  sub: 'Build the future',      bg: '#eaf0fb', color: '#1d5fba' },
-  { icon: '🩺', title: 'Medicine',     sub: 'Heal & innovate',       bg: '#fce4ec', color: '#c62828' },
-  { icon: '📊', title: 'Commerce',     sub: 'Business & finance',    bg: '#fdf4e0', color: '#c48a1a' },
-  { icon: '🎨', title: 'Arts',         sub: 'Create & express',      bg: '#f3effe', color: '#7c3aed' },
+  { icon: '⚙️', title: 'Engineering',  sub: 'Build the future',      bg: '#e0f2fe', color: '#0369a1' },
+  { icon: '🩺', title: 'Medicine',     sub: 'Heal & innovate',       bg: '#d1fae5', color: '#047857' },
+  { icon: '📊', title: 'Commerce',     sub: 'Business & finance',    bg: '#fef3c7', color: '#b45309' },
+  { icon: '🎨', title: 'Arts',         sub: 'Create & express',      bg: '#f1f5f9', color: '#475569' },
 ]
 
+/* Career-icon pastel pairs are kept to four families (blue/green/slate/gold)
+   so the dashboard reads as one palette. Icons are content glyphs. */
+const CAREER_CARDS_PAIRS = {
+  blue:  { bg: '#e0f2fe', color: '#0369a1' },
+  green: { bg: '#d1fae5', color: '#047857' },
+  gold:  { bg: '#fef3c7', color: '#b45309' },
+  slate: { bg: '#f1f5f9', color: '#475569' },
+}
+
 const CAREER_INFO_MAP = {
-  'Engineering': { icon: '⚙️', sub: 'Build the future', bg: '#eaf0fb', color: '#1d5fba' },
-  'IT': { icon: '💻', sub: 'Tech & Software', bg: '#e0f2fe', color: '#0ea5e9' },
-  'Data Science': { icon: '📈', sub: 'Analytics & AI', bg: '#f3e8ff', color: '#9333ea' },
-  'Polytechnic': { icon: '🔧', sub: 'Technical Skills', bg: '#ffedd5', color: '#ea580c' },
-  'Medical': { icon: '🩺', sub: 'Heal & innovate', bg: '#fce4ec', color: '#c62828' },
-  'Nursing': { icon: '🏥', sub: 'Patient Care', bg: '#ffe4e6', color: '#e11d48' },
-  'Pharmacy': { icon: '💊', sub: 'Medicine expert', bg: '#dcfce7', color: '#16a34a' },
-  'Agriculture': { icon: '🌱', sub: 'Farming & Science', bg: '#fef08a', color: '#854d0e' },
-  'Biotechnology': { icon: '🧬', sub: 'Bio & Tech', bg: '#e0e7ff', color: '#4f46e5' },
-  'Design': { icon: '🎨', sub: 'Create & express', bg: '#f3effe', color: '#7c3aed' },
-  'Media': { icon: '🎬', sub: 'Broadcast & Film', bg: '#fce7f3', color: '#db2777' },
-  'Teaching': { icon: '👩‍🏫', sub: 'Educate the next gen', bg: '#fae8ff', color: '#c026d3' },
-  'Journalism': { icon: '📰', sub: 'News & Writing', bg: '#f1f5f9', color: '#475569' },
-  'Arts': { icon: '🎭', sub: 'Culture & Expression', bg: '#fee2e2', color: '#dc2626' },
-  'Commerce': { icon: '📊', sub: 'Business & finance', bg: '#fdf4e0', color: '#c48a1a' },
-  'CA': { icon: '🧮', sub: 'Accountancy', bg: '#fef3c7', color: '#d97706' },
-  'B.Com': { icon: '💼', sub: 'Bachelor of Commerce', bg: '#ffedd5', color: '#ea580c' },
-  'Business': { icon: '🏢', sub: 'Enterprise', bg: '#e0e7ff', color: '#4338ca' },
-  'Management': { icon: '👔', sub: 'Lead & organize', bg: '#dbeafe', color: '#2563eb' },
-  'Civil Services': { icon: '🏛️', sub: 'Public Administration', bg: '#e2e8f0', color: '#334155' },
-  'Law': { icon: '⚖️', sub: 'Justice & Rights', bg: '#ffedd5', color: '#c2410c' },
-  'Public Administration': { icon: '📋', sub: 'Government operations', bg: '#f1f5f9', color: '#475569' }
+  'Engineering': { icon: '⚙️', sub: 'Build the future', ...CAREER_CARDS_PAIRS.blue },
+  'IT': { icon: '💻', sub: 'Tech & Software', ...CAREER_CARDS_PAIRS.blue },
+  'Data Science': { icon: '📈', sub: 'Analytics & AI', ...CAREER_CARDS_PAIRS.blue },
+  'Polytechnic': { icon: '🔧', sub: 'Technical Skills', ...CAREER_CARDS_PAIRS.green },
+  'Medical': { icon: '🩺', sub: 'Heal & innovate', ...CAREER_CARDS_PAIRS.green },
+  'Nursing': { icon: '🏥', sub: 'Patient Care', ...CAREER_CARDS_PAIRS.green },
+  'Pharmacy': { icon: '💊', sub: 'Medicine expert', ...CAREER_CARDS_PAIRS.green },
+  'Agriculture': { icon: '🌱', sub: 'Farming & Science', ...CAREER_CARDS_PAIRS.green },
+  'Biotechnology': { icon: '🧬', sub: 'Bio & Tech', ...CAREER_CARDS_PAIRS.blue },
+  'Design': { icon: '🎨', sub: 'Create & express', ...CAREER_CARDS_PAIRS.slate },
+  'Media': { icon: '🎬', sub: 'Broadcast & Film', ...CAREER_CARDS_PAIRS.slate },
+  'Teaching': { icon: '👩‍🏫', sub: 'Educate the next gen', ...CAREER_CARDS_PAIRS.green },
+  'Journalism': { icon: '📰', sub: 'News & Writing', ...CAREER_CARDS_PAIRS.slate },
+  'Arts': { icon: '🎭', sub: 'Culture & Expression', ...CAREER_CARDS_PAIRS.slate },
+  'Commerce': { icon: '📊', sub: 'Business & finance', ...CAREER_CARDS_PAIRS.gold },
+  'CA': { icon: '🧮', sub: 'Accountancy', ...CAREER_CARDS_PAIRS.gold },
+  'B.Com': { icon: '💼', sub: 'Bachelor of Commerce', ...CAREER_CARDS_PAIRS.gold },
+  'Business': { icon: '🏢', sub: 'Enterprise', ...CAREER_CARDS_PAIRS.blue },
+  'Management': { icon: '👔', sub: 'Lead & organize', ...CAREER_CARDS_PAIRS.blue },
+  'Civil Services': { icon: '🏛️', sub: 'Public Administration', ...CAREER_CARDS_PAIRS.slate },
+  'Law': { icon: '⚖️', sub: 'Justice & Rights', ...CAREER_CARDS_PAIRS.slate },
+  'Public Administration': { icon: '📋', sub: 'Government operations', ...CAREER_CARDS_PAIRS.slate }
 };
 
 const getDefaultCareerCard = (title) => ({
-  icon: '🎓', title, sub: 'Explore this path', bg: '#f3f4f6', color: '#4b5563'
+  icon: '🎓', title, sub: 'Explore this path', ...CAREER_CARDS_PAIRS.slate
 });
 
 /* ── TimeAgo helper ───────────────────────────────────────────── */
@@ -195,7 +198,7 @@ export default function DashboardPage() {
                 sub: s.category || 'Skill',
                 icon: '🚀',
                 bg: '#e0f2fe',
-                color: '#0ea5e9',
+                color: '#0369a1',
                 link: `/student/career-path/class-5/${s.slug}`
               }));
               setRecommendedCareerCards(mappedSkills);
@@ -347,25 +350,25 @@ export default function DashboardPage() {
 
         {/* Welcome Banner */}
         <div className={`${s.welcomeBanner} s-anim-up`}>
-          <div className={s.welcomeGreet}>{greet} 👋</div>
+          <div className={s.welcomeGreet}>{greet}</div>
           <div className={s.welcomeName}>Welcome back, {firstName}!</div>
           <div className={s.welcomeDesc}>
             Explore your future career paths, find the right colleges, and never miss an exam deadline.
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
             <SBtn variant="primary" onClick={() => setIsMentorModalOpen(true)}>
-              🤝 Talk to Mentor
+              Talk to Mentor
             </SBtn>
             {String(viewStudent?.classLevel).includes('12') && (
               <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
-                🏫 Explore Colleges
+                Explore Colleges
               </SBtn>
             )}
           </div>
           <div className={s.welcomeBadges}>
-            {viewStudent?.classLevel && <span className={s.welcomeTag}>🎓 Class {viewStudent.classLevel}</span>}
-            {viewStudent?.district && <span className={s.welcomeTag}>📍 {viewStudent.district}</span>}
-            {unreadCount > 0 && <span className={s.welcomeTag}>🔔 {unreadCount} new alert{unreadCount > 1 ? 's' : ''}</span>}
+            {viewStudent?.classLevel && <span className={s.welcomeTag}>Class {viewStudent.classLevel}</span>}
+            {viewStudent?.district && <span className={s.welcomeTag}>{viewStudent.district}</span>}
+            {unreadCount > 0 && <span className={s.welcomeTag}>{unreadCount} new alert{unreadCount > 1 ? 's' : ''}</span>}
           </div>
         </div>
 
@@ -379,11 +382,10 @@ export default function DashboardPage() {
                 const isVeryJunior = ['5', '8', '5th', '8th'].includes(String(viewStudent?.classLevel));
                 if (isVeryJunior && (stat.label === 'Courses Available' || stat.label === 'Colleges')) return false;
                 return true;
-              }).map((stat, i) => (
+              }).map((stat) => (
                 <div
                   key={stat.label}
                   className={s.statCard}
-                  style={{ background: STAT_GRADIENTS[i % STAT_GRADIENTS.length] }}
                 >
                   <div className={s.statIcon}>{stat.icon}</div>
                   <div className={s.statValue}>{stat.value}</div>
@@ -396,14 +398,14 @@ export default function DashboardPage() {
             {(['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) && recommendation && (
               <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
                 <SSectionHeader
-                  title="🎯 My Personalized Recommendation"
+                  title="My Personalized Recommendation"
                   subtitle="Detailed analysis based on your assessment and interests"
                   action={() => navigate('/student/onboarding/result')}
                   actionLabel="View Full Result"
                 />
                 <SCard style={{ padding: 0, borderRadius: 24, overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                   <div style={{ 
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    background: 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)',
                     padding: '32px 40px', color: '#fff'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
@@ -441,10 +443,10 @@ export default function DashboardPage() {
                               <span key={s} style={{ padding: '6px 14px', background: '#f0f9ff', color: '#0369a1', borderRadius: 10, fontSize: 14, fontWeight: 700, border: '1px solid #bae6fd' }}>{s}</span>
                             ))}
                             {recommendation.recommendedCourses?.map(c => (
-                              <span key={c} style={{ padding: '6px 14px', background: '#f5f3ff', color: '#6d28d9', borderRadius: 10, fontSize: 14, fontWeight: 700, border: '1px solid #ddd6fe' }}>{c}</span>
+                              <span key={c} style={{ padding: '6px 14px', background: '#f0fdf4', color: '#15803d', borderRadius: 10, fontSize: 14, fontWeight: 700, border: '1px solid #bbf7d0' }}>{c}</span>
                             ))}
                             {recommendation.recommendedExams?.map(e => (
-                              <span key={e} style={{ padding: '6px 14px', background: '#fff7ed', color: '#c2410c', borderRadius: 10, fontSize: 14, fontWeight: 700, border: '1px solid #ffedd5' }}>{e}</span>
+                              <span key={e} style={{ padding: '6px 14px', background: '#fffbeb', color: '#b45309', borderRadius: 10, fontSize: 14, fontWeight: 700, border: '1px solid #fde68a' }}>{e}</span>
                             ))}
                           </div>
                         </div>
@@ -492,7 +494,7 @@ export default function DashboardPage() {
             {isClass5 && commProgress && (
               <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
                 <SSectionHeader
-                  title="🚀 My Skill Journey"
+                  title="My Skill Journey"
                   subtitle="Track your real-time communication skills and achievements"
                   action={() => navigate('/student/class5/skills/communicationskills')}
                   actionLabel="Go to Interactive Lab"
@@ -511,7 +513,7 @@ export default function DashboardPage() {
                         </div>
                         <div style={{ padding: '16px 20px', background: '#fff7ed', borderRadius: 18, border: '1px solid #ffedd5', flex: 1, minWidth: 140 }}>
                           <span style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 1, display: 'block', marginBottom: 4 }}>Current Streak</span>
-                          <strong style={{ fontSize: 20, color: '#7c2d12' }}>{commProgress.progress?.streak || 0} Days 🔥</strong>
+                          <strong style={{ fontSize: 20, color: '#7c2d12' }}>{commProgress.progress?.streak || 0} Days</strong>
                         </div>
                       </div>
 
@@ -522,8 +524,8 @@ export default function DashboardPage() {
                         ) : (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                             {commProgress.badges?.map(b => (
-                              <span key={b} style={{ padding: '6px 12px', background: '#f5f3ff', color: '#6d28d9', borderRadius: 10, fontSize: 12, fontWeight: 800, border: '1px solid #ddd6fe' }}>
-                                🌟 {b}
+                              <span key={b} style={{ padding: '6px 12px', background: '#fef3c7', color: '#b45309', borderRadius: 10, fontSize: 12, fontWeight: 800, border: '1px solid #fde68a' }}>
+                                {b}
                               </span>
                             ))}
                           </div>
@@ -548,7 +550,7 @@ export default function DashboardPage() {
             {/* ── Recommended Resources ─────────────────────────────── */}
             <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `🚀 Recommended for Class ${viewStudent?.classLevel?.replace(/\D/g, '')}` : "🧩 Recommended Careers" }
+                title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `Recommended for Class ${viewStudent?.classLevel?.replace(/\D/g, '')}` : "Recommended Careers" }
                 subtitle={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? "Based on your assessment results." : "Explore popular career paths tailored for your future." }
                 action={() => navigate((['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `/student/career-path/class-${viewStudent?.classLevel?.replace(/\D/g, '')}` : '/student/careers')}
                 actionLabel="View All"
@@ -569,7 +571,7 @@ export default function DashboardPage() {
             {/* ── Saved Resources ─────────────────────────────── */}
             <div id="saved" className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title="🔖 Saved Resources"
+                title="Saved Resources"
                 subtitle="Your bookmarked careers, exams, and scholarships"
               />
               {savedGuidance.length === 0 ? (
@@ -586,7 +588,7 @@ export default function DashboardPage() {
                       ClassContent: { badge: `Class ${c.targetClass || ''}`, color: 'blue',   link: `/student/career-path/class-${c.targetClass}/${c.slug}` },
                       Exam:         { badge: 'Entrance Exam',               color: 'orange', link: '/student/careers' },
                       Scholarship:  { badge: 'Scholarship',                 color: 'green',  link: `/student/scholarships/${c._id}` },
-                      College:      { badge: 'College',                     color: 'purple', link: `/student/colleges/${c._id}` },
+                      College:      { badge: 'College',                     color: 'gray',   link: `/student/colleges/${c._id}` },
                       Course:       { badge: 'Course',                      color: 'indigo', link: `/student/course/${c.slug}` },
                       CareerPath:   { badge: 'Career Path',                 color: 'gold',   link: `/student/careers/path/${c._id}` }
                     }
@@ -624,7 +626,7 @@ export default function DashboardPage() {
             {/* ── My Guidance Requests ─────────────────────────────── */}
             <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title="🗣️ My Guidance Requests"
+                title="My Guidance Requests"
                 subtitle="Track your interactions with our mentors"
                 action={() => setIsMentorModalOpen(true)}
                 actionLabel="Request New Guidance"
@@ -666,7 +668,7 @@ export default function DashboardPage() {
               {/* Upcoming Exams */}
               <div>
                 <SSectionHeader
-                  title="📝 Upcoming Exams"
+                  title="Upcoming Exams"
                   subtitle="Important entrance exams and their deadlines."
                 />
                 {exams.length === 0 ? (
@@ -674,8 +676,8 @@ export default function DashboardPage() {
                 ) : (
                   <div className={s.examList}>
                     {exams.map((exam, i) => {
-                      const colors = ['#eaf0fb', '#fce4ec', '#fdf4e0', '#f3effe']
-                      const textColors = ['#1d5fba', '#c62828', '#c48a1a', '#7c3aed']
+                      const colors = ['#e0f2fe', '#d1fae5', '#fef3c7', '#f8fafc']
+                      const textColors = ['#0369a1', '#047857', '#b45309', '#475569']
                       return (
                         <div key={exam._id || i} className={s.examCard}>
                           <div
@@ -701,11 +703,11 @@ export default function DashboardPage() {
               {/* Latest Scholarships */}
               <div>
                 <SSectionHeader
-                  title="🎓 Latest Scholarships"
+                  title="Latest Scholarships"
                   subtitle="Don't miss these deadlines"
                 />
                 {scholarships.length === 0 ? (
-                  <SEmpty icon="ðŸŽ“" title="No scholarships yet" />
+                  <SEmpty icon="🎓" title="No scholarships yet" />
                 ) : (
                   <div className={s.scholarshipList}>
                     {scholarships.map((sch, i) => (
@@ -729,16 +731,16 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* â”€â”€ Notifications Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ── Notifications Preview ──────────────────────────────── */}
             <div className="s-anim-up s-d4" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title="🔔 Notifications"
+                title="Notifications"
                 subtitle="Latest 3 updates from admin"
                 action={() => navigate('/student/notifications')}
                 actionLabel="View All"
               />
               {notifications.length === 0 ? (
-                <SEmpty icon="ðŸ””" title="No notifications yet" desc="Admin updates will appear here" />
+                <SEmpty icon="🔔" title="No notifications yet" desc="Admin updates will appear here" />
               ) : (
                 <div className={s.notifList}>
                   {notifications.map((n, i) => (
@@ -751,7 +753,7 @@ export default function DashboardPage() {
                         {!n.isRead && <span className={s.notifDot} />}
                       </div>
                       <div className={s.notifMsg}>
-                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? 'â€¦' : ''}
+                        {n.message?.substring(0, 120)}{n.message?.length > 120 ? '…' : ''}
                       </div>
                       <div className={s.notifTime}>{timeAgo(n.createdAt)}</div>
                     </div>
