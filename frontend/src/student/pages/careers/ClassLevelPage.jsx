@@ -9,7 +9,7 @@ import {
 import { classContentService } from '../../../services/classContentService'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
-import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
+import { SBtn, SLoader, SEmpty, SBadge, SAlert, STabs } from '../../components/ui'
 import { C5 } from '../../components/class5/redesign/class5Theme'
 import ActivityCard from '../../components/class5/activities/ActivityCard'
 import { careerService } from '../../services'
@@ -84,11 +84,11 @@ const ExamCardDetails = ({ exam }) => {
   const [tab, setTab] = useState('Prep');
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, borderBottom: '1px solid var(--s-border)', paddingBottom: 8 }}>
         {['Prep', 'Careers', 'Resources'].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ 
-            background: 'none', border: 'none', padding: '4px 8px', cursor: 'pointer',
-            fontSize: 13, fontWeight: 700, color: tab === t ? ACCENT : '#94a3b8',
+            background: 'none', border: 'none', padding: '6px 10px', cursor: 'pointer',
+            fontSize: 13.5, fontWeight: 700, color: tab === t ? ACCENT : '#94a3b8',
             borderBottom: tab === t ? `2px solid ${ACCENT}` : '2px solid transparent'
           }}>
             {t}
@@ -217,7 +217,7 @@ const CLASS10_EXAMS = [
 const Class10ExamPanel = () => (
   <div style={{ gridColumn: '1/-1' }}>
     {/* Context callout */}
-    <div style={{ background: '#fff', border: '1px solid #eaf0f6', borderRadius: 24, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+    <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: '20px 24px', marginBottom: 28, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: 'var(--s-shadow)' }}>
       <div style={{ width: 44, height: 44, borderRadius: 14, background: '#E6F4EC', color: ACCENT, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
         <FiFileText size={20} />
       </div>
@@ -232,7 +232,7 @@ const Class10ExamPanel = () => (
 
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 28 }}>
       {CLASS10_EXAMS.map(e => (
-        <div key={e.id} style={{ background: '#fff', borderRadius: 28, border: '1px solid #eaf0f6', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="hover-lift">
+        <div key={e.id} style={{ background: '#fff', borderRadius: 20, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} className="hover-lift">
           <div style={{ height: 6, background: 'linear-gradient(90deg, #1a7a50 0%, #2d9d6a 100%)' }} />
           <div style={{ padding: '20px 22px 14px' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -247,12 +247,12 @@ const Class10ExamPanel = () => (
               {e.name}
               {e.abbr && <span style={{ color: ACCENT, fontWeight: 800, fontSize: 12.5, letterSpacing: '0.04em', marginLeft: 6 }}>({e.abbr})</span>}
             </h3>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#64748b' }}>{e.conducting}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>{e.conducting}</div>
           </div>
           <div style={{ padding: '4px 22px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             {e.rows.map(r => (
-              <div key={r.label} style={{ borderTop: '1px solid #f1f5f9', padding: '10px 0', display: 'flex', gap: 12 }}>
-                <span style={{ width: 84, flexShrink: 0, fontSize: 10.5, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: 2 }}>{r.label}</span>
+              <div key={r.label} style={{ borderTop: '1px solid var(--s-border)', padding: '10px 0', display: 'flex', gap: 12 }}>
+                <span style={{ width: 84, flexShrink: 0, fontSize: 11, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: 2 }}>{r.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.55 }}>{r.value}</span>
               </div>
             ))}
@@ -583,15 +583,15 @@ export default function ClassLevelPage(props) {
       <section style={{
         padding: '34px 24px 0',
         textAlign: 'center',
-        background: 'linear-gradient(180deg, #eaf3fb 0%, #fbfdff 100%)',
-        borderBottom: '1px solid #eef3f8',
+        background: 'linear-gradient(180deg, #e6f4ec 0%, #fbfdff 100%)',
+        borderBottom: '1px solid #e8f0eb',
         marginBottom: 30,
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-            color: ACCENT, background: '#fff', border: '1px solid #dbe7f1',
+            color: ACCENT, background: '#fff', border: '1px solid #d9e6df',
             borderRadius: 99, padding: '6px 14px', marginBottom: 12,
           }}>
             Uyarvu Payanam · Class {cleanLevel}
@@ -608,11 +608,11 @@ export default function ClassLevelPage(props) {
           </p>
           <div style={{ padding: '26px 0 0', display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {Number(cleanLevel) === 12 && (
-              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: ACCENT, color: '#fff', border: 'none', borderRadius: 14, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: ACCENT, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <FiMapPin size={16} /> Explore Colleges
               </SBtn>
             )}
-            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ background: '#fff', color: ACCENT, border: '1px solid #dbe7f1', borderRadius: 14, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <SBtn variant="white" onClick={() => document.getElementById('explorer-start')?.scrollIntoView({ behavior: 'smooth' })} style={{ background: '#fff', color: ACCENT, border: '1px solid var(--s-border)', borderRadius: 12, padding: '12px 28px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               <FiChevronDown size={16} /> Start Exploring
             </SBtn>
           </div>
@@ -623,7 +623,7 @@ export default function ClassLevelPage(props) {
       <section id="explorer-start" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
 
         {/* Breadcrumb back to the journey */}
-        <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#94a3b8', marginBottom: 22, flexWrap: 'wrap' }}>
+        <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#94a3b8', marginBottom: 22, flexWrap: 'wrap' }}>
           <Link to="/explore" style={{ color: ACCENT, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <FiArrowLeft size={13} /> Career Journey
           </Link>
@@ -637,36 +637,23 @@ export default function ClassLevelPage(props) {
           )}
         </nav>
 
-        {/* Section Tabs (Class 5 pill nav) */}
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 8,
-          background: '#f7fafc', border: '1px solid #eaf0f6',
-          borderRadius: 99, padding: 6,
-          marginBottom: activeSec === 'Streams' ? 20 : 36,
-          position: 'sticky', top: 20, zIndex: 100,
-        }}>
-          {availableSections.map(s => {
-            const selected = activeSec === s.id
-            return (
-              <button
-                key={s.id}
-                onClick={() => { setActiveSec(s.id); setActiveSubTab('All'); }}
-                style={{
-                  flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7,
-                  padding: '10px 16px', borderRadius: 99, fontSize: 13.5, fontWeight: 700,
-                  fontFamily: 'var(--s-font-display)', cursor: 'pointer', whiteSpace: 'nowrap',
-                  color: selected ? '#fff' : C5.muted,
-                  background: selected ? ACCENT : 'transparent',
-                  boxShadow: selected ? '0 6px 14px -6px rgba(26,122,80,0.45)' : 'none',
-                  transition: 'all 0.18s ease',
-                }}
-              >
-                <s.icon size={16} strokeWidth={2.4} style={{ opacity: selected ? 1 : 0.75, color: selected ? '#fff' : s.color }} />
-                {s.label}
-              </button>
-            )
-          })}
-        </div>
+        {/* Section Tabs — shared STabs pill primitive: green active, neutral inactive */}
+        <STabs
+          tabs={availableSections.map(s => ({
+            id: s.id,
+            label: s.label,
+            icon: <s.icon size={16} strokeWidth={2.4} />,
+            iconColor: s.color,
+          }))}
+          active={activeSec}
+          onChange={(id) => { setActiveSec(id); setActiveSubTab('All'); }}
+          style={{
+            display: 'flex', flexWrap: 'wrap',
+            border: '1px solid #e8f0eb',
+            marginBottom: activeSec === 'Streams' ? 20 : 36,
+            position: 'sticky', top: 20, zIndex: 100,
+          }}
+        />
 
         {/* Sub-Tabs for Targeted Sections */}
         {['Streams', 'Scholarships', 'Entrance Exams'].includes(activeSec) && !(cleanLevel === '10' && activeSec === 'Streams') && !(cleanLevel === '12' && activeSec === 'Entrance Exams') && (
@@ -685,10 +672,10 @@ export default function ClassLevelPage(props) {
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
                 style={{
-                  padding: '8px 24px', borderRadius: 99, border: activeSubTab === tab ? `2px solid ${ACCENT}` : '1px solid #e2e8f0',
+                  padding: '8px 22px', borderRadius: 99, border: activeSubTab === tab ? `2px solid ${ACCENT}` : '1px solid var(--s-border)',
                   background: activeSubTab === tab ? '#E6F4EC' : '#fff',
                   color: activeSubTab === tab ? ACCENT : '#64748b',
-                  fontWeight: 700, fontSize:13, cursor: 'pointer', transition: 'all 0.2s', whiteSpace:'nowrap'
+                  fontWeight: 700, fontSize: 13.5, cursor: 'pointer', transition: 'all 0.2s', whiteSpace:'nowrap'
                 }}
               >
                 {tab}
@@ -703,19 +690,19 @@ export default function ClassLevelPage(props) {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
                <div>
-                 <h2 style={{ fontSize:28, fontWeight:900, color: C5.ink, letterSpacing: '-0.02em' }}>
+                 <h2 style={{ fontSize:24, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>
                    {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
                     activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
                     activeSec === 'Skills' ? `Skills to Build in Class ${cleanLevel}` : `${activeSec} Insight`}
                  </h2>
                  {activeSec === 'Scholarships' && (
-                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Explore available scholarships you are eligible for.</p>
+                   <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Explore available scholarships you are eligible for.</p>
                  )}
                  {activeSec === 'Exams' && (
-                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Explore useful exams, learn what to study, and prepare in a simple way.</p>
+                   <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Explore useful exams, learn what to study, and prepare in a simple way.</p>
                  )}
                  {activeSec === 'Skills' && (
-                   <p style={{ color:'#64748b', fontSize: 16, marginTop: 8, margin: '8px 0 0 0' }}>Grow your abilities step by step!</p>
+                   <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Grow your abilities step by step!</p>
                  )}
                </div>
             </div>
@@ -725,12 +712,12 @@ export default function ClassLevelPage(props) {
                    <div style={{ marginBottom: 40 }}>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(360px, 1fr))', gap:32 }}>
                          {filteredContent.map(item => (
-                            <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:32, border:'1px solid #f1f5f9', position: 'relative' }}>
+                            <div key={item._id} style={{ background:'#fff', padding:32, borderRadius:20, border:'1px solid var(--s-border)', position: 'relative' }}>
                                <button 
                                  onClick={() => handleSaveAction(item)} 
                                  style={{ 
                                    position:'absolute', top:24, right:24, width:44, height:44, 
-                                   borderRadius:99, background:'#f8fafc', border:'1px solid #e2e8f0', cursor:'pointer', 
+                                   borderRadius:99, background:'#f8fafc', border:'1px solid var(--s-border)', cursor:'pointer', 
                                    display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
                                    transition: 'all 0.2s'
                                  }}
@@ -762,7 +749,7 @@ export default function ClassLevelPage(props) {
                   explorerLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : explorerData.length === 0 ? (
-                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:20, border:'1px dashed #cbd5e1' }}>
                       <SEmpty icon={activeSec === 'Careers' ? <FiBriefcase size={48} /> : <FiMapPin size={48} />} title={`No ${activeSec.toLowerCase()} found`} desc="We couldn't find matching data for this category." />
                     </div>
                   ) : (
@@ -772,9 +759,9 @@ export default function ClassLevelPage(props) {
                           key={group.categoryName} 
                           onClick={() => navigate(`/student/colleges/category/${group.categoryName}`)}
                           style={{ 
-                            background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', 
+                            background:'#fff', borderRadius:20, border:'1px solid var(--s-border)', 
                             padding: '32px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            boxShadow:'0 10px 15px -3px rgba(0,0,0,0.04)', cursor: 'pointer',
+                            boxShadow:'var(--s-shadow)', cursor: 'pointer',
                             transition: 'all 0.3s ease'
                           }}
                           className="insight-header-hover hover-lift"
@@ -811,12 +798,12 @@ export default function ClassLevelPage(props) {
                   mappingLoading ? (
                     <div style={{ gridColumn: '1/-1', padding: '100px 0' }}><SLoader /></div>
                   ) : mappingData.length === 0 ? (
-                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                    <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:20, border:'1px dashed #cbd5e1' }}>
                       <SEmpty icon={<FiLink size={48} />} title="No mappings found" desc="Contact admin to map colleges to courses for this level." />
                     </div>
                   ) : (
                     mappingData.map(clg => (
-                      <div key={clg._id} style={{ background:'#fff', borderRadius:24, border:'1px solid #f1f5f9', padding:24, boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)' }}>
+                      <div key={clg._id} style={{ background:'#fff', borderRadius:20, border:'1px solid var(--s-border)', padding:24, boxShadow:'var(--s-shadow)' }}>
                         <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:20 }}>
                           <div style={{ width:48, height:48, borderRadius:12, background:'var(--s-primary-l)', color:'var(--s-primary)', display:'grid', placeItems:'center', fontSize:20 }}><FiMapPin size={24} /></div>
                           <div>
@@ -829,7 +816,7 @@ export default function ClassLevelPage(props) {
                           <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Courses Available</div>
                           <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                             {clg.coursesOffered && clg.coursesOffered.map(c => (
-                              <span key={c._id} style={{ background:'#fff', border:'1px solid #e2e8f0', padding:'6px 12px', borderRadius:8, fontSize:13, fontWeight:600 }}>
+                              <span key={c._id} style={{ background:'#fff', border:'1px solid var(--s-border)', padding:'6px 12px', borderRadius:8, fontSize:13, fontWeight:600 }}>
                                 {c.courseName}
                               </span>
                             ))}
@@ -845,7 +832,7 @@ export default function ClassLevelPage(props) {
                 ) : activeSec === 'Entrance Exams' && cleanLevel === '12' ? (
                   <div style={{ gridColumn: '1/-1' }}>
                       {/* Stream → Career Mapping (clean white card, professional) */}
-                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 28, marginBottom: 24, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+                      <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: 28, marginBottom: 24, boxShadow: 'var(--s-shadow)' }}>
                          <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', margin: '0 0 4px' }}>Stream → Career Mapping</h3>
                          <p style={{ margin: '0 0 20px', fontSize: 13.5, fontWeight: 600, color: '#64748b' }}>Career directions your Class 12 stream opens up.</p>
                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
@@ -855,7 +842,7 @@ export default function ClassLevelPage(props) {
                                { name: 'Commerce', careers: 'CA, CS, B.Com, BBA, Banking & Finance', tone: '#d97706' },
                                { name: 'Arts & Humanities', careers: 'Law, Civil Services, Design, Journalism, Teaching', tone: '#475569' },
                             ].map((s) => (
-                               <div key={s.name} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: '14px 16px' }}>
+                               <div key={s.name} style={{ background: '#f8fafc', border: '1px solid var(--s-border)', borderRadius: 16, padding: '14px 16px' }}>
                                   <div style={{ fontWeight: 800, fontSize: 14.5, color: s.tone, marginBottom: 6 }}>{s.name}</div>
                                   <div style={{ fontSize: 13, lineHeight: 1.5, color: '#475569' }}>{s.careers}</div>
                                </div>
@@ -864,7 +851,7 @@ export default function ClassLevelPage(props) {
                       </div>
 
                       {/* Tamil Nadu Entrance Facts (clean white card, professional) */}
-                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24, padding: 24, marginBottom: 36, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.04)' }}>
+                      <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: 24, marginBottom: 36, boxShadow: 'var(--s-shadow)' }}>
                          <h3 style={{ fontSize: 16, fontWeight: 900, color: '#0f172a', margin: '0 0 16px' }}>Tamil Nadu Entrance Facts</h3>
                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                             {[
@@ -872,7 +859,7 @@ export default function ClassLevelPage(props) {
                                { label: 'Medical', fact: 'NEET compulsory', tone: '#059669' },
                                { label: 'Arts & Science', fact: 'Merit or CUET', tone: '#475569' },
                             ].map((f) => (
-                               <div key={f.label} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                               <div key={f.label} style={{ background: '#f8fafc', border: '1px solid var(--s-border)', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                                   <div style={{ marginTop: 4, width: 8, height: 8, borderRadius: 99, background: f.tone, flexShrink: 0 }} />
                                   <div>
                                      <div style={{ fontWeight: 800, fontSize: 13, color: '#334155' }}>{f.label}</div>
@@ -886,12 +873,12 @@ export default function ClassLevelPage(props) {
                      {/* Exams List */}
                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 32 }}>
                         {filteredExams.length === 0 ? (
-                           <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'50px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                           <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'50px 0', background:'#fff', borderRadius:20, border:'1px dashed #cbd5e1' }}>
                              <SEmpty title="No exams found" desc="We couldn't find any exams matching your criteria." />
                            </div>
                         ) : (
                            filteredExams.map(exam => (
-                             <div key={exam._id} style={{ background: '#fff', padding: 24, borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }} className="hover-lift">
+                             <div key={exam._id} style={{ background: '#fff', padding: 24, borderRadius: 20, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow)', display: 'flex', flexDirection: 'column' }} className="hover-lift">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                                    <div>
                                      <SBadge color="blue">{exam.category}</SBadge>
@@ -927,7 +914,7 @@ export default function ClassLevelPage(props) {
                   <Class10ExamPanel />
                 ) : activeSec === 'Streams' && cleanLevel === '10' ? null
                 : filteredContent.length === 0 ? (
-                <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:32, border:'1px dashed #cbd5e1' }}>
+                <div style={{ gridColumn: '1/-1', textAlign:'center', padding:'100px 0', background:'#fff', borderRadius:20, border:'1px dashed #cbd5e1' }}>
                   <SEmpty title="Nothing found yet" desc={`We haven't added items to ${activeSec} for Class ${cleanLevel} yet.`} />
                 </div>
               ) : (
@@ -951,16 +938,16 @@ export default function ClassLevelPage(props) {
                   if (item.isDirect) {
                     return (
                       <div key={item._id} style={{ 
-                        background:'#fff', borderRadius:32, border:'1px solid #f1f5f9', 
+                        background:'#fff', borderRadius:20, border:'1px solid var(--s-border)', 
                         overflow:'hidden', display:'flex', flexDirection:'column', 
-                        boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', transition:'0.3s' 
+                        boxShadow:'var(--s-shadow)', transition:'0.3s' 
                       }} className="hover-lift">
                         <div style={{ padding: 32, flex:1, display:'flex', flexDirection:'column', position: 'relative' }}>
                           <button 
                             onClick={() => handleSaveAction(item)} 
                             style={{ 
                               position:'absolute', top:24, right:24, width:44, height:44, 
-                              borderRadius:99, background:'#f8fafc', border:'1px solid #e2e8f0', cursor:'pointer', 
+                              borderRadius:99, background:'#f8fafc', border:'1px solid var(--s-border)', cursor:'pointer', 
                               display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
                               transition: 'all 0.2s'
                             }}
@@ -1002,7 +989,7 @@ export default function ClassLevelPage(props) {
                           
                           <SBtn 
                              variant="outline"
-                             style={{ width:'100%', borderRadius:16, padding:'14px 0', border: `2px solid ${ACCENT}`, color: ACCENT }} 
+                             style={{ width:'100%', borderRadius:12, padding:'14px 0', border: `2px solid ${ACCENT}`, color: ACCENT }} 
                              onClick={() => handleCardClick(item)}
                           >
                              Apply / View Details ↗
@@ -1014,9 +1001,9 @@ export default function ClassLevelPage(props) {
 
                   return (
                     <div key={item._id} style={{ 
-                      background:'#fff', borderRadius:32, border:'1px solid #f1f5f9', 
+                      background:'#fff', borderRadius:20, border:'1px solid var(--s-border)', 
                       overflow:'hidden', display:'flex', flexDirection:'column', 
-                      boxShadow:'0 10px 15px -3px rgba(0,0,0,0.02)', transition:'0.3s' 
+                      boxShadow:'var(--s-shadow)', transition:'0.3s' 
                     }} className="hover-lift">
                       <div style={{ width: '100%', height: 230, position:'relative' }}>
                         <img src={item.coverImage || 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1042,7 +1029,7 @@ export default function ClassLevelPage(props) {
                          <p style={{ color:'#64748b', marginBottom:24, lineHeight:1.6 }}>{item.shortDescription}</p>
                          <SBtn 
                             variant="primary"
-                            style={{ width:'100%', marginTop:'auto', borderRadius:16, padding:'14px 0' }} 
+                            style={{ width:'100%', marginTop:'auto', borderRadius:12, padding:'14px 0' }} 
                             onClick={() => handleCardClick(item)}
                          >
                             Explore Detailed Guide

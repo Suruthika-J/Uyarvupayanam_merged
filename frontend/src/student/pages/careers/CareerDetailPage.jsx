@@ -8,13 +8,13 @@ import { careerService } from '../../services'
 import { SBadge, SBtn, SCard, SLoader } from '../../components/ui'
 import { CAREER_CLASS_MAP, CAREER_CLASS_CONFIGS } from './careerCatalog'
 
-// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 function getConfigByLevel(level) {
   return CAREER_CLASS_CONFIGS.find((c) => c.level === level) || CAREER_CLASS_CONFIGS[0]
 }
 
-// â”€â”€ sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── sub-components ────────────────────────────────────────────────────────────
 
 function SectionHeader({ icon: Icon, label, accent }) {
   return (
@@ -80,7 +80,7 @@ function TagList({ items, accent }) {
   )
 }
 
-// â”€â”€ error state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── error state ───────────────────────────────────────────────────────────────
 
 function NotFound({ id }) {
   return (
@@ -99,7 +99,7 @@ function NotFound({ id }) {
   )
 }
 
-// â”€â”€ main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── main component ────────────────────────────────────────────────────────────
 
 export default function CareerDetailPage() {
   const { id } = useParams()
@@ -139,7 +139,7 @@ export default function CareerDetailPage() {
   return (
     <div className="student-root" style={{ padding: '32px 20px 60px', maxWidth: 980, margin: '0 auto' }}>
 
-      {/* â”€â”€ back nav â”€â”€ */}
+      {/* ── back nav ── */}
       <Link
         to={`/careers/class/${classKey}`}
         style={{
@@ -152,7 +152,7 @@ export default function CareerDetailPage() {
         Back to {config.title} Career Paths
       </Link>
 
-      {/* â”€â”€ hero banner â”€â”€ */}
+      {/* ── hero banner ── */}
       <SCard className="s-anim-up" style={{
         padding: 'clamp(24px, 4vw, 40px)',
         marginBottom: 28,
@@ -199,7 +199,7 @@ export default function CareerDetailPage() {
         )}
       </SCard>
 
-      {/* â”€â”€ 3-col grid: roadmap | courses | opportunities â”€â”€ */}
+      {/* ── 3-col grid: roadmap | courses | opportunities ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
 
         {/* Roadmap */}
@@ -241,7 +241,7 @@ export default function CareerDetailPage() {
         </div>
       </div>
 
-      {/* â”€â”€ footer CTA â”€â”€ */}
+      {/* ── footer CTA ── */}
       <div className="s-anim-up" style={{
         marginTop: 32, padding: '28px 28px',
         borderRadius: 24, textAlign: 'center',

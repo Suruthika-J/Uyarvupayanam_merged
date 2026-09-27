@@ -30,7 +30,7 @@ function ProfessionalClassCard({ item, index }) {
     >
       <div style={{
         background: '#fff',
-        borderRadius: 32,
+        borderRadius: 20,
         padding: '40px 32px',
         border: `1.5px solid ${isHovered ? meta.color : 'var(--s-border)'}`,
         height: '100%',
@@ -39,8 +39,8 @@ function ProfessionalClassCard({ item, index }) {
         gap: 24,
         position: 'relative',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: isHovered ? 'translateY(-8px)' : 'none',
-        boxShadow: isHovered ? `0 20px 40px ${meta.color}15` : '0 4px 20px rgba(0,0,0,0.02)',
+        transform: isHovered ? 'translateY(-4px)' : 'none',
+        boxShadow: isHovered ? '0 12px 28px rgba(15,23,42,0.1)' : 'var(--s-shadow)',
       }}>
         {/* Animated Background Element */}
         <div style={{
@@ -62,7 +62,7 @@ function ProfessionalClassCard({ item, index }) {
         </div>
 
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 24, color: 'var(--s-text)', margin: '0 0 12px' }}>
+          <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 22, color: 'var(--s-text)', margin: '0 0 12px' }}>
             {item.heading}
           </h2>
           <p style={{ margin: 0, fontSize: 16, color: 'var(--s-text3)', lineHeight: 1.7 }}>
@@ -103,13 +103,13 @@ export default function CareersPage() {
         padding: '80px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden',
         background: '#fff', borderBottom: '1px solid var(--s-border)'
       }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, background: 'linear-gradient(90deg, #8b5cf6, #3b82f6, #10b981, #f59e0b)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, background: 'linear-gradient(90deg, var(--s-primary-d), var(--s-primary), #2d9d6a)' }} />
         
         <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative' }}>
-          <SBadge color="purple" style={{ marginBottom: 20 }}>Career Roadmap Hub</SBadge>
+          <SBadge color="green" style={{ marginBottom: 20 }}>Career Roadmap Hub</SBadge>
           <h1 style={{ 
-            fontFamily: 'var(--s-font-display)', fontWeight: 950, fontSize: 'clamp(40px, 6vw, 64px)', 
-            color: 'var(--s-text)', margin: '0 0 20px', letterSpacing: '-0.05em', lineHeight: 1
+            fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 'clamp(34px, 4.5vw, 48px)', 
+            color: 'var(--s-text)', margin: '0 0 20px', letterSpacing: '-0.03em', lineHeight: 1.1
           }}>
             Your Future <span style={{ color: 'var(--s-primary)' }}>Starts Here.</span>
           </h1>
@@ -122,7 +122,7 @@ export default function CareersPage() {
                 <FiZap style={{ color: '#f59e0b' }} /> Verified Roadmaps
              </div>
              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--s-text2)', fontWeight: 600 }}>
-                <FiHexagon style={{ color: '#8b5cf6' }} /> Skill Integration
+                <FiHexagon style={{ color: 'var(--s-accent)' }} /> Skill Integration
              </div>
              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--s-text2)', fontWeight: 600 }}>
                 <FiAward style={{ color: '#10b981' }} /> Scholarship Awareness
@@ -145,11 +145,11 @@ export default function CareersPage() {
         <section style={{ maxWidth: 1000, margin: '80px auto 0', padding: '0 24px' }}>
           <div style={{
             background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            borderRadius: 40,
+            borderRadius: 28,
             padding: '60px 40px',
             textAlign: 'center',
             color: '#fff',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
+            boxShadow: '0 20px 40px rgba(15,23,42,0.12)',
             position: 'relative',
             overflow: 'hidden'
           }}>
@@ -163,7 +163,7 @@ export default function CareersPage() {
               Join thousands of students who are already tracking their progress and receiving custom career recommendations based on their unique interests.
             </p>
             <Link to="/student/signin" state={{ from: location.pathname }} style={{ textDecoration: 'none' }}>
-              <SBtn size="lg" style={{ background: '#fff', color: '#0f172a', fontWeight: 900, padding: '16px 48px', borderRadius: 20 }}>
+              <SBtn size="lg" style={{ background: '#fff', color: '#0f172a', fontWeight: 900, padding: '16px 48px', borderRadius: 12 }}>
                 Create Your Free Profile
               </SBtn>
             </Link>

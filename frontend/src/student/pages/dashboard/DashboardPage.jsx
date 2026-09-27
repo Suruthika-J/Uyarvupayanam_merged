@@ -7,7 +7,7 @@ import { SBtn, SLoader, SSectionHeader, SEmpty, SBadge, SCard } from '../../comp
 import {
   FiGrid, FiBookOpen, FiMapPin, FiFileText, FiAward,
   FiBell, FiUser, FiLogOut, FiArrowRight,
-  FiClock, FiMenu, FiX,
+  FiClock, FiMenu, FiX, FiMessageSquare,
 } from 'react-icons/fi'
 import s from './DashboardPage.module.css'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
@@ -273,10 +273,10 @@ export default function DashboardPage() {
 
   /* ── Stat card data ────────────────────────────────────────── */
   const STAT_CARDS = [
-    { icon: '📚', label: 'Courses Available', value: stats.courses },
-    { icon: '📝', label: 'Entrance Exams', value: stats.exams },
-    { icon: '🎓', label: 'Scholarships', value: stats.scholarships },
-    { icon: '🏫', label: 'Colleges', value: stats.colleges },
+    { icon: <FiBookOpen size={20} />, label: 'Courses Available', value: stats.courses },
+    { icon: <FiFileText size={20} />, label: 'Entrance Exams', value: stats.exams },
+    { icon: <FiAward size={20} />, label: 'Scholarships', value: stats.scholarships },
+    { icon: <FiMapPin size={20} />, label: 'Colleges', value: stats.colleges },
   ]
 
   return (
@@ -396,14 +396,14 @@ export default function DashboardPage() {
 
             {/* ── My Skill Recommendation (Class 5, 8, 10, 12) ─────────── */}
             {(['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) && recommendation && (
-              <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
+              <div className="s-anim-up s-d2" style={{ marginBottom: 44 }}>
                 <SSectionHeader
                   title="My Personalized Recommendation"
                   subtitle="Detailed analysis based on your assessment and interests"
                   action={() => navigate('/student/onboarding/result')}
                   actionLabel="View Full Result"
                 />
-                <SCard style={{ padding: 0, borderRadius: 24, overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                <SCard style={{ padding: 0, borderRadius: 20, overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                   <div style={{ 
                     background: 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)',
                     padding: '32px 40px', color: '#fff'
@@ -492,14 +492,14 @@ export default function DashboardPage() {
             )}
 
             {isClass5 && commProgress && (
-              <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
+              <div className="s-anim-up s-d2" style={{ marginBottom: 44 }}>
                 <SSectionHeader
                   title="My Skill Journey"
                   subtitle="Track your real-time communication skills and achievements"
                   action={() => navigate('/student/class5/skills/communicationskills')}
                   actionLabel="Go to Interactive Lab"
                 />
-                <SCard style={{ padding: 32, borderRadius: 24, background: '#fff', border: '1px solid #f1f5f9', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
+                <SCard style={{ padding: 32, borderRadius: 20, background: '#fff', border: '1px solid #f1f5f9', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32 }} className="s-grid-1col">
                     <div>
                       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -548,7 +548,7 @@ export default function DashboardPage() {
             )}
 
             {/* ── Recommended Resources ─────────────────────────────── */}
-            <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
+            <div className="s-anim-up s-d2" style={{ marginBottom: 44 }}>
               <SSectionHeader
                 title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `Recommended for Class ${viewStudent?.classLevel?.replace(/\D/g, '')}` : "Recommended Careers" }
                 subtitle={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? "Based on your assessment results." : "Explore popular career paths tailored for your future." }
@@ -569,13 +569,13 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Saved Resources ─────────────────────────────── */}
-            <div id="saved" className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
+            <div id="saved" className="s-anim-up s-d2" style={{ marginBottom: 44 }}>
               <SSectionHeader
                 title="Saved Resources"
                 subtitle="Your bookmarked careers, exams, and scholarships"
               />
               {savedGuidance.length === 0 ? (
-                <SEmpty icon="🔖" title="No saved resources yet" desc="Bookmark items to keep track of your career journey." />
+                <SEmpty icon={<FiAward size={48} />} title="No saved resources yet" desc="Bookmark items to keep track of your career journey." />
               ) : (
                 <div className={s.savedGrid}>
                   {savedGuidance.map((item, i) => {
@@ -624,7 +624,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ── My Guidance Requests ─────────────────────────────── */}
-            <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
+            <div className="s-anim-up s-d2" style={{ marginBottom: 44 }}>
               <SSectionHeader
                 title="My Guidance Requests"
                 subtitle="Track your interactions with our mentors"
@@ -632,7 +632,7 @@ export default function DashboardPage() {
                 actionLabel="Request New Guidance"
               />
               {mentorRequests.length === 0 ? (
-                <SEmpty icon="🗣️" title="No requests yet" desc="Need help? Talk to our mentors today." />
+                <SEmpty icon={<FiMessageSquare size={48} />} title="No requests yet" desc="Need help? Talk to our mentors today." />
               ) : (
                 <div className={s.mentorGrid}>
                   {mentorRequests.map((req) => (
@@ -672,7 +672,7 @@ export default function DashboardPage() {
                   subtitle="Important entrance exams and their deadlines."
                 />
                 {exams.length === 0 ? (
-                  <SEmpty icon="📝" title="No exams listed yet" />
+                  <SEmpty icon={<FiFileText size={48} />} title="No exams listed yet" />
                 ) : (
                   <div className={s.examList}>
                     {exams.map((exam, i) => {
@@ -707,7 +707,7 @@ export default function DashboardPage() {
                   subtitle="Don't miss these deadlines"
                 />
                 {scholarships.length === 0 ? (
-                  <SEmpty icon="🎓" title="No scholarships yet" />
+                  <SEmpty icon={<FiAward size={48} />} title="No scholarships yet" />
                 ) : (
                   <div className={s.scholarshipList}>
                     {scholarships.map((sch, i) => (
@@ -732,7 +732,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Notifications Preview ──────────────────────────────── */}
-            <div className="s-anim-up s-d4" style={{ marginBottom: 28 }}>
+            <div className="s-anim-up s-d4" style={{ marginBottom: 44 }}>
               <SSectionHeader
                 title="Notifications"
                 subtitle="Latest 3 updates from admin"
@@ -740,7 +740,7 @@ export default function DashboardPage() {
                 actionLabel="View All"
               />
               {notifications.length === 0 ? (
-                <SEmpty icon="🔔" title="No notifications yet" desc="Admin updates will appear here" />
+                <SEmpty icon={<FiBell size={48} />} title="No notifications yet" desc="Admin updates will appear here" />
               ) : (
                 <div className={s.notifList}>
                   {notifications.map((n, i) => (

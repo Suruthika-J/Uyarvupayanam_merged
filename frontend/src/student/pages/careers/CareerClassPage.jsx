@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FiArrowLeft, FiSearch, FiStar } from 'react-icons/fi'
 import { careerService } from '../../services'
-import { SBadge, SBtn, SCard, SEmpty, SInput, SLoader, SSelect } from '../../components/ui'
+import { SBadge, SBtn, SCard, SEmpty, SInput, SLoader, SSelect, STabs } from '../../components/ui'
 import {
   CAREER_CLASS_CONFIGS,
   CAREER_CLASS_MAP,
@@ -11,7 +11,7 @@ import {
   getCareerShortDescription,
 } from './careerCatalog'
 
-// â”€â”€ Career card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Career card ───────────────────────────────────────────────────────────────
 
 function CareerPathCard({ career, accent, badgeColor }) {
   const shortDesc = getCareerShortDescription(career)
@@ -32,7 +32,7 @@ function CareerPathCard({ career, accent, badgeColor }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
           <SBadge color={badgeColor}>{career.level}</SBadge>
           <SBadge color="gray">{career.interestArea || 'General'}</SBadge>
-          {career.isRecommended && <SBadge color="gold">â­ Recommended</SBadge>}
+          {career.isRecommended && <SBadge color="gold">Recommended</SBadge>}
         </div>
         <h2 style={{
           fontFamily: 'var(--s-font-display)', fontWeight: 800,
@@ -76,10 +76,11 @@ function CareerPathCard({ career, accent, badgeColor }) {
   )
 }
 
-// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CareerClassPage() {
   const { classKey } = useParams()
+  const navigate = useNavigate()
   const config = CAREER_CLASS_MAP[classKey]
 
   const [careers, setCareers] = useState([])
@@ -193,7 +194,7 @@ export default function CareerClassPage() {
         </div>
       </div>
 
-      {/* â”€â”€ search + filter row â”€â”€ */}
+      {/* ── search + filter row ── */}
       <div className="s-anim-up s-d1" style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1.4fr) minmax(200px, 0.8fr)',
@@ -212,7 +213,7 @@ export default function CareerClassPage() {
         </SSelect>
       </div>
 
-      {/* â”€â”€ results count + sibling class links â”€â”€ */}
+      {/* ── results count + sibling class links ── */}
       <div className="s-anim-up s-d2" style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', gap: 12,
@@ -222,13 +223,14 @@ export default function CareerClassPage() {
           <FiStar size={15} color={accent} />
           {loading ? 'Loading…' : `Showing ${filteredCareers.length} career path${filteredCareers.length === 1 ? '' : 's'}`}
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {CAREER_CLASS_CONFIGS.filter((c) => c.key !== config.key).map((c) => (
-            <Link key={c.key} to={`/careers/class/${c.key}`} style={{ textDecoration: 'none' }}>
-              <SBtn variant="ghost" size="sm">{c.title}</SBtn>
-            </Link>
-          ))}
-        </div>
+        {/* sibling class switcher — shared segmented tabs */}
+        <STabs
+          variant="segmented"
+          tabs={CAREER_CLASS_CONFIGS.map((c) => ({ id: c.key, label: c.title }))}
+          active={config.key}
+          onChange={(k) => navigate(`/careers/class/${k}`)}
+          style={{ overflowX: 'auto' }}
+        />
       </div>
 
       {/* career grid */}

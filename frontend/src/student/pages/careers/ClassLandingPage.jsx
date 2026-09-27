@@ -245,7 +245,7 @@ export default function ClassLandingPage({ classKey }) {
   const accent = config.accentColor
 
   return (
-    <div className="student-root" style={{ background: config.isKidFriendly ? '#fdf8ff' : '#fcfcfd', minHeight: '100vh', paddingBottom: 80 }}>
+    <div className="student-root" style={{ background: config.isKidFriendly ? '#f2fbf5' : '#fcfcfd', minHeight: '100vh', paddingBottom: 80 }}>
       {/* Hero Header */}
       <section style={{ padding: '60px 24px', maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
          <div style={{ maxWidth: 840, margin: '0 auto' }}>
@@ -283,13 +283,13 @@ export default function ClassLandingPage({ classKey }) {
                ))}
                
                {config.isKidFriendly && (
-                 <div style={{ marginTop: 60, padding: '60px 40px', background: 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)', borderRadius: 32, color: '#fff', textAlign: 'center', boxShadow: '0 20px 40px rgba(109, 40, 217, 0.2)', animation: 'fadeUp 0.6s ease both' }}>
+                 <div style={{ marginTop: 60, padding: '60px 40px', background: 'linear-gradient(135deg, #145c3d 0%, #2d9d6a 100%)', borderRadius: 28, color: '#fff', textAlign: 'center', boxShadow: '0 20px 40px rgba(26,122,80,0.18)', animation: 'fadeUp 0.6s ease both' }}>
                     <div style={{ display: 'grid', placeItems: 'center', marginBottom: 24 }}>
                        <div style={{ width: 60, height: 60, borderRadius: 99, background: 'rgba(255,255,255,0.2)', display: 'grid', placeItems: 'center' }}>
                           <FiStar size={32} fill="#fff" />
                        </div>
                     </div>
-                    <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 32, marginBottom: 16 }}>✨ Your Journey is Special!</h2>
+                    <h2 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 900, fontSize: 32, marginBottom: 16 }}>Your Journey is Special!</h2>
                     <p style={{ fontSize: 20, fontWeight: 500, opacity: 0.95, marginBottom: 32, maxWidth: 640, margin: '0 auto 32px', lineHeight: 1.6 }}>
                       "You don’t need to choose your career now. Just explore, learn new things, and enjoy your journey!"
                     </p>

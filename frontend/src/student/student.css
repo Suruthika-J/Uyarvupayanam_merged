@@ -100,6 +100,17 @@
   outline-offset: 2px;
 }
 
+/* Tab hover affordances — inactive tabs of the shared kit gain a neutral
+   wash (pill/segmented) or brand text hint (underline). Inline styles carry
+   the resting colors, so hover needs !important to win. */
+.student-root .s-tab[aria-selected="false"]:hover {
+  color: var(--s-primary) !important;
+}
+.student-root .s-tabs-pill .s-tab[aria-selected="false"]:hover,
+.student-root .s-tabs-segmented .s-tab[aria-selected="false"]:hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
 /* Print: hide elements carrying .no-print (e.g. Class 5 passport chrome). */
 @media print {
   .no-print { display: none !important; }
@@ -1099,7 +1110,7 @@
 }
 
 .insight-header-hover:hover {
-  background: linear-gradient(to right, #eff6ff, #fff) !important;
+  background: linear-gradient(to right, var(--s-primary-l), #fff) !important;
   transform: scale(1.002);
 }
 
@@ -1120,9 +1131,9 @@
 }
 
 .hover-lift:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  border-color: #e2e8f0 !important;
+  transform: translateY(-4px);
+  box-shadow: var(--s-shadow-lg) !important;
+  border-color: var(--s-border) !important;
 }
 
 /* ── Overlay safety ─────────────────────────────────────────────────────────

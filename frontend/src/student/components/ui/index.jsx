@@ -123,8 +123,8 @@ export function SBadge({ children, color = 'green', dot = false, style = {} }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       background: c.bg, color: c.text,
-      padding: '3px 10px', borderRadius: 99,
-      fontSize: 12, fontWeight: 600,
+      padding: '4px 11px', borderRadius: 99,
+      fontSize: 12.5, fontWeight: 600,
       fontFamily: 'var(--s-font-display)', letterSpacing: '0.01em',
       whiteSpace: 'nowrap', ...style,
     }}>
@@ -290,28 +290,32 @@ export function SAlert({ type = 'info', children, onClose }) {
   )
 }
 
-/* ── Section Header ──────────────────────────────────────── */
+/* ── Section Header ────────────────────────────────────────
+   Consistent PAGE → SECTION hierarchy: 21px semibold title,
+   14px muted subtitle, right-aligned action link.            */
 export function SSectionHeader({ title, subtitle, action, actionLabel, icon }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-end',
-      justifyContent: 'space-between', marginBottom: 18, gap: 12,
+      justifyContent: 'space-between', marginBottom: 22, gap: 14,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
         {icon && <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--s-primary)', flexShrink: 0 }}>{icon}</span>}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <h2 style={{
-            fontFamily: 'var(--s-font-display)', fontWeight: 800,
-            fontSize: 18, color: 'var(--s-text)', marginBottom: 2,
+            fontFamily: 'var(--s-font-display)', fontWeight: 700,
+            fontSize: 21, color: 'var(--s-text)', marginBottom: 2,
+            letterSpacing: '-0.01em', lineHeight: 1.3,
           }}>{title}</h2>
-          {subtitle && <p style={{ fontSize: 13, color: 'var(--s-text3)' }}>{subtitle}</p>}
+          {subtitle && <p style={{ fontSize: 14, color: 'var(--s-text3)', lineHeight: 1.55, margin: '3px 0 0' }}>{subtitle}</p>}
         </div>
       </div>
       {action && (
         <button onClick={action} aria-label={actionLabel} style={{
-          fontSize: 13, fontWeight: 700, color: 'var(--s-primary)',
+          fontSize: 14, fontWeight: 700, color: 'var(--s-primary)',
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'var(--s-font-display)', whiteSpace: 'nowrap',
+          padding: '4px 0', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4,
         }}>{actionLabel} →</button>
       )}
     </div>
@@ -325,34 +329,40 @@ export function STabs({ tabs, active, onChange, variant = 'pill', size = 'md', f
   const compact = size === 'sm'
   const tabBase = {
     fontFamily: 'var(--s-font-display)', fontWeight: 600,
-    fontSize: compact ? 12.5 : 13.5,
+    fontSize: compact ? 13 : 14,
     background: 'none', border: 'none', cursor: 'pointer',
     transition: 'all 0.18s ease', whiteSpace: 'nowrap',
     color: 'var(--s-text3)',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
   }
+  // NOTE: `extra` is spread AFTER color/fontWeight so variants may override
+  // the active color (e.g. pill active = #fff on green).
   const shared = (t, on, extra = {}) => ({
     ...tabBase,
-    ...extra,
     color: on ? 'var(--s-primary)' : 'var(--s-text3)',
     fontWeight: on ? 700 : 600,
+    ...extra,
+  })
+  const iconStyle = (t, on) => ({
+    display: 'inline-flex', flexShrink: 0,
+    color: on ? undefined : (t.iconColor || undefined),
   })
 
   if (variant === 'underline') {
     return (
-      <div role="tablist" className="s-tabs" style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--s-border)', overflowX: 'auto', ...style }}>
+      <div role="tablist" className="s-tabs" style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--s-border)', overflowX: 'auto', maxWidth: '100%', ...style }}>
         {tabs.map(t => {
           const on = active === t.id
           return (
             <button key={t.id} role="tab" aria-selected={on} className="s-tab"
               onClick={() => onChange && onChange(t.id)}
               style={shared(t, on, {
-                height: compact ? 36 : 42, padding: '0 14px',
+                height: compact ? 40 : 46, padding: '0 16px',
                 borderBottom: `2px solid ${on ? 'var(--s-primary)' : 'transparent'}`,
                 marginBottom: -1,
               })}
             >
-              {t.icon && <span style={{ display: 'inline-flex' }}>{t.icon}</span>}
+              {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
               {t.label}
             </button>
           )
@@ -363,7 +373,7 @@ export function STabs({ tabs, active, onChange, variant = 'pill', size = 'md', f
 
   if (variant === 'segmented') {
     return (
-      <div role="tablist" className="s-tabs" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 10, padding: 3, gap: 2, ...style }}>
+      <div role="tablist" className="s-tabs s-tabs-segmented" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 10, padding: 3, gap: 2, overflowX: 'auto', maxWidth: '100%', ...style }}>
         {tabs.map(t => {
           const on = active === t.id
           return (
@@ -371,12 +381,12 @@ export function STabs({ tabs, active, onChange, variant = 'pill', size = 'md', f
               onClick={() => onChange && onChange(t.id)}
               style={shared(t, on, {
                 flex: fullWidth ? 1 : 'none',
-                height: compact ? 30 : 36, padding: '0 16px', borderRadius: 8,
+                height: compact ? 32 : 38, padding: '0 18px', borderRadius: 8,
                 background: on ? 'var(--s-surface)' : 'transparent',
-                boxShadow: on ? '0 1px 3px rgba(15,23,42,0.12)' : 'none',
+                boxShadow: on ? '0 1px 3px rgba(15,23,42,0.1)' : 'none',
               })}
             >
-              {t.icon && <span style={{ display: 'inline-flex' }}>{t.icon}</span>}
+              {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
               {t.label}
             </button>
           )
@@ -387,19 +397,19 @@ export function STabs({ tabs, active, onChange, variant = 'pill', size = 'md', f
 
   // pill (default)
   return (
-    <div role="tablist" className="s-tabs" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 'var(--s-radius-pill)', padding: 4, gap: 2, flexWrap: 'wrap', ...style }}>
+    <div role="tablist" className="s-tabs s-tabs-pill" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 'var(--s-radius-pill)', padding: 4, gap: 2, flexWrap: 'wrap', maxWidth: '100%', ...style }}>
       {tabs.map(t => {
         const on = active === t.id
         return (
           <button key={t.id} role="tab" aria-selected={on} className="s-tab"
             onClick={() => onChange && onChange(t.id)}
             style={shared(t, on, {
-              height: compact ? 30 : 38, padding: '0 18px', borderRadius: 'var(--s-radius-pill)',
+              height: compact ? 32 : 42, padding: '0 20px', borderRadius: 'var(--s-radius-pill)',
               background: on ? 'var(--s-primary)' : 'transparent',
               color: on ? '#fff' : 'var(--s-text3)',
             })}
           >
-            {t.icon && <span style={{ display: 'inline-flex' }}>{t.icon}</span>}
+            {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
             {t.label}
           </button>
         )

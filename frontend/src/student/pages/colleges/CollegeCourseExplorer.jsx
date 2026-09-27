@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { collegeService } from '../../services'
 import { SCard, SBadge, SLoader, SEmpty, SInput, SBtn } from '../../components/ui'
-import { FiSearch, FiMapPin, FiBookOpen, FiClock, FiLayers, FiExternalLink } from 'react-icons/fi'
+import { FiSearch, FiMapPin, FiBookOpen, FiClock, FiLayers, FiExternalLink, FiBuildings, FiAlertTriangle, FiCpu } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 export default function CollegeCourseExplorer() {
@@ -124,7 +124,7 @@ export default function CollegeCourseExplorer() {
                 className="dropdown-item-hover"
               >
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s-primary-l)', color: 'var(--s-primary)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>
-                  🏫
+                  <FiBuildings size={18} />
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--s-text)' }}>{c.collegeName}</div>
@@ -150,8 +150,8 @@ export default function CollegeCourseExplorer() {
               boxShadow: '0 15px 30px rgba(59, 130, 246, 0.2)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'grid', placeItems: 'center', fontSize: 28 }}>
-                  🏫
+                <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'grid', placeItems: 'center' }}>
+                  <FiBuildings size={28} />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>{selectedCollege.collegeName}</h2>
@@ -170,7 +170,7 @@ export default function CollegeCourseExplorer() {
               <SEmpty 
                 title="No mapped courses found" 
                 desc="This college hasn't listed its courses in our database yet. Please contact the administrator to map them." 
-                icon="âš ï¸ "
+                icon={<FiAlertTriangle size={48} />}
               />
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
@@ -182,8 +182,8 @@ export default function CollegeCourseExplorer() {
                     gap: 20, transition: '0.25s', animation: `fadeUp 0.3s ease both ${idx * 0.05}s`
                   }} className="course-card-hover">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1 }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-bg2)', display: 'grid', placeItems: 'center', color: 'var(--s-primary)', fontSize: 20 }}>
-                        🎓
+                      <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-bg2)', display: 'grid', placeItems: 'center', color: 'var(--s-primary)' }}>
+                        <FiBookOpen size={20} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -215,8 +215,8 @@ export default function CollegeCourseExplorer() {
                     gap: 20, transition: '0.25s', animation: `fadeUp 0.3s ease both ${(verifiedCourses.length + idx) * 0.05}s`
                   }} className="course-card-hover">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1 }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-secondary-l)', display: 'grid', placeItems: 'center', color: 'var(--s-secondary)', fontSize: 20 }}>
-                        🤖
+                      <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-secondary-l)', display: 'grid', placeItems: 'center', color: 'var(--s-secondary)' }}>
+                        <FiCpu size={20} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -247,7 +247,7 @@ export default function CollegeCourseExplorer() {
             height: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
             background: 'var(--s-surface2)', borderRadius: 24, padding: 40, border: '2px dashed var(--s-border)', color: 'var(--s-text3)', textAlign: 'center'
           }}>
-            <div style={{ fontSize: 44, marginBottom: 16 }}>🔎</div>
+            <div style={{ marginBottom: 16 }}><FiSearch size={44} strokeWidth={1.5} color="var(--s-text3)" /></div>
             <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Global College Course Lookup</h3>
             <p style={{ maxWidth: 400, margin: 0, fontSize: 14.5 }}>Find any institution above to see exactly what they offer. We use verified mapping data for 100% accuracy.</p>
           </div>
