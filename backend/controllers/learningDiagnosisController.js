@@ -26,6 +26,7 @@ const { validateWeights } = require("../config/ldnbs/recommendationWeights");
 const { normalizeGrade } = require("./onboardingAssessmentController");
 const diagnosticService = require("../services/diagnosticQuestionService");
 const orchestrator = require("../services/ldnbsOrchestrator");
+const { upsertStudentProfile } = require("../utils/studentProfileSync");
 
 function shuffle(arr) {
     const copy = [...arr];
@@ -196,6 +197,17 @@ exports.submitDiagnostic = async (req, res) => {
             const status = outcome.code === "SESSION_NOT_FOUND" ? 400 : 422;
             return res.status(status).json({ success: false, code: outcome.code, message: outcome.message });
         }
+
+        // Phase 3 — durable home for the Step-1 profile fields. `legacyFields`
+        // carries the 13 onboarding fields the form spreads into this body.
+        // Best-effort only: a profile-sync failure must never fail or change the
+        // onboarding response that already succeeded (existing behavior preserved).
+        try {
+            await upsertStudentProfile({ userId: studentId, classLevel: resolvedGrade, fields: legacyFields });
+        } catch (syncErr) {
+            console.error("StudentProfile sync (LD submit) failed:", syncErr.message);
+        }
+
         res.json({ success: true, result: outcome.payload });
     } catch (error) {
         console.error("LD submit error:", error);
@@ -295,7 +307,8 @@ exports.reassessDiagnostic = async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 exports.getDiagnosticResult = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const studentId = String(req.student._id);
         const student = await User.findById(studentId).select("name email classLevel userType").lean();
         if (!student) return res.status(404).json({ success: false, message: "Student not found" });
 

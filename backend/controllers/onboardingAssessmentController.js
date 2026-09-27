@@ -9,6 +9,7 @@ const RecommendationRule = require("../models/RecommendationRule");
 const GuidelineRule = require("../models/GuidelineRule");
 const { generateQuestionsForSkill, MAX_FETCH_SKILLS } = require("../utils/aiQuestionGenerator");
 const { getRecommendations } = require("../utils/recommendationEngine");
+const { normalizeClassLabel } = require("../utils/normalizeClass");
 
 // Configurable number of questions drawn per skill category. If a skill has
 // fewer questions than this, whatever is available is used instead.
@@ -16,11 +17,10 @@ const PER_SKILL_COUNT = Math.max(1, parseInt(process.env.ASSESSMENT_PER_SKILL ||
 
 // Map any classLevel representation ("Class 5", "5", "5th", "class-5", ...)
 // onto the canonical "Class N" grade used by the OnboardingQuestion pool.
+// Delegates to the shared normalizer (backend/utils/normalizeClass.js) via its
+// "Class X" label form. Output shape and null-on-miss behavior are unchanged.
 function normalizeGrade(value) {
-    if (!value) return null;
-    const digits = String(value).replace(/[^\d]/g, "");
-    const map = { 5: "Class 5", 8: "Class 8", 10: "Class 10", 12: "Class 12" };
-    return map[digits] || null;
+    return normalizeClassLabel(value);
 }
 
 // Fisher–Yates shuffle on a copy so repeated attempts get different sets.
@@ -123,7 +123,8 @@ exports.generateAssessment = async (req, res) => {
 // Latest scored response (per-skill breakdown) — powers the student result screen.
 exports.getLatestResponse = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         const response = await OnboardingResponse.findOne({ userId }).sort({ createdAt: -1 }).lean();
         if (!response) {
             return res.status(404).json({ success: false, message: "No assessment response found" });
@@ -380,11 +381,14 @@ exports.generateOnboardingQuestions = async (req, res) => {
 
 // GET /api/onboarding/result/:studentId
 // Runs scoring (read from the per-skill assessment_results rows) + the
-// recommendation engine, marks the student onboarding-completed, and returns
-// the full payload for the result screen.
+// recommendation engine and returns the full payload for the result screen.
+// STRICTLY READ-ONLY: the onboarding-completed flags are set at submit time
+// (POST /api/onboarding/submit / the LD pipeline), so no mutation happens here.
+// The student ID is derived from the verified token (verifyStudent +
+// verifyOwnership) and never from the URL parameter.
 exports.getOnboardingResult = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        const studentId = String(req.student._id);
         const student = await User.findById(studentId).select("name classLevel").lean();
         if (!student) {
             return res.status(404).json({ success: false, message: "Student not found" });
@@ -401,11 +405,6 @@ exports.getOnboardingResult = async (req, res) => {
 
         const skillResults = rows.map((r) => ({ skill: r.skill, correct: r.score, total: r.totalQuestions }));
         const result = await getRecommendations({ studentGrade: grade, skillResults });
-
-        await User.findByIdAndUpdate(studentId, {
-            onboardingCompleted: true,
-            recommendationGenerated: true,
-        });
 
         res.json({ success: true, studentId, grade, result });
     } catch (error) {

@@ -73,7 +73,8 @@ exports.getAllMentorRequests = async (req, res) => {
 // @route   GET /api/mentor-requests/user/:userId
 exports.getUserMentorRequests = async (req, res) => {
   try {
-    const requests = await MentorRequest.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+    // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+    const requests = await MentorRequest.find({ userId: req.student._id }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: requests });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error", error: error.message });

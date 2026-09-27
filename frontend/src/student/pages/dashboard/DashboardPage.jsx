@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
-import {
-  notificationService,
-  careerService,
-  courseService,
-  examService,
-  scholarshipService,
-  collegeService,
-} from '../../services'
+import studentApi from '../../services/studentApi'
 import { userActionService } from '../../../services/userActionService'
 import { SBtn, SLoader, SSectionHeader, SEmpty, SBadge, SCard } from '../../components/ui'
 import {
@@ -17,7 +10,6 @@ import {
   FiClock, FiMenu, FiX,
 } from 'react-icons/fi'
 import s from './DashboardPage.module.css'
-import { mentorRequestService } from '../../services/mentorRequestService'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
 import onboardingService from '../../../services/onboardingService'
 import class5CommunicationService from '../../../services/class5CommunicationService'
@@ -125,7 +117,7 @@ export default function DashboardPage() {
 
   /* ── Data state ────────────────────────────────────────────── */
   const [notifications, setNotifications] = useState([])
-  const [careers, setCareers] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const [exams, setExams] = useState([])
   const [scholarships, setScholarships] = useState([])
   const [stats, setStats] = useState({ courses: 0, exams: 0, scholarships: 0, colleges: 0 })
@@ -135,105 +127,112 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [isMentorModalOpen, setIsMentorModalOpen] = useState(false)
   const [recommendation, setRecommendation] = useState(null)
+  const [summaryStudent, setSummaryStudent] = useState(null)
   const [retaking, setRetaking] = useState(false)
 
-  /* ── Fetch all data on mount ──────────────────────────────── */
+  /* ── Fetch dashboard summary on mount — single API ─────────── */
   useEffect(() => {
-    const normalize = (res) => {
-      if (Array.isArray(res)) return res
-      if (Array.isArray(res?.data)) return res.data
-      if (Array.isArray(res?.careers)) return res.careers
-      if (Array.isArray(res?.courses)) return res.courses
-      if (Array.isArray(res?.exams)) return res.exams
-      if (Array.isArray(res?.scholarships)) return res.scholarships
-      if (Array.isArray(res?.colleges)) return res.colleges
-      return []
-    }
+    // Phase 6B — one call replaces the nine parallel requests (notifications,
+    // careers, exams, scholarships, courses, colleges, saved items, mentor
+    // requests, legacy recommendation). Identity is supplied by the axios
+    // auth interceptor (Bearer token) — no userId/studentId is sent.
+    // Sections are read directly from the summary shape, NOT through the old
+    // normalize() helper (which cannot see sections.notifications.items).
+    studentApi.get('/dashboard-summary')
+      .then((res) => {
+        const summary = res.data
+        try {
+          const sections = summary?.sections || {}
+          const notifData = sections.notifications || { items: [], unreadCount: 0 }
 
-    Promise.allSettled([
-      notificationService.getUserNotifications(student?._id),
-      careerService.getAll(),
-      examService.getAll(),
-      scholarshipService.getAll(),
-      courseService.getAll(),
-      collegeService.getAll(),
-      userActionService.getSavedList(), // Fetch ALL types
-      mentorRequestService.getMyRequests(student?._id),
-      onboardingService.getRecommendations(student?._id).catch(() => null)
-    ]).then(([notifR, careerR, examR, scholR, courseR, collegeR, savedR, mentorR, onbR]) => {
-      try {
-        const notifs = normalize(notifR.value || notifR.reason?.response?.data)
-        setNotifications(notifs.slice(0, 3))
-        
-        setCareers(normalize(careerR.value || careerR.reason?.response?.data).slice(0, 6))
+          setNotifications((notifData.items || []).slice(0, 3))
+          setUnreadCount(notifData.unreadCount || 0)
 
-        const examArr = normalize(examR.value || examR.reason?.response?.data)
-        setExams(examArr.slice(0, 4))
+          setExams(Array.isArray(sections.exams) ? sections.exams.slice(0, 4) : [])
 
-        const scholArr = normalize(scholR.value || scholR.reason?.response?.data)
-        setScholarships(scholArr.slice(0, 3))
+          setScholarships(Array.isArray(sections.scholarships) ? sections.scholarships.slice(0, 3) : [])
 
-        setStats({
-          courses: normalize(courseR.value || courseR.reason?.response?.data).length,
-          exams: examArr.length,
-          scholarships: scholArr.length,
-          colleges: normalize(collegeR.value || collegeR.reason?.response?.data).length,
-        })
+          // Stats are the server-computed counts — do NOT reconstruct them
+          // from the section arrays (those are capped display lists, while
+          // the stats are true class-aware counts).
+          setStats({
+            courses: summary?.stats?.courses ?? 0,
+            exams: summary?.stats?.exams ?? 0,
+            scholarships: summary?.stats?.scholarships ?? 0,
+            colleges: summary?.stats?.colleges ?? 0,
+          })
 
-        if (savedR.status === 'fulfilled' && savedR.value?.success) {
-          setSavedGuidance(savedR.value.data)
-        }
+          if (Array.isArray(sections.savedItems)) {
+            setSavedGuidance(sections.savedItems)
+          }
 
-        if (mentorR.status === 'fulfilled' && mentorR.value?.success) {
-           setMentorRequests(mentorR.value.data)
-        }
+          if (Array.isArray(sections.mentorRequests)) {
+            setMentorRequests(sections.mentorRequests)
+          }
 
-        // Process Onboarding Recommendations
-        if (onbR?.status === 'fulfilled' && onbR?.value?.success) {
-          const recData = onbR.value.result;
+          // Fresh student snapshot — verifyStudent refetches the user per
+          // request, so this is newer than the context login snapshot.
+          if (summary?.student) {
+            setSummaryStudent(summary.student)
+          }
+
+          // Process the legacy Recommendation (source: sections.recommendation).
+          // No LD / LearningRecommendation mapping is introduced here.
+          const recData = sections.recommendation || null;
           setRecommendation(recData);
 
-          const isClass5  = student?.classLevel === '5'  || student?.classLevel === '5th'  || student?.classLevel === 'Class 5';
-          const isClass8  = student?.classLevel === '8'  || student?.classLevel === '8th'  || student?.classLevel === 'Class 8';
-          const isClass10 = student?.classLevel === '10' || student?.classLevel === '10th' || student?.classLevel === 'Class 10';
-          const isClass12 = student?.classLevel === '12' || student?.classLevel === '12th' || student?.classLevel === 'Class 12';
+          if (recData) {
+            const isClass5  = student?.classLevel === '5'  || student?.classLevel === '5th'  || student?.classLevel === 'Class 5';
+            const isClass8  = student?.classLevel === '8'  || student?.classLevel === '8th'  || student?.classLevel === 'Class 8';
+            const isClass10 = student?.classLevel === '10' || student?.classLevel === '10th' || student?.classLevel === 'Class 10';
+            const isClass12 = student?.classLevel === '12' || student?.classLevel === '12th' || student?.classLevel === 'Class 12';
 
-          if ((isClass5 || isClass8 || isClass10 || isClass12) && recData.fetchedClass5Content) {
-            // Map Class 5 Content to Cards
-            const skills = recData.fetchedClass5Content.skills || [];
-            const mappedSkills = skills.map(s => ({
-              title: s.title,
-              sub: s.category || 'Skill',
-              icon: '🚀',
-              bg: '#e0f2fe',
-              color: '#0ea5e9',
-              link: `/student/career-path/class-5/${s.slug}`
-            }));
-            setRecommendedCareerCards(mappedSkills);
-          } else if (recData?.recommendedCareers?.length > 0) {
-            const recCareers = recData.recommendedCareers;
-            const mappedCards = recCareers.map(c => {
-              if (CAREER_INFO_MAP[c]) {
-                return { title: c, ...CAREER_INFO_MAP[c] }
-              }
-              return getDefaultCareerCard(c)
-            });
-            setRecommendedCareerCards(mappedCards);
+            if ((isClass5 || isClass8 || isClass10 || isClass12) && recData.fetchedClass5Content) {
+              // Map Class 5 Content to Cards
+              const skills = recData.fetchedClass5Content.skills || [];
+              const mappedSkills = skills.map(s => ({
+                title: s.title,
+                sub: s.category || 'Skill',
+                icon: '🚀',
+                bg: '#e0f2fe',
+                color: '#0ea5e9',
+                link: `/student/career-path/class-5/${s.slug}`
+              }));
+              setRecommendedCareerCards(mappedSkills);
+            } else if (recData?.recommendedCareers?.length > 0) {
+              const recCareers = recData.recommendedCareers;
+              const mappedCards = recCareers.map(c => {
+                if (CAREER_INFO_MAP[c]) {
+                  return { title: c, ...CAREER_INFO_MAP[c] }
+                }
+                return getDefaultCareerCard(c)
+              });
+              setRecommendedCareerCards(mappedCards);
+            }
           }
+        } catch (err) {
+          console.error("Error processing dashboard data:", err)
+        } finally {
+          setLoading(false)
         }
-      } catch (err) {
-        console.error("Error processing dashboard data:", err)
-      } finally {
+      })
+      .catch((err) => {
+        // e.g. network failure — keep the page usable with the empty
+        // fallbacks. A 401 is handled by the studentApi interceptor, which
+        // clears the token and redirects to sign-in.
+        console.error("Error fetching dashboard summary:", err)
         setLoading(false)
-      }
-    })
+      })
   }, [student?._id])
 
   /* ── Derived ───────────────────────────────────────────────── */
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  // Prefer the fresh summary student snapshot; fall back to the context
+  // login snapshot so the page still renders if the summary student is ever
+  // absent. The summary student is refetched server-side per request.
+  const viewStudent = summaryStudent || student
   const hour = new Date().getHours()
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const firstName = student?.name?.split(' ')[0] || 'Student'
+  const firstName = viewStudent?.name?.split(' ')[0] || 'Student'
 
   const handleLogout = () => {
     logout()
@@ -287,7 +286,7 @@ export default function DashboardPage() {
         <div className={s.sidebarLabel}>Menu</div>
 
         {SIDEBAR_NAV.filter(item => {
-          const isJunior = ['5', '8', '5th', '8th'].includes(String(student?.classLevel));
+          const isJunior = ['5', '8', '5th', '8th'].includes(String(viewStudent?.classLevel));
           if (isJunior && ['courses', 'colleges'].includes(item.id)) return false;
           return true;
         }).map(({ id, icon: Icon, label, to }) => {
@@ -322,12 +321,12 @@ export default function DashboardPage() {
         <div className={s.sidebarBottom}>
           <div className={s.profileCard}>
             <div className={s.profileAvatar}>
-              {student?.name?.[0]?.toUpperCase() || 'S'}
+              {viewStudent?.name?.[0]?.toUpperCase() || 'S'}
             </div>
             <div>
               <div className={s.profileName}>{firstName}</div>
               <div className={s.profileSub}>
-                {student?.classLevel ? `Class ${student.classLevel}` : 'Student'}
+                {viewStudent?.classLevel ? `Class ${viewStudent.classLevel}` : 'Student'}
               </div>
             </div>
           </div>
@@ -357,15 +356,15 @@ export default function DashboardPage() {
             <SBtn variant="primary" onClick={() => setIsMentorModalOpen(true)}>
               🤝 Talk to Mentor
             </SBtn>
-            {String(student?.classLevel).includes('12') && (
+            {String(viewStudent?.classLevel).includes('12') && (
               <SBtn variant="white" onClick={() => navigate('/student/colleges')} style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
                 🏫 Explore Colleges
               </SBtn>
             )}
           </div>
           <div className={s.welcomeBadges}>
-            {student?.classLevel && <span className={s.welcomeTag}>🎓 Class {student.classLevel}</span>}
-            {student?.district && <span className={s.welcomeTag}>📍 {student.district}</span>}
+            {viewStudent?.classLevel && <span className={s.welcomeTag}>🎓 Class {viewStudent.classLevel}</span>}
+            {viewStudent?.district && <span className={s.welcomeTag}>📍 {viewStudent.district}</span>}
             {unreadCount > 0 && <span className={s.welcomeTag}>🔔 {unreadCount} new alert{unreadCount > 1 ? 's' : ''}</span>}
           </div>
         </div>
@@ -377,7 +376,7 @@ export default function DashboardPage() {
             {/* ── Statistics Cards ────────────────────────────────── */}
             <div className={`${s.statsGrid} s-anim-up s-d1`}>
               {STAT_CARDS.filter(stat => {
-                const isVeryJunior = ['5', '8', '5th', '8th'].includes(String(student?.classLevel));
+                const isVeryJunior = ['5', '8', '5th', '8th'].includes(String(viewStudent?.classLevel));
                 if (isVeryJunior && (stat.label === 'Courses Available' || stat.label === 'Colleges')) return false;
                 return true;
               }).map((stat, i) => (
@@ -394,7 +393,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ── My Skill Recommendation (Class 5, 8, 10, 12) ─────────── */}
-            {(['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) && recommendation && (
+            {(['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) && recommendation && (
               <div className="s-anim-up s-d2" style={{ marginBottom: 32 }}>
                 <SSectionHeader
                   title="🎯 My Personalized Recommendation"
@@ -549,9 +548,9 @@ export default function DashboardPage() {
             {/* ── Recommended Resources ─────────────────────────────── */}
             <div className="s-anim-up s-d2" style={{ marginBottom: 28 }}>
               <SSectionHeader
-                title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? `🚀 Recommended for Class ${student?.classLevel?.replace(/\D/g, '')}` : "🧩 Recommended Careers" }
-                subtitle={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? "Based on your assessment results." : "Explore popular career paths tailored for your future." }
-                action={() => navigate((['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(student?.classLevel))) ? `/student/career-path/class-${student?.classLevel?.replace(/\D/g, '')}` : '/student/careers')}
+                title={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `🚀 Recommended for Class ${viewStudent?.classLevel?.replace(/\D/g, '')}` : "🧩 Recommended Careers" }
+                subtitle={ (['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? "Based on your assessment results." : "Explore popular career paths tailored for your future." }
+                action={() => navigate((['5', '5th', 'Class 5', '8', '8th', 'Class 8', '10', '10th', 'Class 10', '12', '12th', 'Class 12'].includes(String(viewStudent?.classLevel))) ? `/student/career-path/class-${viewStudent?.classLevel?.replace(/\D/g, '')}` : '/student/careers')}
                 actionLabel="View All"
               />
               <div className={s.careerGrid}>

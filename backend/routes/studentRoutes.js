@@ -9,6 +9,8 @@ const {
 const { getClass12Categories, getClass12Content } = require("../controllers/class12Controller");
 const { getStudentCourseDetails } = require("../controllers/courseController");
 const verifyStudent = require("../middleware/verifyStudent");
+const studentProfileController = require("../controllers/studentProfileController");
+const dashboardSummaryController = require("../controllers/dashboardSummaryController");
 const { rateLimit } = require("../middleware/rateLimit");
 
 const TEN_MINUTES = 10 * 60 * 1000;
@@ -60,9 +62,16 @@ router.get("/class12/exploration", getClass12Content);
 router.get("/courses/:courseId", getStudentCourseDetails);
 
 // Protected routes (Login required)
-router.get("/profile", verifyStudent, (req, res) => {
-    res.json({ message: "Protected profile data", student: req.student });
-});
+// School-student profile (Phase 3). Ownership is derived from req.student._id
+// only — these routes take NO :userId/:studentId URL parameter and never trust
+// a client-supplied userId/studentId (see studentProfileController.js).
+router.get("/profile", verifyStudent, studentProfileController.getStudentProfile);
+router.put("/profile", verifyStudent, studentProfileController.updateStudentProfile);
+
+// Phase 6A — consolidated read-only school-dashboard summary. Ownership is
+// derived exclusively from req.student._id (verifyStudent); no client-supplied
+// userId/studentId is accepted anywhere. Additive — existing calls untouched.
+router.get("/dashboard-summary", verifyStudent, dashboardSummaryController.getDashboardSummary);
 
 router.get("/recommendations", verifyStudent, (req, res) => {
     res.json({ message: "Protected personalized recommendations", student: req.student._id });

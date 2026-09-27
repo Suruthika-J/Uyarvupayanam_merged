@@ -120,7 +120,7 @@ exports.submitAssessment = async (req, res) => {
             Course.find({ ...query, category: { $in: recommendationKeywords } }).limit(5),
             College.find({ ...query }).limit(5), // Colleges might need better filtering
             Scholarship.find({ ...query }).limit(5),
-            Exam.find({ ...query }).limit(5)
+            Exam.find({ applicableClass: { $in: [classLevel, "All"] } }).limit(5)
         ]);
 
         // 4. Generate Improvement Plan
@@ -179,7 +179,8 @@ exports.submitAssessment = async (req, res) => {
 // GET /api/assessment/result/:userId
 exports.getLatestResult = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         const result = await StudentTestResult.findOne({ userId })
             .sort({ createdAt: -1 })
             .populate("recommendations.courses")

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const verifyAdmin = require("../middleware/verifyAdmin");
 const verifyStudent = require("../middleware/verifyStudent");
+const verifyOwnership = require("../middleware/verifyOwnership");
 
 const {
     createNotification,
@@ -34,7 +35,7 @@ router.delete("/", verifyAdmin, deleteAllNotifications);
 router.get("/:id", verifyStudent, getNotificationById);
 
 // GET    /api/notifications/user/:userId      → all notifications for a user
-router.get("/user/:userId", verifyStudent, getUserNotifications);
+router.get("/user/:userId", verifyStudent, verifyOwnership("userId"), getUserNotifications);
 
 // PUT    /api/notifications/:id               → edit title/message/type/isRead
 router.put("/:id", verifyAdmin, updateNotification);
@@ -43,7 +44,7 @@ router.put("/:id", verifyAdmin, updateNotification);
 router.put("/:id/read", verifyStudent, markAsRead);
 
 // PUT    /api/notifications/user/:userId/read-all → mark all as read for user
-router.put("/user/:userId/read-all", verifyStudent, markAllAsRead);
+router.put("/user/:userId/read-all", verifyStudent, verifyOwnership("userId"), markAllAsRead);
 
 // DELETE /api/notifications/:id              → delete one
 router.delete("/:id", verifyAdmin, deleteNotification);

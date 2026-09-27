@@ -2,17 +2,19 @@ const express = require("express");
 const router = express.Router();
 const onboardingController = require("../controllers/onboardingController");
 const verifyAdmin = require("../middleware/verifyAdmin");
+const verifyStudent = require("../middleware/verifyStudent");
+const verifyOwnership = require("../middleware/verifyOwnership");
 const onboardingAssessmentController = require("../controllers/onboardingAssessmentController");
 const OnboardingQuestion = require("../models/OnboardingQuestion");
 
 router.get("/questions/:grade", onboardingController.getQuestions);
 router.post("/submit", onboardingController.submitOnboarding);
-router.get("/recommendations/user/:userId", onboardingController.getRecommendations);
+router.get("/recommendations/user/:userId", verifyStudent, verifyOwnership("userId"), onboardingController.getRecommendations);
 router.get("/assessment/questions", onboardingAssessmentController.generateAssessment);
 router.post("/generate-questions", onboardingAssessmentController.generateOnboardingQuestions);
-router.get("/result/:studentId", onboardingAssessmentController.getOnboardingResult);
-router.get("/response/user/:userId", onboardingAssessmentController.getLatestResponse);
-router.post("/retake/:userId", onboardingController.retakeAssessment);
+router.get("/result/:studentId", verifyStudent, verifyOwnership("studentId"), onboardingAssessmentController.getOnboardingResult);
+router.get("/response/user/:userId", verifyStudent, verifyOwnership("userId"), onboardingAssessmentController.getLatestResponse);
+router.post("/retake/:userId", verifyStudent, verifyOwnership("userId"), onboardingController.retakeAssessment);
 
 // Admin — student assessment results (per-skill rows grouped into attempts)
 router.get("/admin/results", verifyAdmin, onboardingAssessmentController.getAdminResults);
@@ -80,7 +82,7 @@ const learningDiagnosis = require("../controllers/learningDiagnosisController");
 router.post("/ld/generate-questions", learningDiagnosis.generateDiagnosticQuestions);
 router.post("/ld/submit", learningDiagnosis.submitDiagnostic);
 router.post("/ld/reassess", learningDiagnosis.reassessDiagnostic);
-router.get("/ld/result/:studentId", learningDiagnosis.getDiagnosticResult);
+router.get("/ld/result/:studentId", verifyStudent, verifyOwnership("studentId"), learningDiagnosis.getDiagnosticResult);
 
 // Admin configuration (Part 27)
 router.get("/ld/admin/config", verifyAdmin, learningDiagnosis.getLdConfig);

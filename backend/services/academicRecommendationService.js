@@ -40,6 +40,7 @@ const StudentTestResult = require("../models/StudentTestResult");
 const AssessmentQuestion = require("../models/AssessmentQuestion");
 const ClassContent = require("../models/ClassContent");
 const Skill = require("../models/Skill");
+const { normalizeClassOr } = require("../utils/normalizeClass");
 
 // ----------------------------------------------------------------------------
 // Constants
@@ -83,11 +84,9 @@ const QUIZ_PCT = 0.25;
 const round = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 // Extract a numeric grade key ("Class 10" / "10" / "10th" -> "10").
-const normalizeGrade = (grade) => {
-  if (!grade) return "10";
-  const match = String(grade).match(/\d+/);
-  return match ? match[0] : "10";
-};
+// Delegates to the shared school-class normalizer; the historical "10"
+// fallback is preserved for missing / non-school / unknown values.
+const normalizeGrade = (grade) => normalizeClassOr(grade, "10");
 
 // Classify a latest percentage into its band + priority weight.
 const classifyBand = (pct) => {

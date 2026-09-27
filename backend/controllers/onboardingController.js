@@ -10,6 +10,7 @@ const Exam = require("../models/Exam");
 const Scholarship = require("../models/Scholarship");
 const CareerPath = require("../models/CareerPath");
 const { getRecommendations } = require("../utils/recommendationEngine");
+const { upsertStudentProfile } = require("../utils/studentProfileSync");
 
 // GET /api/onboarding/questions/:grade
 exports.getQuestions = async (req, res) => {
@@ -305,7 +306,7 @@ exports.submitOnboarding = async (req, res) => {
         
         const [skillsContent, examsContent, scholarshipsContent, careersContent, habitsContent, funContent] = await Promise.all([
             ClassContent.find({ targetClass: cleanGrade, status: "published", sectionType: "Skills" }).limit(4),
-            Exam.find({ targetClass: { $in: [cleanGrade, "All"] } }).limit(3),
+            Exam.find({ applicableClass: { $in: [cleanGrade, "All"] } }).limit(3),
             Scholarship.find({ targetClass: { $in: [cleanGrade, "All"] } }).limit(3),
             CareerPath.find({ level: { $in: [`${cleanGrade}th`, `Class ${cleanGrade}`] } }).limit(3),
             ClassContent.find({ targetClass: cleanGrade, status: "published", sectionType: "Habits" }).limit(2),
@@ -349,6 +350,20 @@ exports.submitOnboarding = async (req, res) => {
             }
         });
         await recommendation.save();
+
+        // Phase 3 — durable StudentProfile home for the onboarding fields this
+        // legacy payload carries (its `interests[]` list stays Recommendation-
+        // only; it is not a StudentProfile field). Best-effort only: a sync
+        // failure must not change the (already succeeding) submission behavior.
+        try {
+            await upsertStudentProfile({
+                userId: resolvedUserId,
+                classLevel: grade,
+                fields: { marksPercentage, board, stream, preferredStream, preferredCourseCategory, careerInterest, entranceExamPlan, goalAfter10th, goalAfter12th },
+            });
+        } catch (syncErr) {
+            console.error("StudentProfile sync (legacy submit) failed:", syncErr.message);
+        }
 
         await User.findByIdAndUpdate(resolvedUserId, { onboardingCompleted: true, recommendationGenerated: true });
 
@@ -400,7 +415,8 @@ exports.submitOnboarding = async (req, res) => {
 // GET /api/recommendations/user/:userId
 exports.getRecommendations = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         const recommendation = await Recommendation.findOne({ userId })
             .sort({ createdAt: -1 })
             .populate("fetchedClass5Content.skills")
@@ -424,7 +440,8 @@ exports.getRecommendations = async (req, res) => {
 // POST /api/onboarding/retake/:userId
 exports.retakeAssessment = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         
         // Reset user onboarding status
         await User.findByIdAndUpdate(userId, { 

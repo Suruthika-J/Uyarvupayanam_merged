@@ -171,12 +171,11 @@ exports.getAllNotifications = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────
 exports.getUserNotifications = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         const { page = 1, limit = 20 } = req.query;
 
-        if (!userId || userId === 'undefined' || !userId.match(/^[0-9a-fA-F]{24}$/)) {
-            return res.status(400).json({ message: "Invalid user ID" });
-        }
+        // The ID comes from the verified token, so no format re-validation here.
 
         // Validate: only students have notifications
         const user = await User.findById(userId).select("role classLevel").lean();
@@ -231,6 +230,16 @@ exports.getNotificationById = async (req, res) => {
         if (!notification) {
             return res.status(404).json({ message: "Notification not found" });
         }
+
+        // Broadcast notifications are shared with all students; personal
+        // notifications are readable only by their owner.
+        if (
+            !notification.isBroadcast &&
+            String(notification.userId) !== String(req.student._id)
+        ) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
         res.json(notification);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch notification" });
@@ -279,14 +288,22 @@ exports.updateNotification = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────
 exports.markAsRead = async (req, res) => {
     try {
-        const notification = await Notification.findByIdAndUpdate(
-            req.params.id,
-            { isRead: true },
-            { new: true }
-        );
+        const notification = await Notification.findById(req.params.id);
         if (!notification) {
             return res.status(404).json({ message: "Notification not found" });
         }
+
+        // Broadcast notifications are shared with all students; personal
+        // notifications can only be marked read by their owner.
+        if (
+            !notification.isBroadcast &&
+            String(notification.userId) !== String(req.student._id)
+        ) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        notification.isRead = true;
+        await notification.save();
 
         // Emit only to the user who read it
         const targetId = notification.userId
@@ -308,7 +325,8 @@ exports.markAsRead = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────
 exports.markAllAsRead = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
 
         // Guard: only allow for student accounts
         const user = await User.findById(userId).select("role").lean();
