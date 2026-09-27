@@ -25,8 +25,8 @@ import {
 
 const ACTIVITY_ID = 'make_your_own_song';
 const BACK_ROUTE = '/student/class5?section=Fun';
-const GRADIENT = 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)';
-const ACCENT = '#ec4899';
+const GRADIENT = 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)';
+const ACCENT = '#1a7a50';
 const REVIEW_STEP = SONG_STEPS.length;
 
 function fireConfetti() {

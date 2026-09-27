@@ -4,8 +4,8 @@ import { FiCheckCircle } from 'react-icons/fi';
 export default function ActivityStepProgress({
   steps = [],
   current = 0,
-  accent = '#8b5cf6',
-  gradient = 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)',
+  accent = '#1a7a50',
+  gradient = 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)',
   onStepClick,
   rightLabel,
   showStepCount = true,

@@ -4,7 +4,7 @@ import { useStudentAuth } from '../../context/StudentAuthContext'
 import { collegeService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
 import { SCard, SBadge, SLoader, SEmpty, SInput, SSelect, SBtn } from '../../components/ui'
-import { FiMapPin, FiSearch, FiBookmark, FiArrowRight, FiGrid, FiList, FiX } from 'react-icons/fi'
+import { FiMapPin, FiSearch, FiBookmark, FiArrowRight, FiGrid, FiList, FiX, FiHome } from 'react-icons/fi'
 
 // Must match the admin STREAMS list exactly
 const STREAMS = [
@@ -246,7 +246,7 @@ export default function CollegesPage() {
               fontFamily: 'var(--s-font-display)', fontWeight: 900,
               fontSize: 'clamp(26px, 4vw, 36px)', color: 'var(--s-text)', marginBottom: 8
             }}>
-              🏫 College Exploration Hub
+              College Exploration Hub
             </h1>
             <p style={{ fontSize: 15, color: 'var(--s-text3)', maxWidth: 580, margin: 0 }}>
               Discover {allColleges.length > 0 ? allColleges.length.toLocaleString() : ''} colleges across Tamil Nadu.
@@ -255,7 +255,7 @@ export default function CollegesPage() {
           </div>
           <Link to="/student/colleges/explorer" style={{ textDecoration: 'none' }}>
             <SBtn variant="outline" style={{ borderRadius: 12, padding: '10px 18px', border: '2px solid var(--s-primary)', whiteSpace: 'nowrap' }}>
-              📚 Course-Wise Lookup
+              Course-Wise Lookup
             </SBtn>
           </Link>
         </div>
@@ -422,7 +422,7 @@ export default function CollegesPage() {
           </div>
         ) : filteredColleges.length === 0 ? (
           <SEmpty
-            icon="🏫"
+            icon={<FiHome size={48} />}
             title={
               hasActiveFilter
                 ? `No ${activeStream !== 'All' ? activeStream : ''} colleges found`

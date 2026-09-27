@@ -1,5 +1,6 @@
 import React from 'react'
 import { C5, ICONS } from './class5Theme'
+import { SSectionHeader } from '../../ui'
 
 // Big tab hero: eyebrow + punchy title + subtitle + optional right-side action.
 export default function SectionHeader({ eyebrow, title, subtitle, children, align = 'left' }) {
@@ -24,7 +25,7 @@ export default function SectionHeader({ eyebrow, title, subtitle, children, alig
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
               color: C5.navy,
-              background: '#e6f0f7',
+              background: '#e6f4ec',
               padding: '4px 12px',
               borderRadius: 99,
               marginBottom: 10,
@@ -33,7 +34,7 @@ export default function SectionHeader({ eyebrow, title, subtitle, children, alig
             {eyebrow}
           </span>
         )}
-        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, color: C5.ink, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: C5.ink, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
           {title}
         </h1>
         {subtitle && (
@@ -48,38 +49,16 @@ export default function SectionHeader({ eyebrow, title, subtitle, children, alig
 }
 
 export function SubSection({ title, subtitle, action, onAction, actionLabel = 'See all' }) {
+  // Delegates to the shared SSectionHeader so every class uses one
+  // section-header language. `action` is the click handler (same contract
+  // as SSectionHeader); `onAction` is accepted for back-compat.
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'space-between',
-        gap: 10,
-        margin: '34px 0 14px',
-      }}
-    >
-      <div>
-        <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: C5.ink }}>{title}</h2>
-        {subtitle && <p style={{ margin: '3px 0 0', fontSize: 13.5, color: C5.faint }}>{subtitle}</p>}
-      </div>
-      {action && (
-        <button
-          onClick={onAction}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: 700,
-            color: C5.navy,
-            fontFamily: 'var(--s-font-display)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {actionLabel} →
-        </button>
-      )}
-    </div>
+    <SSectionHeader
+      title={title}
+      subtitle={subtitle}
+      action={action || onAction || undefined}
+      actionLabel={actionLabel}
+    />
   )
 }
 

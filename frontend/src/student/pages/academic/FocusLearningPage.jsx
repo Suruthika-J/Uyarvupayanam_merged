@@ -161,7 +161,7 @@ export default function FocusLearningPage() {
             <FiArrowLeft size={16} /> Back to Dashboard
           </button>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0, fontFamily: 'var(--s-font-display)' }}>
-            🎯 Focus Learning Session
+            Focus Learning Session
           </h1>
           <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>
             Deep work study session with real-time distraction feedback & focus scoring.
@@ -370,7 +370,7 @@ export default function FocusLearningPage() {
               </div>
 
               <div style={{ background: '#f8fafc', borderRadius: 16, padding: 16, border: '1px solid #e2e8f0', fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
-                <strong style={{ color: '#0f172a', display: 'block', marginBottom: 4 }}>💡 Focus Tip</strong>
+                <strong style={{ color: '#0f172a', display: 'block', marginBottom: 4 }}>Focus Tip</strong>
                 Keeping your browser on this study tab uninterrupted yields maximum focus score and improves retention!
               </div>
             </div>

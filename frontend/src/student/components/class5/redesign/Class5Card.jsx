@@ -1,6 +1,6 @@
 import React from 'react'
 import { C5, worldColor } from './class5Theme'
-import { SBadge } from '../../ui'
+import { SBadge, SBtn } from '../../ui'
 
 // Standard card: photo header (or gradient + icon block), tag pills,
 // oneLiner chip, then title + description + full-width navy CTA button.
@@ -120,32 +120,15 @@ export default function Class5Card({
           {description}
         </p>
         {footer}
-        <button
+        <SBtn
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={onClick}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 7,
-            background: C5.navy,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 14,
-            padding: '12px 16px',
-            fontSize: 14,
-            fontWeight: 800,
-            fontFamily: 'var(--s-font-display)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            boxShadow: '0 8px 16px -8px rgba(15,76,117,0.5)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = C5.navyDeep)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = C5.navy)}
+          icon={CtaIcon ? <CtaIcon size={16} /> : undefined}
         >
-          {CtaIcon ? <CtaIcon size={16} /> : null}
           {cta}
-        </button>
+        </SBtn>
       </div>
     </div>
   )

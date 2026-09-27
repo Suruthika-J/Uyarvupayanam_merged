@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function QuestionProgress({ current, total, color = '#6366f1' }) {
+export default function QuestionProgress({ current, total, color = '#1a7a50' }) {
   const pct = total === 0 ? 0 : Math.round(((current + 1) / total) * 100);
   return (
     <div style={{ marginBottom: 24 }}>

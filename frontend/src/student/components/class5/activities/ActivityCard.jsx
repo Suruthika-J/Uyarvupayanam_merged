@@ -10,7 +10,7 @@ export default function ActivityCard({
   difficulty,
   cta = 'Play Now',
   icon: Icon,
-  gradient = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+  gradient = 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)',
   onStart,
   emoji,
 }) {

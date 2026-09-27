@@ -5,7 +5,7 @@ export default function SelectionCard({
   option,
   selected = false,
   onSelect,
-  accent = '#8b5cf6',
+  accent = '#1a7a50',
   disabled = false,
   meta,
   selectedCount,

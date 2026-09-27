@@ -43,10 +43,10 @@ const STATUS_CONFIG = {
 }
 
 const TABS = [
-  { id: 'recommended', label: '🌟 Recommended',      short: 'Recommended'  },
-  { id: 'all',         label: '🎓 All Scholarships', short: 'Browse All'   },
-  { id: 'saved',       label: '🔖 Saved',            short: 'Saved'        },
-  { id: 'tracking',   label: '📋 My Applications',  short: 'Tracking'     },
+  { id: 'recommended', label: 'Recommended',      short: 'Recommended'  },
+  { id: 'all',         label: 'All Scholarships', short: 'Browse All'   },
+  { id: 'saved',       label: 'Saved',            short: 'Saved'        },
+  { id: 'tracking',   label: 'My Applications',  short: 'Tracking'     },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -609,7 +609,7 @@ export default function CollegeScholarshipsPage() {
           <FiAward size={13} /> Higher Education Financial Assistance Portal
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 8px', fontFamily: 'var(--s-font-display)', color: '#fff', lineHeight: 1.2 }}>
-          College Scholarships &amp; Schemes 🎓
+          College Scholarships &amp; Schemes
         </h1>
         <p style={{ fontSize: 14.5, color: '#a7f3d0', fontWeight: 600, margin: 0, maxWidth: 640 }}>
           Discover government stipends, merit grants, research funding, and private trusts — matched to your academic profile.
@@ -618,10 +618,10 @@ export default function CollegeScholarshipsPage() {
         {/* Quick Stats */}
         <div style={{ display: 'flex', gap: 20, marginTop: 20, flexWrap: 'wrap' }}>
           {[
-            { label: 'Total Schemes', value: scholarships.length, icon: '📋' },
-            { label: 'AI Matches', value: recommended.length, icon: '🌟' },
-            { label: 'Saved', value: savedIds.size, icon: '🔖' },
-            { label: 'Tracking', value: Object.keys(statusMap).length, icon: '📈' },
+            { label: 'Total Schemes', value: scholarships.length, icon: <FiFileText size={18} /> },
+            { label: 'AI Matches', value: recommended.length, icon: <FiStar size={18} /> },
+            { label: 'Saved', value: savedIds.size, icon: <FiBookmark size={18} /> },
+            { label: 'Tracking', value: Object.keys(statusMap).length, icon: <FiTrendingUp size={18} /> },
           ].map(stat => (
             <div key={stat.label} style={{ background: 'rgba(255,255,255,0.12)', padding: '8px 16px', borderRadius: 12 }}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>{stat.icon} {stat.value}</div>
@@ -693,7 +693,7 @@ export default function CollegeScholarshipsPage() {
       {activeTab === 'recommended' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🌟</span>
+            <FiStar size={20} style={{ color: 'var(--s-primary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', fontFamily: 'var(--s-font-display)' }}>Best Match For You</div>
               <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 1 }}>AI-matched against your enrolled academic profile. Shows "Potentially Eligible" — always verify requirements before applying.</div>
@@ -821,7 +821,7 @@ export default function CollegeScholarshipsPage() {
       {activeTab === 'saved' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🔖</span>
+            <FiBookmark size={20} style={{ color: 'var(--s-primary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)' }}>Saved Scholarships</div>
               <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>Scholarships you've bookmarked for easy access.</div>
@@ -859,7 +859,7 @@ export default function CollegeScholarshipsPage() {
       {activeTab === 'tracking' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>📋</span>
+            <FiFileText size={20} style={{ color: 'var(--s-primary)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)' }}>My Application Tracking</div>
               <div style={{ fontSize: 12, color: 'var(--s-text3)' }}>

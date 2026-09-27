@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { FiArrowLeft, FiSearch, FiStar } from 'react-icons/fi'
+import { FiArrowLeft, FiSearch, FiStar, FiCompass, FiMap } from 'react-icons/fi'
 import { careerService } from '../../services'
 import { SBadge, SBtn, SCard, SEmpty, SInput, SLoader, SSelect, STabs } from '../../components/ui'
 import {
@@ -119,7 +119,7 @@ export default function CareerClassPage() {
     return (
       <div className="student-root" style={{ padding: '40px 20px', maxWidth: 1080, margin: '0 auto' }}>
         <SEmpty
-          icon="🧭"
+          icon={<FiCompass size={48} />}
           title="Class not found"
           desc="Choose one of the available class guidance categories to continue."
         />
@@ -240,7 +240,7 @@ export default function CareerClassPage() {
         </div>
       ) : filteredCareers.length === 0 ? (
         <SEmpty
-          icon="🛤️"
+          icon={<FiMap size={48} />}
           title={`No career paths found for ${config.title}`}
           desc={search || interestFilter !== 'All'
             ? 'Try clearing your search or changing the interest filter.'

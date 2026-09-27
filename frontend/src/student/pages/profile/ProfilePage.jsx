@@ -166,7 +166,7 @@ export default function ProfilePage() {
         <SCard className="s-anim-up s-d2" style={{ padding: '28px', marginTop: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
             <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 700, fontSize: 15, color: 'var(--s-text)', margin: 0 }}>
-              🛡️ Communication Passport
+              Communication Passport
             </h3>
             <SBtn variant="outline" size="sm" onClick={() => navigate(`/student/class5/skills/communicationskills/passport/${student._id || student.id}`)}>
               View Shareable Passport ↗

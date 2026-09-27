@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { collegeService } from '../../services'
 import { SCard, SBadge, SLoader, SEmpty, SInput, SBtn } from '../../components/ui'
-import { FiSearch, FiMapPin, FiBookOpen, FiClock, FiLayers, FiExternalLink, FiBuildings, FiAlertTriangle, FiCpu } from 'react-icons/fi'
+import { FiSearch, FiMapPin, FiBookOpen, FiClock, FiLayers, FiExternalLink, FiHome, FiAlertTriangle, FiCpu } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 export default function CollegeCourseExplorer() {
@@ -124,7 +124,7 @@ export default function CollegeCourseExplorer() {
                 className="dropdown-item-hover"
               >
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s-primary-l)', color: 'var(--s-primary)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>
-                  <FiBuildings size={18} />
+                  <FiHome size={18} />
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--s-text)' }}>{c.collegeName}</div>
@@ -151,7 +151,7 @@ export default function CollegeCourseExplorer() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
                 <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'grid', placeItems: 'center' }}>
-                  <FiBuildings size={28} />
+                  <FiHome size={28} />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>{selectedCollege.collegeName}</h2>

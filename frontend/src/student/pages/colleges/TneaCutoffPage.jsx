@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { FiSearch, FiMapPin, FiDownload, FiChevronDown, FiFilter, FiExternalLink } from 'react-icons/fi'
+import { FiSearch, FiMapPin, FiDownload, FiChevronDown, FiFilter, FiExternalLink, FiBarChart2 } from 'react-icons/fi'
 import { SCard, SBadge, SLoader, SEmpty, SInput, SSelect, SBtn } from '../../components/ui'
 import { cutoffService } from '../../../services/cutoffService'
 import { courseService } from '../../../services/courseService'
@@ -142,7 +142,7 @@ export default function TneaCutoffPage() {
       {/* Main Content */}
       {loading ? <SLoader /> : filteredData.length === 0 ? (
         <SEmpty 
-          icon="📊" 
+          icon={<FiBarChart2 size={48} />} 
           title="No Cutoff Data Found" 
           desc="Try adjusting your filters or search query to find relevant results." 
         />

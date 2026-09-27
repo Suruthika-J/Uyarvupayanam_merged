@@ -47,17 +47,17 @@ import {
 } from 'react-icons/fi'
 
 export const C5 = {
-  navy: '#1a7a50',
-  navyDeep: '#145c3d',
+  navy: 'var(--s-primary)',
+  navyDeep: 'var(--s-primary-d)',
   ink: '#1e293b',
   muted: '#5b6b80',
   faint: '#8ea0b4',
-  line: '#eaf0f6',
-  bg: '#ffffff',
-  soft: '#f7fafc',
-  radius: 24,
-  radiusLg: 32,
-  shadow: '0 10px 15px -3px rgba(0,0,0,0.02)',
+  line: 'var(--s-border)',
+  bg: 'var(--s-surface)',
+  soft: 'var(--s-surface2)',
+  radius: 20,
+  radiusLg: 20,
+  shadow: 'var(--s-shadow)',
   shadowLg: '0 18px 40px -12px rgba(26,122,80,0.18)',
 }
 

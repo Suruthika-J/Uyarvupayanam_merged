@@ -149,13 +149,13 @@ export default function PatternMaster() {
         <div
           style={{
             background: '#fff',
-            borderRadius: 28,
+            borderRadius: 20,
             border: '1px solid #f1f5f9',
             padding: '28px 26px',
             boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
           }}
         >
-          <QuestionProgress current={current} total={QUESTION_COUNT} color="#8b5cf6" />
+          <QuestionProgress current={current} total={QUESTION_COUNT} color="#1a7a50" />
 
           {/* Level badge */}
           <div
@@ -170,8 +170,8 @@ export default function PatternMaster() {
               style={{
                 fontSize: 13,
                 fontWeight: 800,
-                color: '#8b5cf6',
-                background: '#f5f3ff',
+                color: 'var(--s-primary)',
+                background: 'var(--s-primary-l)',
                 padding: '6px 14px',
                 borderRadius: 12,
               }}
@@ -255,7 +255,7 @@ export default function PatternMaster() {
                 borderRadius: 16,
                 border: 'none',
                 background: selected
-                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                  ? 'linear-gradient(135deg, var(--s-primary) 0%, #2d9d6a 100%)'
                   : '#e2e8f0',
                 color: selected ? '#fff' : '#94a3b8',
                 fontWeight: 800,
@@ -265,7 +265,7 @@ export default function PatternMaster() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
-                boxShadow: selected ? '0 10px 20px -6px rgba(99,102,241,0.4)' : 'none',
+                boxShadow: selected ? '0 10px 20px -6px rgba(26,122,80,0.4)' : 'none',
               }}
             >
               <FiSend /> Submit Answer

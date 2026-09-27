@@ -2,8 +2,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FiCheck, FiLock, FiMap } from "react-icons/fi";
 
-const completedGradient = "linear-gradient(135deg, #10b981, #059669)";
-const activeGradient = "linear-gradient(135deg, #3b82f6, #2563eb)";
+const completedGradient = "linear-gradient(135deg, #059669, #10b981)";
+const activeGradient = "linear-gradient(135deg, #34d399, #059669)";
 const lockedBg = "#e2e8f0";
 
 export default function JourneyStepper({
@@ -15,7 +15,7 @@ export default function JourneyStepper({
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
         borderRadius: 28,
         padding: 3,
         marginBottom: 40,
@@ -27,7 +27,7 @@ export default function JourneyStepper({
           borderRadius: 25,
           padding: "28px 32px",
           boxShadow:
-            "0 20px 60px -12px rgba(102, 126, 234, 0.25), 0 0 0 1px rgba(255,255,255,0.1) inset",
+            "0 20px 60px -12px rgba(26, 122, 80, 0.25), 0 0 0 1px rgba(255,255,255,0.1) inset",
           position: "relative",
           overflow: "hidden",
         }}
@@ -42,7 +42,7 @@ export default function JourneyStepper({
             height: 120,
             borderRadius: "50%",
             background:
-              "linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08))",
+              "linear-gradient(135deg, rgba(26,122,80,0.08), rgba(16,185,129,0.08))",
             pointerEvents: "none",
           }}
         />
@@ -69,12 +69,11 @@ export default function JourneyStepper({
             marginBottom: 28,
           }}
         >
-          <span style={{ fontSize: 26 }}>🗺️</span>
           <h4
             style={{
               fontSize: 13,
               fontWeight: 800,
-              color: "#8b5cf6",
+              color: "var(--s-primary)",
               textTransform: "uppercase",
               letterSpacing: 2,
               margin: 0,
@@ -155,7 +154,7 @@ export default function JourneyStepper({
                       background: isCompleted
                         ? completedGradient
                         : isActive
-                          ? "linear-gradient(90deg, #10b981, #3b82f6)"
+                          ? "linear-gradient(90deg, #34d399, #059669)"
                           : "#e2e8f0",
                       zIndex: 0,
                       transform: "translateX(50%)",
@@ -180,7 +179,7 @@ export default function JourneyStepper({
                     boxShadow: isCompleted
                       ? "0 0 20px rgba(16,185,129,0.4), 0 4px 12px rgba(16,185,129,0.3)"
                       : isActive
-                        ? "0 0 24px rgba(59,130,246,0.4), 0 4px 12px rgba(59,130,246,0.3)"
+                        ? "0 0 24px rgba(5,150,105,0.4), 0 4px 12px rgba(5,150,105,0.3)"
                         : "0 2px 8px rgba(0,0,0,0.08)",
                     opacity: isUnlocked ? 1 : 0.5,
                     transition: "all 0.3s ease",
@@ -194,9 +193,9 @@ export default function JourneyStepper({
                     isActive
                       ? {
                           boxShadow: [
-                            "0 0 0 0 rgba(59,130,246,0.4)",
-                            "0 0 0 12px rgba(59,130,246,0)",
-                            "0 0 24px rgba(59,130,246,0.4)",
+                            "0 0 0 0 rgba(5,150,105,0.4)",
+                            "0 0 0 12px rgba(5,150,105,0)",
+                            "0 0 24px rgba(5,150,105,0.4)",
                           ],
                         }
                       : {}
@@ -222,7 +221,7 @@ export default function JourneyStepper({
                         position: "absolute",
                         inset: -6,
                         borderRadius: "50%",
-                        border: "3px solid rgba(59,130,246,0.3)",
+                        border: "3px solid rgba(5,150,105,0.3)",
                         pointerEvents: "none",
                       }}
                       animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0, 0.6] }}

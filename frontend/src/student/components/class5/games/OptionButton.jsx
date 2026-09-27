@@ -32,9 +32,9 @@ export default function OptionButton({
       text = '#94a3b8';
     }
   } else if (selected) {
-    bg = '#eef2ff';
-    border = '2px solid #6366f1';
-    text = '#4338ca';
+    bg = 'var(--s-green-l)';
+    border = '2px solid var(--s-primary)';
+    text = 'var(--s-primary-d)';
   }
 
   return (
@@ -57,7 +57,7 @@ export default function OptionButton({
         fontWeight: 700,
         color: text,
         textAlign: 'left',
-        boxShadow: selected && !revealed ? '0 6px 12px -4px rgba(99,102,241,0.3)' : 'none',
+        boxShadow: selected && !revealed ? '0 6px 12px -4px rgba(26,122,80,0.3)' : 'none',
       }}
     >
       <span
@@ -65,7 +65,7 @@ export default function OptionButton({
           width: 28,
           height: 28,
           borderRadius: 10,
-          background: revealed ? (isCorrectOption ? '#10b981' : selected ? '#ef4444' : '#e2e8f0') : selected ? '#6366f1' : '#e2e8f0',
+          background: revealed ? (isCorrectOption ? '#10b981' : selected ? '#ef4444' : '#e2e8f0') : selected ? 'var(--s-primary)' : '#e2e8f0',
           color: revealed ? (isCorrectOption || selected ? '#fff' : '#94a3b8') : selected ? '#fff' : '#64748b',
           display: 'grid',
           placeItems: 'center',

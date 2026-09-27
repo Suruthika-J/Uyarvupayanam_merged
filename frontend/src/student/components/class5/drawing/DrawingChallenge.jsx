@@ -133,7 +133,7 @@ export default function DrawingChallenge() {
         {/* Prompt card */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #ec4899 0%, #f59e0b 100%)',
+            background: 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)',
             color: '#fff',
             borderRadius: 24,
             padding: '22px 26px',
@@ -235,7 +235,7 @@ export default function DrawingChallenge() {
             disabled={!drawn}
             style={{
               flex: 2, minWidth: 200, padding: '14px 0', borderRadius: 14, border: 'none',
-              background: drawn ? 'linear-gradient(135deg, #ec4899 0%, #f59e0b 100%)' : '#e2e8f0',
+              background: drawn ? 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)' : '#e2e8f0',
               color: drawn ? '#fff' : '#94a3b8', fontWeight: 800, fontSize: 15,
               cursor: drawn ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

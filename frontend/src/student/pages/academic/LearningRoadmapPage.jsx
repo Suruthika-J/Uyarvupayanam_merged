@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { SCard, SLoader, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
 import {
   FiTarget, FiCheckCircle, FiCircle, FiArrowRight, FiAward,
-  FiBriefcase, FiBookOpen, FiCode, FiZap, FiCheck
+  FiBriefcase, FiBookOpen, FiCode, FiZap, FiCheck, FiMap
 } from 'react-icons/fi'
 import axiosInstance from '../../../config/axios'
 
@@ -130,7 +130,7 @@ export default function LearningRoadmapPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22, marginBottom: 32 }}>
         {milestones.length === 0 ? (
           <SEmpty
-            icon="🗺️"
+            icon={<FiMap size={48} />}
             title="No roadmap available yet"
             desc="We haven't generated milestones for your target career. Try refreshing, or set a target career from your recommendations."
           />

@@ -78,8 +78,8 @@ export default function HabitTracker({ onAuthRequired }) {
                  key={h}
                  onClick={() => handleToggle(h)}
                  style={{
-                   background: active ? '#6366f111' : '#fff',
-                   border: `2px solid ${active ? '#6366f1' : 'var(--s-border)'}`,
+                   background: active ? 'var(--s-green-l)' : '#fff',
+                   border: `2px solid ${active ? 'var(--s-primary)' : 'var(--s-border)'}`,
                    padding: '20px 32px',
                    borderRadius: 24,
                    display: 'flex',
@@ -93,8 +93,8 @@ export default function HabitTracker({ onAuthRequired }) {
                    transform: active ? 'translateY(-2px)' : 'none'
                  }}
                >
-                 {active ? <FiCheckCircle size={32} color="#6366f1" /> : <FiCircle size={32} color="var(--s-border)" />}
-                 <span style={{ fontWeight: 800, color: active ? '#4338ca' : 'var(--s-text2)', fontSize: 16 }}>{h}</span>
+                 {active ? <FiCheckCircle size={32} color="var(--s-primary)" /> : <FiCircle size={32} color="var(--s-border)" />}
+                 <span style={{ fontWeight: 800, color: active ? 'var(--s-primary-d)' : 'var(--s-text2)', fontSize: 16 }}>{h}</span>
                  {streak > 0 && (
                    <SBadge color="gold" style={{ marginTop: 4 }}>
                       <FiZap size={12} fill="#fbbf24" /> {streak} Day Streak

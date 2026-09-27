@@ -8,8 +8,8 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
     <div
       style={{
         background: '#fff',
-        borderRadius: 32,
-        border: '1px solid #f1f5f9',
+        borderRadius: 20,
+        border: '1px solid var(--s-border)',
         padding: '36px 32px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
         maxWidth: 640,
@@ -23,12 +23,12 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
           width: 72,
           height: 72,
           borderRadius: 24,
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          background: 'linear-gradient(135deg, var(--s-primary) 0%, #2d9d6a 100%)',
           color: '#fff',
           display: 'grid',
           placeItems: 'center',
           margin: '0 auto 18px',
-          boxShadow: '0 12px 20px -6px rgba(99,102,241,0.5)',
+          boxShadow: '0 12px 20px -6px rgba(26,122,80,0.45)',
         }}
       >
         <FiAward size={36} />
@@ -48,7 +48,7 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
           marginBottom: 8,
         }}
       >
-        <span style={{ fontSize: 56, fontWeight: 900, color: '#6366f1', letterSpacing: '-0.03em' }}>
+        <span style={{ fontSize: 56, fontWeight: 900, color: 'var(--s-primary)', letterSpacing: '-0.03em' }}>
           {result.score}
         </span>
         <span style={{ fontSize: 22, fontWeight: 800, color: '#94a3b8' }}>/ {result.maxScore}</span>
@@ -86,7 +86,7 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
         {[
           { label: 'Correct', value: result.correct, icon: FiCheckCircle, color: '#10b981' },
           { label: 'Incorrect', value: result.incorrect, icon: FiXCircle, color: '#ef4444' },
-          { label: 'Percentage', value: `${result.percentage}%`, icon: FiTarget, color: '#f59e0b' },
+          { label: 'Percentage', value: `${result.percentage}%`, icon: FiTarget, color: 'var(--s-accent)' },
           { label: 'Level', value: perf.label, icon: null, color: perf.color },
         ].map((s, i) => (
           <div
@@ -115,14 +115,14 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
       {skills.length > 0 && (
         <div
           style={{
-            background: '#f5f6ff',
+            background: 'var(--s-green-l)',
             borderRadius: 18,
             padding: 20,
             marginBottom: 24,
             textAlign: 'left',
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-primary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
             Your Skill Performance
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -141,7 +141,7 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
                     <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>{skill.label}</span>
                     <span style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.label}</span>
                   </div>
-                  <div style={{ height: 10, background: '#e5e7ff', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: 10, background: '#e6f4ec', borderRadius: 99, overflow: 'hidden' }}>
                     <div
                       style={{
                         height: '100%',
@@ -168,13 +168,13 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
             gap: 8,
             padding: '13px 24px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, var(--s-primary) 0%, #2d9d6a 100%)',
             color: '#fff',
             border: 'none',
             fontWeight: 800,
             fontSize: 15,
             cursor: 'pointer',
-            boxShadow: '0 10px 20px -6px rgba(99,102,241,0.5)',
+            boxShadow: '0 10px 20px -6px rgba(26,122,80,0.45)',
           }}
         >
           <FiRefreshCcw /> Play Again
@@ -188,8 +188,8 @@ export default function ResultScreen({ result, skills = [], message, onPlayAgain
             padding: '13px 24px',
             borderRadius: 14,
             background: '#fff',
-            color: '#6366f1',
-            border: '2px solid #e0e7ff',
+            color: 'var(--s-primary)',
+            border: '2px solid var(--s-border)',
             fontWeight: 800,
             fontSize: 15,
             cursor: 'pointer',

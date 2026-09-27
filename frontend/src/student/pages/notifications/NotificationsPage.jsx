@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { notificationService } from '../../services'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SCard, SBtn, SBadge, SLoader, SEmpty, SAlert } from '../../components/ui'
-import { FiCheckCircle, FiCheck } from 'react-icons/fi'
+import { FiCheckCircle, FiCheck, FiBell } from 'react-icons/fi'
 
 const TYPE_META = {
   exam:         { emoji: '📝', color: '#c48a1a', badge: 'gold',   label: 'Exam'         },
@@ -98,7 +98,7 @@ export default function NotificationsPage() {
       )}
 
       {loading ? <SLoader /> : notifications.length === 0 ? (
-        <SEmpty icon="🔔" title="No notifications yet" desc="Important updates from your admin will appear here." />
+        <SEmpty icon={<FiBell size={48} />} title="No notifications yet" desc="Important updates from your admin will appear here." />
       ) : (
         <div className="s-anim-up s-d1" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {notifications.map((n, i) => {

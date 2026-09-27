@@ -24,9 +24,9 @@ const INGREDIENT_LABELS = {
   theme: 'Story Theme',
 };
 
-const GRADIENT = 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)';
-const ACCENT = '#8b5cf6';
-const ACCENT2 = '#ec4899';
+const GRADIENT = 'linear-gradient(135deg, #1a7a50 0%, #2d9d6a 100%)';
+const ACCENT = '#1a7a50';
+const ACCENT2 = '#2d9d6a';
 
 function fireConfetti() {
   confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
@@ -50,7 +50,7 @@ function ChoiceOption({ option, selected, onSelect }) {
         padding: '18px 20px',
         borderRadius: 20,
         border: selected ? `3px solid ${ACCENT}` : '2px solid #e2e8f0',
-        background: selected ? '#f5f3ff' : '#fff',
+        background: selected ? 'var(--s-green-l)' : '#fff',
         color: selected ? '#1e293b' : '#475569',
         cursor: 'pointer',
         fontWeight: 800,
@@ -373,7 +373,7 @@ export default function StoryBuilder() {
                     key={key}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 8,
-                      background: '#f5f3ff', border: `1.5px solid ${ACCENT}33`,
+                      background: 'var(--s-green-l)', border: `1.5px solid ${ACCENT}33`,
                       color: ACCENT, padding: '8px 14px', borderRadius: 14,
                       fontWeight: 800, fontSize: 14,
                     }}
