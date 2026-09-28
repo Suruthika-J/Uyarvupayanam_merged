@@ -54,6 +54,33 @@ const collegeSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    // Collegedunia ranking-snapshot enrichment (journalism colleges etc.)
+    totalFees: {
+      type: Number,
+      default: 0, // total programme fees in INR
+    },
+    userRating: {
+      type: Number,
+      default: 0, // 0..5
+    },
+    totalReviews: {
+      type: Number,
+      default: 0,
+    },
+    placementAvgPackage: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    placementHighestPackage: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    cdScore: {
+      type: Number,
+      default: 0, // Collegedunia score out of 1000
+    },
     rank: {
       type: String,
       trim: true,

@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../../../config/axios'
 import { SBtn, SInput, SAlert, SCard } from '../../components/ui'
 import { FiLock, FiEye, FiEyeOff, FiArrowLeft, FiCheckCircle, FiShield } from 'react-icons/fi'
-
-const API_BASE = 'http://localhost:5000/api'
 
 export default function ResetPasswordPage() {
   const { token } = useParams()
@@ -45,7 +43,7 @@ export default function ResetPasswordPage() {
     setApiError('')
 
     try {
-      await axios.post(`${API_BASE}/auth/reset-password`, {
+      await axiosInstance.post('/auth/reset-password', {
         token,
         password: form.password,
       })

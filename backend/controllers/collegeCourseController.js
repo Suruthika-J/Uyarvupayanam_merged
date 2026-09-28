@@ -3,6 +3,7 @@ const Course = require("../models/Course");
 const Cutoff = require("../models/Cutoff");
 const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const axios = require("axios");
+const collegesInsightCache = require("../services/collegesInsightCache");
 
 // Helper: Normalize College Name for matching
 const normalizeCollegeName = (name) => {
@@ -197,6 +198,8 @@ exports.bulkAutoMap = async (req, res) => {
       await College.bulkWrite(bulkOps);
     }
 
+    collegesInsightCache.bust(); // admin mapping writes must refresh the student page
+
     res.status(200).json({
       success: true,
       message: `Bulk mapping completed: ${stats.mappingsCreated} records synchronized.`,
@@ -243,6 +246,8 @@ exports.saveMapping = async (req, res) => {
     }
 
     await college.save();
+
+    collegesInsightCache.bust(); // admin mapping writes must refresh the student page
 
     res.status(200).json({
       success: true,
@@ -550,6 +555,8 @@ exports.deduplicateMappings = async (req, res) => {
       }
     }
 
+    collegesInsightCache.bust(); // global dedupe changes college-course sets
+
     res.status(200).json({
       success: true,
       message: `Global cleanup complete. Deduplicated ${totalFixed} colleges.`,
@@ -569,6 +576,7 @@ exports.importDiplomaRoute = async (req, res) => {
     const { importDiplomaCSV } = require("../utils/diplomaImporter");
     const result = await importDiplomaCSV(true); // Force run from API trigger
     if (result.success) {
+      collegesInsightCache.bust();
       return res.status(200).json({
         success: true,
         message: "Diploma Course Offered Mapping synchronization complete.",
@@ -599,6 +607,7 @@ exports.importArtsScienceRoute = async (req, res) => {
     const { importArtsScienceExcel } = require("../utils/artsScienceImporter");
     const result = await importArtsScienceExcel(true);
     if (result.success) {
+      collegesInsightCache.bust();
       return res.status(200).json({
         success: true,
         message: "Arts & Science College-Course Mapping synchronization complete.",
@@ -629,6 +638,7 @@ exports.importMedicalRoute = async (req, res) => {
     const { importMedicalExcel } = require("../utils/medicalImporter");
     const result = await importMedicalExcel(true);
     if (result.success) {
+      collegesInsightCache.bust();
       return res.status(200).json({
         success: true,
         message: "Medical College-Course Mapping synchronization complete.",
@@ -659,6 +669,7 @@ exports.importSiddhaRoute = async (req, res) => {
     const { importSiddhaExcel } = require("../utils/siddhaImporter");
     const result = await importSiddhaExcel(true);
     if (result.success) {
+      collegesInsightCache.bust();
       return res.status(200).json({
         success: true,
         message: "Siddha Medical College-Course Mapping synchronization complete.",
@@ -689,6 +700,7 @@ exports.importAyurvedaRoute = async (req, res) => {
     const { importAyurvedaExcel } = require("../utils/ayurvedaImporter");
     const result = await importAyurvedaExcel(true);
     if (result.success) {
+      collegesInsightCache.bust();
       return res.status(200).json({
         success: true,
         message: "Ayurveda Medical College-Course Mapping synchronization complete.",

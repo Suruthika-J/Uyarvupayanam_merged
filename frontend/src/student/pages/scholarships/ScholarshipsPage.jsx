@@ -151,7 +151,7 @@ export default function ScholarshipsPage() {
         {/* Header Section */}
         <div className="s-section-header" style={{ textAlign: 'left', marginBottom: 40 }}>
            <div className="s-section-tag"><FiAward size={14} /> Financial Aid</div>
-           <h1 className="s-section-title" style={{ fontSize: 36, marginTop: 8 }}>Available Scholarships</h1>
+           <h1 className="s-section-title" style={{ fontSize: 32, marginTop: 8 }}>Available Scholarships</h1>
            <p className="s-section-desc" style={{ margin: 0, maxWidth: 600 }}>
              Discover and apply for scholarships to support your educational journey.
            </p>
@@ -262,7 +262,7 @@ export default function ScholarshipsPage() {
 
               <div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                   <SBadge color="blue" style={{ fontSize: 11 }}>{scholarship.category || 'General'}</SBadge>
+                   <SBadge color="blue" style={{ fontSize: 12 }}>{scholarship.category || 'General'}</SBadge>
                  </div>
                  <h3 style={{ margin: 0, fontSize: 18, color: 'var(--s-text)', lineHeight: 1.4 }}>{scholarship.name || scholarship.scholarshipName}</h3>
                  <p style={{ margin: '4px 0 0 0', color: 'var(--s-text3)', fontSize: 14 }}>{scholarship.provider || 'Independent Provider'}</p>

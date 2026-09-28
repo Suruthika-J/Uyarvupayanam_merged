@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-09-04T17:54:41.986Z",
+  "totalActiveCourses": 1000,
+  "uniqueGroupKeys": 769,
+  "totalDupGroups": 90,
+  "classA_exactCopies": 9,
+  "classB_nameVariants": 57,
+  "classC_differentDegrees_review": 24,
+  "membersInMergeableGroups_A_B": 239,
+  "membersInReviewGroups_C": 82,
+  "recordsToArchiveIfAllABMerged": 173,
+  "totalCollegeMapsInABGroups": 7497,
+  "duplicateMapOverlapAcrossABGroups": 3379,
+  "groupCountByLevel": {
+    "after12th": 73,
+    "undergraduate": 17
+  }
+}

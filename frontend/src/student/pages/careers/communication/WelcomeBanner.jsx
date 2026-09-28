@@ -38,7 +38,7 @@ export default function WelcomeBanner() {
         width: "100%",
         background:
           "linear-gradient(135deg, #059669 0%, #10b981 30%, #34d399 60%, #6ee7b7 100%)",
-        borderRadius: 32,
+        borderRadius: 20,
         padding: "48px 48px 64px 48px",
         boxShadow:
           "0 12px 48px rgba(5,150,105,0.35), 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.15)",

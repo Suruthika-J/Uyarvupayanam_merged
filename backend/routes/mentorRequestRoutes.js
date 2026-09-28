@@ -10,12 +10,13 @@ const {
 } = require("../controllers/mentorRequestController");
 const verifyAdmin = require("../middleware/verifyAdmin");
 const verifyStudent = require("../middleware/verifyStudent");
+const verifyOwnership = require("../middleware/verifyOwnership");
 
 // User Side: Create request
 router.post("/", createMentorRequest);
 
 // User Side: Get my requests
-router.get("/user/:userId", verifyStudent, getUserMentorRequests);
+router.get("/user/:userId", verifyStudent, verifyOwnership("userId"), getUserMentorRequests);
 
 // Admin Side: Management
 router.get("/", verifyAdmin, getAllMentorRequests);

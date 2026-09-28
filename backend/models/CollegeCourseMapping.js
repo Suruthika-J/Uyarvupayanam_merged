@@ -80,6 +80,15 @@ const collegeCourseMappingSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // TNEA seat-matrix seat counts (admin-only; never projected publicly)
+    seatsOC: { type: Number, default: 0 },
+    seatsBC: { type: Number, default: 0 },
+    seatsBCM: { type: Number, default: 0 },
+    seatsMBC: { type: Number, default: 0 },
+    seatsSC: { type: Number, default: 0 },
+    seatsSCA: { type: Number, default: 0 },
+    seatsST: { type: Number, default: 0 },
+    seatsTotal: { type: Number, default: 0 },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

@@ -3,6 +3,7 @@ const College = require("../models/College");
 const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const mongoose = require("mongoose");
 const { allSourceCourses, SOURCE_URL, SOURCE_NAME } = require("../data/sourceCoursesAfter12th");
+const collegesInsightCache = require("../services/collegesInsightCache");
 
 // ─── Normalize helper for duplicate checking ──────────────────────
 const normalize = (str) => String(str || "").trim().toLowerCase();
@@ -17,6 +18,7 @@ const uniqueKey = (c) =>
 exports.createCourse = async (req, res) => {
   try {
     const course = await Course.create(req.body);
+    collegesInsightCache.bust(); // course writes must refresh the student page
     res.status(201).json({
       success: true,
       message: "Course created successfully",
@@ -33,33 +35,43 @@ exports.createCourse = async (req, res) => {
 };
 
 // @desc    Get all courses
+const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @route   GET /api/courses
 // @access  Public
 exports.getAllCourses = async (req, res) => {
   try {
-    const { level, targetLevel, category } = req.query;
-    const filter = {};
+    const { level, targetLevel, category, search } = req.query;
 
-    if (level) {
-      const normalizedLevel = level.replace(/\s/g, '');
-      const levelRegex = new RegExp(`^${normalizedLevel.split('').join('[\\s]*')}$`, "i");
-      filter.$or = [
-        { level: levelRegex },
-        { targetLevel: levelRegex }
-      ];
-    }
-    if (targetLevel) {
-       const normalizedTargetLevel = targetLevel.replace(/\s/g, '');
-       const targetLevelRegex = new RegExp(`^${normalizedTargetLevel.split('').join('[\\s]*')}$`, "i");
-       if (!filter.$or) {
-          filter.$or = [
-            { level: targetLevelRegex },
-            { targetLevel: targetLevelRegex }
-          ];
-       }
-    }
-    if (category) filter.category = new RegExp(`^${category}$`, "i");
+    const isAll = (v) => !v || String(v).trim().toLowerCase() === 'all';
+    const and = [];
 
+    if (!isAll(level) || !isAll(targetLevel)) {
+      const levelValue = !isAll(level) ? level : targetLevel;
+      const normalizedLevel = String(levelValue).replace(/\s/g, '');
+      const levelRegex = new RegExp(`^${escapeRegex(normalizedLevel).split('').join('[\\s]*')}$`, "i");
+      and.push({
+        $or: [
+          { level: levelRegex },
+          { targetLevel: levelRegex }
+        ]
+      });
+    }
+    if (!isAll(category)) {
+      and.push({ category: new RegExp(`^${escapeRegex(category)}$`, "i") });
+    }
+    if (!isAll(search)) {
+      const searchRegex = new RegExp(escapeRegex(search), "i");
+      and.push({
+        $or: [
+          { courseName: searchRegex },
+          { shortDescription: searchRegex },
+          { overview: searchRegex }
+        ]
+      });
+    }
+
+    const filter = and.length ? (and.length === 1 ? and[0] : { $and: and }) : {};
     const courses = await Course.find(filter).sort({ courseName: 1 });
 
     // Deduplicate by normalized course name within same category
@@ -144,6 +156,8 @@ exports.updateCourse = async (req, res) => {
       });
     }
 
+    collegesInsightCache.bust(); // course writes must refresh the student page
+
     res.status(200).json({
       success: true,
       message: "Course updated successfully",
@@ -171,6 +185,8 @@ exports.deleteCourse = async (req, res) => {
         message: "Course not found",
       });
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,
@@ -219,6 +235,8 @@ exports.bulkImportCourses = async (req, res) => {
         skippedCount++;
       }
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,
@@ -373,6 +391,8 @@ exports.importFromSource = async (req, res) => {
       insertedCount++;
       existingKeys.add(key); // prevent within-batch duplicates
     }
+
+    collegesInsightCache.bust(); // course writes must refresh the student page
 
     res.status(200).json({
       success: true,

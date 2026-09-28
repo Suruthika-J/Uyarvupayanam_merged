@@ -1,0 +1,604 @@
+[
+  {
+    "order": 136,
+    "code": "DCE",
+    "groupName": "Diploma in Civil Engineering",
+    "subjects": [
+      "Building Materials",
+      "Surveying",
+      "Structural Engineering",
+      "AutoCAD"
+    ],
+    "bestFor": "Students interested in construction, infrastructure, and site-engineering careers.",
+    "progression": [
+      "Lateral entry to B.E. Civil (2nd year)",
+      "Site Supervisor / Junior Engineer roles",
+      "Government PWD / municipal engineering posts"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 137,
+    "code": "DME",
+    "groupName": "Diploma in Mechanical Engineering",
+    "subjects": [
+      "Engineering Mechanics",
+      "Thermal Engineering",
+      "Manufacturing Processes",
+      "CAD/CAM"
+    ],
+    "bestFor": "Students interested in machinery, manufacturing, and production careers.",
+    "progression": [
+      "Lateral entry to B.E. Mechanical (2nd year)",
+      "Junior Engineer in manufacturing/production",
+      "Maintenance Engineer roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 138,
+    "code": "DEEE",
+    "groupName": "Diploma in Electrical and Electronics Engineering",
+    "subjects": [
+      "Electrical Circuits",
+      "Power Systems",
+      "Electrical Machines",
+      "Control Systems"
+    ],
+    "bestFor": "Students interested in power systems, electrical installation, and maintenance careers.",
+    "progression": [
+      "Lateral entry to B.E. EEE (2nd year)",
+      "Junior Electrical Engineer",
+      "Electricity Board / power-sector roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "electronics-lab"
+  },
+  {
+    "order": 139,
+    "code": "DECE",
+    "groupName": "Diploma in Electronics and Communication Engineering",
+    "subjects": [
+      "Electronic Devices",
+      "Communication Systems",
+      "Microprocessors",
+      "Digital Electronics"
+    ],
+    "bestFor": "Students interested in electronics, telecom, and embedded-systems careers.",
+    "progression": [
+      "Lateral entry to B.E. ECE (2nd year)",
+      "Junior Electronics Engineer",
+      "Telecom industry technician roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "electronics-lab"
+  },
+  {
+    "order": 140,
+    "code": "DCS",
+    "groupName": "Diploma in Computer Engineering",
+    "subjects": [
+      "Programming Fundamentals",
+      "Data Structures",
+      "Computer Networks",
+      "Database Systems"
+    ],
+    "bestFor": "Students interested in software development and IT-infrastructure careers.",
+    "progression": [
+      "Lateral entry to B.E./B.Tech CSE (2nd year)",
+      "Junior Software Developer",
+      "IT Support Engineer roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "computer-lab"
+  },
+  {
+    "order": 141,
+    "code": "DIT",
+    "groupName": "Diploma in Information Technology",
+    "subjects": [
+      "Web Technologies",
+      "Programming",
+      "Networking",
+      "Database Management"
+    ],
+    "bestFor": "Students interested in web development, networking, and IT-service careers.",
+    "progression": [
+      "Lateral entry to B.E./B.Tech IT (2nd year)",
+      "Web Developer",
+      "Network Administrator roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "computer-lab"
+  },
+  {
+    "order": 142,
+    "code": "DAE",
+    "groupName": "Diploma in Automobile Engineering",
+    "subjects": [
+      "Automotive Chassis",
+      "Engine Systems",
+      "Vehicle Maintenance",
+      "Auto Electrical Systems"
+    ],
+    "bestFor": "Students interested in vehicle design, repair, and automotive-industry careers.",
+    "progression": [
+      "Lateral entry to B.E. Automobile (2nd year)",
+      "Service Engineer at automobile companies",
+      "Workshop Supervisor roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 143,
+    "code": "DCHE",
+    "groupName": "Diploma in Chemical Engineering",
+    "subjects": [
+      "Chemical Process Technology",
+      "Industrial Chemistry",
+      "Plant Operations",
+      "Mass Transfer"
+    ],
+    "bestFor": "Students interested in process industries and chemical-plant operations.",
+    "progression": [
+      "Lateral entry to B.Tech Chemical Engineering (2nd year)",
+      "Plant Operator/Junior Engineer in process industries"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 144,
+    "code": "DTT",
+    "groupName": "Diploma in Textile Technology",
+    "subjects": [
+      "Yarn Manufacturing",
+      "Fabric Structure",
+      "Textile Testing",
+      "Weaving Technology"
+    ],
+    "bestFor": "Students interested in textile manufacturing and production-technology careers.",
+    "progression": [
+      "Lateral entry to B.Tech Textile Technology (2nd year)",
+      "Textile Mill Supervisor roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "textile-studio"
+  },
+  {
+    "order": 145,
+    "code": "DTC",
+    "groupName": "Diploma in Textile Chemistry",
+    "subjects": [
+      "Dyeing Technology",
+      "Textile Chemical Processing",
+      "Printing Technology",
+      "Finishing Processes"
+    ],
+    "bestFor": "Students interested in the chemical-processing side of textile manufacturing.",
+    "progression": [
+      "Lateral entry to B.Tech Textile Chemistry (2nd year)",
+      "Textile Processing Unit roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "textile-studio"
+  },
+  {
+    "order": 146,
+    "code": "DPT",
+    "groupName": "Diploma in Printing Technology",
+    "subjects": [
+      "Prepress Technology",
+      "Printing Machinery",
+      "Print Production Management",
+      "Packaging Technology"
+    ],
+    "bestFor": "Students interested in printing, publishing, and packaging-industry careers.",
+    "progression": [
+      "Lateral entry to B.Tech Printing Technology (2nd year)",
+      "Print Production Supervisor roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "printing-studio"
+  },
+  {
+    "order": 147,
+    "code": "DPL",
+    "groupName": "Diploma in Plastic Technology",
+    "subjects": [
+      "Polymer Science",
+      "Mould Design",
+      "Plastic Processing",
+      "Materials Testing"
+    ],
+    "bestFor": "Students interested in plastics manufacturing and polymer-processing careers.",
+    "progression": [
+      "Lateral entry to B.Tech Plastic Technology (2nd year)",
+      "Plastic Processing Unit roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 148,
+    "code": "DICE",
+    "groupName": "Diploma in Instrumentation and Control Engineering",
+    "subjects": [
+      "Process Instrumentation",
+      "Control Systems",
+      "Sensors and Transducers",
+      "Industrial Automation"
+    ],
+    "bestFor": "Students interested in industrial automation and process-control careers.",
+    "progression": [
+      "Lateral entry to B.E. Instrumentation (2nd year)",
+      "Instrumentation Engineer in process plants"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "electronics-lab"
+  },
+  {
+    "order": 149,
+    "code": "DMCT",
+    "groupName": "Diploma in Mechatronics Engineering",
+    "subjects": [
+      "Robotics",
+      "Automation Systems",
+      "Sensors and Actuators",
+      "Programmable Logic Controllers"
+    ],
+    "bestFor": "Students interested in robotics, automation, and integrated mechanical-electronic systems.",
+    "progression": [
+      "Lateral entry to B.E. Mechatronics (2nd year)",
+      "Automation Engineer roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 150,
+    "code": "DAER",
+    "groupName": "Diploma in Aeronautical Engineering",
+    "subjects": [
+      "Aircraft Structures",
+      "Aerodynamics",
+      "Aircraft Maintenance",
+      "Avionics"
+    ],
+    "bestFor": "Students interested in aircraft maintenance and aerospace-industry careers.",
+    "progression": [
+      "Lateral entry to B.E. Aeronautical (2nd year)",
+      "Aircraft Maintenance Technician roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 151,
+    "code": "DMAR",
+    "groupName": "Diploma in Marine Engineering",
+    "subjects": [
+      "Marine Machinery",
+      "Ship Construction",
+      "Naval Architecture Basics",
+      "Marine Systems"
+    ],
+    "bestFor": "Students interested in shipbuilding and marine-engineering careers.",
+    "progression": [
+      "Lateral entry to B.E. Marine Engineering (2nd year)",
+      "Ship-industry technical roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 152,
+    "code": "DMIN",
+    "groupName": "Diploma in Mining Engineering",
+    "subjects": [
+      "Mining Methods",
+      "Mine Surveying",
+      "Rock Mechanics",
+      "Mine Safety"
+    ],
+    "bestFor": "Students interested in mining and mineral-extraction industry careers.",
+    "progression": [
+      "Lateral entry to B.E. Mining Engineering (2nd year)",
+      "Mine Supervisor roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 153,
+    "code": "DPCE",
+    "groupName": "Diploma in Petrochemical Engineering",
+    "subjects": [
+      "Petroleum Refining",
+      "Petrochemical Processes",
+      "Plant Safety",
+      "Process Equipment"
+    ],
+    "bestFor": "Students interested in oil, gas, and petrochemical-industry careers.",
+    "progression": [
+      "Lateral entry to B.Tech Petrochemical Engineering (2nd year)",
+      "Refinery/Plant technical roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 154,
+    "code": "DRT",
+    "groupName": "Diploma in Rubber Technology",
+    "subjects": [
+      "Rubber Compounding",
+      "Polymer Processing",
+      "Rubber Testing",
+      "Product Manufacturing"
+    ],
+    "bestFor": "Students interested in rubber and polymer-product manufacturing careers.",
+    "progression": [
+      "Lateral entry to B.Tech Rubber Technology (2nd year)",
+      "Rubber Industry technical roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 155,
+    "code": "DCT",
+    "groupName": "Diploma in Ceramic Technology",
+    "subjects": [
+      "Ceramic Raw Materials",
+      "Glaze Technology",
+      "Kiln Operations",
+      "Ceramic Product Design"
+    ],
+    "bestFor": "Students interested in ceramics, glass, and refractory-industry careers.",
+    "progression": [
+      "Lateral entry to B.Tech Ceramic Technology (2nd year)",
+      "Ceramic Industry technical roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 156,
+    "code": "DLT",
+    "groupName": "Diploma in Leather Technology",
+    "subjects": [
+      "Leather Processing",
+      "Tanning Technology",
+      "Footwear Technology",
+      "Quality Control"
+    ],
+    "bestFor": "Students interested in leather manufacturing and footwear-industry careers.",
+    "progression": [
+      "Lateral entry to B.Tech Leather Technology (2nd year)",
+      "Leather Industry technical roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "engineering-workshop"
+  },
+  {
+    "order": 157,
+    "code": "DFT",
+    "groupName": "Diploma in Fashion Technology",
+    "subjects": [
+      "Garment Construction",
+      "Fashion Illustration",
+      "Pattern Making",
+      "Apparel Production"
+    ],
+    "bestFor": "Students interested in fashion design and garment-industry careers.",
+    "progression": [
+      "Lateral entry to B.Tech Fashion Technology (2nd year)",
+      "B.Des Fashion Design",
+      "Apparel industry roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "textile-studio"
+  },
+  {
+    "order": 158,
+    "code": "DAT",
+    "groupName": "Diploma in Apparel Technology",
+    "subjects": [
+      "Apparel Manufacturing",
+      "Garment Costing",
+      "Quality Assurance",
+      "Production Planning"
+    ],
+    "bestFor": "Students interested in garment manufacturing and production-management careers.",
+    "progression": [
+      "Lateral entry to B.Tech Apparel Technology (2nd year)",
+      "Apparel Production Supervisor roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "textile-studio"
+  },
+  {
+    "order": 159,
+    "code": "DCCP",
+    "groupName": "Diploma in Commercial and Computer Practice",
+    "subjects": [
+      "Office Automation",
+      "Accounting Software",
+      "Business Communication",
+      "Computer Applications"
+    ],
+    "bestFor": "Students interested in office administration and computer-based business operations.",
+    "progression": [
+      "B.Com",
+      "BBA",
+      "Office Administrator / Computer Operator roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "office-admin"
+  },
+  {
+    "order": 160,
+    "code": "DID",
+    "groupName": "Diploma in Interior Decoration",
+    "subjects": [
+      "Interior Design Principles",
+      "Space Planning",
+      "Materials and Finishes",
+      "CAD for Interiors"
+    ],
+    "bestFor": "Students interested in interior design and space-planning careers.",
+    "progression": [
+      "B.Des Interior Design",
+      "Interior Design Assistant roles",
+      "Furniture/Décor industry careers"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "architecture-studio"
+  },
+  {
+    "order": 161,
+    "code": "DMOP",
+    "groupName": "Diploma in Modern Office Practice",
+    "subjects": [
+      "Office Management",
+      "Business Correspondence",
+      "Computer Applications",
+      "Records Management"
+    ],
+    "bestFor": "Students interested in administrative and office-support careers.",
+    "progression": [
+      "B.Com",
+      "BBA",
+      "Office Executive / Administrative Assistant roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "office-admin"
+  },
+  {
+    "order": 162,
+    "code": "DHMCT",
+    "groupName": "Diploma in Hotel Management and Catering Technology",
+    "subjects": [
+      "Food Production",
+      "Food & Beverage Service",
+      "Housekeeping",
+      "Front Office Operations"
+    ],
+    "bestFor": "Students interested in hospitality, hotel management, and catering careers.",
+    "progression": [
+      "B.Sc Hotel Management",
+      "Hospitality industry roles",
+      "Catering entrepreneurship"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "culinary-kitchen"
+  },
+  {
+    "order": 163,
+    "code": "DARCH",
+    "groupName": "Diploma in Architecture (Architectural Assistantship)",
+    "subjects": [
+      "Building Design",
+      "Architectural Drawing",
+      "Construction Materials",
+      "CAD for Architecture"
+    ],
+    "bestFor": "Students interested in architectural design and building-planning careers.",
+    "progression": [
+      "B.Arch (via entrance)",
+      "Architectural Assistant roles",
+      "CAD Draftsman in architecture firms"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "architecture-studio"
+  },
+  {
+    "order": 164,
+    "code": "DBME",
+    "groupName": "Diploma in Bio-Medical Engineering",
+    "subjects": [
+      "Medical Instrumentation",
+      "Biomedical Sensors",
+      "Hospital Equipment Maintenance",
+      "Physiology Basics"
+    ],
+    "bestFor": "Students interested in medical-equipment technology and healthcare-engineering careers.",
+    "progression": [
+      "Lateral entry to B.E. Biomedical Engineering (2nd year)",
+      "Medical Equipment Technician roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "medical-clinic"
+  },
+  {
+    "order": 165,
+    "code": "DAGE",
+    "groupName": "Diploma in Agricultural Engineering",
+    "subjects": [
+      "Farm Machinery",
+      "Irrigation Engineering",
+      "Soil and Water Conservation",
+      "Agricultural Processing"
+    ],
+    "bestFor": "Students interested in agricultural mechanization and farm-technology careers.",
+    "progression": [
+      "Lateral entry to B.Tech Agricultural Engineering (2nd year)",
+      "Farm Equipment Industry roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "farm-field"
+  },
+  {
+    "order": 166,
+    "code": "DFDT",
+    "groupName": "Diploma in Food Technology",
+    "subjects": [
+      "Food Processing",
+      "Food Preservation",
+      "Food Quality Control",
+      "Food Packaging"
+    ],
+    "bestFor": "Students interested in food-processing and food-industry technology careers.",
+    "progression": [
+      "Lateral entry to B.Tech Food Technology (2nd year)",
+      "Food Industry Quality Control roles"
+    ],
+    "category": "polytechnic",
+    "subCategory": null,
+    "backgroundTheme": "culinary-kitchen"
+  }
+]

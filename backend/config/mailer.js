@@ -1,19 +1,47 @@
 const nodemailer = require("nodemailer");
 
 /**
- * Create a reusable Nodemailer transporter using Gmail SMTP.
- * Credentials are loaded from environment variables:
- *   EMAIL_USER  – the Gmail address to send FROM
- *   EMAIL_PASS  – an App Password generated in your Google account
- *               (NOT your regular Gmail password; 2-FA must be enabled)
+ * Create a reusable Nodemailer transporter.
+ *
+ * DEFAULT (Gmail SMTP): service "gmail" using
+ *   EMAIL_USER            – the Gmail address to send FROM
+ *   EMAIL_APP_PASSWORD    – an App Password (NOT the regular password; 2FA must be on)
+ *   EMAIL_PASS            – legacy alias for the app password
+ *
+ * OPTIONAL production override — swap in a transactional provider to avoid
+ * Google blocking automated OTP/verification mail sent from a fresh Gmail
+ * account. When MAIL_HOST (or MAIL_SERVICE) is set, the Gmail config is
+ * replaced entirely:
+ *   MAIL_HOST      – SMTP host, e.g. smtp-relay.brevo.com / smtp.resend.com
+ *   MAIL_SERVICE   – alternative: a Nodemailer service name, e.g. "gmail"
+ *   MAIL_PORT      – port (default 587)
+ *   MAIL_SECURE    – "true" = implicit TLS on 465; otherwise STARTTLS on MAIL_PORT
+ *   MAIL_USER      – SMTP username
+ *   MAIL_PASS      – SMTP password / API key
+ *
+ * `defaultFrom` is the From-address used by every mailer:
+ *   MAIL_FROM      – override (e.g. noreply@yourdomain.com); falls back to EMAIL_USER
  */
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+const transporter = nodemailer.createTransport(
+    process.env.MAIL_HOST || process.env.MAIL_SERVICE
+        ? {
+              host: process.env.MAIL_HOST || process.env.MAIL_SERVICE,
+              port: Number(process.env.MAIL_PORT) || 587,
+              secure: process.env.MAIL_SECURE === "true",
+              auth: process.env.MAIL_USER
+                  ? { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS || "" }
+                  : undefined,
+          }
+        : {
+              service: "gmail",
+              auth: {
+                  user: process.env.EMAIL_USER,
+                  pass: process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS,
+              },
+          }
+);
+
+const defaultFrom = process.env.MAIL_FROM || process.env.EMAIL_USER;
 
 /**
  * Send a nicely-formatted HTML email for a notification.
@@ -87,7 +115,7 @@ const sendNotificationEmail = async (toEmail, toName, notif) => {
 </html>`;
 
     const mailOptions = {
-        from: `"CareerMap 🎓" <${process.env.EMAIL_USER}>`,
+        from: `"CareerMap 🎓" <${defaultFrom}>`,
         to: toEmail,
         subject: `🔔 ${typeLabel}: ${notif.title}`,
         html,
@@ -103,4 +131,4 @@ const sendNotificationEmail = async (toEmail, toName, notif) => {
     }
 };
 
-module.exports = { transporter, sendNotificationEmail };
+module.exports = { transporter, defaultFrom, sendNotificationEmail };

@@ -14,7 +14,11 @@ const DATA_URLS = {
     2025: "https://www.tneacutoff.com/api/c5.json",
 };
 
-const MONGO_URI = "mongodb+srv://uyarvupayanam_db_user:UyarvuPayanam1234@cluster0.i0sep1t.mongodb.net/uyarvuPayanam?retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+  console.error("MONGO_URI is not set. Add it to your environment (e.g. backend/.env) before running this script.");
+  process.exit(1);
+}
 
 async function forceSync() {
     await mongoose.connect(MONGO_URI);

@@ -1,0 +1,826 @@
+/* ── Check Your Progress page ────────────────────────────────────────────── */
+
+.page {
+  width: 100%;
+  max-width: none;
+  padding: 28px 32px 48px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 3vw, 28px);
+  color: var(--s-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.headerIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageSub {
+  font-size: 13.5px;
+  color: var(--s-text3);
+  margin: 0;
+}
+
+/* ── Loading / error / no-data states ───────────────────────────────────── */
+
+.stateCard {
+  max-width: 500px;
+  margin: 40px auto 0;
+  text-align: center;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 20px;
+  padding: 48px 32px;
+  box-shadow: var(--s-shadow);
+}
+
+.stateIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.stateTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--s-text);
+  margin: 0 0 8px;
+}
+
+.stateDesc {
+  font-size: 13.5px;
+  color: var(--s-text3);
+  max-width: 380px;
+  margin: 0 auto 22px;
+  line-height: 1.65;
+}
+
+/* ── Hero (intro + result) ──────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 24px;
+  align-items: center;
+  background: linear-gradient(135deg, #1a7a50 0%, #2d9d6a 55%, #1a6845 100%);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  padding: 30px 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -40px;
+  width: 180px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.heroLeft,
+.heroRight {
+  position: relative;
+  z-index: 1;
+}
+
+.heroEyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 6px;
+}
+
+.heroTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.heroMessage {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 520px;
+  margin: 0 0 20px;
+}
+
+.heroScore {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 6vw, 64px);
+  line-height: 1;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 4px;
+}
+
+.heroScorePct {
+  font-size: 0.45em;
+  font-weight: 700;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.heroBandRow {
+  margin-bottom: 8px;
+}
+
+.heroDelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.heroPrev {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12.5px;
+}
+
+.heroNote {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 12px 0 0;
+  line-height: 1.55;
+  max-width: 440px;
+}
+
+.heroHint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin: 16px 0 0;
+  max-width: 300px;
+}
+
+.focusTitle {
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+.chipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fde047;
+  flex-shrink: 0;
+}
+
+/* ── Stat cards ─────────────────────────────────────────────────────────── */
+
+.statRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 150px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.statValue {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.statSub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.statBadge {
+  margin-top: 2px;
+}
+
+/* ── CTA row ────────────────────────────────────────────────────────────── */
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── At-a-glance chips ──────────────────────────────────────────────────── */
+
+.summaryChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sumChipUp,
+.sumChipDown,
+.sumChipStill,
+.sumChipNew {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+.sumChipUp strong { color: #a7f3d0; }
+.sumChipDown strong { color: #fecaca; }
+.sumChipStill strong { color: #fde68a; }
+.sumChipNew strong { color: #bfdbfe; }
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+
+.sectionHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sectionIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--s-text);
+  margin: 0 0 2px;
+}
+
+.sectionSub {
+  font-size: 13px;
+  color: var(--s-text3);
+  margin: 0;
+}
+
+.card {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--s-shadow);
+}
+
+.mutedText {
+  color: var(--s-text3);
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.footNote {
+  font-size: 12.5px;
+  color: var(--s-text3);
+  margin: 14px 0 0;
+  text-align: center;
+}
+
+/* ── Quiz ───────────────────────────────────────────────────────────────── */
+
+.quizCard {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 20px;
+  padding: 28px 30px 24px;
+  box-shadow: var(--s-shadow);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.quizMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.quizCat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--s-font-display);
+  padding: 6px 12px;
+  border-radius: 99px;
+}
+
+.quizQIndex {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--s-text2);
+  font-family: var(--s-font-display);
+}
+
+.quizProgressWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.quizProgress {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--s-bg2);
+  overflow: hidden;
+}
+
+.quizProgressFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--s-primary-l), var(--s-primary));
+  transition: width 0.25s ease;
+}
+
+.quizProgressLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--s-text3);
+  font-family: var(--s-font-display);
+  white-space: nowrap;
+}
+
+.quizText {
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--s-text);
+  line-height: 1.45;
+  margin: 0 0 20px;
+}
+
+.optList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--s-bg);
+  border: 1.5px solid var(--s-border);
+  border-radius: 14px;
+  padding: 13px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--s-font-body);
+  font-size: 14.5px;
+  color: var(--s-text);
+}
+
+.opt:hover {
+  border-color: var(--s-primary);
+  background: var(--s-primary-l);
+}
+
+.optSel {
+  border-color: var(--s-primary);
+  background: var(--s-primary-l);
+}
+
+.optLetter {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--s-surface);
+  border: 1.5px solid var(--s-border);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--s-text2);
+  flex-shrink: 0;
+  font-family: var(--s-font-display);
+}
+
+.optSel .optLetter {
+  background: var(--s-primary);
+  border-color: var(--s-primary);
+  color: #fff;
+}
+
+.optText {
+  flex: 1;
+}
+
+.optCheck {
+  color: var(--s-primary);
+  flex-shrink: 0;
+}
+
+.quizFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ── Result comparison rows ─────────────────────────────────────────────── */
+
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.compareRow {
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: var(--s-shadow);
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.rowName {
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--s-text);
+}
+
+.rowBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.rowBarCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rowBarValue {
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--s-text);
+}
+
+.rowBarLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--s-text3);
+}
+
+.rowArrow {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--s-text3);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.rowArrowFlat {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bar {
+  height: 9px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.rowFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--s-border);
+}
+
+.deltaUp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--s-green);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--s-font-display);
+}
+
+.deltaDown {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--s-font-display);
+}
+
+.deltaFlat {
+  color: var(--s-text3);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+.deltaNew {
+  color: var(--s-blue);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+.rowGoal {
+  font-size: 12.5px;
+  color: var(--s-text3);
+}
+
+/* ── Subject + topic display in quiz ───────────────────────────────────── */
+
+.quizSubjectWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quizTopic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+  padding: 5px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+/* ── Plan list in hero ─────────────────────────────────────────────────── */
+
+.planRowList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.planRowName {
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+}
+
+.planRowMid {
+  display: flex;
+  align-items: center;
+}
+
+.planRowNone {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.planRowCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fde047;
+  font-family: var(--s-font-display);
+  white-space: nowrap;
+}
+
+/* ── Result hero meta grid ─────────────────────────────────────────────── */
+
+.resultMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.resultMeta {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resultMetaLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.resultMetaValue {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--s-font-display);
+}
+
+.trendUp { color: #a7f3d0; }
+.trendDown { color: #fecaca; }
+.trendFlat { color: #fde68a; }
+
+.heroUp {}
+.heroDown {}
+
+/* ── Subject rows in comparison ────────────────────────────────────────── */
+
+.rowNameWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rowTopic {
+  font-size: 11.5px;
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-family: var(--s-font-display);
+}
+
+/* ── What to do next ───────────────────────────────────────────────────── */
+
+.nextSteps {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--s-text2);
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}

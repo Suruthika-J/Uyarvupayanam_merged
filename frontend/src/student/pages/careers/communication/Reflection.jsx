@@ -266,7 +266,7 @@ export default function Reflection({ onSelect, onComplete, studentId }) {
                 <span style={{ fontSize: 32 }}>{option.emoji}</span>
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 800,
                     color: isSelected ? "#fff" : "#64748b",
                   }}

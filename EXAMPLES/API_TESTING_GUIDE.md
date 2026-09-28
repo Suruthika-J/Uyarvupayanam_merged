@@ -33,7 +33,7 @@ backend/
 
 ### 2. Environment Variables (`.env`)
 ```env
-MONGO_URI=mongodb+srv://uyarvupayanam_db_user:UyarvuPayanam1234@cluster0.i0sep1t.mongodb.net/uyarvuPayanam?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<db_user>:<db_password>@<cluster-host>/<dbname>?retryWrites=true&w=majority
 PORT=5000
 JWT_SECRET=UyarvuPayanamSecretKey
 ```

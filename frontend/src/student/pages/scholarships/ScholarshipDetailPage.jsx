@@ -187,11 +187,11 @@ export default function ScholarshipDetailPage() {
             <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Quick Summary</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Provider</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Provider</div>
                   <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{scholarship.provider}</div>
                </div>
                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Category</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Category</div>
                   <div style={{ fontSize: 14, color: 'var(--s-text)', fontWeight: 600 }}>{scholarship.category}</div>
                </div>
                <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, border: '1px solid #dbeafe' }}>

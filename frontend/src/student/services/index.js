@@ -40,7 +40,7 @@ export const examService = {
 export const scholarshipService = {
   getAll: (params) => studentApi.get('/scholarships', { params }).then(r => r.data),
   getById: (id) => {
-    console.log("Service: scholarshipService.getById called, API URL:", `http://localhost:5000/api/scholarships/${id}`);
+    console.log("Service: scholarshipService.getById called for id:", id);
     return studentApi.get(`/scholarships/${id}`).then(r => r.data);
   },
 }

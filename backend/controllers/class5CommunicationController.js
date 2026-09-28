@@ -202,6 +202,160 @@ exports.completeStep = async (req, res) => {
   }
 };
 
+// Reusable handler to save an interactive Game/Learning activity result.
+const ACTIVITY_CONFIG = {
+  pattern_master: {
+    label: "Pattern Master",
+    skills: [
+      { name: "logicalThinking", gain: 15 },
+      { name: "problemSolving", gain: 15 },
+    ],
+    xpBonus: 20,
+    badges: [
+      { name: "Pattern Master", threshold: 80 },
+    ],
+  },
+  drawing_challenge: {
+    label: "Drawing Challenge",
+    skills: [
+      { name: "creativity", gain: 10 },
+    ],
+    xpBonus: 10,
+    badges: [
+      { name: "Creative Artist", threshold: 100 },
+    ],
+  },
+  story_builder: {
+    label: "Story Builder",
+    skills: [
+      { name: "creativity", gain: 10 },
+      { name: "imagination", gain: 10 },
+      { name: "storytelling", gain: 10 },
+      { name: "logicalSequencing", gain: 10 },
+    ],
+    xpBonus: 10,
+    badges: [
+      { name: "Storyteller", threshold: 100 },
+    ],
+  },
+  make_your_own_song: {
+    label: "Make Your Own Song",
+    skills: [
+      { name: "creativity", gain: 10 },
+      { name: "expression", gain: 10 },
+      { name: "vocabulary", gain: 10 },
+    ],
+    xpBonus: 10,
+    badges: [
+      { name: "Young Songwriter", threshold: 100 },
+    ],
+  },
+  treasure_hunt: {
+    label: "Treasure Hunt",
+    skills: [
+      { name: "observation", gain: 10 },
+      { name: "problemSolving", gain: 10 },
+      { name: "logicalThinking", gain: 10 },
+      { name: "attention", gain: 10 },
+    ],
+    xpBonus: 10,
+    badges: [
+      { name: "Treasure Hunter", threshold: 80 },
+    ],
+  },
+};
+
+exports.submitActivityResult = async (req, res) => {
+  try {
+    const studentId = req.student._id;
+    const { activityId, score, total, correct, incorrect, percentage, detail } = req.body || {};
+
+    if (!activityId) {
+      return res.status(400).json({ success: false, message: "activityId is required" });
+    }
+
+    const config = ACTIVITY_CONFIG[activityId];
+    if (!config) {
+      return res.status(400).json({ success: false, message: "Unknown activityId" });
+    }
+
+    const totalQ = Number(total) || 0;
+    const pct = Number(percentage);
+    const numScore = Number(score) || 0;
+
+    let progress = await StudentSkillProgress.findOne({ studentId });
+    if (!progress) {
+      progress = await StudentSkillProgress.create({ studentId });
+    }
+
+    const alreadyCompleted = progress.completedSteps.includes(activityId);
+    const xpEarned = config.xpBonus + (pct >= 80 ? 20 : 0);
+
+    if (!alreadyCompleted) {
+      progress.completedSteps.push(activityId);
+    }
+
+    progress.xp += xpEarned;
+    progress.level = calculateLevel(progress.xp);
+
+    if (pct > 0 && config.skills && config.skills.length) {
+      config.skills.forEach(({ name, gain }) => {
+        const pctGain = Math.round((gain * pct) / 100);
+        progress[name] = Math.min(100, (progress[name] || 10) + pctGain);
+      });
+    }
+
+    updateStreakHelper(progress);
+    await progress.save();
+
+    await StudentActivityHistory.create({
+      studentId,
+      activityType: activityId,
+      activityDetail: JSON.stringify({
+        title: config.label,
+        score,
+        total,
+        correct,
+        incorrect,
+        percentage: pct,
+        ...(detail && typeof detail === "object" ? detail : {}),
+      }),
+      xpEarned,
+    });
+
+    // Award a badge when the student performs well (only if not yet unlocked)
+    let newBadge = null;
+    if (config.badges && config.badges.length) {
+      for (const badge of config.badges) {
+        if (pct >= badge.threshold) {
+          try {
+            await StudentBadge.create({ studentId, badgeName: badge.name });
+            newBadge = badge.name;
+          } catch (err) {
+            // duplicate badge -> ignore
+          }
+          break;
+        }
+      }
+    }
+
+    const badges = await StudentBadge.find({ studentId }).sort({ unlockedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: `${config.label} result saved! +${xpEarned} XP`,
+      data: {
+        progress,
+        badges: badges.map((b) => b.badgeName),
+        newBadge: alreadyCompleted ? null : newBadge,
+        xpEarned,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error saving activity result", error: error.message });
+  }
+};
+
 exports.getOrGenerateDailyMission = async (req, res) => {
   try {
     const studentId = req.student._id;
@@ -366,6 +520,15 @@ exports.getPublicPassport = async (req, res) => {
         confidence: 10,
         respect: 10,
         leadership: 10,
+        logicalThinking: 10,
+        problemSolving: 10,
+        creativity: 10,
+        imagination: 10,
+        storytelling: 10,
+        logicalSequencing: 10,
+        expression: 10,
+        vocabulary: 10,
+        attention: 10,
         xp: 0,
         level: 1,
         streak: 0,

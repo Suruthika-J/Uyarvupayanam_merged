@@ -151,7 +151,7 @@ export default function ProfilePage() {
               <div key={i} style={{ padding: '13px 15px', background: 'var(--s-bg2)', borderRadius: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--s-text3)', marginBottom: 5 }}>
                   {row.icon}
-                  <span style={{ fontSize: 11.5, fontWeight: 700, fontFamily: 'var(--s-font-display)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'var(--s-font-display)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     {row.label}
                   </span>
                 </div>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
         <SCard className="s-anim-up s-d2" style={{ padding: '28px', marginTop: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
             <h3 style={{ fontFamily: 'var(--s-font-display)', fontWeight: 700, fontSize: 15, color: 'var(--s-text)', margin: 0 }}>
-              🛡️ Communication Passport
+              Communication Passport
             </h3>
             <SBtn variant="outline" size="sm" onClick={() => navigate(`/student/class5/skills/communicationskills/passport/${student._id || student.id}`)}>
               View Shareable Passport ↗
@@ -175,21 +175,21 @@ export default function ProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }} className="s-grid-1col">
             <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Level</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Level</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>Level {commProgress.progress?.level || 1}</div>
             </div>
             <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Total XP</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Total XP</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>{commProgress.progress?.xp || 0} XP</div>
             </div>
             <div style={{ padding: '12px 14px', background: 'var(--s-bg2)', borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Streak</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Streak</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>{commProgress.progress?.streak || 0} Days 🔥</div>
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 8 }}>Earned Badges</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 8 }}>Earned Badges</span>
             {commProgress.badges?.length === 0 ? (
               <div style={{ fontSize: 13, color: 'var(--s-text3)' }}>No badges unlocked yet. Start playing steps to earn!</div>
             ) : (
@@ -215,7 +215,7 @@ export default function ProfilePage() {
             Member since {student?.createdAt ? new Date(student.createdAt).getFullYear() : new Date().getFullYear()}
           </div>
           {student?._id && (
-            <div style={{ fontSize: 11.5, color: 'var(--s-text3)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 2 }}>
               ID: {student._id.slice(-8)}
             </div>
           )}

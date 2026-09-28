@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   FiChevronLeft, FiMapPin, FiGlobe, FiChevronRight,
   FiDownload, FiBriefcase, FiTrendingUp, FiCheckCircle,
   FiInfo, FiBookOpen, FiPercent, FiDollarSign, FiAlertCircle
 } from 'react-icons/fi'
-import { SBadge, SCard, SBtn, SLoader, SEmpty } from '../../components/ui'
+import { SBadge, SCard, SBtn, SLoader, SEmpty, SInput, SSelect } from '../../components/ui'
 import { courseService } from '../../../services/courseService'
 import { userActionService } from '../../../services/userActionService'
 import { adminService } from '../../../services/adminService'
@@ -25,6 +25,82 @@ const CATEGORY_STREAM_MAP = {
   'IT & Computer': 'Engineering',
 }
 
+// College type → badge styling
+const COLLEGE_TYPE_COLORS = {
+  government: { label: '#166534', bg: '#dcfce7' },
+  private:    { label: '#1d4ed8', bg: '#dbeafe' },
+  aided:      { label: '#b45309', bg: '#fef3c7' },
+  default:    { label: '#475569', bg: '#f1f5f9' },
+}
+
+const typeStyle = (t) => COLLEGE_TYPE_COLORS[String(t || '').toLowerCase()] || COLLEGE_TYPE_COLORS.default
+
+function CollegeRow({ clg, onView }) {
+  const [hover, setHover] = useState(false)
+  const ts = typeStyle(clg.collegeType || clg.type || 'Government')
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16,
+        border: `1px solid ${hover ? '#c7d2fe' : 'var(--s-border)'}`,
+        background: hover ? '#f8fafc' : '#fff',
+        boxShadow: hover ? '0 6px 16px -8px rgba(79,70,229,0.25)' : 'none',
+        transition: 'all 0.2s ease',
+      }}
+    >
+      {/* Logo / thumbnail placeholder (no real logos in DB yet) */}
+      <div style={{
+        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+        background: hover ? '#eef2ff' : 'var(--s-bg)',
+        display: 'grid', placeItems: 'center', fontSize: 22, transition: 'background 0.2s',
+      }}>
+        🏫
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3
+          title={clg.collegeName}
+          style={{
+            fontSize: 15.5, fontWeight: 800, margin: '0 0 6px', color: 'var(--s-text)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}
+        >
+          {clg.collegeName}
+        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontSize: 12, fontWeight: 700, color: '#475569', background: '#f1f5f9',
+            padding: '3px 10px', borderRadius: 99,
+          }}>
+            <FiMapPin size={12} /> {clg.district || 'Tamil Nadu'}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 800, color: ts.label, background: ts.bg, padding: '3px 10px', borderRadius: 99 }}>
+            {clg.collegeType || clg.type || 'Government'}
+          </span>
+        </div>
+      </div>
+
+      <button
+        onClick={onView}
+        style={{
+          flexShrink: 0, padding: '9px 20px', borderRadius: 10, cursor: 'pointer',
+          fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap',
+          background: hover ? 'var(--s-primary)' : '#fff',
+          color: hover ? '#fff' : 'var(--s-primary)',
+          border: '1.5px solid var(--s-primary)',
+          transition: 'all 0.2s',
+        }}
+      >
+        View College →
+      </button>
+    </div>
+  )
+}
+
 export default function CourseDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
@@ -35,6 +111,46 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState('Overview')
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setIsSaving] = useState(false)
+
+  // ── College directory state (Offering Colleges section) ──
+  const [clgPage, setClgPage] = useState(1)
+  const [clgQuery, setClgQuery] = useState('')
+  const [clgDistrict, setClgDistrict] = useState('All')
+  const [clgType, setClgType] = useState('All')
+  const [clgSort, setClgSort] = useState('name')
+  const PAGE_SIZE = 10
+
+  const districts = useMemo(() =>
+    ['All', ...[...new Set(colleges.map(c => (c.district || '').trim()).filter(Boolean))].sort()],
+    [colleges]
+  )
+
+  const collegeTypes = useMemo(() =>
+    ['All', ...[...new Set(colleges.map(c => (c.collegeType || c.type || 'Government')).filter(Boolean))]],
+    [colleges]
+  )
+
+  const visibleColleges = useMemo(() => {
+    const q = clgQuery.trim().toLowerCase()
+    const list = colleges.filter(c => {
+      const dOk = clgDistrict === 'All' || (c.district || '').trim() === clgDistrict
+      const tOk = clgType === 'All' || (c.collegeType || c.type || 'Government') === clgType
+      const qOk = !q || (c.collegeName || '').toLowerCase().includes(q)
+      return dOk && tOk && qOk
+    })
+    list.sort((a, b) =>
+      clgSort === 'district'
+        ? ((a.district || '').localeCompare(b.district || '')) || (a.collegeName || '').localeCompare(b.collegeName || '')
+        : (a.collegeName || '').localeCompare(b.collegeName || '')
+    )
+    return list
+  }, [colleges, clgQuery, clgDistrict, clgType, clgSort])
+
+  const totalPages = Math.max(1, Math.ceil(visibleColleges.length / PAGE_SIZE))
+  const safePage = Math.min(clgPage, totalPages)
+  const pagedColleges = visibleColleges.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  useEffect(() => { setClgPage(1) }, [clgQuery, clgDistrict, clgType, clgSort])
 
   const isEngineering = course?.category?.toLowerCase().includes('engineering') ||
     course?.category?.toLowerCase().includes('it') ||
@@ -190,55 +306,115 @@ export default function CourseDetailPage() {
               </SCard>
 
               <SCard style={{ padding: 32 }}>
-                <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Colleges Offering This Course</span>
-                  <span style={{ fontSize: 14, color: 'var(--s-text3)', fontWeight: 700 }}>
-                    {colleges.length} {colleges.length === 1 ? 'college' : 'colleges'} found
-                  </span>
-                </h2>
-                {colleges.length === 0 ? (
-                  <p style={{ color: 'var(--s-text3)', fontSize: 15, margin: 0 }}>
-                    No colleges are currently mapped for this course.
-                  </p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {colleges.map((clg, idx) => (
-                      <div key={clg._id} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        paddingBottom: idx === colleges.length - 1 ? 0 : 20,
-                        borderBottom: idx === colleges.length - 1 ? 'none' : '1px solid var(--s-border)',
-                        flexWrap: 'wrap',
-                        gap: 16
-                      }}>
-                        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--s-bg)', fontSize: 22, display: 'grid', placeItems: 'center', flexShrink: 0 }}>🏫</div>
-                          <div>
-                            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 4px', color: 'var(--s-text)' }}>
-                              {clg.collegeName}
-                            </h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-primary)', background: '#e0f2fe', padding: '2px 8px', borderRadius: 6 }}>
-                                {clg.collegeType || 'Government'}
-                              </span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--s-text3)', fontSize: 13, fontWeight: 700 }}>
-                                <FiMapPin size={12} /> {clg.district}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <SBtn
-                          variant="outline"
-                          size="sm"
-                          style={{ borderRadius: 10, padding: '8px 16px', fontWeight: 700 }}
-                          onClick={() => navigate(`/student/colleges/${clg._id}`)}
-                        >
-                          View College
-                        </SBtn>
-                      </div>
-                    ))}
+
+                {/* ── Stat banner ── */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24,
+                  background: 'linear-gradient(135deg, #eef2ff 0%, #e0f2fe 100%)',
+                  border: '1px solid #c7d2fe', borderRadius: 16, padding: '18px 24px',
+                }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 14, background: '#fff', flexShrink: 0,
+                    display: 'grid', placeItems: 'center', fontSize: 24,
+                    boxShadow: '0 4px 10px rgba(79,70,229,0.15)',
+                  }}>
+                    🏫
                   </div>
+                  <div>
+                    <div style={{ fontSize: 19, fontWeight: 900, color: 'var(--s-text)' }}>
+                      <span style={{ color: 'var(--s-primary)' }}>{colleges.length} colleges</span> offer this course across Tamil Nadu
+                    </div>
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 2, fontWeight: 600 }}>
+                      Government, Private & Aided institutions · filter by district, type, or name below
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Filter / search / sort bar ── */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 180px 180px', gap: 12, marginBottom: 24 }}>
+                  <SInput
+                    placeholder="Search college name..."
+                    value={clgQuery}
+                    onChange={e => setClgQuery(e.target.value)}
+                  />
+                  <SSelect value={clgDistrict} onChange={e => setClgDistrict(e.target.value)}>
+                    {districts.map(d => (
+                      <option key={d} value={d}>{d === 'All' ? '📍 All Districts' : d}</option>
+                    ))}
+                  </SSelect>
+                  <SSelect value={clgType} onChange={e => setClgType(e.target.value)}>
+                    {collegeTypes.map(t => (
+                      <option key={t} value={t}>{t === 'All' ? '🏛 All Types' : t}</option>
+                    ))}
+                  </SSelect>
+                  <SSelect value={clgSort} onChange={e => setClgSort(e.target.value)}>
+                    <option value="name">Sort: Name A–Z</option>
+                    <option value="district">Sort: District</option>
+                  </SSelect>
+                </div>
+
+                {visibleColleges.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--s-text3)' }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)' }}>No colleges match your filters</div>
+                    <div style={{ fontSize: 14, marginTop: 4 }}>Try clearing the search or switching district / type.</div>
+                    <SBtn
+                      variant="outline"
+                      size="sm"
+                      style={{ marginTop: 16 }}
+                      onClick={() => { setClgQuery(''); setClgDistrict('All'); setClgType('All'); setClgSort('name') }}
+                    >
+                      Clear Filters
+                    </SBtn>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {pagedColleges.map(clg => (
+                        <CollegeRow
+                          key={clg._id}
+                          clg={clg}
+                          onView={() => navigate(`/student/colleges/${clg._id}`)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* ── Pagination controls ── */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, flexWrap: 'wrap', gap: 12 }}>
+                      <span style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 700 }}>
+                        Showing {((safePage - 1) * PAGE_SIZE) + 1}–{Math.min(safePage * PAGE_SIZE, visibleColleges.length)} of <strong>{visibleColleges.length}</strong> {visibleColleges.length === 1 ? 'college' : 'colleges'}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <button
+                          onClick={() => setClgPage(p => Math.max(1, p - 1))}
+                          disabled={safePage === 1}
+                          style={{
+                            padding: '8px 18px', borderRadius: 10, cursor: safePage === 1 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800, fontSize: 13, border: '1px solid var(--s-border)',
+                            background: '#fff', color: safePage === 1 ? '#cbd5e1' : 'var(--s-text)',
+                            opacity: safePage === 1 ? 0.6 : 1,
+                          }}
+                        >
+                          ← Prev
+                        </button>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text2)' }}>
+                          Page {safePage} of {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setClgPage(p => Math.min(totalPages, p + 1))}
+                          disabled={safePage === totalPages}
+                          style={{
+                            padding: '8px 18px', borderRadius: 10, cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
+                            fontWeight: 800, fontSize: 13, border: '1px solid var(--s-border)',
+                            background: '#fff', color: safePage === totalPages ? '#cbd5e1' : 'var(--s-text)',
+                            opacity: safePage === totalPages ? 0.6 : 1,
+                          }}
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </SCard>
 

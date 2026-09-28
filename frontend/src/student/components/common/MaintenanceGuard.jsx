@@ -10,7 +10,8 @@ export default function MaintenanceGuard({ children }) {
     const checkMaintenance = async () => {
       try {
         // Use direct axios for public check to avoid interceptors potentially blocking
-        const res = await axios.get('http://localhost:5000/api/settings/public');
+        const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+        const res = await axios.get(`${API_BASE}/settings/public`);
         if (res.data && res.data.maintenanceMode) {
           setMaintenance(true);
         }

@@ -9,14 +9,13 @@ import {
 } from 'react-icons/fi'
 
 const PUBLIC_NAV_LINKS = [
-  { to: '/student/home',    label: 'Home',     end: true },
-  { to: '/student/class5',  label: 'Class 5',  end: false },
-  { to: '/student/class8',  label: 'Class 8',  end: false },
-  { to: '/student/class10', label: 'Class 10', end: false },
-  { to: '/student/class12', label: 'Class 12', end: false },
-  { to: '/student/courses', label: 'Courses',  end: false },
-  { to: '/student/scholarships', label: 'Scholarships', end: false },
+  { to: '/',                 label: 'Home',         end: true  },
+  { to: '/explore',           label: 'Explore',      end: false },
+  { to: '/#how-it-works',     label: 'How It Works', end: false },
+  { to: '/#features',         label: 'Features',     end: false },
+  { to: '/#about',            label: 'About',        end: false },
 ]
+
 
 
 export default function StudentNavbar() {
@@ -64,12 +63,25 @@ export default function StudentNavbar() {
     navigate('/student/signin')
   }
 
+  const handleNavClick = (e, to) => {
+    if (to.includes('#')) {
+      const targetId = to.split('#')[1]
+      if (location.pathname === '/') {
+        e.preventDefault()
+        const el = document.getElementById(targetId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+    }
+  }
+
   return (
     <nav className={`s-navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="s-navbar-inner" style={{ maxWidth: 1240 }}>
 
         {/* Logo */}
-        <Link to="/student/home" className="s-nav-logo" style={{ textDecoration: 'none' }}>
+        <Link to="/" className="s-nav-logo" style={{ textDecoration: 'none' }}>
           <img
             src="/logo.png"
             alt="Uyarvu Payanam"
@@ -77,7 +89,7 @@ export default function StudentNavbar() {
           />
           <div className="s-nav-logo-text" style={{ marginLeft: 8 }}>
             <span className="s-nav-logo-title" style={{ fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--s-primary)' }}>Uyarvu Payanam</span>
-            <span className="s-nav-logo-sub" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, opacity: 0.6 }}>Career Platform</span>
+            <span className="s-nav-logo-sub" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, opacity: 0.6 }}>Career Platform</span>
           </div>
         </Link>
 
@@ -88,6 +100,7 @@ export default function StudentNavbar() {
               key={to}
               to={to}
               end={end}
+              onClick={(e) => handleNavClick(e, to)}
               className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
             >
               {label}
@@ -173,6 +186,7 @@ export default function StudentNavbar() {
               key={to}
               to={to}
               end={end}
+              onClick={(e) => { handleNavClick(e, to); setMobileOpen(false); }}
               className={({ isActive }) => `s-nav-link ${isActive ? 'active' : ''}`}
             >
               {label}

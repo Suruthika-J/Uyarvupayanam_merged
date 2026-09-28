@@ -32,6 +32,10 @@ const onboardingQuestionSchema = new mongoose.Schema(
         explanation: {
             type: String,
         },
+        // LD-NBSE diagnostic metadata (Part 2) — optional so legacy rows are untouched.
+        subskill: { type: String },
+        cognitiveType: { type: String },
+        weight: { type: Number, default: 1 },
     },
     { timestamps: true }
 );

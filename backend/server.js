@@ -38,6 +38,80 @@ connectDB().then(() => {
   } catch (err) {
     console.error("Failed to require/run Ayurveda importer on startup:", err);
   }
+  try {
+    const { seedTaxonomyData } = require("./utils/taxonomySeeder");
+    const { seedCollegeCareers } = require("./utils/collegeCareerSeeder");
+    seedTaxonomyData().catch(err => console.error("Error in taxonomy seeding:", err));
+    seedCollegeCareers().catch(err => console.error("Error in college careers seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run seeders on startup:", err);
+  }
+  try {
+    const { seedClass5Discovery } = require("./seeders/seedClass5Discovery");
+    seedClass5Discovery()
+      .then((results) => {
+        console.log("Class 5 discovery seed:", results);
+      })
+      .catch(err => console.error("Error in Class 5 discovery seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Class 5 discovery seeding:", err);
+  }
+  try {
+    const { startScheduler } = require("./services/class5EngineService");
+    startScheduler();
+  } catch (err) {
+    console.error("Failed to start Class 5 scheduler:", err);
+  }
+  try {
+    const { seedAdhikarams } = require("./seeders/seedAdhikarams");
+    seedAdhikarams()
+      .then(results => {
+        console.log("Adhikaram seed:", results);
+      })
+      .catch(err => console.error("Error in Adhikaram seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Adhikaram seeding:", err);
+  }
+  try {
+    const { seedMaths } = require("./seeders/seedMaths");
+    seedMaths()
+      .then(results => {
+        console.log("Math Adventure seed:", results);
+      })
+      .catch(err => console.error("Error in Math Adventure seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Math Adventure seeding:", err);
+  }
+  try {
+    const { seedSocial } = require("./seeders/seedSocial");
+    seedSocial()
+      .then(results => {
+        console.log("World Explorer seed:", results);
+      })
+      .catch(err => console.error("Error in World Explorer seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run World Explorer seeding:", err);
+  }
+  try {
+    const { seedScience } = require("./seeders/seedScience");
+    seedScience()
+      .then(results => {
+        console.log("Science Adventure seed:", results);
+      })
+      .catch(err => console.error("Error in Science Adventure seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Science Adventure seeding:", err);
+  }
+  try {
+    const { seedStreams } = require("./seeders/seedStreams");
+    seedStreams()
+      .then(results => {
+        console.log("Streams After 10th seed:", results);
+      })
+      .catch(err => console.error("Error in Streams seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Streams seeding:", err);
+  }
 });
 
 const app = express();
@@ -110,46 +184,13 @@ io.on("connection", (socket) => {
 app.use(cors({
   origin: corsOriginValidator,
   credentials: true,
-}));{userId} joined rooms: students, user_${userId}`);
-  });
-
-  // Legacy support: if old client code calls join_user_room
-  socket.on("join_user_room", (userId) => {
-    socket.join("students");
-    socket.join(`user_${userId}`);
-    console.log(`ðŸ“Œ Socket ${socket.id} joined room: user_${userId}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`ðŸ”Œ Socket disconnected: ${socket.id}`);
-  });
-});
-
-// â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-<<<<<<< HEAD
-app.use(cors({
-  origin: corsOriginValidator,
-  credentials: true,
 }));
-=======
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS policy: Origin not allowed"));
-      }
-    },
-    credentials: true,
-  })
-);
->>>>>>> origin/blackboxai/fix-cutoff-pagination
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Routes ──────────────────────────────────────────────────────────
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/admin/college", require("./routes/collegeAdminRoutes"));
 app.use("/api/settings", require("./routes/settingsRoutes"));
 app.use("/api/career-paths", require("./routes/careerPathRoutes"));
 app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
@@ -158,24 +199,57 @@ app.use("/api/courses", require("./routes/courseRoutes"));
 app.use("/api/exams", require("./routes/examRoutes"));
 app.use("/api/colleges", require("./routes/collegeRoutes"));
 app.use("/api/scholarships", require("./routes/scholarshipRoutes"));
+app.use("/api/college-scholarships", require("./routes/collegeScholarshipRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/admin/notifications", require("./routes/adminNotificationRoutes"));
 app.use("/api/students", require("./routes/studentRoutes"));
 app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
-app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
 app.use("/api/user-actions", require("./routes/userActionRoutes"));
+app.use("/api/assessment", require("./routes/grokAssessmentRoutes"));
+app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
+app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));
+app.use("/api/college-advisor", require("./routes/collegeAdvisorRoutes"));
+app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));
 app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 app.use("/api/class5-communication", require("./routes/class5CommunicationRoutes"));
 app.use("/api/communication-content", require("./routes/communicationContentRoutes"));
 
-// â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Class 5 career-discovery feature (Discover Me, Skill Quests, Squad, Real World, Trophy Room)
+// Note: endpoints live under /api/class5/* so the existing /api/scholarships service stays untouched.
+app.use("/api/class5", require("./routes/class5DiscoveryRoutes"));
+
+// Thirukkural Adhikaram Cartoon Theme System
+app.use("/api/tamil", require("./routes/tamilRoutes"));
+
+// Math Adventure Worlds (Class 5 maths)
+app.use("/api/maths", require("./routes/mathsRoutes"));
+
+// World Explorer (Class 5 social science)
+app.use("/api/social", require("./routes/socialRoutes"));
+
+// Cartoon Science Adventure World (Class 5 science)
+app.use("/api/science", require("./routes/scienceRoutes"));
+
+// English Adventure (Class 5)
+app.use("/api/english", require("./routes/englishRoutes"));
+
+// Streams After 10th (Class 10 HSC groups & vocational courses)
+app.use("/api/streams", require("./routes/streamRoutes"));
+
+// Colleges Insight (Class 12) — public read API over the admin College-Course Mapping data
+app.use("/api/colleges-insight", require("./routes/collegesInsightRoutes"));
+
+// Admin-only TNEA seat-matrix import + "Courses & Colleges" explorers
+app.use("/api/admin/seat-matrix", require("./routes/seatMatrixRoutes"));
+
+// ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
-  console.log(`ðŸš€ Server + Socket.io running on port ${PORT}`)
+  console.log(`🚀 Server + Socket.io running on port ${PORT}`)
 );

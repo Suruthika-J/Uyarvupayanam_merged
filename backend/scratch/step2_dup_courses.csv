@@ -1,0 +1,322 @@
+group,class,courseId,rawName,level,degree,variant,medium,ss,category,maps,colleges,cutoffs,saves,vacancies,createdAt,canonical
+G001,C,69d78e8bac4cdd106017b948,B.Com. Information Technology,after12th,BCOM,,,,IT & Computer,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G001,C,69d78e8bac4cdd106017b97e,B.Tech. Information Technology,after12th,BTECH,,,,IT & Computer,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G001,C,69e2677d9b26658edfffaf3c,B.Tech. Information Technology,after12th,BTECH,,,,Engineering,151,151,0,0,0,2026-04-17T17:01:49.314Z,
+G001,C,69e267819b26658edfffaf49,B.Tech. Information Technology (ss),after12th,BTECH,,,yes,Engineering,417,417,0,0,0,2026-04-17T17:01:53.376Z,YES
+G001,C,69e2682a43acac003436891e,B.Sc. Information Technology,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-17T17:04:42.568Z,
+G001,C,69ea75b43de2eee3fbb4ab09,INFORMATION TECHNOLOGY,after12th,,,,,Engineering,29,29,0,0,0,2026-04-23T19:40:36.742Z,
+G001,C,69ea807d32e643c0e37a7a6a,INFORMATION TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:37.160Z,
+G001,C,69ea808532e643c0e37a7a77,INFORMATION TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:45.245Z,
+G002,C,69d78e8bac4cdd106017b951,B.B.A.,after12th,BBA,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G002,C,69d78e8bac4cdd106017b942,B.Com.,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G002,C,69d78e8bac4cdd106017b991,B. Arch,after12th,BARCH,,,,Architecture,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G002,C,69e2529c6089fd04f8df878c,M.B.B.S,after12th,MBBS,,,,Medical,36,36,0,0,0,2026-04-17T15:32:44.752Z,
+G002,C,69e2529c6089fd04f8df878d,BDS,after12th,BDS,,,,Medical,36,36,0,0,0,2026-04-17T15:32:44.927Z,
+G002,C,69e2529d6089fd04f8df878e,B.S.M.S,after12th,BSMS,,,,Medical,36,36,0,0,0,2026-04-17T15:32:45.120Z,
+G002,C,69e2529d6089fd04f8df878f,B.A.M.S,after12th,BAMS,,,,Medical,36,36,0,0,0,2026-04-17T15:32:45.280Z,
+G002,C,69e2529e6089fd04f8df8793,B.V.Sc,after12th,BVSC,,,,Medical,36,36,0,0,0,2026-04-17T15:32:46.050Z,
+G002,C,69e2529f6089fd04f8df8796,B.Pharm,after12th,BPHARM,,,,Medical,36,36,0,0,0,2026-04-17T15:32:47.369Z,
+G002,C,69e252ad6089fd04f8df87cb,LLB,after12th,LLB,,,,Law,1,1,0,0,0,2026-04-17T15:33:01.750Z,
+G002,C,69e252d06089fd04f8df8868,B. Arch.,after12th,BARCH,,,,Architecture,0,0,0,0,0,2026-04-17T15:33:36.051Z,
+G002,C,69e2682743acac003436890e,M.B.B.S.,after12th,MBBS,,,,Medical,36,36,0,0,0,2026-04-17T17:04:39.279Z,YES
+G002,C,6a678a1cb9a3dd01a953d3a6,BSMS,after12th,BSMS,,,,Medical,8,8,0,0,0,2026-07-27T16:41:00.754Z,
+G002,C,6a67917713421e00e0cbf380,BAMS,after12th,BAMS,,,,Medical,8,8,0,0,0,2026-07-27T17:12:23.865Z,
+G003,B,69d78e8bac4cdd106017b98a,B.Tech. Food Technology,after12th,BTECH,,,,Engineering,1,1,0,0,0,2026-04-09T11:33:31.078Z,YES
+G003,B,69e267809b26658edfffaf45,B.Tech. Food Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:52.238Z,
+G003,B,69ea6da52b999f13417e10d7,FOOD TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:13.949Z,
+G003,B,69ea75b13de2eee3fbb4ab03,FOOD TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:40:33.285Z,
+G003,B,69ea77af44b8d3a98f3fa85c,FOOD TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:49:03.339Z,
+G004,B,69d78e8bac4cdd106017b954,B.B.A. Retail Management,after12th,BBA,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G004,B,69e252af6089fd04f8df87d5,Retail Management,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:03.524Z,YES
+G005,B,69d78e8bac4cdd106017b95b,B.B.A. Financial Management,after12th,BBA,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G005,B,69e252ae6089fd04f8df87cf,Financial Management,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:02.434Z,YES
+G006,B,69d78e8bac4cdd106017b985,B.Tech. Petroleum Engineering,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G006,B,69ea6db32b999f13417e10dc,PETROLEUM ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:27.286Z,YES
+G007,B,69d78e8bac4cdd106017b95a,B.B.A. Marketing Management,after12th,BBA,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G007,B,69e252af6089fd04f8df87d4,Marketing Management,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:03.379Z,YES
+G008,B,69d78e8bac4cdd106017b95d,B.Sc. Mathematics,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G008,B,69e252d36089fd04f8df8879,Mathematics,after12th,,,,,Science,0,0,0,0,0,2026-04-17T15:33:39.421Z,YES
+G009,B,69d78e8bac4cdd106017b963,B.Sc. Microbiology,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G009,B,69e252d36089fd04f8df887a,Microbiology,after12th,,,,,Science,0,0,0,0,0,2026-04-17T15:33:39.587Z,YES
+G010,B,69d78e8bac4cdd106017b96d,B.E. Mechanical Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-09T11:33:31.077Z,
+G010,B,69e252cb6089fd04f8df8854,B.E. Mechanical Engineering (Tamil Medium),after12th,BE,,Tamil,,Engineering,417,417,0,0,0,2026-04-17T15:33:31.183Z,
+G010,B,69e267749b26658edfffaf33,B.E. Mechanical Engineering (tamil Medium),after12th,BE,,Tamil,,Engineering,417,417,0,0,0,2026-04-17T17:01:40.934Z,YES
+G010,B,69e2677b9b26658edfffaf39,B.E. Mechanical Engineering,after12th,BE,,,,Engineering,39,39,0,0,0,2026-04-17T17:01:47.230Z,
+G011,B,69d78e8bac4cdd106017b937,B.A. Economics,after12th,BA,,,,Arts,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G011,B,69e252a76089fd04f8df87b1,Economics,after12th,,,,,Arts,0,0,0,0,0,2026-04-17T15:32:55.818Z,YES
+G012,B,69d78e8bac4cdd106017b945,B.Com. Corporate Secretaryship,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G012,B,69e252b56089fd04f8df87e1,Corporate Secretaryship,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:09.028Z,
+G012,B,69e2682b43acac0034368922,B.Com Corporate Secretaryship,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-17T17:04:43.495Z,YES
+G013,C,69d78e8bac4cdd106017b953,B.B.A. International Business,after12th,BBA,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.077Z,YES
+G013,C,69d78e8bac4cdd106017b94e,B.Com International Business,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G014,B,69d78e8bac4cdd106017b95f,B.Sc. Chemistry,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G014,B,69e252d16089fd04f8df886e,Chemistry,after12th,,,,,Science,0,0,0,0,0,2026-04-17T15:33:37.034Z,YES
+G015,B,69d78e8bac4cdd106017b971,B.E. Industrial Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G015,B,69e267839b26658edfffaf57,B.E. Industrial Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:55.567Z,
+G015,B,69ea75ae3de2eee3fbb4aafc,INDUSTRIAL ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:30.970Z,YES
+G016,B,69d78e8bac4cdd106017b976,B.E. Robotics and Automation,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G016,B,69e2677b9b26658edfffaf3a,B.E. Robotics And Automation (ss),after12th,BE,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:47.744Z,
+G016,B,69ea6da52b999f13417e10d6,ROBOTICS AND AUTOMATION,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:13.455Z,
+G016,B,69ea808532e643c0e37a7a78,ROBOTICS AND AUTOMATION (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:45.456Z,YES
+G017,B,69d78e8bac4cdd106017b979,B.E. Electrical and Electronics Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-09T11:33:31.078Z,
+G017,B,69e267819b26658edfffaf48,B.E. Electrical And Electronics Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:53.069Z,YES
+G017,B,69ea807c32e643c0e37a7a67,ELECTRICAL AND ELECTRONICS ENGINEERING,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T20:26:36.261Z,
+G018,C,69d78e8bac4cdd106017b962,B.Sc. Biotechnology,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G018,C,69d78e8bac4cdd106017b988,B.Tech. Biotechnology,after12th,BTECH,,,,Engineering,1,1,0,0,0,2026-04-09T11:33:31.078Z,YES
+G019,B,69d78e8bac4cdd106017b96b,B.E. Aeronautical Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G019,B,69ea6da22b999f13417e10d5,AERONAUTICAL ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:10.309Z,YES
+G020,B,69d78e8bac4cdd106017b970,B.E. Production Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G020,B,69e267849b26658edfffaf5d,B.E. Production Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:56.856Z,
+G020,B,69ea75b33de2eee3fbb4ab08,PRODUCTION ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:35.843Z,YES
+G021,B,69d78e8bac4cdd106017b981,B.E. Computer and Communication Engineering,after12th,BE,,,,IT & Computer,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G021,B,69ea809932e643c0e37a7a86,COMPUTER AND COMMUNICATION ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:27:05.927Z,YES
+G022,B,69d78e8bac4cdd106017b97a,B.E. Electronics and Instrumentation Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G022,B,69e267779b26658edfffaf35,B.E. Electronics And Instrumentation Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:43.239Z,
+G022,B,69ea808432e643c0e37a7a75,ELECTRONICS AND INSTRUMENTATION ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:26:44.530Z,YES
+G023,C,69d78e8bac4cdd106017b97d,B.E. Computer Science and Engineering,after12th,BE,,,,IT & Computer,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G023,C,69e252cc6089fd04f8df885b,B.Tech. Computer Science and Engineering (Tamil Medium),after12th,BTECH,,Tamil,,IT & Computer,0,0,0,0,0,2026-04-17T15:33:32.916Z,
+G023,C,69e267789b26658edfffaf36,B.E. Computer Science And Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:44.671Z,
+G023,C,69e2677f9b26658edfffaf43,B.E. Computer Science And Engineering (ss),after12th,BE,,,yes,Engineering,417,417,0,0,0,2026-04-17T17:01:51.630Z,YES
+G023,C,69ea807b32e643c0e37a7a64,COMPUTER SCIENCE AND ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:35.365Z,
+G023,C,69ea807b32e643c0e37a7a65,COMPUTER SCIENCE AND ENGINEERING,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T20:26:35.603Z,
+G023,C,69ea808432e643c0e37a7a74,COMPUTER SCIENCE AND ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:44.018Z,
+G024,B,69d78e8bac4cdd106017b98d,B.Tech. Textile Technology,after12th,BTECH,,,,Design,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G024,B,69e2677a9b26658edfffaf38,B.Tech. Textile Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:46.912Z,
+G024,B,69ea6ddf2b999f13417e10e3,TEXTILE TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:07:11.695Z,
+G024,B,69ea75b13de2eee3fbb4ab06,TEXTILE TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:33.896Z,
+G024,B,69ea76213de2eee3fbb4ab0d,TEXTILE TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:25.925Z,
+G024,B,69ea783044b8d3a98f3fa862,TEXTILE TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:12.974Z,YES
+G025,B,69d78e8bac4cdd106017b95e,B.Sc. Physics,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G025,B,69e252d46089fd04f8df887d,Physics,after12th,,,,,Science,0,0,0,0,0,2026-04-17T15:33:40.089Z,YES
+G026,B,69d78e8bac4cdd106017b967,B.E. Civil Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-09T11:33:31.077Z,
+G026,B,69e252c96089fd04f8df884e,B.E. Civil Engineering (Tamil Medium),after12th,BE,,Tamil,,Engineering,417,417,0,0,0,2026-04-17T15:33:29.079Z,
+G026,B,69e2677c9b26658edfffaf3b,B.E. Civil Engineering (tamil Medium),after12th,BE,,Tamil,,Engineering,417,417,0,0,0,2026-04-17T17:01:48.814Z,
+G026,B,69e267819b26658edfffaf4a,B.E. Civil  Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:53.630Z,YES
+G026,B,69ea6ddf2b999f13417e10e1,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:07:11.166Z,
+G026,B,69ea76213de2eee3fbb4ab0b,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:25.179Z,
+G026,B,69ea76233de2eee3fbb4ab0f,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:27.571Z,
+G026,B,69ea77143de2eee3fbb4ab10,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:46:28.679Z,
+G026,B,69ea783044b8d3a98f3fa860,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:12.056Z,
+G026,B,69ea783344b8d3a98f3fa864,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:15.330Z,
+G026,B,69ea792644b8d3a98f3fa866,CIVIL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:55:18.612Z,
+G026,B,69ea807e32e643c0e37a7a6e,CIVIL ENGINEERING (TAMIL MEDIUM),after12th,,,Tamil,,Engineering,0,0,0,0,0,2026-04-23T20:26:38.285Z,
+G026,B,69ea808d32e643c0e37a7a7f,CIVIL ENGINEERING (TAMIL MEDIUM),after12th,,,Tamil,,Engineering,0,0,0,0,0,2026-04-23T20:26:53.238Z,
+G027,B,69d78e8bac4cdd106017b989,B.Tech. Pharmaceutical Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G027,B,69e267809b26658edfffaf47,B.Tech. Pharmaceutical Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:52.724Z,
+G027,B,69ea808232e643c0e37a7a71,PHARMACEUTICAL TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:42.379Z,
+G027,B,69ea80b432e643c0e37a7a9a,PHARMACEUTICAL TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:27:32.341Z,YES
+G028,B,69d78e8bac4cdd106017b97c,B.E. Electronics and Communication Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-09T11:33:31.078Z,
+G028,B,69e267769b26658edfffaf34,B.E. Electronics And Communication Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:42.424Z,
+G028,B,69e267839b26658edfffaf54,B.E. Electronics And Communication Engineering (ss),after12th,BE,,,yes,Engineering,417,417,0,0,0,2026-04-17T17:01:55.119Z,YES
+G028,B,69ea807c32e643c0e37a7a66,ELECTRONICS AND COMMUNICATION ENGINEERING,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T20:26:36.031Z,
+G028,B,69ea807c32e643c0e37a7a69,ELECTRONICS AND COMMUNICATION ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:36.690Z,
+G028,B,69ea808432e643c0e37a7a76,ELECTRONICS AND COMMUNICATION ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:44.939Z,
+G029,B,69d78e8bac4cdd106017b93e,B.A. Defence and Strategic Studies,after12th,BA,,,,Arts,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G029,B,69e252d56089fd04f8df8887,Defence and Strategic Studies,after12th,,,,,Science,0,0,0,0,0,2026-04-17T15:33:41.772Z,YES
+G030,B,69d78e8bac4cdd106017b94a,B.Com. Co-operation,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G030,B,69e252b46089fd04f8df87e0,Co-operation,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:08.870Z,YES
+G031,B,69d78e8bac4cdd106017b98e,B.Tech. Fashion Technology,after12th,BTECH,,,,Design,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G031,B,69ea6dbf2b999f13417e10de,FASHION TECHNOLOGY,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T19:06:39.053Z,YES
+G031,B,69ea6ddf2b999f13417e10e2,FASHION TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:07:11.390Z,
+G031,B,69ea76213de2eee3fbb4ab0c,FASHION TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:25.413Z,
+G031,B,69ea783044b8d3a98f3fa861,FASHION TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:12.258Z,
+G032,B,69d78e8bac4cdd106017b973,B.E. Marine Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G032,B,69ea6dac2b999f13417e10da,MARINE ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:20.014Z,YES
+G033,B,69d78e8bac4cdd106017b933,B.A. History,after12th,BA,,,,Arts,0,0,0,0,0,2026-04-09T11:33:31.076Z,
+G033,B,69e252a86089fd04f8df87b5,History,after12th,,,,,Arts,0,0,0,0,0,2026-04-17T15:32:56.494Z,YES
+G034,B,69d78e8bac4cdd106017b96c,B.E. Automobile Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G034,B,69e2677e9b26658edfffaf3f,B.E. Automobile Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:50.788Z,
+G034,B,69ea75b33de2eee3fbb4ab07,AUTOMOBILE ENGINEERING,after12th,,,,,Engineering,6,6,0,0,0,2026-04-23T19:40:35.641Z,YES
+G035,B,69d78e8bac4cdd106017b960,B.Sc. Computer Science,after12th,BSC,,,,IT & Computer,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G035,B,69e252d16089fd04f8df8871,Computer Science,after12th,,,,,IT & Computer,1,1,0,0,0,2026-04-17T15:33:37.540Z,YES
+G035,B,69e2682a43acac003436891d,B.Sc. Computer Science,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-17T17:04:42.435Z,
+G036,B,69d78e8bac4cdd106017b96f,B.E. Manufacturing Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.077Z,
+G036,B,69e2677f9b26658edfffaf42,B.E. Manufacturing Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:51.422Z,
+G036,B,69ea807d32e643c0e37a7a6c,MANUFACTURING ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:26:37.671Z,YES
+G037,B,69d78e8bac4cdd106017b983,B.Tech. Chemical Engineering,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-09T11:33:31.078Z,
+G037,B,69e267829b26658edfffaf4e,B.Tech. Chemical  Engineering,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:54.208Z,
+G037,B,69e267859b26658edfffaf5e,B.Tech. Chemical  Engineering (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:57.061Z,
+G037,B,69ea75b03de2eee3fbb4ab00,CHEMICAL ENGINEERING,after12th,,,,,Engineering,3,3,0,0,0,2026-04-23T19:40:32.622Z,YES
+G037,B,69ea75b03de2eee3fbb4ab01,CHEMICAL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:40:32.871Z,
+G037,B,69ea76233de2eee3fbb4ab0e,CHEMICAL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:27.358Z,
+G037,B,69ea77ae44b8d3a98f3fa85a,CHEMICAL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:49:02.621Z,
+G037,B,69ea783344b8d3a98f3fa863,CHEMICAL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:15.126Z,
+G038,B,69e252a86089fd04f8df87b7,Psychology,after12th,,,,,Arts,0,0,0,0,0,2026-04-17T15:32:56.787Z,
+G038,B,69e2682943acac003436891b,B.A. Psychology,after12th,BA,,,,Arts,0,0,0,0,0,2026-04-17T17:04:41.913Z,YES
+G039,C,69e252ac6089fd04f8df87c5,B.B.A. LLB,after12th,BBA,,,,Law,0,0,0,0,0,2026-04-17T15:33:00.722Z,
+G039,C,69e252ad6089fd04f8df87c7,B.Sc. LLB,after12th,BSC,,,,Law,0,0,0,0,0,2026-04-17T15:33:01.074Z,
+G039,C,69e252ad6089fd04f8df87c9,B.Com. LLB,after12th,BCOM,,,,Law,0,0,0,0,0,2026-04-17T15:33:01.404Z,YES
+G040,C,69e252ac6089fd04f8df87c6,B.B.A. LLB (Hons),after12th,BBA,Hons,,,Law,7,7,0,0,0,2026-04-17T15:33:00.914Z,YES
+G040,C,69e252ad6089fd04f8df87c8,B.Sc. LLB (Hons),after12th,BSC,Hons,,,Law,1,1,0,0,0,2026-04-17T15:33:01.233Z,
+G040,C,69e252ad6089fd04f8df87ca,B.Com. LLB (Hons),after12th,BCOM,Hons,,,Law,6,6,0,0,0,2026-04-17T15:33:01.569Z,
+G041,B,69e252b46089fd04f8df87dd,Accounting & Finance,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:08.108Z,
+G041,B,69e2682b43acac0034368923,B.Com Accounting & Finance,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-17T17:04:43.639Z,YES
+G042,B,69e252b46089fd04f8df87de,Business Administration,after12th,,,,,Commerce,0,0,0,0,0,2026-04-17T15:33:08.553Z,
+G042,B,69e2682b43acac0034368924,B.B.A. (Business Administration),after12th,BBA,,,,Management,0,0,0,0,0,2026-04-17T17:04:43.804Z,YES
+G043,C,69e252b76089fd04f8df87ed,B.Ed (General),after12th,BED,,,,Arts,0,0,0,0,0,2026-04-17T15:33:11.606Z,
+G043,C,69e2682b43acac0034368920,B.Com General,after12th,BCOM,,,,Commerce,0,0,0,0,0,2026-04-17T17:04:43.016Z,YES
+G044,C,69e252c26089fd04f8df8827,B.Sc. Horticulture,after12th,BSC,,,,Agriculture,0,0,0,0,0,2026-04-17T15:33:22.051Z,
+G044,C,69e252c26089fd04f8df882a,B.Tech Horticulture,after12th,BTECH,,,,Agriculture,0,0,0,0,0,2026-04-17T15:33:22.530Z,YES
+G045,C,69e252c86089fd04f8df884d,B.E. Agricultural Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:28.921Z,
+G045,C,69ea6dac2b999f13417e10db,AGRICULTURAL ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:20.687Z,
+G045,C,6a42a551598bfaf4b261d32f,B.Tech. Agricultural Engineering,after12th,BTECH,,,,Engineering,5,5,0,0,0,2026-06-29T17:03:13.256Z,YES
+G046,B,69e252c96089fd04f8df884f,B.E. Mining Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:29.611Z,
+G046,B,69e267849b26658edfffaf5c,B.E. Mining Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:56.650Z,
+G046,B,69ea75af3de2eee3fbb4aafe,MINING ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:31.640Z,YES
+G047,B,69e252ca6089fd04f8df8852,B.E. Aerospace Engineering,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:30.866Z,
+G047,B,69ea6dbd2b999f13417e10dd,AEROSPACE ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:37.285Z,YES
+G048,C,69e252cc6089fd04f8df8859,B.Tech. Artificial Intelligence and Data Science,after12th,BTECH,,,,IT & Computer,0,0,0,0,0,2026-04-17T15:33:32.596Z,
+G048,C,69e267839b26658edfffaf58,B.E. Artificial Intelligence And Data Science,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:55.832Z,
+G048,C,69e267849b26658edfffaf59,B.E. Artificial Intelligence And Data Science (ss),after12th,BE,,,yes,Engineering,417,417,0,0,0,2026-04-17T17:01:56.037Z,YES
+G048,C,69ea808232e643c0e37a7a73,ARTIFICIAL INTELLIGENCE AND DATA SCIENCE (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:42.885Z,
+G048,C,69ea809132e643c0e37a7a81,ARTIFICIAL INTELLIGENCE AND DATA SCIENCE,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:26:57.022Z,
+G049,B,69e252cd6089fd04f8df885c,B.E. Computer Science and Engineering (Cyber Security),after12th,BE,Cyber Security,,,IT & Computer,0,0,0,0,0,2026-04-17T15:33:33.091Z,
+G049,B,69e267849b26658edfffaf5b,B.E. Computer Science And Engineering (cyber Security),after12th,BE,Cyber Security,,,Engineering,417,417,0,0,0,2026-04-17T17:01:56.446Z,YES
+G049,B,69ea809332e643c0e37a7a84,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:26:59.624Z,
+G049,B,69ea809e32e643c0e37a7a88,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:10.846Z,
+G049,B,69ea80a532e643c0e37a7a8f,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:17.706Z,
+G049,B,69ea80a832e643c0e37a7a91,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:20.164Z,
+G049,B,69ea80aa32e643c0e37a7a93,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:22.417Z,
+G049,B,69ea80ac32e643c0e37a7a94,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:24.362Z,
+G049,B,69ea80ae32e643c0e37a7a95,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:26.719Z,
+G049,B,69ea80b032e643c0e37a7a96,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:28.663Z,
+G049,B,69ea80b432e643c0e37a7a9b,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:32.660Z,
+G049,B,69ea80b632e643c0e37a7a9d,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:34.902Z,
+G049,B,69ea80b832e643c0e37a7a9e,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:36.756Z,
+G049,B,69ea80ba32e643c0e37a7aa0,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:38.495Z,
+G049,B,69ea80bd32e643c0e37a7aa2,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:41.362Z,
+G049,B,69ea80c232e643c0e37a7aa3,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:46.789Z,
+G049,B,69ea80cb32e643c0e37a7aa6,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:55.805Z,
+G049,B,69ea80cf32e643c0e37a7aa8,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:27:59.392Z,
+G049,B,69ea80d132e643c0e37a7aaa,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:01.655Z,
+G049,B,69ea80d732e643c0e37a7aac,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:07.483Z,
+G049,B,69ea80d832e643c0e37a7aad,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:08.809Z,
+G049,B,69ea80db32e643c0e37a7aae,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:11.161Z,
+G049,B,69ea80dd32e643c0e37a7aaf,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:13.825Z,
+G049,B,69ea80df32e643c0e37a7ab0,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:15.155Z,
+G049,B,69ea80e632e643c0e37a7ab2,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:22.937Z,
+G049,B,69ea80e832e643c0e37a7ab6,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:24.772Z,
+G049,B,69ea80ec32e643c0e37a7ab8,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,0,0,0,0,0,2026-04-23T20:28:28.468Z,
+G049,B,69ea80f032e643c0e37a7abb,COMPUTER SCIENCE AND ENGINEERING (CYBER SECURITY),after12th,,Cyber Security,,,Engineering,1,1,0,0,0,2026-04-23T20:28:32.151Z,
+G050,A,69e252cd6089fd04f8df885d,B.E.Computer Science and Engineering (Artificial Intelligence and Machine Learning),after12th,BE,Artificial Intelligence And Machine Learning,,,IT & Computer,0,0,0,0,0,2026-04-17T15:33:33.254Z,
+G050,A,69e2677f9b26658edfffaf41,B.E. Computer Science And Engineering (artificial Intelligence And Machine Learning),after12th,BE,Artificial Intelligence And Machine Learning,,,Engineering,417,417,0,0,0,2026-04-17T17:01:51.174Z,YES
+G051,B,69e252cd6089fd04f8df885e,B.E.Computer Science and Design,after12th,BE,,,,IT & Computer,0,0,0,0,0,2026-04-17T15:33:33.409Z,
+G051,B,69ea80a232e643c0e37a7a8a,COMPUTER SCIENCE AND DESIGN,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:27:14.026Z,YES
+G052,B,69e252cd6089fd04f8df885f,B.Tech. Industrial Bio-Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:33.553Z,
+G052,B,69e2677e9b26658edfffaf3d,B.Tech. Industrial Bio Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:50.260Z,
+G052,B,69e267829b26658edfffaf52,B.Tech. Industrial Bio Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:54.820Z,
+G052,B,69ea75b13de2eee3fbb4ab04,INDUSTRIAL BIO TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:33.491Z,
+G052,B,69ea808232e643c0e37a7a70,INDUSTRIAL BIO TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:42.177Z,YES
+G053,B,69e252cd6089fd04f8df8861,B.Tech. Leather Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:33.885Z,
+G053,B,69e267829b26658edfffaf53,B.Tech. Leather Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:54.972Z,
+G053,B,69ea75b13de2eee3fbb4ab05,LEATHER TECHNOLOGY,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T19:40:33.694Z,YES
+G054,B,69e252ce6089fd04f8df8862,B.Tech. Ceramic Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:34.023Z,
+G054,B,69e267829b26658edfffaf51,B.Tech. Ceramic Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:54.677Z,
+G054,B,69ea75b13de2eee3fbb4ab02,CERAMIC TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:40:33.055Z,
+G054,B,69ea77ae44b8d3a98f3fa85b,CERAMIC TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:49:02.928Z,YES
+G055,B,69e252ce6089fd04f8df8863,B.Tech. Apparel Technology,after12th,BTECH,,,,Design,0,0,0,0,0,2026-04-17T15:33:34.193Z,
+G055,B,69e2677f9b26658edfffaf44,B.Tech. Apparel Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:51.941Z,
+G055,B,69ea75b03de2eee3fbb4aaff,APPAREL TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:40:32.442Z,
+G055,B,69ea77ae44b8d3a98f3fa859,APPAREL TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:49:02.112Z,YES
+G056,B,69e252ce6089fd04f8df8864,B.Tech. Plastic Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T15:33:34.600Z,
+G056,B,69ea6dc12b999f13417e10df,PLASTIC TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:41.608Z,YES
+G057,B,69e252d06089fd04f8df8869,B.Plan.,after12th,,,,,Architecture,0,0,0,0,0,2026-04-17T15:33:36.190Z,
+G057,B,69e267839b26658edfffaf56,B.E. B.plan,after12th,BE,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:55.409Z,YES
+G058,A,69e252d06089fd04f8df886c,Bio-Technology,after12th,,,,,Science,6,6,0,0,0,2026-04-17T15:33:36.719Z,YES
+G058,A,69ea6ddf2b999f13417e10e0,BIO TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:07:11.019Z,
+G058,A,69ea76203de2eee3fbb4ab0a,BIO TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:42:24.978Z,
+G058,A,69ea782f44b8d3a98f3fa85e,BIO TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:11.606Z,
+G059,B,69e252d46089fd04f8df8882,Visual Communication,after12th,,,,,Design,0,0,0,0,0,2026-04-17T15:33:40.973Z,
+G059,B,69e2682a43acac003436891f,B.Sc. Visual Communication,after12th,BSC,,,,Science,0,0,0,0,0,2026-04-17T17:04:42.857Z,YES
+G060,B,69e267799b26658edfffaf37,B.E. Computer Science And Engineering (data Science),after12th,BE,Data Science,,,Engineering,417,417,0,0,0,2026-04-17T17:01:45.961Z,YES
+G060,B,69ea808832e643c0e37a7a7b,COMPUTER SCIENCE AND ENGINEERING (DATA SCIENCE),after12th,,Data Science,,,Engineering,0,0,0,0,0,2026-04-23T20:26:48.216Z,
+G061,B,69e2677f9b26658edfffaf40,B.E. Bio Medical Engineering  (ss),after12th,BE,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:51.028Z,
+G061,B,69ea6da82b999f13417e10d8,BIO MEDICAL ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T19:06:16.416Z,
+G061,B,69ea807a32e643c0e37a7a63,BIO MEDICAL ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:34.728Z,YES
+G062,B,69e267809b26658edfffaf46,B.Tech. Electronics Engineering (vlsi Design And Technology) (ss),after12th,BTECH,Vlsi Design And Technology,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:52.452Z,
+G062,B,69ea807c32e643c0e37a7a68,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY) (SS),after12th,,Vlsi Design And Technology,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:36.542Z,
+G062,B,69ea80a232e643c0e37a7a8c,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY),after12th,,Vlsi Design And Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:27:14.941Z,
+G062,B,69ea80a532e643c0e37a7a8e,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY),after12th,,Vlsi Design And Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:27:17.502Z,
+G062,B,69ea80ba32e643c0e37a7a9f,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY),after12th,,Vlsi Design And Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:27:38.306Z,
+G062,B,69ea80bd32e643c0e37a7aa1,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY),after12th,,Vlsi Design And Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:27:41.092Z,
+G062,B,69ea80e832e643c0e37a7ab5,ELECTRONICS ENGINEERING (VLSI DESIGN AND TECHNOLOGY),after12th,,Vlsi Design And Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:28:24.575Z,YES
+G063,B,69e267819b26658edfffaf4b,B.E. Computer Science And Bussiness System,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:53.756Z,YES
+G063,B,69ea809232e643c0e37a7a83,COMPUTER SCIENCE AND BUSSINESS SYSTEM,after12th,,,,,Engineering,1,1,0,0,0,2026-04-23T20:26:58.660Z,
+G064,B,69e267819b26658edfffaf4c,B.Tech. Rubber And Plastic Technology,after12th,BTECH,,,,Engineering,0,0,0,0,0,2026-04-17T17:01:53.907Z,
+G064,B,69ea808532e643c0e37a7a79,RUBBER AND PLASTIC TECHNOLOGY,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:26:45.657Z,YES
+G065,B,69e267829b26658edfffaf4f,B.E. Civil And Structutural Engineering,after12th,BE,,,,Engineering,417,417,0,0,0,2026-04-17T17:01:54.361Z,YES
+G065,B,69ea808832e643c0e37a7a7c,CIVIL AND STRUCTUTURAL ENGINEERING,after12th,,,,,Engineering,0,0,0,0,0,2026-04-23T20:26:48.831Z,
+G066,B,69e267839b26658edfffaf55,B.Tech. Petroleum Engineering And Technology (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:55.277Z,
+G066,B,69ea808232e643c0e37a7a72,PETROLEUM ENGINEERING AND TECHNOLOGY (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:42.588Z,YES
+G067,B,69e267849b26658edfffaf5a,B.Tech. Material Science And Engineering (ss),after12th,BTECH,,,yes,Engineering,0,0,0,0,0,2026-04-17T17:01:56.242Z,
+G067,B,69ea807d32e643c0e37a7a6b,MATERIAL SCIENCE AND ENGINEERING (SS),after12th,,,,yes,Engineering,0,0,0,0,0,2026-04-23T20:26:37.468Z,YES
+G068,C,69e2682c43acac003436892b,B.A. L.L.B. (Honours) - Integrated,after12th,BA,Honours,,,Law,0,0,0,0,0,2026-04-17T17:04:44.846Z,
+G068,C,69e2682c43acac003436892c,B.B.A. L.L.B. (Honours) - Integrated,after12th,BBA,Honours,,,Law,0,0,0,0,0,2026-04-17T17:04:44.986Z,
+G068,C,69e2682d43acac003436892d,B.Com L.L.B. (Honours) - Integrated,after12th,BCOM,Honours,,,Law,0,0,0,0,0,2026-04-17T17:04:45.138Z,YES
+G069,A,69ea6e522b999f13417e10e4,MECHATRONICS (SS),after12th,ME,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:09:06.780Z,
+G069,A,69ea77153de2eee3fbb4ab11,MECHATRONICS (SS),after12th,ME,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:46:29.021Z,
+G069,A,69ea792744b8d3a98f3fa867,MECHATRONICS (SS),after12th,ME,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:55:19.014Z,YES
+G070,B,69ea75af3de2eee3fbb4aafd,MECHANICAL ENGINEERING,after12th,ME,,,,Engineering,0,0,0,0,0,2026-04-23T19:40:31.444Z,
+G070,B,69ea807e32e643c0e37a7a6f,MECHANICAL ENGINEERING (TAMIL MEDIUM),after12th,ME,,Tamil,,Engineering,0,0,0,0,0,2026-04-23T20:26:38.591Z,
+G070,B,69ea808c32e643c0e37a7a7e,MECHANICAL ENGINEERING (TAMIL MEDIUM),after12th,ME,,Tamil,,Engineering,0,0,0,0,0,2026-04-23T20:26:52.107Z,
+G070,B,69ea808f32e643c0e37a7a80,MECHANICAL ENGINEERING (TAMIL MEDIUM),after12th,ME,,Tamil,,Engineering,0,0,0,0,0,2026-04-23T20:26:55.588Z,YES
+G071,A,69ea77ac44b8d3a98f3fa858,MEDICAL ENGINEERING (SS),after12th,MED,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:49:00.297Z,
+G071,A,69ea782f44b8d3a98f3fa85f,MEDICAL ENGINEERING (SS),after12th,MED,,,yes,Engineering,0,0,0,0,0,2026-04-23T19:51:11.850Z,YES
+G072,A,69ea808732e643c0e37a7a7a,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:26:47.499Z,
+G072,A,69ea809232e643c0e37a7a82,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:26:58.353Z,
+G072,A,69ea809632e643c0e37a7a85,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:02.720Z,
+G072,A,69ea809d32e643c0e37a7a87,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:09.309Z,
+G072,A,69ea80a432e643c0e37a7a8d,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:16.682Z,
+G072,A,69ea80a732e643c0e37a7a90,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:19.247Z,
+G072,A,69ea80a932e643c0e37a7a92,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:21.707Z,
+G072,A,69ea80b132e643c0e37a7a97,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:29.790Z,
+G072,A,69ea80b332e643c0e37a7a98,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:31.223Z,
+G072,A,69ea80b632e643c0e37a7a9c,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:34.297Z,
+G072,A,69ea80c532e643c0e37a7aa4,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:49.042Z,
+G072,A,69ea80c632e643c0e37a7aa5,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:27:50.782Z,
+G072,A,69ea80d032e643c0e37a7aa9,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:28:00.822Z,
+G072,A,69ea80e432e643c0e37a7ab1,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:28:20.991Z,
+G072,A,69ea80e732e643c0e37a7ab3,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:28:23.789Z,
+G072,A,69ea80eb32e643c0e37a7ab7,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:28:27.647Z,
+G072,A,69ea80ee32e643c0e37a7ab9,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,0,0,0,0,0,2026-04-23T20:28:30.207Z,
+G072,A,69ea80ef32e643c0e37a7aba,COMPUTER SCIENCE AND ENGINEERING (AI AND MACHINE LEARNING),after12th,,Ai And Machine Learning,,,Engineering,1,1,0,0,0,2026-04-23T20:28:31.534Z,YES
+G073,A,69ea80a232e643c0e37a7a8b,ELECTRONICS AND COMMUNICATION (ADVANCED COMMUNICATION TECHNOLOGY),after12th,,Advanced Communication Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:27:14.531Z,
+G073,A,69ea80e832e643c0e37a7ab4,ELECTRONICS AND COMMUNICATION (ADVANCED COMMUNICATION TECHNOLOGY),after12th,,Advanced Communication Technology,,,Engineering,0,0,0,0,0,2026-04-23T20:28:24.167Z,YES
+G074,C,6a65a5ffa70cb6d55bb69e3c,B.Sc. Computer Science,undergraduate,BSC,,,,Arts & Science,211,211,0,0,0,2026-07-26T06:15:25.907Z,YES
+G074,C,6a65a614a70cb6d55bb69edf,B.E. Computer Science,undergraduate,BE,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:46.493Z,
+G075,A,6a65a600a70cb6d55bb69e40,B.A. English,undergraduate,BA,,English,,Arts & Science,132,132,0,0,0,2026-07-26T06:15:26.275Z,YES
+G075,A,6a687c10c1cdd6a29761885a,B.A. (English),undergraduate,BA,,English,,Arts & Science,60,60,0,0,0,2026-07-28T09:53:20.735Z,
+G076,C,6a65a600a70cb6d55bb69e48,B.Com. General,undergraduate,BCOM,,,,Arts & Science,194,194,0,0,0,2026-07-26T06:15:26.913Z,YES
+G076,C,6a65a608a70cb6d55bb69e6e,B.B.A. General,undergraduate,BBA,,,,Arts & Science,10,10,0,0,0,2026-07-26T06:15:35.019Z,
+G077,C,6a65a600a70cb6d55bb69e49,B.Com. Computer Applications,undergraduate,BCOM,,,,Arts & Science,47,47,0,0,0,2026-07-26T06:15:27.006Z,YES
+G077,C,6a65a60ba70cb6d55bb69e8c,B.B.A. Computer Applications,undergraduate,BBA,,,,Arts & Science,2,2,0,0,0,2026-07-26T06:15:37.869Z,
+G078,A,6a65a601a70cb6d55bb69e4e,B.A. English Literature,undergraduate,BA,,English,,Arts & Science,7,7,0,0,0,2026-07-26T06:15:27.406Z,
+G078,A,6a97093b0d0e6dc481af6119,B.A. (English Literature),undergraduate,BA,,English,,Arts & Science,19,19,0,0,0,2026-09-01T17:19:53.633Z,YES
+G079,A,6a65a606a70cb6d55bb69e55,B.Sc. Psychology,undergraduate,BSC,,,,Arts & Science,25,25,0,0,0,2026-07-26T06:15:32.192Z,YES
+G079,A,6a68321ac1cdd6a297617c09,B.Sc. (Psychology),undergraduate,BSC,,,,Arts & Science,2,2,0,0,0,2026-07-28T04:37:45.899Z,
+G080,C,6a65a607a70cb6d55bb69e5e,B.Sc. Information Technology,undergraduate,BSC,,,,Arts & Science,91,91,0,0,0,2026-07-26T06:15:33.632Z,YES
+G080,C,6a65a618a70cb6d55bb69f03,B.Tech. Information Technology,undergraduate,BTECH,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:50.277Z,
+G081,C,6a65a608a70cb6d55bb69e66,B.B.A.,undergraduate,BBA,,,,Arts & Science,299,299,0,0,0,2026-07-26T06:15:34.436Z,YES
+G081,C,6a65a60ca70cb6d55bb69e99,B.Com.,undergraduate,BCOM,,,,Arts & Science,133,133,0,0,0,2026-07-26T06:15:39.015Z,
+G081,C,6a65a615a70cb6d55bb69ee6,B.A.,undergraduate,BA,,,,Arts & Science,3,3,0,0,0,2026-07-26T06:15:47.174Z,
+G081,C,6a65a615a70cb6d55bb69ee9,B.Arch,undergraduate,BARCH,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:47.617Z,
+G081,C,6a65a61ba70cb6d55bb69f24,B.Sc.,undergraduate,BSC,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:53.324Z,
+G082,C,6a65a609a70cb6d55bb69e70,B.B.A. International Business,undergraduate,BBA,,,,Arts & Science,6,6,0,0,0,2026-07-26T06:15:35.550Z,YES
+G082,C,6a65a60da70cb6d55bb69e9b,B.Com. International Business,undergraduate,BCOM,,,,Arts & Science,5,5,0,0,0,2026-07-26T06:15:39.243Z,
+G083,C,6a65a60aa70cb6d55bb69e77,B.Sc. Biotechnology,undergraduate,BSC,,,,Arts & Science,44,44,0,0,0,2026-07-26T06:15:36.200Z,YES
+G083,C,6a65a617a70cb6d55bb69efd,B.Tech. Biotechnology,undergraduate,BTECH,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:49.711Z,
+G084,B,6a65a60ba70cb6d55bb69e8e,B.B.A. Logistics,undergraduate,BBA,,,,Arts & Science,8,8,0,0,0,2026-07-26T06:15:37.958Z,YES
+G084,B,6a65a613a70cb6d55bb69ed9,BBA Logistics,undergraduate,BBA,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:45.981Z,
+G085,C,6a65a60ea70cb6d55bb69ea9,B.B.A. Aviation Management,undergraduate,BBA,,,,Arts & Science,2,2,0,0,0,2026-07-26T06:15:40.642Z,YES
+G085,C,6a65a617a70cb6d55bb69ef8,B.Sc. Aviation Management,undergraduate,BSC,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:49.285Z,
+G086,B,6a65a60ea70cb6d55bb69eaa,B.B.A. CA,undergraduate,BBA,,,,Arts & Science,7,7,0,0,0,2026-07-26T06:15:40.743Z,
+G086,B,6a65a613a70cb6d55bb69ed8,BBA CA,undergraduate,BBA,,,,Arts & Science,84,84,0,0,0,2026-07-26T06:15:45.883Z,YES
+G087,C,6a65a610a70cb6d55bb69eb7,B.Sc. IT,undergraduate,BSC,,,,Arts & Science,7,7,0,0,0,2026-07-26T06:15:42.237Z,YES
+G087,C,6a65a614a70cb6d55bb69edc,B.Tech IT,undergraduate,BTECH,,,,Arts & Science,2,2,0,0,0,2026-07-26T06:15:46.251Z,
+G087,C,6a65a616a70cb6d55bb69ef2,B.Lit,undergraduate,BL,,,,Arts & Science,3,3,0,0,0,2026-07-26T06:15:48.416Z,
+G088,C,6a65a610a70cb6d55bb69eb8,B.Sc. Cyber Security,undergraduate,BSC,,,,Arts & Science,4,4,0,0,0,2026-07-26T06:15:42.317Z,YES
+G088,C,6a65a614a70cb6d55bb69ee0,B.E. Cyber Security,undergraduate,BE,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:46.576Z,
+G089,C,6a65a612a70cb6d55bb69ece,B.Sc AI & ML,undergraduate,BSC,,,,Arts & Science,4,4,0,0,0,2026-07-26T06:15:44.705Z,YES
+G089,C,6a65a613a70cb6d55bb69edb,B.Tech AI & ML,undergraduate,BTECH,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:46.170Z,
+G090,C,6a65a615a70cb6d55bb69eea,B.A.LL.B,undergraduate,BA,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:47.716Z,
+G090,C,6a65a615a70cb6d55bb69eeb,B.Com.LL.B,undergraduate,BCOM,,,,Arts & Science,1,1,0,0,0,2026-07-26T06:15:47.833Z,YES

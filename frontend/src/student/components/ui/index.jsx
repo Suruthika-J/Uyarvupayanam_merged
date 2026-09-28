@@ -1,63 +1,100 @@
 import React, { useState } from 'react'
 
+export { StreamingText, AIGenerating, AIFailure } from './AiStates'
+export { useTypewriter } from './useTypewriter'
+
 /* ── Button ──────────────────────────────────────────────── */
 const BTN_SIZES = {
-  sm: { padding: '6px 14px',  fontSize: 12.5, borderRadius: 8  },
-  md: { padding: '10px 22px', fontSize: 14,   borderRadius: 10 },
-  lg: { padding: '13px 30px', fontSize: 15.5, borderRadius: 12 },
+  sm: { height: 34, padding: '0 16px',  fontSize: 12.5, borderRadius: 9  },
+  md: { height: 42, padding: '0 22px', fontSize: 14,   borderRadius: 10 },
+  lg: { height: 48, padding: '0 30px', fontSize: 15.5, borderRadius: 12 },
 }
 const BTN_VARIANTS = {
-  primary: { background: 'var(--s-primary)',  color: '#fff',             border: 'none' },
-  accent:  { background: 'var(--s-accent)',   color: '#fff',             border: 'none' },
-  outline: { background: 'transparent',       color: 'var(--s-primary)', border: '1.5px solid var(--s-primary)' },
-  ghost:   { background: 'var(--s-surface2)', color: 'var(--s-text2)',   border: '1.5px solid var(--s-border)' },
-  danger:  { background: '#fef2f2',           color: '#dc2626',          border: '1.5px solid #fecaca' },
-  white:   { background: '#fff',              color: 'var(--s-primary)', border: 'none' },
+  primary:   { background: 'var(--s-primary)', color: '#fff', border: '1.5px solid var(--s-primary)' },
+  secondary: { background: 'var(--s-surface)', color: 'var(--s-primary)', border: '1.5px solid var(--s-border)' },
+  accent:    { background: 'var(--s-accent)',  color: '#fff', border: '1.5px solid var(--s-accent)' },
+  outline:   { background: 'transparent',      color: 'var(--s-primary)', border: '1.5px solid var(--s-primary)' },
+  ghost:     { background: 'var(--s-surface2)', color: 'var(--s-text2)',  border: '1.5px solid var(--s-border)' },
+  danger:    { background: 'var(--s-error-l)', color: 'var(--s-error)',   border: '1.5px solid #fecaca' },
+  white:     { background: '#fff',             color: 'var(--s-primary)', border: 'none' },
+}
+const BTN_HOVERS = {
+  primary:   { background: 'var(--s-primary-d)', boxShadow: '0 6px 18px rgba(26,122,80,0.28)' },
+  secondary: { borderColor: 'var(--s-primary)',  boxShadow: '0 4px 12px rgba(15,23,42,0.08)' },
+  accent:    { background: '#0369a1',            boxShadow: '0 6px 18px rgba(2,132,199,0.28)' },
+  outline:   { background: 'var(--s-primary-l)', boxShadow: 'none' },
+  ghost:     { borderColor: 'var(--s-primary)',  color: 'var(--s-primary)', boxShadow: 'none' },
+  danger:    { background: 'var(--s-error-l)',   boxShadow: 'none' },
+  white:     { background: '#f0faf5',            boxShadow: '0 4px 12px rgba(15,23,42,0.10)' },
 }
 
-export function SBtn({ children, variant = 'primary', size = 'md', style = {}, disabled, fullWidth, ...props }) {
+export function SBtn({ children, variant = 'primary', size = 'md', style = {}, disabled, fullWidth, loading = false, icon, ...props }) {
   const [hov, setHov] = useState(false)
+  const blocked = disabled || loading
+  const hovered = hov && !blocked
+  const hoverPatch = BTN_HOVERS[variant] || {}
   return (
     <button
-      disabled={disabled}
+      className="s-kit-btn"
+      disabled={blocked}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
         display: fullWidth ? 'flex' : 'inline-flex', alignItems: 'center', justifyContent: 'center',
         width: fullWidth ? '100%' : 'auto',
-        gap: 7, cursor: disabled ? 'not-allowed' : 'pointer',
+        gap: 8, cursor: blocked ? 'not-allowed' : 'pointer',
         fontFamily: 'var(--s-font-display)', fontWeight: 600,
         transition: 'all 0.2s ease', textDecoration: 'none',
-        opacity: disabled ? 0.6 : 1,
-        transform: hov && !disabled ? 'translateY(-1px)' : 'none',
-        boxShadow: hov && !disabled ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+        opacity: disabled ? 0.55 : 1,
         ...BTN_SIZES[size],
         ...BTN_VARIANTS[variant],
+        transform: hovered ? 'translateY(-1px)' : 'none',
+        boxShadow: hovered ? (hoverPatch.boxShadow || '0 4px 12px rgba(0,0,0,0.1)') : 'none',
+        ...(hovered ? hoverPatch : {}),
         ...style,
       }}
       {...props}
     >
+      {loading && (
+        <span aria-hidden="true" style={{
+          display: 'inline-block', width: 14, height: 14, borderRadius: '50%',
+          border: '2px solid currentColor', borderTopColor: 'transparent',
+          animation: 's-spin 0.7s linear infinite', flexShrink: 0,
+        }} />
+      )}
+      {icon && <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>}
       {children}
     </button>
   )
 }
 
 /* ── Card ────────────────────────────────────────────────── */
-export function SCard({ children, hover = false, style = {}, fullWidth, ...props }) {
+const CARD_VARIANTS = {
+  default:     {},
+  elevated:    { boxShadow: 'var(--s-shadow-md)' },
+  bordered:    { boxShadow: 'none' },
+  compact:     { padding: 12 },
+  interactive: { cursor: 'pointer' },
+}
+
+export function SCard({ children, variant = 'default', hover = false, style = {}, fullWidth, ...props }) {
   const [hov, setHov] = useState(false)
+  const lift = hover || variant === 'interactive'
   return (
     <div
+      className="s-kit-card"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
         background: 'var(--s-surface)',
         border: '1px solid var(--s-border)',
-        borderRadius: 'var(--s-radius)',
+        borderRadius: 'var(--s-radius-lg)',
         padding: 20,
-        boxShadow: hov && hover ? 'var(--s-shadow-lg)' : 'var(--s-shadow)',
-        transform: hov && hover ? 'translateY(-3px)' : 'none',
+        boxShadow: hov && lift ? 'var(--s-shadow-lg)' : 'var(--s-shadow)',
+        transform: hov && lift ? 'translateY(-3px)' : 'none',
         transition: 'all 0.22s ease',
         width: fullWidth ? '100%' : 'auto',
+        ...CARD_VARIANTS[variant],
         ...style,
       }}
       {...props}
@@ -75,6 +112,9 @@ const BADGE_COLORS = {
   blue:   { bg: 'var(--s-blue-l)',   text: 'var(--s-blue)'   },
   purple: { bg: 'var(--s-purple-l)', text: 'var(--s-purple)' },
   gray:   { bg: 'var(--s-bg2)',      text: 'var(--s-text3)'  },
+  red:    { bg: 'var(--s-error-l)',  text: 'var(--s-error)'  },
+  indigo: { bg: 'var(--s-blue-l)',   text: 'var(--s-blue)'   },
+  white:  { bg: '#ffffff',           text: 'var(--s-primary)' },
 }
 
 export function SBadge({ children, color = 'green', dot = false, style = {} }) {
@@ -83,8 +123,8 @@ export function SBadge({ children, color = 'green', dot = false, style = {} }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       background: c.bg, color: c.text,
-      padding: '3px 10px', borderRadius: 99,
-      fontSize: 12, fontWeight: 600,
+      padding: '4px 11px', borderRadius: 99,
+      fontSize: 12.5, fontWeight: 600,
       fontFamily: 'var(--s-font-display)', letterSpacing: '0.01em',
       whiteSpace: 'nowrap', ...style,
     }}>
@@ -193,7 +233,7 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
 }
 
 /* ── Select ──────────────────────────────────────────────── */
-export function SSelect({ label, children, style = {}, ...props }) {
+export function SSelect({ label, options, children, style = {}, ...props }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       {label && (
@@ -204,23 +244,30 @@ export function SSelect({ label, children, style = {}, ...props }) {
       )}
       <select style={{
         width: '100%', fontFamily: 'var(--s-font-body)',
-        background: 'var(--s-surface)',
+        background: '#fff',
         border: '1.5px solid var(--s-border)',
         borderRadius: 10, padding: '11px 14px',
         fontSize: 14, color: 'var(--s-text)', outline: 'none',
+        cursor: 'pointer',
         transition: 'border-color 0.2s ease',
         ...style,
-      }} {...props}>{children}</select>
+      }} {...props}>
+        {children || (options && options.map((opt, idx) => {
+          const val = typeof opt === 'object' ? opt.value : opt
+          const lbl = typeof opt === 'object' ? (opt.label || opt.value) : opt
+          return <option key={val || idx} value={val}>{lbl}</option>
+        }))}
+      </select>
     </div>
   )
 }
 
 /* ── Alert ───────────────────────────────────────────────── */
 const ALERT_STYLES = {
-  success: { bg: '#f0fdf4', border: '#86efac', text: '#15803d' },
-  error:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
-  warning: { bg: '#fffbeb', border: '#fcd34d', text: '#d97706' },
-  info:    { bg: 'var(--s-blue-l)', border: '#93c5fd', text: 'var(--s-blue)' },
+  success: { bg: 'var(--s-success-l)', border: '#a7f3d0', text: 'var(--s-success)' },
+  error:   { bg: 'var(--s-error-l)',   border: '#fecaca', text: 'var(--s-error)' },
+  warning: { bg: 'var(--s-warning-l)', border: '#fde68a', text: 'var(--s-warning)' },
+  info:    { bg: 'var(--s-info-l)',    border: '#bae6fd', text: 'var(--s-info)' },
 }
 
 export function SAlert({ type = 'info', children, onClose }) {
@@ -243,27 +290,130 @@ export function SAlert({ type = 'info', children, onClose }) {
   )
 }
 
-/* ── Section Header ──────────────────────────────────────── */
-export function SSectionHeader({ title, subtitle, action, actionLabel }) {
+/* ── Section Header ────────────────────────────────────────
+   Consistent PAGE → SECTION hierarchy: 21px semibold title,
+   14px muted subtitle, right-aligned action link.            */
+export function SSectionHeader({ title, subtitle, action, actionLabel, icon }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-end',
-      justifyContent: 'space-between', marginBottom: 18, gap: 12,
+      justifyContent: 'space-between', marginBottom: 22, gap: 14,
     }}>
-      <div>
-        <h2 style={{
-          fontFamily: 'var(--s-font-display)', fontWeight: 800,
-          fontSize: 18, color: 'var(--s-text)', marginBottom: 2,
-        }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: 13, color: 'var(--s-text3)' }}>{subtitle}</p>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        {icon && <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--s-primary)', flexShrink: 0 }}>{icon}</span>}
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{
+            fontFamily: 'var(--s-font-display)', fontWeight: 700,
+            fontSize: 21, color: 'var(--s-text)', marginBottom: 2,
+            letterSpacing: '-0.01em', lineHeight: 1.3,
+          }}>{title}</h2>
+          {subtitle && <p style={{ fontSize: 14, color: 'var(--s-text3)', lineHeight: 1.55, margin: '3px 0 0' }}>{subtitle}</p>}
+        </div>
       </div>
       {action && (
-        <button onClick={action} style={{
-          fontSize: 13, fontWeight: 700, color: 'var(--s-primary)',
+        <button onClick={action} aria-label={actionLabel} style={{
+          fontSize: 14, fontWeight: 700, color: 'var(--s-primary)',
           background: 'none', border: 'none', cursor: 'pointer',
           fontFamily: 'var(--s-font-display)', whiteSpace: 'nowrap',
+          padding: '4px 0', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4,
         }}>{actionLabel} →</button>
       )}
+    </div>
+  )
+}
+
+/* ── Tabs / Switch (shared primitive) ──────────────────────
+   One component, three variants. Green is the active color;
+   blue is reserved for genuinely informational states.      */
+export function STabs({ tabs, active, onChange, variant = 'pill', size = 'md', fullWidth, style = {} }) {
+  const compact = size === 'sm'
+  const tabBase = {
+    fontFamily: 'var(--s-font-display)', fontWeight: 600,
+    fontSize: compact ? 13 : 14,
+    background: 'none', border: 'none', cursor: 'pointer',
+    transition: 'all 0.18s ease', whiteSpace: 'nowrap',
+    color: 'var(--s-text3)',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+  }
+  // NOTE: `extra` is spread AFTER color/fontWeight so variants may override
+  // the active color (e.g. pill active = #fff on green).
+  const shared = (t, on, extra = {}) => ({
+    ...tabBase,
+    color: on ? 'var(--s-primary)' : 'var(--s-text3)',
+    fontWeight: on ? 700 : 600,
+    ...extra,
+  })
+  const iconStyle = (t, on) => ({
+    display: 'inline-flex', flexShrink: 0,
+    color: on ? undefined : (t.iconColor || undefined),
+  })
+
+  if (variant === 'underline') {
+    return (
+      <div role="tablist" className="s-tabs" style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--s-border)', overflowX: 'auto', maxWidth: '100%', ...style }}>
+        {tabs.map(t => {
+          const on = active === t.id
+          return (
+            <button key={t.id} role="tab" aria-selected={on} className="s-tab"
+              onClick={() => onChange && onChange(t.id)}
+              style={shared(t, on, {
+                height: compact ? 40 : 46, padding: '0 16px',
+                borderBottom: `2px solid ${on ? 'var(--s-primary)' : 'transparent'}`,
+                marginBottom: -1,
+              })}
+            >
+              {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
+  if (variant === 'segmented') {
+    return (
+      <div role="tablist" className="s-tabs s-tabs-segmented" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 10, padding: 3, gap: 2, overflowX: 'auto', maxWidth: '100%', ...style }}>
+        {tabs.map(t => {
+          const on = active === t.id
+          return (
+            <button key={t.id} role="tab" aria-selected={on} className="s-tab"
+              onClick={() => onChange && onChange(t.id)}
+              style={shared(t, on, {
+                flex: fullWidth ? 1 : 'none',
+                height: compact ? 32 : 38, padding: '0 18px', borderRadius: 8,
+                background: on ? 'var(--s-surface)' : 'transparent',
+                boxShadow: on ? '0 1px 3px rgba(15,23,42,0.1)' : 'none',
+              })}
+            >
+              {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // pill (default)
+  return (
+    <div role="tablist" className="s-tabs s-tabs-pill" style={{ display: 'inline-flex', background: 'var(--s-surface2)', borderRadius: 'var(--s-radius-pill)', padding: 4, gap: 2, flexWrap: 'wrap', maxWidth: '100%', ...style }}>
+      {tabs.map(t => {
+        const on = active === t.id
+        return (
+          <button key={t.id} role="tab" aria-selected={on} className="s-tab"
+            onClick={() => onChange && onChange(t.id)}
+            style={shared(t, on, {
+              height: compact ? 32 : 42, padding: '0 20px', borderRadius: 'var(--s-radius-pill)',
+              background: on ? 'var(--s-primary)' : 'transparent',
+              color: on ? '#fff' : 'var(--s-text3)',
+            })}
+          >
+            {t.icon && <span style={iconStyle(t, on)}>{t.icon}</span>}
+            {t.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

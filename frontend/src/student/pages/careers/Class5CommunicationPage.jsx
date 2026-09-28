@@ -203,7 +203,7 @@ export default function Class5CommunicationPage() {
   if (loading) return <SLoader fullPage />;
 
   return (
-    <div className="student-root" style={{ background: '#fefefe', minHeight: '100vh', paddingBottom: 100 }}>
+    <div className="student-root" style={{ background: '#fbfdff', minHeight: '100vh', paddingBottom: 100 }}>
 
       {/* Level Up Modal */}
       <AnimatePresence>
@@ -236,7 +236,7 @@ export default function Class5CommunicationPage() {
       </AnimatePresence>
 
       {/* Back Button */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 0' }}>
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 0' }}>
         <motion.button
           whileHover={{ x: -4 }}
           onClick={() => navigate('/student/class5')}
@@ -252,7 +252,7 @@ export default function Class5CommunicationPage() {
 
       {/* Main Grid */}
       <section style={{
-        maxWidth: 1200, margin: '0 auto', padding: '20px 24px',
+        maxWidth: 1100, margin: '0 auto', padding: '20px 24px',
         display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 40,
       }} className="s-grid-1col">
 
@@ -273,9 +273,9 @@ export default function Class5CommunicationPage() {
 
           {/* Active Step Content */}
           <div style={{
-            minHeight: 400, background: '#fff', border: '1px solid #f1f5f9',
-            borderRadius: 32, padding: 40,
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
+            minHeight: 400, background: '#fff', border: '1px solid var(--s-border)',
+            borderRadius: 20, padding: 40,
+            boxShadow: 'var(--s-shadow)',
           }}>
 
             {/* Section 2: Learning Video */}
@@ -352,7 +352,7 @@ export default function Class5CommunicationPage() {
           {/* Section 9: Communication Tips */}
           <div style={{ marginTop: 60 }}>
             <h3 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24 }}>
-              💡 Daily Communication Tips
+              Daily Communication Tips
             </h3>
             <CommunicationTips tips={flipTips} />
           </div>

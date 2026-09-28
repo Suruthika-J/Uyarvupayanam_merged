@@ -179,7 +179,7 @@ export default function Class5PassportPage() {
               color: '#94a3b8'
             }}>
               <span style={{ fontSize: 44, fontWeight: 800, color: '#3b82f6' }}>{initials}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, marginTop: 10, textTransform: 'uppercase' }}>Student Photo</span>
+              <span style={{ fontSize: 12, fontWeight: 700, marginTop: 10, textTransform: 'uppercase' }}>Student Photo</span>
             </div>
 
             <div style={{ background: '#fef3c7', padding: '10px 16px', borderRadius: 12, border: '1px solid #fcd34d', color: '#b45309', fontWeight: 800, fontSize: 13, display: 'inline-block', marginBottom: 20 }}>
@@ -188,15 +188,15 @@ export default function Class5PassportPage() {
 
             <div style={{ textAlign: 'left', fontSize: 13, color: '#475569', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 10 }}>District</span>
+                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 12 }}>District</span>
                 <strong>{student.district || 'Tamil Nadu'}</strong>
               </div>
               <div>
-                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 10 }}>Class Grade</span>
+                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 12 }}>Class Grade</span>
                 <strong>Class {student.classLevel || '5'}</strong>
               </div>
               <div>
-                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 10 }}>Member Since</span>
+                <span style={{ display: 'block', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', fontSize: 12 }}>Member Since</span>
                 <strong>{regYear}</strong>
               </div>
             </div>

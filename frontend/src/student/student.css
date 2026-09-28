@@ -1,19 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
+  /* ── Surfaces ── */
   --s-bg:           #f8fafb;
   --s-bg2:          #edf1f4;
   --s-surface:      #ffffff;
   --s-surface2:     #f3f5f7;
   --s-border:       #dce1e6;
+
+  /* ── Text ── */
   --s-text:         #111827;
   --s-text2:        #374151;
   --s-text3:        #6b7280;
-  --s-primary:      #0f4c75;
-  --s-primary-l:    #e0eef6;
-  --s-primary-d:    #0a3555;
-  --s-accent:       #0ea5e9;
-  --s-accent-l:     #e0f2fe;
+
+  /* ── Brand: green primary, white surfaces, blue limited accent ── */
+  --s-primary:       #1a7a50;
+  --s-primary-d:     #145c3d;      /* hover / deep */
+  --s-primary-l:     #e6f4ec;      /* light tint */
+  --s-accent:        #0284c7;      /* informational / secondary accent only */
+  --s-accent-l:      #e0f2fe;
+
+  /* ── Semantic (not brand) ── */
+  --s-success:       #059669;   --s-success-l:  #d1fae5;
+  --s-warning:       #d97706;   --s-warning-l:  #fef3c7;
+  --s-error:         #dc2626;   --s-error-l:    #fee2e2;
+  --s-info:          #0284c7;   --s-info-l:     #e0f2fe;
+
+  /* ── Legacy category/status aliases (kept for existing call sites) ── */
   --s-gold:         #b45309;
   --s-gold-l:       #fef3c7;
   --s-blue:         #1e40af;
@@ -22,12 +35,33 @@
   --s-purple-l:     #ede9fe;
   --s-green:        #047857;
   --s-green-l:      #d1fae5;
+  /* Aliases referenced by legacy college/onboarding surfaces. */
+  --s-card-bg:      var(--s-surface);
+  --s-bg-alt:       var(--s-surface2);
+
+  /* ── Radius ── */
   --s-radius:       12px;
-  --s-radius-sm:    8px;
+  --s-radius-sm:    10px;
   --s-radius-lg:    20px;
-  --s-shadow:       0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --s-shadow-md:    0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.04);
-  --s-shadow-lg:    0 10px 25px rgba(0,0,0,0.06), 0 20px 48px rgba(0,0,0,0.04);
+  --s-radius-pill:  999px;
+
+  /* ── Shadow (neutral; brand tints applied per use) ── */
+  --s-shadow:       0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.05);
+  --s-shadow-md:    0 4px 6px rgba(15,23,42,0.05), 0 12px 16px rgba(15,23,42,0.05);
+  --s-shadow-lg:    0 10px 25px rgba(15,23,42,0.08), 0 20px 48px rgba(15,23,42,0.06);
+
+  /* ── Spacing scale ── */
+  --s-space-1: 4px;
+  --s-space-2: 8px;
+  --s-space-3: 12px;
+  --s-space-4: 16px;
+  --s-space-5: 24px;
+  --s-space-6: 32px;
+
+  /* ── Focus ── */
+  --s-focus: rgba(26, 122, 80, 0.28);
+
+  /* ── Typography ── */
   --s-font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --s-font-body:    'Inter', sans-serif;
   --s-font-scale:   1;
@@ -46,6 +80,50 @@
   -webkit-font-smoothing: antialiased;
   font-size: calc(16px * var(--s-font-scale));
   line-height: 1.6;
+}
+
+/* Headings inside the student tree use the display font (Plus Jakarta Sans),
+   overriding the app-wide Nunito rule so the whole student UI shares one
+   heading family (Phase 1C typography consolidation). */
+.student-root h1,
+.student-root h2,
+.student-root h3,
+.student-root h4,
+.student-root h5 {
+  font-family: var(--s-font-display);
+}
+
+/* Keyboard focus rings for the shared kit (buttons + tabs). */
+.s-kit-btn:focus-visible,
+.s-tab:focus-visible {
+  outline: 2px solid var(--s-primary);
+  outline-offset: 2px;
+}
+
+/* Tab hover affordances — inactive tabs of the shared kit gain a neutral
+   wash (pill/segmented) or brand text hint (underline). Inline styles carry
+   the resting colors, so hover needs !important to win. */
+.student-root .s-tab[aria-selected="false"]:hover {
+  color: var(--s-primary) !important;
+}
+.student-root .s-tabs-pill .s-tab[aria-selected="false"]:hover,
+.student-root .s-tabs-segmented .s-tab[aria-selected="false"]:hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Print: hide elements carrying .no-print (e.g. Class 5 passport chrome). */
+@media print {
+  .no-print { display: none !important; }
+}
+
+/* OTP digit boxes — visible slot + focus ring (border-color/box-shadow must
+   beat the inline styles set by OtpInput, hence !important). */
+.s-otp-input {
+  caret-color: var(--s-primary);
+}
+.s-otp-input:focus {
+  border-color: var(--s-primary) !important;
+  box-shadow: 0 0 0 4px var(--s-focus) !important;
 }
 
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
@@ -108,7 +186,7 @@
 .s-nav-logo-sub {
   font-family: var(--s-font-display);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--s-text3);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -418,7 +496,7 @@
 .s-btn-primary:hover {
   background: var(--s-primary-d);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(15,76,117,0.3);
+  box-shadow: 0 4px 14px rgba(26,122,80,0.3);
 }
 
 .s-btn-white {
@@ -757,7 +835,7 @@
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(15,76,117,0.15);
+  box-shadow: 0 4px 16px rgba(26,122,80,0.16);
   transition: all 0.2s;
   white-space: nowrap;
 }
@@ -767,7 +845,7 @@
   background: var(--s-primary);
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15,76,117,0.25);
+  box-shadow: 0 8px 24px rgba(26,122,80,0.26);
 }
 
 .s-a11y-panel {
@@ -817,6 +895,25 @@
 .s-d2 { animation-delay: 0.16s; }
 .s-d3 { animation-delay: 0.24s; }
 .s-d4 { animation-delay: 0.32s; }
+
+/* ── AI streaming / generating animations ───────────────────────────────── */
+@keyframes s-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.ai-dots span {
+  animation: s-blink 1.2s steps(2) infinite;
+}
+.ai-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-dots span:nth-child(3) { animation-delay: 0.4s; }
+.ai-shimmer-bar {
+  animation: ai-shimmer 1.4s ease-in-out infinite;
+  border-radius: 99px;
+}
+@keyframes ai-shimmer {
+  0%   { transform: translateX(-160%); }
+  100% { transform: translateX(320%); }
+}
 .s-d5 { animation-delay: 0.40s; }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
@@ -853,6 +950,19 @@
 
   .s-features-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Mobile collapse for grids carrying the legacy s-grid-* helper classes
+     (previously defined nowhere — 38 call sites app-wide, including the
+     Class 5 passport, dashboard, college and onboarding pages). !important
+     wins over the inline gridTemplateColumns set at desktop sizes. */
+  .s-grid-1col,
+  .s-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  .no-border-mobile {
+    border: none !important;
   }
 
   .s-section {
@@ -1000,7 +1110,7 @@
 }
 
 .insight-header-hover:hover {
-  background: linear-gradient(to right, #eff6ff, #fff) !important;
+  background: linear-gradient(to right, var(--s-primary-l), #fff) !important;
   transform: scale(1.002);
 }
 
@@ -1021,7 +1131,17 @@
 }
 
 .hover-lift:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  border-color: #e2e8f0 !important;
+  transform: translateY(-4px);
+  box-shadow: var(--s-shadow-lg) !important;
+  border-color: var(--s-border) !important;
+}
+
+/* ── Overlay safety ─────────────────────────────────────────────────────────
+   Decorative full-section layers must never intercept clicks, even if they
+   remain mounted for any reason. Real dialogs (AuthModal, .s-modal-overlay,
+   ExplorePage restricted-feature modal, etc.) are conditional in JSX and
+   unmount completely on close, so they are not affected by this rule. */
+.s-hero-bg,
+.s-hero-overlay {
+  pointer-events: none;
 }

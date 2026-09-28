@@ -3,9 +3,14 @@ const OnboardingQuestion = require("../models/OnboardingQuestion");
 const OnboardingResponse = require("../models/OnboardingResponse");
 const Recommendation = require("../models/Recommendation");
 const ClassContent = require("../models/ClassContent");
+const AssessmentResult = require("../models/AssessmentResult");
+const GeneratedAssessment = require("../models/GeneratedAssessment");
+const AssessmentSummary = require("../models/AssessmentSummary");
 const Exam = require("../models/Exam");
 const Scholarship = require("../models/Scholarship");
 const CareerPath = require("../models/CareerPath");
+const { getRecommendations } = require("../utils/recommendationEngine");
+const { upsertStudentProfile } = require("../utils/studentProfileSync");
 
 // GET /api/onboarding/questions/:grade
 exports.getQuestions = async (req, res) => {
@@ -22,115 +27,156 @@ exports.getQuestions = async (req, res) => {
     }
 };
 
+function addUnique(list, values) {
+    for (const v of values) {
+        if (v && !list.includes(v)) list.push(v);
+    }
+    return list;
+}
+
 // POST /api/onboarding/submit
+// Accepts either:
+//   - { userId, grade, answers, ... }            → legacy static-bank scoring
+//   - { studentId, sessionId, answers, ... }     → session scoring against
+//                                                 generated_assessments (AI set)
+// Answers are matched against the server's stored correctAnswer only — the
+// client is never trusted, and the LLM is never re-queried to grade anything.
+// Scoring feeds the standalone recommendation engine; the legacy Recommendation
+// / OnboardingResponse documents keep their shape so the existing result
+// screen keeps working; per-skill rows are persisted to assessment_results and
+// a full engine snapshot to assessment_summaries.
 exports.submitOnboarding = async (req, res) => {
     try {
         const { 
-            userId, grade, answers, 
+            userId, studentId, grade, answers, sessionId,
             marksPercentage, board, interests, preferredStream, 
             stream, preferredCourseCategory, careerInterest, entranceExamPlan,
             goalAfter10th, goalAfter12th 
         } = req.body;
 
+        const resolvedUserId = userId || studentId;
+        if (!resolvedUserId) {
+            return res.status(400).json({ success: false, message: "userId or studentId is required" });
+        }
+        if (!Array.isArray(answers) || answers.length === 0) {
+            return res.status(400).json({ success: false, message: "answers are required" });
+        }
+
         const processedAnswers = [];
         let correctAnswersCount = 0;
         const skillScores = {}; // { skillTag: { correct: 0, total: 0 } }
 
-        for (const ans of answers) {
-            const question = await OnboardingQuestion.findById(ans.questionId);
-            if (!question) continue;
-
-            const isCorrect = question.correctAnswer === ans.selectedAnswer;
-            if (isCorrect) correctAnswersCount++;
-
-            processedAnswers.push({
-                questionId: question._id,
-                selectedAnswer: ans.selectedAnswer,
-                isCorrect
-            });
-
-            // Skill Tag Tracking
-            if (!skillScores[question.skillTag]) {
-                skillScores[question.skillTag] = { correct: 0, total: 0 };
+        if (sessionId) {
+            // ── Session-based evaluation: source of truth is generated_assessments ──
+            const sessionRows = await GeneratedAssessment.find({ sessionId, studentId: resolvedUserId }).lean();
+            if (!sessionRows.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Assessment session not found. Please restart the assessment.",
+                });
             }
-            skillScores[question.skillTag].total += 1;
-            if (isCorrect) {
-                skillScores[question.skillTag].correct += 1;
+            const answerMap = new Map();
+            for (const row of sessionRows) {
+                answerMap.set(String(row._id), { skill: row.skill, correctAnswer: row.correctAnswer });
+            }
+
+            for (const ans of answers) {
+                const meta = answerMap.get(String(ans.questionId));
+                if (!meta) continue; // ids outside this session are ignored
+
+                const isCorrect = meta.correctAnswer === ans.selectedAnswer;
+                if (isCorrect) correctAnswersCount++;
+
+                processedAnswers.push({
+                    questionId: ans.questionId,
+                    selectedAnswer: ans.selectedAnswer,
+                    isCorrect
+                });
+
+                const tag = meta.skill || "General";
+                if (!skillScores[tag]) skillScores[tag] = { correct: 0, total: 0 };
+                skillScores[tag].total += 1;
+                if (isCorrect) skillScores[tag].correct += 1;
+            }
+        } else {
+            // ── Legacy static-bank evaluation ──
+            for (const ans of answers) {
+                const question = await OnboardingQuestion.findById(ans.questionId);
+                if (!question) continue;
+
+                const isCorrect = question.correctAnswer === ans.selectedAnswer;
+                if (isCorrect) correctAnswersCount++;
+
+                processedAnswers.push({
+                    questionId: question._id,
+                    selectedAnswer: ans.selectedAnswer,
+                    isCorrect
+                });
+
+                // Skill Tag Tracking
+                const tag = question.skillTag || "General";
+                if (!skillScores[tag]) skillScores[tag] = { correct: 0, total: 0 };
+                skillScores[tag].total += 1;
+                if (isCorrect) skillScores[tag].correct += 1;
             }
         }
 
-        const totalQuestions = answers.length || (grade.includes("12") ? 25 : 20);
+        const totalQuestions = processedAnswers.length || answers.length || (grade.includes("12") ? 25 : 20);
         const scorePercentage = Math.round((correctAnswersCount / totalQuestions) * 100);
 
-        // Performance Level
-        let performanceLevel = "";
-        if (scorePercentage >= 90) performanceLevel = "Excellent";
-        else if (scorePercentage >= 75) performanceLevel = "Very Good";
-        else if (scorePercentage >= 60) performanceLevel = "Good, needs improvement";
-        else if (scorePercentage >= 40) performanceLevel = "Needs focused practice";
-        else performanceLevel = "Needs strong guidance and foundation support";
+        // ── Recommendation engine (identical for both scoring paths) ──
+        const skillResults = Object.entries(skillScores).map(([skill, v]) => ({ skill, correct: v.correct, total: v.total }));
+        const engine = await getRecommendations({ studentGrade: grade, skillResults });
 
-        // Skill-wise Breakdown
-        const skillWiseScore = [];
-        const strongSkills = [];
-        const averageSkills = [];
-        const weakSkills = [];
+        // Legacy performanceLevel mapping from the engine's overall level
+        let performanceLevel = "Needs focused practice";
+        if (engine.overallLevel === "Strong") performanceLevel = "Excellent";
+        else if (engine.overallLevel === "Average") performanceLevel = "Good, needs improvement";
 
-        for (const skillTag in skillScores) {
-            const data = skillScores[skillTag];
-            const percentage = Math.round((data.correct / data.total) * 100);
-            let status = "";
+        // Skill-wise Breakdown (legacy shape, engine data)
+        const skillWiseScore = engine.skillBreakdown.map((b) => ({
+            skillTag: b.skill,
+            score: b.correct,
+            total: b.total,
+            percentage: b.percentage,
+            status: b.level === "Strong" ? "Strong Skill" : b.level === "Average" ? "Average Skill" : "Improvement Needed"
+        }));
 
-            if (percentage >= 80) {
-                status = "Strong Skill";
-                strongSkills.push(skillTag);
-            } else if (percentage >= 60) {
-                status = "Average Skill";
-                averageSkills.push(skillTag);
-            } else {
-                status = "Improvement Needed";
-                weakSkills.push(skillTag);
-            }
-
-            skillWiseScore.push({
-                skillTag,
-                score: data.correct,
-                total: data.total,
-                percentage,
-                status
-            });
-        }
+        const strongSkills = engine.strongSkills;
+        const averageSkills = engine.skillBreakdown.filter((b) => b.level === "Average").map((b) => b.skill);
+        const weakSkills = engine.needsImprovement;
 
         // ══════════════════════════════════════════════════════════════════════
         // RECOMMENDATION LOGIC
         // ══════════════════════════════════════════════════════════════════════
-        const recommendedSkills = [];
-        const suggestedActivities = [];
+        const recommendedSkills = [...engine.recommendedSkillsToFocus];
+        const suggestedActivities = [...engine.suggestedActivities];
         const recommendedStreams = [];
         const recommendedCourses = [];
         const recommendedCareerPaths = [];
         const recommendedColleges = [];
-        const recommendedExams = [];
+        const recommendedExams = [...engine.recommendedExams];
+        const recommendedScholarships = [];
         let recommendedCutoffDetails = "";
-        let learningGuidelines = `You are doing well, but you can improve in some areas. `;
+        const learningGuidelines = engine.quickGuideline;
         let improvementMessage = "";
 
         // Skill-based logic (Generalized for all tags)
         if (weakSkills.some(s => s.includes("Math"))) {
-            recommendedSkills.push("Quantitative Aptitude", "Algebra Basics");
-            suggestedActivities.push("Practice math problems daily.", "Take aptitude mock tests.");
+            addUnique(recommendedSkills, ["Quantitative Aptitude", "Algebra Basics"]);
+            addUnique(suggestedActivities, ["Practice math problems daily.", "Take aptitude mock tests."]);
         }
         if (weakSkills.some(s => s.includes("English") || s.includes("Communication"))) {
-            recommendedSkills.push("Business Communication", "Spoken English");
-            suggestedActivities.push("Read one article daily.", "Practice mirror speaking.");
+            addUnique(recommendedSkills, ["Business Communication", "Spoken English"]);
+            addUnique(suggestedActivities, ["Read one article daily.", "Practice mirror speaking."]);
         }
         if (weakSkills.some(s => s.includes("Logical") || s.includes("Reasoning"))) {
-            recommendedSkills.push("Analytical Reasoning", "Data Interpretation");
-            suggestedActivities.push("Solve logical puzzles weekly.", "Analyze charts and graphs.");
+            addUnique(recommendedSkills, ["Analytical Reasoning", "Data Interpretation"]);
+            addUnique(suggestedActivities, ["Solve logical puzzles weekly.", "Analyze charts and graphs."]);
         }
         if (weakSkills.some(s => s.includes("Digital") || s.includes("Employability"))) {
-            recommendedSkills.push("Digital Literacy", "MS Office Basics");
-            suggestedActivities.push("Learn Google Workspace tools.", "Practice email writing.");
+            addUnique(recommendedSkills, ["Digital Literacy", "MS Office Basics"]);
+            addUnique(suggestedActivities, ["Learn Google Workspace tools.", "Practice email writing."]);
         }
 
         // ══════════════════════════════════════════════════════════════════════
@@ -140,22 +186,22 @@ exports.submitOnboarding = async (req, res) => {
             // Stream-based
             if (stream === "Science Maths") {
                 recommendedCourses.push("B.E/B.Tech", "B.Sc Computer Science", "Architecture");
-                recommendedExams.push("TNEA", "JEE Mains", "NATA");
+                addUnique(recommendedExams, ["TNEA", "JEE Mains", "NATA"]);
                 recommendedCutoffDetails = "Aim for a cutoff above 185 for top TNEA colleges.";
             } else if (stream === "Science Biology") {
                 recommendedCourses.push("MBBS/BDS", "B.Pharm", "B.Sc Agriculture");
-                recommendedExams.push("NEET", "TNAU");
+                addUnique(recommendedExams, ["NEET", "TNAU"]);
             } else if (stream === "Commerce") {
                 recommendedCourses.push("B.Com", "BBA", "CA/CMA Foundation");
-                recommendedExams.push("CUET");
+                addUnique(recommendedExams, ["CUET"]);
             } else if (stream === "Arts / Humanities") {
                 recommendedCourses.push("BA English/History", "Journalism", "Law");
-                recommendedExams.push("CLAT", "CUET");
+                addUnique(recommendedExams, ["CLAT", "CUET"]);
             }
 
             // Interest-based
             if (careerInterest?.includes("Software") || careerInterest?.includes("Computer")) {
-                recommendedSkills.push("Coding (Python/C++)", "Web Development");
+                addUnique(recommendedSkills, ["Coding (Python/C++)", "Web Development"]);
                 recommendedCourses.push("Full Stack Development", "Data Science Cert");
             } else if (careerInterest?.includes("Doctor")) {
                 recommendedCareerPaths.push("Specialist Doctor", "Surgeon", "Medical Researcher");
@@ -253,12 +299,6 @@ exports.submitOnboarding = async (req, res) => {
             }
         }
 
-        if (weakSkills.length > 0) {
-            learningGuidelines += `Focus on ${weakSkills.join(", ")} by spending extra 60 minutes daily on these areas.`;
-        } else {
-            learningGuidelines = "Excellent work! You have strong foundations. Focus on competitive exam strategies now.";
-        }
-
         // ══════════════════════════════════════════════════════════════════════
         // FETCH MATCHING CONTENT
         // ══════════════════════════════════════════════════════════════════════
@@ -266,7 +306,7 @@ exports.submitOnboarding = async (req, res) => {
         
         const [skillsContent, examsContent, scholarshipsContent, careersContent, habitsContent, funContent] = await Promise.all([
             ClassContent.find({ targetClass: cleanGrade, status: "published", sectionType: "Skills" }).limit(4),
-            Exam.find({ targetClass: { $in: [cleanGrade, "All"] } }).limit(3),
+            Exam.find({ applicableClass: { $in: [cleanGrade, "All"] } }).limit(3),
             Scholarship.find({ targetClass: { $in: [cleanGrade, "All"] } }).limit(3),
             CareerPath.find({ level: { $in: [`${cleanGrade}th`, `Class ${cleanGrade}`] } }).limit(3),
             ClassContent.find({ targetClass: cleanGrade, status: "published", sectionType: "Habits" }).limit(2),
@@ -274,30 +314,30 @@ exports.submitOnboarding = async (req, res) => {
         ]);
 
         if (cleanGrade === "10") {
-            recommendedExams.push("NTSE", "Diploma Entrance");
+            addUnique(recommendedExams, ["NTSE", "Diploma Entrance"]);
         } else if (cleanGrade === "12" && recommendedExams.length === 0) {
-            recommendedExams.push("CUET", "TANCET (Later)");
+            addUnique(recommendedExams, ["CUET", "TANCET (Later)"]);
         }
 
         // Save Response
         const response = new OnboardingResponse({
-            userId, grade, answers: processedAnswers, totalQuestions,
+            userId: resolvedUserId, grade, answers: processedAnswers, totalQuestions,
             correctAnswers: correctAnswersCount, wrongAnswers: totalQuestions - correctAnswersCount,
             scorePercentage, performanceLevel, skillWiseScore,
             strongSkills, averageSkills, weakSkills
         });
         await response.save();
 
-        // Save Recommendation
+        // Save Recommendation (legacy shape — engine-powered skill data)
         const recommendation = new Recommendation({
-            userId, grade, scorePercentage, performanceLevel,
+            userId: resolvedUserId, grade, scorePercentage, performanceLevel,
             marksPercentage, board, stream, interests, preferredStream, 
             preferredCourseCategory, careerInterest, entranceExamPlan,
             goalAfter10th, goalAfter12th,
             strongSkills, averageSkills, weakSkills,
             recommendedSkills, recommendedStreams, recommendedCourses, 
             recommendedExams, 
-            recommendedScholarships: scholarshipsContent.map(s => s.scholarshipName || s.title),
+            recommendedScholarships: [...new Set([...scholarshipsContent.map(s => s.scholarshipName || s.title), ...recommendedScholarships])],
             recommendedColleges, recommendedCutoffDetails, recommendedCareerPaths,
             suggestedActivities, learningGuidelines, improvementMessage,
             fetchedClass5Content: {
@@ -311,7 +351,59 @@ exports.submitOnboarding = async (req, res) => {
         });
         await recommendation.save();
 
-        await User.findByIdAndUpdate(userId, { onboardingCompleted: true, recommendationGenerated: true });
+        // Phase 3 — durable StudentProfile home for the onboarding fields this
+        // legacy payload carries (its `interests[]` list stays Recommendation-
+        // only; it is not a StudentProfile field). Best-effort only: a sync
+        // failure must not change the (already succeeding) submission behavior.
+        try {
+            await upsertStudentProfile({
+                userId: resolvedUserId,
+                classLevel: grade,
+                fields: { marksPercentage, board, stream, preferredStream, preferredCourseCategory, careerInterest, entranceExamPlan, goalAfter10th, goalAfter12th },
+            });
+        } catch (syncErr) {
+            console.error("StudentProfile sync (legacy submit) failed:", syncErr.message);
+        }
+
+        await User.findByIdAndUpdate(resolvedUserId, { onboardingCompleted: true, recommendationGenerated: true });
+
+        // Persist one assessment_results row per skill so admins can review the
+        // student's results (student_id, skill, score, total_questions, submitted_at).
+        const resultUser = await User.findById(resolvedUserId).select("name email").lean();
+        const submittedAt = new Date(); // one timestamp per attempt so admin rows group into a single attempt
+        await AssessmentResult.deleteMany({ studentId: resolvedUserId });
+        if (skillWiseScore.length) {
+            await AssessmentResult.insertMany(
+                skillWiseScore.map((s) => ({
+                    studentId: resolvedUserId,
+                    studentName: resultUser?.name || "",
+                    studentEmail: resultUser?.email || "",
+                    grade,
+                    skill: s.skillTag,
+                    score: s.score,
+                    totalQuestions: s.total,
+                    percentage: s.percentage,
+                    submittedAt,
+                }))
+            );
+        }
+
+        // Persist the full engine snapshot (per spec: save the result against the student)
+        await AssessmentSummary.create({
+            studentId: resolvedUserId,
+            sessionId: sessionId || "",
+            grade,
+            overallScore: engine.overallScore,
+            overallLevel: engine.overallLevel,
+            skillBreakdown: engine.skillBreakdown,
+            strongSkills: engine.strongSkills,
+            needsImprovement: engine.needsImprovement,
+            recommendedSkillsToFocus: engine.recommendedSkillsToFocus,
+            suggestedActivities: engine.suggestedActivities,
+            recommendedExams: engine.recommendedExams,
+            quickGuideline: engine.quickGuideline,
+            submittedAt,
+        });
 
         res.json({ success: true, result: recommendation, response });
     } catch (error) {
@@ -323,7 +415,8 @@ exports.submitOnboarding = async (req, res) => {
 // GET /api/recommendations/user/:userId
 exports.getRecommendations = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         const recommendation = await Recommendation.findOne({ userId })
             .sort({ createdAt: -1 })
             .populate("fetchedClass5Content.skills")
@@ -347,7 +440,8 @@ exports.getRecommendations = async (req, res) => {
 // POST /api/onboarding/retake/:userId
 exports.retakeAssessment = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // Owner is guaranteed by verifyStudent + verifyOwnership middleware.
+        const userId = req.student._id;
         
         // Reset user onboarding status
         await User.findByIdAndUpdate(userId, { 
@@ -358,6 +452,9 @@ exports.retakeAssessment = async (req, res) => {
         // Optionally delete previous data to keep it clean
         await OnboardingResponse.deleteMany({ userId });
         await Recommendation.deleteMany({ userId });
+        await AssessmentResult.deleteMany({ studentId: userId });
+        await GeneratedAssessment.deleteMany({ studentId: userId });
+        await AssessmentSummary.deleteMany({ studentId: userId });
 
         res.json({ success: true, message: "Assessment reset successfully. You can now retake the onboarding." });
     } catch (error) {

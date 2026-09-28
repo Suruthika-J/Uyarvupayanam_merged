@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 const assessmentController = require("../controllers/assessmentController");
 const verifyAdmin = require("../middleware/verifyAdmin");
+const verifyStudent = require("../middleware/verifyStudent");
+const verifyOwnership = require("../middleware/verifyOwnership");
 
 // Student Routes
 router.get("/questions/:classLevel", assessmentController.getQuestionsByLevel);
 router.post("/submit", assessmentController.submitAssessment);
-router.get("/result/:userId", assessmentController.getLatestResult);
+router.get("/result/:userId", verifyStudent, verifyOwnership("userId"), assessmentController.getLatestResult);
 
 // Admin Routes
 router.post("/admin/questions", verifyAdmin, assessmentController.createQuestion);

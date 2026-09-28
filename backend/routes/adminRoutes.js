@@ -5,6 +5,7 @@ const {
   loginAdmin,
   dashboardStats,
   getUsers,
+  getUserDetails,
   blockUser,
   unblockUser,
   resetPassword,
@@ -36,6 +37,7 @@ router.get("/reports/registrations", verifyAdmin, getRegistrationReport);
 router.get("/reports/popular-courses", verifyAdmin, getPopularCoursesReport);
 router.get("/reports/scholarships", verifyAdmin, getScholarshipsReport);
 router.get("/users", verifyAdmin, getUsers);
+router.get("/users/:id", verifyAdmin, getUserDetails);
 router.patch("/users/:id/block", verifyAdmin, blockUser);
 router.patch("/users/:id/unblock", verifyAdmin, unblockUser);
 router.put("/users/:id/reset-password", verifyAdmin, resetPassword);

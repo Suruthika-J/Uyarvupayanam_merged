@@ -42,7 +42,8 @@ export default function CareerDetailsPage() {
         }
 
         // 2. Fetch scholarships and filter manually
-        const scholarRes = await axios.get("http://localhost:5000/api/scholarships");
+        const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+        const scholarRes = await axios.get(`${API_BASE}/scholarships`);
         const levelNum = level.replace(/\D/g, ''); // extracts '5', '8', '10', '12'
         const related = scholarRes.data.filter(s => {
           if (!s.eligibility) return false;

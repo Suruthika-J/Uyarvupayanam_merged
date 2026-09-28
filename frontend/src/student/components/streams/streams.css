@@ -1,0 +1,504 @@
+/* ── Streams After 10th — professional flip-card section (Purple & White) ── */
+
+.streams-root {
+  /* Brand purple & white design tokens — matches the Journey Explorer School track (#7C3AED) */
+  --brand-purple: #7C3AED;
+  --brand-purple-dark: #6D28D9;
+  --brand-purple-light: #F3E8FF;
+  --brand-white: #FFFFFF;
+  --text-dark: #1F2937;
+  --text-muted: #6B7280;
+  --border-light: #E5E7EB;
+  width: 100%;
+}
+
+/* Tabs (All / Science / Commerce / Arts / Diploma / Polytechnic) */
+.streams-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.streams-tab {
+  border: 1.5px solid var(--border-light);
+  background: var(--brand-white);
+  color: var(--text-dark);
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 9px 20px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.streams-tab:hover {
+  background: var(--brand-purple-light);
+  border-color: var(--brand-purple-dark);
+  color: var(--brand-purple-dark);
+}
+.streams-tab.is-active {
+  background: var(--brand-purple);
+  border-color: var(--brand-purple);
+  color: var(--brand-white);
+  box-shadow: 0 8px 16px -6px rgba(124, 58, 237, 0.35);
+}
+.streams-tab.is-active:hover {
+  background: var(--brand-purple-dark);
+  border-color: var(--brand-purple-dark);
+  color: var(--brand-white);
+}
+.streams-tab-count {
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(148, 163, 184, 0.25);
+  color: inherit;
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+.streams-tab.is-active .streams-tab-count {
+  background: var(--brand-white);
+  color: var(--brand-purple-dark);
+}
+
+/* Diploma sub-category chips */
+.streams-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-light);
+}
+.streams-chip {
+  border: 1px solid var(--border-light);
+  background: var(--brand-white);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.streams-chip:hover {
+  border-color: var(--brand-purple-dark);
+  color: var(--brand-purple-dark);
+  background: var(--brand-purple-light);
+}
+.streams-chip.is-active {
+  background: var(--brand-purple);
+  border-color: var(--brand-purple);
+  color: var(--brand-white);
+}
+
+.streams-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.streams-summary {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Grid */
+.streams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+/* ── Flip card ── */
+.stream-flip-card {
+  perspective: 1400px;
+  height: 420px;
+  cursor: pointer;
+}
+.stream-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.65s cubic-bezier(0.4, 0.05, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.stream-flip-card.flipped .stream-flip-inner {
+  transform: rotateY(180deg);
+}
+
+@media (hover: hover) {
+  .stream-flip-card:hover .stream-flip-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+.stream-flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--brand-white);
+  border: 1px solid #e8ecf1;
+  box-shadow: 0 14px 30px -14px rgba(17, 24, 39, 0.18);
+  display: flex;
+  flex-direction: column;
+}
+
+.stream-flip-front {
+  transform: rotateY(0deg);
+}
+.stream-flip-back {
+  transform: rotateY(180deg);
+  background: #FAF5FF;
+  border: 1px solid #E9D5FF;
+}
+
+/* Front face — purple banner that shows the group's real subjects (no abstract art) */
+.stream-front-media {
+  position: relative;
+  height: 168px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.stream-banner {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #7C3AED 0%, #a855f7 55%, #c4b5fd 135%);
+}
+.stream-code-badge {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--brand-purple-dark);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(17, 24, 39, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stream-code-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-purple);
+  flex-shrink: 0;
+}
+.stream-group-name {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  color: var(--brand-white);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(17, 24, 39, 0.45);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.stream-front-body {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+.stream-subjects-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stream-subject-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brand-purple-light);
+  color: var(--brand-purple-dark);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 7px;
+  padding: 5px 10px;
+}
+.stream-best-for {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.stream-front-caption {
+  margin-top: auto;
+  border-top: 1px dashed var(--border-light);
+  padding: 11px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+.stream-cap-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Back face */
+.stream-back-pad {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-dark);
+  overflow-y: auto;
+  flex: 1;
+}
+.stream-back-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stream-back-sub {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--brand-purple-dark);
+}
+.stream-back-chip {
+  display: inline-block;
+  background: var(--brand-purple-light);
+  border: 1px solid #E9D5FF;
+  color: var(--brand-purple-dark);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  padding: 5px 10px;
+}
+.stream-back-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.stream-back-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.stream-back-list li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--brand-purple);
+}
+.stream-back-flip {
+  margin-top: auto;
+  background: var(--brand-white);
+  border: 1.5px solid var(--brand-purple);
+  color: var(--brand-purple-dark);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 10px;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.stream-back-flip:hover {
+  background: var(--brand-purple);
+  color: var(--brand-white);
+}
+
+/* Skeleton */
+.streams-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+.stream-skeleton-card {
+  height: 420px;
+  border-radius: 14px;
+  background: linear-gradient(100deg, #f1f5f9 40%, #f8fafc 50%, #f1f5f9 60%);
+  background-size: 200% 100%;
+  animation: streams-shimmer 1.3s infinite linear;
+  border: 1px solid #eef2f7;
+}
+@keyframes streams-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+.streams-empty {
+  grid-column: 1 / -1;
+  background: var(--brand-white);
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 70px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* Show more */
+.streams-show-more {
+  margin: 26px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand-white);
+  border: 1.5px solid var(--brand-purple);
+  color: var(--brand-purple-dark);
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 11px 26px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.streams-show-more:hover {
+  background: var(--brand-purple);
+  color: var(--brand-white);
+}
+
+/* Guided entry — broad career paths first (step 1 of the funnel) */
+.streams-path-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+}
+.streams-path-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: var(--brand-white);
+  border: 1px solid #e8ecf1;
+  border-radius: 18px;
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 14px 30px -18px rgba(17, 24, 39, 0.2);
+  font-family: inherit;
+  color: inherit;
+}
+.streams-path-card:hover,
+.streams-path-card:focus-visible {
+  border-color: var(--brand-purple);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px -10px var(--brand-purple);
+  outline: none;
+}
+.streams-path-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-purple-light);
+  color: var(--brand-purple-dark);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.streams-path-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+.streams-path-blurb {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  flex: 1;
+}
+.streams-path-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--brand-purple);
+}
+
+/* Back to broad paths (step 1 of the funnel) */
+.streams-back-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--brand-white);
+  border: 1.5px solid var(--border-light);
+  color: var(--brand-purple-dark);
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  margin: 0 0 18px;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+.streams-back-path:hover,
+.streams-back-path:focus-visible {
+  border-color: var(--brand-purple);
+  background: var(--brand-purple-light);
+  outline: none;
+}
+
+@media (max-width: 640px) {
+  .stream-flip-card {
+    height: 440px;
+  }
+}
+
+/* Touch devices: tap to flip */
+@media (hover: none) {
+  .stream-flip-card:hover .stream-flip-inner {
+    transform: none;
+  }
+  .stream-flip-card.flipped .stream-flip-inner {
+    transform: rotateY(180deg);
+  }
+}
