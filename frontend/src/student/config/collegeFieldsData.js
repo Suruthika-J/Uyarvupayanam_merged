@@ -16,53 +16,100 @@ export const COLLEGE_FIELDS_DATA = [
     ],
     domains: [
       {
-        name: "Computer Science & Information Technology",
+        name: "CSE (Computer Science & Engineering)",
         specs: [
-          "Software Engineering",
+          "Software Engineering & Architecture",
           "Artificial Intelligence & Machine Learning",
-          "Data Science & Big Analytics",
+          "Data Science & Big Data Analytics",
           "Cyber Security & Ethical Hacking",
           "Cloud Computing & DevOps",
-          "Full Stack Web & Mobile Development"
+          "Full Stack Web & Mobile Development",
+          "Algorithms & System Programming"
         ]
       },
       {
-        name: "Electronics & Electrical Engineering",
+        name: "IT (Information Technology)",
+        specs: [
+          "Enterprise Software & IT Infrastructure",
+          "Cloud Systems & Cloud Native Ops",
+          "Database Administration & Big Data",
+          "Network Security & Cyber Defense",
+          "Web Applications & Microservices",
+          "Information Systems Management"
+        ]
+      },
+      {
+        name: "AI & DS (Artificial Intelligence & Data Science)",
+        specs: [
+          "Machine Learning & Deep Learning",
+          "Big Data Analytics & Data Engineering",
+          "Natural Language Processing (NLP)",
+          "Computer Vision & Image Processing",
+          "Generative AI & LLM Engineering",
+          "Predictive Modeling & Business Intelligence"
+        ]
+      },
+      {
+        name: "ECE (Electronics & Communication Engineering)",
         specs: [
           "VLSI & Semiconductor Chip Design",
-          "Embedded Systems & IoT",
-          "Robotics & Automation",
-          "Power Systems & Renewable Energy",
-          "Telecommunications & 5G"
+          "Embedded Systems & Microcontrollers",
+          "Wireless Communication & 5G/6G Networks",
+          "Signal Processing & Image Analysis",
+          "IoT & Smart Sensor Systems",
+          "RF & Microwave Engineering"
         ]
       },
       {
-        name: "Mechanical & Automotive Engineering",
+        name: "EEE (Electrical & Electronics Engineering)",
+        specs: [
+          "Power Systems & High Voltage Engineering",
+          "Renewable Energy & Smart Grid Systems",
+          "Electric Vehicle (EV) Technology & Drives",
+          "Control Systems & Industrial Automation",
+          "Power Electronics & Energy Management"
+        ]
+      },
+      {
+        name: "Mechanical Engineering",
         specs: [
           "CAD / CAM / CAE Product Design",
-          "Robotics & Mechatronics",
-          "Automotive & Electric Vehicle Tech",
+          "Robotics, Mechatronics & Automation",
           "Thermal & Fluid Engineering",
-          "Manufacturing & Industrial Automation"
+          "Automotive & EV Systems",
+          "Manufacturing Engineering & Metallurgy",
+          "Industrial Engineering & Supply Chain"
         ]
       },
       {
-        name: "Civil & Architecture",
+        name: "Civil Engineering",
         specs: [
           "Structural Engineering",
           "Architectural Design & Urban Planning",
           "Environmental & Water Resources",
           "Transportation & Infrastructure",
-          "Geotechnical Engineering"
+          "Geotechnical Engineering",
+          "Construction Technology & Management"
         ]
       },
       {
-        name: "Chemical & Materials Science",
+        name: "Chemical & Biotechnology Engineering",
         specs: [
           "Petrochemical & Polymer Engineering",
           "Process Automation & Safety",
+          "Bioprocess & Genetic Engineering",
           "Nanotechnology & Advanced Materials",
-          "Bioprocess Engineering"
+          "Pharmaceutical Engineering"
+        ]
+      },
+      {
+        name: "Mechatronics & Robotics Engineering",
+        specs: [
+          "Industrial Robotics & Automated Systems",
+          "Autonomous Systems & Drones",
+          "Control & Instrumentation Engineering",
+          "Human-Robot Interaction & AI Robotics",
+          "Embedded Robotics & Sensors"
         ]
       }
     ],

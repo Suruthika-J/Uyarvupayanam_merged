@@ -98,8 +98,17 @@ const getSpecializationsByDomain = async (req, res) => {
 
     const record = await AcademicTaxonomy.findOne({ fieldId: fId, status: "active" });
     if (record && record.domains) {
+      const targetNorm = domainName ? domainName.trim().toLowerCase() : "";
+      const targetSlug = targetNorm.replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+
       const dom = record.domains.find(
-        d => (domainId && d.id === domainId) || (domainName && d.name.toLowerCase() === domainName.toLowerCase())
+        d => (domainId && d.id === domainId) ||
+             (targetNorm && (
+               d.name.toLowerCase() === targetNorm ||
+               d.id === targetSlug ||
+               d.name.toLowerCase().includes(targetNorm) ||
+               targetNorm.includes(d.name.toLowerCase())
+             ))
       );
       if (dom && dom.specializations) {
         return res.status(200).json({
@@ -112,7 +121,13 @@ const getSpecializationsByDomain = async (req, res) => {
 
     // Fallback search
     const fb = COLLEGE_FIELDS_DATA.find(f => f.id === fId) || COLLEGE_FIELDS_DATA[0];
-    const fbDom = fb.domains.find(d => domainName && d.name.toLowerCase() === domainName.toLowerCase()) || fb.domains[0];
+    const fbDom = fb.domains.find(
+      d => domainName && (
+        d.name.toLowerCase() === domainName.toLowerCase() ||
+        d.name.toLowerCase().includes(domainName.toLowerCase()) ||
+        domainName.toLowerCase().includes(d.name.toLowerCase())
+      )
+    ) || fb.domains[0];
 
     res.status(200).json({
       success: true,

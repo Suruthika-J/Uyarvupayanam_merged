@@ -302,6 +302,194 @@ export default function CollegeOnboardingPage() {
   const [loadingGrok, setLoadingGrok] = useState(false)
   const [grokSource, setGrokSource] = useState('')
 
+  // AHP + Fuzzy Logic 15 Default Questions State
+  const [ahpQuestions, setAhpQuestions] = useState([])
+  const [ahpAnswers, setAhpAnswers] = useState({})
+  const [loadingAhp, setLoadingAhp] = useState(false)
+  const [evaluatingAhp, setEvaluatingAhp] = useState(false)
+  const [ahpResult, setAhpResult] = useState(null)
+
+  // Step 5 Flip-Flap Cards & AHP Priorities State
+  const [flippedCards, setFlippedCards] = useState({})
+  const [ahpPriorities, setAhpPriorities] = useState({})
+
+  // Step 5 Pairwise AHP Career Discovery State (Deterministically Driven by Step 4)
+  const [ahpCandidates, setAhpCandidates] = useState([])
+  const [ahpPairs, setAhpPairs] = useState([])
+  const [ahpPairIndex, setAhpPairIndex] = useState(0)
+  const [ahpComparisonsMap, setAhpComparisonsMap] = useState({})
+  const [selectedDomainInPair, setSelectedDomainInPair] = useState(null)
+  const [selectedIntensity, setSelectedIntensity] = useState(3)
+  const [ahpDiscoveryResult, setAhpDiscoveryResult] = useState(null)
+  const [loadingAhpDiscovery, setLoadingAhpDiscovery] = useState(false)
+  const [calculatingAhpDiscovery, setCalculatingAhpDiscovery] = useState(false)
+
+  // Load candidate domains for Step 5 Pairwise AHP Discovery when step === 5
+  useEffect(() => {
+    if (step === 5) {
+      loadAhpDiscoveryData()
+    }
+  }, [step, profile.domain, profile.specialization])
+
+  const loadAhpDiscoveryData = async () => {
+    setLoadingAhpDiscovery(true)
+    try {
+      // Check if saved AHP result exists on backend first (404 expected for new students)
+      try {
+        const savedRes = await axiosInstance.get('/onboarding/ahp/result')
+        if (savedRes.data?.success && savedRes.data.ahpProfile) {
+          const saved = savedRes.data.ahpProfile
+          const savedBranch = saved.branchId || ''
+          const savedSpecs = Array.isArray(saved.selectedSpecializations) ? saved.selectedSpecializations.join(', ') : ''
+          const currentSpecs = profile.specialization || ''
+
+          // Only use saved result if branch & selected specializations match current profile
+          if (savedBranch === profile.domain && savedSpecs === currentSpecs) {
+            setAhpCandidates(saved.candidateDomains || [])
+            setAhpDiscoveryResult(saved)
+            setLoadingAhpDiscovery(false)
+            return
+          }
+        }
+      } catch (err) {
+        // Ignored: 404 is normal if the student has not completed Step 5 yet
+      }
+
+      // Reset old result if selections changed
+      setAhpDiscoveryResult(null)
+
+      // Otherwise fetch candidate domains based on Step 4 branch & specializations
+      const branchId = profile.domain || 'cse'
+      const specializations = profile.specialization || ''
+      const res = await axiosInstance.get(`/onboarding/ahp/domains?branchId=${encodeURIComponent(branchId)}&specializations=${encodeURIComponent(specializations)}`)
+      
+      if (res.data?.success && Array.isArray(res.data.candidateDomains)) {
+        const candidates = res.data.candidateDomains
+        setAhpCandidates(candidates)
+
+        // Generate all unique pairwise combinations: N * (N - 1) / 2
+        const pairs = []
+        for (let i = 0; i < candidates.length; i++) {
+          for (let j = i + 1; j < candidates.length; j++) {
+            pairs.push({
+              pairKey: `${candidates[i].id}_vs_${candidates[j].id}`,
+              domainA: candidates[i],
+              domainB: candidates[j]
+            })
+          }
+        }
+        setAhpPairs(pairs)
+
+        // Restore saved comparisons from localStorage if available and matching specializations
+        const localSaved = localStorage.getItem('ahp_pairwise_progress')
+        if (localSaved) {
+          try {
+            const parsed = JSON.parse(localSaved)
+            if (parsed.comparisonsMap && parsed.branchId === branchId && parsed.specializations === specializations) {
+              setAhpComparisonsMap(parsed.comparisonsMap)
+              setAhpPairIndex(Math.min(parsed.pairIndex || 0, pairs.length - 1))
+            } else {
+              localStorage.removeItem('ahp_pairwise_progress')
+              setAhpComparisonsMap({})
+              setAhpPairIndex(0)
+            }
+          } catch (e) {
+            localStorage.removeItem('ahp_pairwise_progress')
+            setAhpComparisonsMap({})
+            setAhpPairIndex(0)
+          }
+        } else {
+          setAhpComparisonsMap({})
+          setAhpPairIndex(0)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load AHP discovery candidates', err)
+    } finally {
+      setLoadingAhpDiscovery(false)
+    }
+  }
+
+  const handleSelectPairwiseDomain = (selectedDomain) => {
+    setSelectedDomainInPair(selectedDomain)
+    setSelectedIntensity(3) // Default to Slight Preference (3)
+  }
+
+  const handleConfirmPairwiseSelection = async () => {
+    if (!selectedDomainInPair) return
+
+    const currentPair = ahpPairs[ahpPairIndex]
+    if (!currentPair) return
+
+    const updatedMap = {
+      ...ahpComparisonsMap,
+      [currentPair.pairKey]: {
+        domainA: currentPair.domainA.id,
+        domainB: currentPair.domainB.id,
+        selectedDomain: selectedDomainInPair.id,
+        intensity: Number(selectedIntensity) || 3
+      }
+    }
+
+    setAhpComparisonsMap(updatedMap)
+    setSelectedDomainInPair(null)
+
+    // Save progress locally
+    localStorage.setItem('ahp_pairwise_progress', JSON.stringify({
+      branchId: profile.domain || 'cse',
+      specializations: profile.specialization || '',
+      comparisonsMap: updatedMap,
+      pairIndex: ahpPairIndex + 1
+    }))
+
+    // If more pairs remain, move to next pair
+    if (ahpPairIndex + 1 < ahpPairs.length) {
+      setAhpPairIndex(prev => prev + 1)
+    } else {
+      // All comparisons completed! Compute AHP matrix & save to backend
+      await finishAhpDiscovery(updatedMap)
+    }
+  }
+
+  const finishAhpDiscovery = async (finalMap = ahpComparisonsMap) => {
+    setCalculatingAhpDiscovery(true)
+    setError('')
+    try {
+      const comparisonsList = Object.values(finalMap)
+      const payload = {
+        branchId: profile.domain || 'cse',
+        selectedSpecializations: profile.specialization ? profile.specialization.split(',').map(s => s.trim()) : [],
+        candidateDomains: ahpCandidates,
+        pairwiseComparisons: comparisonsList
+      }
+
+      const res = await axiosInstance.post('/onboarding/ahp/save', payload)
+      if (res.data?.success && res.data.ahpProfile) {
+        setAhpDiscoveryResult(res.data.ahpProfile)
+        setProfile(prev => ({
+          ...prev,
+          careerInterests: res.data.ahpProfile.candidateDomainsForStep6?.map(d => d.name) || []
+        }))
+        localStorage.removeItem('ahp_pairwise_progress')
+      }
+    } catch (err) {
+      setError('Failed to compute AHP matrix result. Please try again.')
+    } finally {
+      setCalculatingAhpDiscovery(false)
+    }
+  }
+
+  const handleReviseAhpComparisons = async () => {
+    setAhpDiscoveryResult(null)
+    setAhpPairIndex(0)
+    setAhpComparisonsMap({})
+    localStorage.removeItem('ahp_pairwise_progress')
+    try {
+      await axiosInstance.post('/onboarding/ahp/revise')
+    } catch (e) {}
+    loadAhpDiscoveryData()
+  }
+
   // Load Fields Taxonomy on Mount
   useEffect(() => {
     const initTaxonomy = async () => {
@@ -394,12 +582,51 @@ export default function CollegeOnboardingPage() {
     loadSpecializations()
   }, [profile.fieldId, profile.domain])
 
-  // Fetch Grok AI Assessment Questions when Step 7 is reached
+  // Fetch AHP + Fuzzy 15 Default Questions when Step 7 is reached
   useEffect(() => {
-    if (step === 7 && grokQuestions.length === 0) {
-      fetchGrokQuestions()
+    if (step === 7) {
+      if (grokQuestions.length === 0) fetchGrokQuestions()
+      if (ahpQuestions.length === 0) fetchAhpQuestions()
     }
   }, [step])
+
+  const fetchAhpQuestions = async () => {
+    setLoadingAhp(true)
+    try {
+      const res = await axiosInstance.get('/ahp-fuzzy/questions')
+      if (res.data?.success && Array.isArray(res.data.questions)) {
+        setAhpQuestions(res.data.questions)
+      }
+    } catch (err) {
+      console.warn('Failed to fetch AHP Fuzzy questions')
+    } finally {
+      setLoadingAhp(false)
+    }
+  }
+
+  const handleEvaluateAhpFuzzy = async () => {
+    const formattedAnswers = Object.entries(ahpAnswers).map(([qNum, optId]) => ({
+      questionNumber: Number(qNum),
+      optionId: optId
+    }))
+    if (formattedAnswers.length === 0) {
+      setError('Please select an option for at least one question to run AHP + Fuzzy evaluation.')
+      return
+    }
+
+    setEvaluatingAhp(true)
+    setError('')
+    try {
+      const res = await axiosInstance.post('/ahp-fuzzy/evaluate', { answers: formattedAnswers })
+      if (res.data?.success && res.data.evaluation) {
+        setAhpResult(res.data.evaluation)
+      }
+    } catch (err) {
+      setError('Evaluation failed. Please try again.')
+    } finally {
+      setEvaluatingAhp(false)
+    }
+  }
 
   const fetchGrokQuestions = async () => {
     setLoadingGrok(true)
@@ -674,15 +901,23 @@ export default function CollegeOnboardingPage() {
                         return (
                           <div
                             key={dom.id || dom.name}
-                            onClick={() => setProfile({ ...profile, domain: dom.name })}
+                            onClick={() => {
+                              setProfile(prev => ({
+                                ...prev,
+                                domain: dom.name,
+                                specialization: '' // reset specializations when domain branch changes
+                              }))
+                            }}
                             style={{
                               padding: 16, borderRadius: 14, cursor: 'pointer',
                               border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
                               background: isSelected ? 'var(--s-primary-l)' : '#fff',
-                              fontWeight: 700, fontSize: 14, color: isSelected ? 'var(--s-primary)' : 'var(--s-text)'
+                              fontWeight: 700, fontSize: 14, color: isSelected ? 'var(--s-primary)' : 'var(--s-text)',
+                              boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.15)' : 'none',
+                              transition: 'all 0.15s ease'
                             }}
                           >
-                            {dom.name}
+                            {isSelected ? '✓ ' : ''}{dom.name}
                           </div>
                         )
                       })}
@@ -690,27 +925,55 @@ export default function CollegeOnboardingPage() {
                   )}
                 </div>
 
-                {specsList.length > 0 && (
+                {loadingSpecs ? (
+                  <SLoader label="Loading relevant specializations..." />
+                ) : specsList.length > 0 && (
                   <div>
-                    <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 10, color: 'var(--s-text)' }}>
-                      Specialization / Elective Focus (Optional)
-                    </label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <label style={{ fontWeight: 800, fontSize: 13, color: 'var(--s-text)' }}>
+                        Specialization / Elective Focus (Multi-select enabled)
+                      </label>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#047857', background: '#d1fae5', padding: '3px 10px', borderRadius: 12 }}>
+                        Click to select multiple focus areas
+                      </span>
+                    </div>
+
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {specsList.map(sp => {
-                        const isSelected = profile.specialization === sp.name
+                        const selectedList = profile.specialization
+                          ? profile.specialization.split(',').map(s => s.trim()).filter(Boolean)
+                          : []
+                        const isSelected = selectedList.includes(sp.name)
+
+                        const toggleSpec = () => {
+                          const nextList = isSelected
+                            ? selectedList.filter(s => s !== sp.name)
+                            : [...selectedList, sp.name]
+                          setProfile(prev => ({
+                            ...prev,
+                            specialization: nextList.join(', ')
+                          }))
+                        }
+
                         return (
                           <button
                             key={sp.id || sp.name}
                             type="button"
-                            onClick={() => setProfile({ ...profile, specialization: sp.name })}
+                            onClick={toggleSpec}
                             style={{
-                              padding: '8px 16px', borderRadius: 20, cursor: 'pointer',
+                              padding: '9px 18px', borderRadius: 22, cursor: 'pointer',
                               border: isSelected ? '2px solid #047857' : '1px solid var(--s-border)',
                               background: isSelected ? '#d1fae5' : '#fff',
-                              color: isSelected ? '#047857' : 'var(--s-text2)', fontWeight: 700, fontSize: 13
+                              color: isSelected ? '#047857' : 'var(--s-text2)',
+                              fontWeight: isSelected ? 800 : 600,
+                              fontSize: 13,
+                              boxShadow: isSelected ? '0 2px 6px rgba(4, 120, 87, 0.12)' : 'none',
+                              transition: 'all 0.15s ease',
+                              display: 'inline-flex', alignItems: 'center', gap: 6
                             }}
                           >
-                            {sp.name}
+                            <span>{isSelected ? '✓' : '+'}</span>
+                            <span>{sp.name}</span>
                           </button>
                         )
                       })}
@@ -721,73 +984,373 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 5: Interests & Goals */}
-          {step === 5 && (
-            <div className="s-anim-up">
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-                Step 5: Academic Interests & Career Aspirations
-              </h3>
-              <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
-                Select what drives your academic journey.
-              </p>
+          {/* STEP 5: AHP CAREER INTEREST DISCOVERY */}
+          {step === 5 && (() => {
+            if (loadingAhpDiscovery) {
+              return <SLoader label="Loading candidate career pathways for AHP Discovery..." />
+            }
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <div>
-                  <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 10, color: 'var(--s-text)' }}>
-                    Academic Focus Options (Select all that apply)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
-                    {ACADEMIC_INTEREST_OPTIONS.map(opt => {
-                      const isSelected = profile.academicInterests.includes(opt)
-                      return (
-                        <div
-                          key={opt}
-                          onClick={() => toggleArrayItem('academicInterests', opt)}
-                          style={{
-                            padding: 14, borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                            background: isSelected ? 'var(--s-primary-l)' : '#fff',
-                            fontSize: 13, fontWeight: 700, color: 'var(--s-text)',
-                            display: 'flex', alignItems: 'center', gap: 10
-                          }}
-                        >
-                          <FiCheck size={16} style={{ opacity: isSelected ? 1 : 0.2 }} />
-                          <span>{opt}</span>
+            // 1. RESULT DISPLAY SCREEN (If AHP discovery completed)
+            if (ahpDiscoveryResult) {
+              const { rankedDomains, consistencyRatio, consistencyStatus, isConsistent, candidateDomainsForStep6 } = ahpDiscoveryResult
+
+              return (
+                <div className="s-anim-up">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <div>
+                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857', background: '#d1fae5', padding: '4px 12px', borderRadius: 20 }}>
+                        📊 Step 5 Complete: AHP Career Profile Analyzed
+                      </span>
+                      <h3 style={{ fontSize: 22, fontWeight: 900, margin: '6px 0 0', color: 'var(--s-text)' }}>
+                        CAREER INTEREST PROFILE
+                      </h3>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 14, background: isConsistent ? '#f0fdf4' : '#fffbeb', color: isConsistent ? '#047857' : '#b45309', border: `1px solid ${isConsistent ? '#86efac' : '#fcd34d'}` }}>
+                        CR = {consistencyRatio} ({consistencyStatus})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleReviseAhpComparisons}
+                        style={{ background: 'none', border: '1px solid var(--s-border)', borderRadius: 10, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: 'var(--s-text2)' }}
+                      >
+                        🔄 Revise Choices
+                      </button>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 24, lineHeight: 1.6 }}>
+                    Your pairwise career preferences have been evaluated using the <strong>Analytic Hierarchy Process (AHP)</strong>. Below are your strongest relative interest signals. These top candidate domains will now be evaluated for your actual suitability in <strong>Step 6 (Fuzzy Assessment)</strong>.
+                  </p>
+
+                  {/* INCONSISTENCY ALERT IF CR > 0.10 */}
+                  {!isConsistent && (
+                    <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 16, padding: 18, marginBottom: 24, color: '#92400e', fontSize: 13, lineHeight: 1.6 }}>
+                      ⚠️ <strong>Preference Inconsistency Detected (CR = {consistencyRatio} &gt; 0.10):</strong> Your comparisons show slight intransitive preferences. You can continue, or click "Revise Choices" above to refine your answers for higher mathematical consistency.
+                    </div>
+                  )}
+
+                  {/* AHP PRIORITY DISTRIBUTION BARS */}
+                  <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: 24, marginBottom: 28, boxShadow: 'var(--s-shadow)' }}>
+                    <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--s-text3)', marginBottom: 20 }}>
+                      AHP Relative Priority Distribution ("Strongest Interest Signals")
+                    </h4>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                      {rankedDomains?.map((item, idx) => {
+                        const IconComp = ICON_MAP[item.icon] || FiBriefcase
+                        const isTopThree = idx < 3
+                        return (
+                          <div key={item.id || idx}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{
+                                  width: 32, height: 32, borderRadius: 10,
+                                  background: isTopThree ? '#d1fae5' : '#f1f5f9',
+                                  color: isTopThree ? '#047857' : 'var(--s-text3)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                  <IconComp size={16} />
+                                </div>
+                                <div>
+                                  <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--s-text)' }}>
+                                    {item.name}
+                                  </span>
+                                  <span style={{ fontSize: 11, color: 'var(--s-text3)', marginLeft: 8 }}>
+                                    ({item.category})
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div style={{ fontWeight: 900, fontSize: 15, color: isTopThree ? '#047857' : 'var(--s-text2)' }}>
+                                {item.scorePercent}%
+                              </div>
+                            </div>
+
+                            <div style={{ height: 10, width: '100%', background: '#f1f5f9', borderRadius: 6, overflow: 'hidden' }}>
+                              <div style={{
+                                height: '100%',
+                                width: `${item.scorePercent}%`,
+                                background: isTopThree ? 'linear-gradient(90deg, #10b981 0%, #047857 100%)' : '#cbd5e1',
+                                borderRadius: 6,
+                                transition: 'width 0.6s ease'
+                              }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* STEP 6 HANDOFF CANDIDATES CARD */}
+                  <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', border: '2px solid #86efac', borderRadius: 20, padding: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#047857', letterSpacing: '0.05em', marginBottom: 6 }}>
+                      ➡️ Candidate Domains Passed to Step 6 (Fuzzy Assessment)
+                    </div>
+                    <div style={{ fontSize: 14, color: '#065f46', marginBottom: 16, lineHeight: 1.5 }}>
+                      The top 2–3 domains below will dictate the domain-specific scenario questions presented in Step 6:
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                      {candidateDomainsForStep6?.map((cand, idx) => (
+                        <div key={cand.id || idx} style={{ background: '#fff', border: '1px solid #a7f3d0', borderRadius: 14, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ background: '#d1fae5', color: '#047857', width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 }}>
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: 13, color: '#065f46' }}>{cand.name}</div>
+                            <div style={{ fontSize: 11, color: '#047857' }}>AHP Weight: {cand.scorePercent}%</div>
+                          </div>
                         </div>
-                      )
-                    })}
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
+            // 2. PAIRWISE COMPARISON INTERACTION SCREEN
+            const currentPair = ahpPairs[ahpPairIndex]
+            const totalPairs = ahpPairs.length
+            const currentPairNum = ahpPairIndex + 1
+            const pairProgressPercent = totalPairs > 0 ? Math.round((ahpPairIndex / totalPairs) * 100) : 0
+            const currentXp = ahpPairIndex * 10
+
+            if (!currentPair) {
+              return (
+                <div style={{ textAlign: 'center', padding: 40 }}>
+                  <p style={{ fontSize: 14, color: 'var(--s-text2)', marginBottom: 16 }}>
+                    No candidate comparisons loaded for this branch selection yet.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={loadAhpDiscoveryData}
+                    style={{
+                      background: 'var(--s-primary)', color: '#fff', border: 'none',
+                      borderRadius: 12, padding: '10px 24px', fontSize: 13, fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔄 Retry Loading Career Pathways
+                  </button>
+                </div>
+              )
+            }
+
+            const domainA = currentPair.domainA
+            const domainB = currentPair.domainB
+            const IconA = ICON_MAP[domainA.icon] || FiCpu
+            const IconB = ICON_MAP[domainB.icon] || FiGlobe
+
+            return (
+              <div className="s-anim-up">
+                {/* CAREER DISCOVERY GAMIFIED MISSION HEADER */}
+                <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: 22, marginBottom: 28, boxShadow: 'var(--s-shadow)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-primary)', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>⚡ CAREER DISCOVERY MISSION</span>
+                        <span style={{ background: '#d1fae5', color: '#047857', padding: '2px 8px', borderRadius: 10, fontSize: 10 }}>+10 XP / Comparison</span>
+                      </div>
+                      <h3 style={{ fontSize: 20, fontWeight: 900, margin: '4px 0 0', color: 'var(--s-text)' }}>
+                        AHP Career Interest Discovery
+                      </h3>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ background: '#f8fafc', border: '1px solid var(--s-border)', padding: '6px 14px', borderRadius: 12, fontSize: 13, fontWeight: 800, color: 'var(--s-text)' }}>
+                        Comparison <strong>{currentPairNum}</strong> of <strong>{totalPairs}</strong>
+                      </div>
+                      <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '6px 14px', borderRadius: 12, fontSize: 13, fontWeight: 800, color: '#047857' }}>
+                        ⭐ {currentXp} XP
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ height: 8, width: '100%', background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ height: '100%', width: `${pairProgressPercent}%`, background: 'var(--s-primary)', transition: 'width 0.3s ease' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--s-text3)', fontWeight: 600 }}>
+                    <span>Your career-interest profile is taking shape...</span>
+                    <span>{pairProgressPercent}% Completed</span>
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 10, color: 'var(--s-text)' }}>
-                    Target Career Pathways
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
-                    {CAREER_INTEREST_OPTIONS.map(opt => {
-                      const isSelected = profile.careerInterests.includes(opt)
-                      return (
-                        <div
-                          key={opt}
-                          onClick={() => toggleArrayItem('careerInterests', opt)}
-                          style={{
-                            padding: 14, borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid #b45309' : '1px solid var(--s-border)',
-                            background: isSelected ? '#fef3c7' : '#fff',
-                            fontSize: 13, fontWeight: 700, color: 'var(--s-text)',
-                            display: 'flex', alignItems: 'center', gap: 10
-                          }}
-                        >
-                          <FiStar size={16} style={{ color: isSelected ? '#b45309' : '#cbd5e1' }} />
-                          <span>{opt}</span>
+                {/* PAIRWISE COMPARISON VS CONTAINER */}
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <h4 style={{ fontSize: 17, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
+                    Which path would you rather explore?
+                  </h4>
+                  <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: 0 }}>
+                    Choose the path that interests you more. No math required!
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center', marginBottom: 28 }}>
+                  {/* OPTION A CARD */}
+                  <div
+                    onClick={() => handleSelectPairwiseDomain(domainA)}
+                    style={{
+                      background: selectedDomainInPair?.id === domainA.id ? '#f0fdf4' : '#fff',
+                      border: selectedDomainInPair?.id === domainA.id ? '2px solid #047857' : '1px solid var(--s-border)',
+                      borderRadius: 20, padding: 24, cursor: 'pointer',
+                      boxShadow: selectedDomainInPair?.id === domainA.id ? '0 6px 20px rgba(4, 120, 87, 0.18)' : 'var(--s-shadow)',
+                      transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', height: '100%',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: selectedDomainInPair?.id === domainA.id ? '#047857' : '#f1f5f9', color: selectedDomainInPair?.id === domainA.id ? '#fff' : 'var(--s-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <IconA size={24} />
                         </div>
-                      )
-                    })}
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#047857', background: '#d1fae5', padding: '3px 10px', borderRadius: 12 }}>
+                          {domainA.category}
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginBottom: 8, lineHeight: 1.3 }}>
+                        {domainA.name}
+                      </h4>
+                      <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                        "{domainA.description}"
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      style={{
+                        marginTop: 20, width: '100%', padding: '11px', borderRadius: 12, border: 'none',
+                        background: selectedDomainInPair?.id === domainA.id ? '#047857' : '#f1f5f9',
+                        color: selectedDomainInPair?.id === domainA.id ? '#fff' : 'var(--s-text)',
+                        fontWeight: 800, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {selectedDomainInPair?.id === domainA.id ? '✓ Selected' : 'Choose This Path'}
+                    </button>
+                  </div>
+
+                  {/* VS BADGE */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14, boxShadow: '0 4px 12px rgba(4, 120, 87, 0.3)' }}>
+                      VS
+                    </div>
+                  </div>
+
+                  {/* OPTION B CARD */}
+                  <div
+                    onClick={() => handleSelectPairwiseDomain(domainB)}
+                    style={{
+                      background: selectedDomainInPair?.id === domainB.id ? '#f0fdf4' : '#fff',
+                      border: selectedDomainInPair?.id === domainB.id ? '2px solid #047857' : '1px solid var(--s-border)',
+                      borderRadius: 20, padding: 24, cursor: 'pointer',
+                      boxShadow: selectedDomainInPair?.id === domainB.id ? '0 6px 20px rgba(4, 120, 87, 0.18)' : 'var(--s-shadow)',
+                      transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', height: '100%',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: selectedDomainInPair?.id === domainB.id ? '#047857' : '#f1f5f9', color: selectedDomainInPair?.id === domainB.id ? '#fff' : 'var(--s-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <IconB size={24} />
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#047857', background: '#d1fae5', padding: '3px 10px', borderRadius: 12 }}>
+                          {domainB.category}
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginBottom: 8, lineHeight: 1.3 }}>
+                        {domainB.name}
+                      </h4>
+                      <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                        "{domainB.description}"
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      style={{
+                        marginTop: 20, width: '100%', padding: '11px', borderRadius: 12, border: 'none',
+                        background: selectedDomainInPair?.id === domainB.id ? '#047857' : '#f1f5f9',
+                        color: selectedDomainInPair?.id === domainB.id ? '#fff' : 'var(--s-text)',
+                        fontWeight: 800, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {selectedDomainInPair?.id === domainB.id ? '✓ Selected' : 'Choose This Path'}
+                    </button>
                   </div>
                 </div>
+
+                {/* OPTIONAL PREFERENCE INTENSITY SELECTOR (Appears after domain choice) */}
+                {selectedDomainInPair && (
+                  <div className="s-anim-up" style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: 20, padding: 22, marginBottom: 24 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#065f46', marginBottom: 12 }}>
+                      You selected <strong>{selectedDomainInPair.name}</strong>. How much more interested are you in this path?
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 16 }}>
+                      {[
+                        { val: 1, label: '1 — Equal Preference' },
+                        { val: 3, label: '3 — Slight Preference' },
+                        { val: 5, label: '5 — Strong Preference' },
+                        { val: 7, label: '7 — Very Strong' },
+                        { val: 9, label: '9 — Extreme Preference' }
+                      ].map(opt => {
+                        const isChosen = selectedIntensity === opt.val
+                        return (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() => setSelectedIntensity(opt.val)}
+                            style={{
+                              padding: '10px 12px', borderRadius: 12, border: isChosen ? '2px solid #047857' : '1px solid #a7f3d0',
+                              background: isChosen ? '#047857' : '#fff',
+                              color: isChosen ? '#fff' : '#065f46',
+                              fontWeight: isChosen ? 800 : 600, fontSize: 12, cursor: 'pointer',
+                              textAlign: 'center', transition: 'all 0.12s ease'
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                      <button
+                        type="button"
+                        onClick={handleConfirmPairwiseSelection}
+                        disabled={calculatingAhpDiscovery}
+                        style={{
+                          background: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
+                          color: '#fff', border: 'none', borderRadius: 12,
+                          padding: '12px 28px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                          boxShadow: '0 4px 12px rgba(4, 120, 87, 0.2)'
+                        }}
+                      >
+                        {calculatingAhpDiscovery ? 'Computing Matrix...' : 'Confirm Preference (+10 XP) →'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* PREVIOUS PAIR BACK BUTTON */}
+                {ahpPairIndex > 0 && !selectedDomainInPair && (
+                  <div style={{ textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setAhpPairIndex(prev => prev - 1)}
+                      style={{ background: 'none', border: 'none', color: 'var(--s-text3)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      ← Back to Previous Comparison
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* STEP 6: Skills */}
           {step === 6 && (
@@ -822,82 +1385,242 @@ export default function CollegeOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 7: xAI Grok Dynamic Onboarding Assessment Questions */}
+          {/* STEP 7: AHP + Fuzzy Logic Assessment & Grok Quiz */}
           {step === 7 && (
             <div className="s-anim-up">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#6d28d9', letterSpacing: '0.06em' }}>
-                    ⚡ Powered by xAI Grok API
+              {/* AHP + FUZZY LOGIC DOMAIN PRIORITY DIAGNOSTIC */}
+              <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', border: '1px solid #a7f3d0', borderRadius: 20, padding: 24, marginBottom: 32 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857', background: '#d1fae5', padding: '4px 12px', borderRadius: 20 }}>
+                      📊 AHP (Analytic Hierarchy Process) + 🧠 Fuzzy Logic Decision Engine
+                    </span>
+                    <h3 style={{ fontSize: 20, fontWeight: 800, margin: '8px 0 0', color: '#064e3b' }}>
+                      Step 7: AHP + Fuzzy Logic Domain Priority Assessment
+                    </h3>
                   </div>
-                  <h3 style={{ fontSize: 20, fontWeight: 800, margin: '4px 0 0', color: 'var(--s-text)' }}>
-                    Step 7: AI Aptitude & Branch Diagnostic Quiz
-                  </h3>
+                  <span style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
+                    15 Default Diagnostic Questions
+                  </span>
                 </div>
-                <span style={{ fontSize: 11, background: '#ede9fe', color: '#6d28d9', padding: '6px 12px', borderRadius: 20, fontWeight: 800 }}>
-                  {profile.degreeProgramme} • {profile.domain}
-                </span>
+
+                <p style={{ fontSize: 13, color: '#065f46', margin: '0 0 20px', lineHeight: 1.6 }}>
+                  Answer the 15 default engineering scenarios below. Our <strong>AHP Matrix</strong> calculates your domain priority vector, and our <strong>Mamdani Fuzzy Logic Inference Engine</strong> fuzzifies your response intensities to break ties when candidate engineering domains have equal or close preference levels.
+                </p>
+
+                {/* AHP + FUZZY EVALUATION RESULTS CARD */}
+                {ahpResult && ahpResult.topDomain && (
+                  <div style={{ background: '#fff', border: '2px solid #10b981', borderRadius: 18, padding: 22, marginBottom: 24, boxShadow: '0 4px 14px rgba(16, 185, 129, 0.12)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        🏆 AHP + Fuzzy Logic High-Priority Domain Result
+                      </span>
+                      {ahpResult.isTieCondition && (
+                        <span style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: 12, fontWeight: 700 }}>
+                          🔀 Fuzzy Logic Tie-Breaker Applied
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 220 }}>
+                        <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>Suggested High-Priority Domain:</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: '#065f46', margin: '2px 0 6px' }}>
+                          {ahpResult.topDomain.name}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--s-text2)' }}>
+                          Category: <strong>{ahpResult.topDomain.category}</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
+                          <div style={{ fontSize: 11, color: '#166534', fontWeight: 700 }}>AHP Priority</div>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#047857' }}>{ahpResult.topDomain.ahpScorePercent}%</div>
+                        </div>
+                        <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
+                          <div style={{ fontSize: 11, color: '#1e40af', fontWeight: 700 }}>Fuzzy Match</div>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#1d4ed8' }}>{ahpResult.topDomain.fuzzyMatchScore}%</div>
+                        </div>
+                        <div style={{ background: '#faf5ff', border: '1px solid #d8b4fe', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
+                          <div style={{ fontSize: 11, color: '#6b21a8', fontWeight: 700 }}>Combined Match</div>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#7e22ce' }}>{ahpResult.topDomain.combinedScorePercent}%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {ahpResult.isTieCondition && (
+                      <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '10px 14px', borderRadius: 12, fontSize: 12, color: '#92400e', marginBottom: 14, lineHeight: 1.5 }}>
+                        💡 <strong>Tie-Breaker Explanation:</strong> {ahpResult.tieBreakReason}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfile(prev => ({
+                            ...prev,
+                            domain: ahpResult.topDomain.name
+                          }))
+                        }}
+                        style={{
+                          background: '#047857', color: '#fff', border: 'none',
+                          borderRadius: 12, padding: '10px 20px', fontSize: 13, fontWeight: 800,
+                          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6
+                        }}
+                      >
+                        ✓ Apply Suggested Domain ({ahpResult.topDomain.name}) to My Profile
+                      </button>
+                      <span style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
+                        {profile.domain === ahpResult.topDomain.name ? '✓ Currently Selected in Profile' : ''}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 15 QUESTIONS LIST */}
+                {loadingAhp ? (
+                  <SLoader label="Loading 15 default AHP + Fuzzy diagnostic questions from database..." />
+                ) : ahpQuestions.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: '#065f46', fontWeight: 700 }}>
+                      <span>Answer Progress: {Object.keys(ahpAnswers).length} of {ahpQuestions.length} answered</span>
+                      <button
+                        type="button"
+                        onClick={handleEvaluateAhpFuzzy}
+                        disabled={evaluatingAhp}
+                        style={{
+                          background: '#047857', color: '#fff', border: 'none',
+                          borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {evaluatingAhp ? 'Evaluating AHP + Fuzzy...' : '⚡ Calculate High-Priority Domain'}
+                      </button>
+                    </div>
+
+                    {ahpQuestions.map((q, qIdx) => {
+                      const selectedOptId = ahpAnswers[q.questionNumber]
+                      return (
+                        <div key={q.questionNumber || qIdx} style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: 800, color: '#047857' }}>
+                              Question {q.questionNumber} of 15 • {q.category}
+                            </span>
+                            <span style={{ fontSize: 11, background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 8, fontWeight: 700 }}>
+                              Dimension: {q.dimension}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14, lineHeight: 1.5 }}>
+                            {q.questionText}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+                            {q.options?.map((opt) => {
+                              const isSelected = selectedOptId === opt.optionId
+                              return (
+                                <button
+                                  key={opt.optionId}
+                                  type="button"
+                                  onClick={() => setAhpAnswers({ ...ahpAnswers, [q.questionNumber]: opt.optionId })}
+                                  style={{
+                                    padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                                    border: isSelected ? '2px solid #047857' : '1px solid #e2e8f0',
+                                    background: isSelected ? '#d1fae5' : '#f8fafc',
+                                    color: isSelected ? '#047857' : 'var(--s-text)', fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                    lineHeight: 1.4, transition: 'all 0.12s ease'
+                                  }}
+                                >
+                                  {isSelected ? '✓ ' : ''}{opt.text}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    <div style={{ textAlign: 'center', marginTop: 12 }}>
+                      <button
+                        type="button"
+                        onClick={handleEvaluateAhpFuzzy}
+                        disabled={evaluatingAhp}
+                        style={{
+                          background: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
+                          color: '#fff', border: 'none', borderRadius: 14,
+                          padding: '14px 36px', fontSize: 15, fontWeight: 800,
+                          cursor: 'pointer', boxShadow: '0 4px 12px rgba(4, 120, 87, 0.25)'
+                        }}
+                      >
+                        {evaluatingAhp ? 'Running AHP Matrix & Fuzzy Inference Engine...' : '⚡ Run AHP + Fuzzy Logic Domain Priority Evaluation'}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
-              {loadingGrok ? (
-                <div style={{ padding: 40, textAlign: 'center' }}>
-                  <SLoader label="Generating dynamic diagnostic questions using xAI Grok API..." />
-                </div>
-              ) : grokQuestions.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, fontSize: 13, color: 'var(--s-text2)' }}>
-                    📝 Answer these 5 randomized Easy-to-Medium diagnostic questions generated specifically for your selected degree (<strong>{profile.degreeProgramme}</strong>) and domain branch (<strong>{profile.domain}</strong>).
+              {/* SECONDARY GROK DIAGNOSTIC QUIZ */}
+              <div style={{ borderTop: '2px dashed var(--s-border)', paddingTop: 28, marginTop: 28 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#6d28d9', letterSpacing: '0.06em' }}>
+                      ⚡ Powered by xAI Grok API
+                    </div>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: '4px 0 0', color: 'var(--s-text)' }}>
+                      Selected Domain Skill Diagnostic Quiz ({profile.domain})
+                    </h3>
                   </div>
-
-                  {grokQuestions.map((q, qIdx) => {
-                    const selectedOpt = grokAnswers[q.id]
-                    return (
-                      <div key={q.id || qIdx} style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 20 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
-                            Question {qIdx + 1} of {grokQuestions.length} • {q.topic || 'Concept Check'}
-                          </span>
-                          <span style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: 8, fontWeight: 700 }}>
-                            Easy - Medium
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14 }}>
-                          {q.question}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                          {q.options?.map((opt, oIdx) => {
-                            const isChosen = selectedOpt === oIdx
-                            const isCorrect = oIdx === q.correctIndex
-                            return (
-                              <button
-                                key={oIdx}
-                                type="button"
-                                onClick={() => setGrokAnswers({ ...grokAnswers, [q.id]: oIdx })}
-                                style={{
-                                  padding: 12, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                  border: isChosen ? (isCorrect ? '2px solid #047857' : '2px solid #dc2626') : '1px solid var(--s-border)',
-                                  background: isChosen ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#fff',
-                                  color: 'var(--s-text)', fontSize: 13, fontWeight: 600
-                                }}
-                              >
-                                <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        {selectedOpt !== undefined && q.explanation && (
-                          <div style={{ marginTop: 12, padding: 10, background: '#eff6ff', borderRadius: 10, fontSize: 12, color: '#1e40af' }}>
-                            💡 <strong>Explanation:</strong> {q.explanation}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
                 </div>
-              ) : null}
+
+                {loadingGrok ? (
+                  <div style={{ padding: 30, textAlign: 'center' }}>
+                    <SLoader label="Generating dynamic diagnostic questions using xAI Grok API..." />
+                  </div>
+                ) : grokQuestions.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    {grokQuestions.map((q, qIdx) => {
+                      const selectedOpt = grokAnswers[q.id]
+                      return (
+                        <div key={q.id || qIdx} style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
+                              Diagnostic Question {qIdx + 1} of {grokQuestions.length} • {q.topic || 'Concept Check'}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 12 }}>
+                            {q.question}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+                            {q.options?.map((opt, oIdx) => {
+                              const isChosen = selectedOpt === oIdx
+                              const isCorrect = oIdx === q.correctIndex
+                              return (
+                                <button
+                                  key={oIdx}
+                                  type="button"
+                                  onClick={() => setGrokAnswers({ ...grokAnswers, [q.id]: oIdx })}
+                                  style={{
+                                    padding: 12, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                                    border: isChosen ? (isCorrect ? '2px solid #047857' : '2px solid #dc2626') : '1px solid var(--s-border)',
+                                    background: isChosen ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#fff',
+                                    color: 'var(--s-text)', fontSize: 13, fontWeight: 600
+                                  }}
+                                >
+                                  <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
 

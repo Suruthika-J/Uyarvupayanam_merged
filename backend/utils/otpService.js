@@ -40,41 +40,56 @@ const PURPOSE_EMAIL = {
 const sendOtpEmail = async ({ email, otp, purpose }) => {
   const label = PURPOSE_EMAIL[purpose] || PURPOSE_EMAIL.login;
   const validForMin = purpose === "login" ? 5 : 10;
-  await transporter.sendMail({
-    from: `"Uyarvu Payanam" <${defaultFrom}>`,
-    to: email,
-    subject: label.subject,
-    text: `Your Uyarvu Payanam verification code is: ${otp}\n\nThis OTP is valid for ${validForMin} minutes.\n\nIf you did not request this code, please ignore this email.`,
-    html: `
-      <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafb; padding: 32px;">
-        <div style="background: #ffffff; border-radius: 16px; padding: 40px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
-          <div style="text-align: center; margin-bottom: 28px;">
-            <h1 style="color: #0f4c75; font-size: 24px; margin: 0;">Uyarvu Payanam</h1>
-            <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0;">Career Guidance Platform</p>
+  const fromAddr = defaultFrom || "noreply@uyarvupayanam.org";
+
+  try {
+    if (!process.env.EMAIL_USER && !process.env.MAIL_USER && !process.env.MAIL_HOST) {
+      console.log(`🔑 [DEV OTP] No SMTP credentials configured in .env. OTP for ${email}: [ ${otp} ]`);
+      return;
+    }
+
+    await transporter.sendMail({
+      from: `"Uyarvu Payanam" <${fromAddr}>`,
+      to: email,
+      subject: label.subject,
+      text: `Your Uyarvu Payanam verification code is: ${otp}\n\nThis OTP is valid for ${validForMin} minutes.\n\nIf you did not request this code, please ignore this email.`,
+      html: `
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafb; padding: 32px;">
+          <div style="background: #ffffff; border-radius: 16px; padding: 40px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+            <div style="text-align: center; margin-bottom: 28px;">
+              <h1 style="color: #0f4c75; font-size: 24px; margin: 0;">Uyarvu Payanam</h1>
+              <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0;">Career Guidance Platform</p>
+            </div>
+            <h2 style="color: #111827; font-size: 20px; margin-bottom: 12px;">
+              ${label.heading}
+            </h2>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              Your verification code is:
+            </p>
+            <div style="text-align: center; margin: 28px 0;">
+              <span style="display: inline-block; background: #f0f4fa; border: 1px dashed #b6c5d4; color: #0f4c75; letter-spacing: 8px; font-size: 28px; font-weight: 800; padding: 12px 22px; border-radius: 12px;">
+                ${otp}
+              </span>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+              This OTP is valid for <strong>${validForMin} minutes</strong>. If you didn't
+              request it, you can safely ignore this email.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+              © ${new Date().getFullYear()} Uyarvu Payanam. All rights reserved.
+            </p>
           </div>
-          <h2 style="color: #111827; font-size: 20px; margin-bottom: 12px;">
-            ${label.heading}
-          </h2>
-          <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-            Your verification code is:
-          </p>
-          <div style="text-align: center; margin: 28px 0;">
-            <span style="display: inline-block; background: #f0f4fa; border: 1px dashed #b6c5d4; color: #0f4c75; letter-spacing: 8px; font-size: 28px; font-weight: 800; padding: 12px 22px; border-radius: 12px;">
-              ${otp}
-            </span>
-          </div>
-          <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
-            This OTP is valid for <strong>${validForMin} minutes</strong>. If you didn't
-            request it, you can safely ignore this email.
-          </p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-            © ${new Date().getFullYear()} Uyarvu Payanam. All rights reserved.
-          </p>
         </div>
-      </div>
-    `,
-  });
+      `,
+    });
+  } catch (err) {
+    console.warn(`⚠️ [DEV OTP FALLBACK] SMTP send error: ${err.message}. Generated OTP for ${email}: [ ${otp} ]`);
+    if (process.env.NODE_ENV !== "production") {
+      return;
+    }
+    throw err;
+  }
 };
 
 // Shared OTP verification: enforce expiry + attempt cap, and only succeed when

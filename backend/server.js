@@ -41,8 +41,10 @@ connectDB().then(() => {
   try {
     const { seedTaxonomyData } = require("./utils/taxonomySeeder");
     const { seedCollegeCareers } = require("./utils/collegeCareerSeeder");
+    const { seedAhpFuzzyQuestions } = require("./seeders/seedAhpFuzzyQuestions");
     seedTaxonomyData().catch(err => console.error("Error in taxonomy seeding:", err));
     seedCollegeCareers().catch(err => console.error("Error in college careers seeding:", err));
+    seedAhpFuzzyQuestions().catch(err => console.error("Error in AHP Fuzzy questions seeding:", err));
   } catch (err) {
     console.error("Failed to require/run seeders on startup:", err);
   }
@@ -212,6 +214,7 @@ app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
+app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
 app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));
 app.use("/api/college-advisor", require("./routes/collegeAdvisorRoutes"));
@@ -247,6 +250,12 @@ app.use("/api/colleges-insight", require("./routes/collegesInsightRoutes"));
 
 // Admin-only TNEA seat-matrix import + "Courses & Colleges" explorers
 app.use("/api/admin/seat-matrix", require("./routes/seatMatrixRoutes"));
+
+// AHP (Analytic Hierarchy Process) + Fuzzy Logic Assessment Engine
+app.use("/api/ahp-fuzzy", require("./routes/ahpFuzzyRoutes"));
+
+// Step 5 AHP Career Interest Discovery Route
+app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;

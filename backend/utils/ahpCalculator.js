@@ -1,0 +1,463 @@
+/**
+ * Analytic Hierarchy Process (AHP) Deterministic Calculator
+ *
+ * Implements standard AHP matrix normalization, priority weight vector calculation,
+ * principal eigenvalue (λmax) estimation, Consistency Index (CI), and Consistency Ratio (CR).
+ */
+
+const RANDOM_INDEX = {
+  1: 0.0,
+  2: 0.0,
+  3: 0.58,
+  4: 0.90,
+  5: 1.12,
+  6: 1.24,
+  7: 1.32,
+  8: 1.41,
+  9: 1.45,
+  10: 1.49
+};
+
+// Career domains dictionary grouped by Step 4 core domain branch & specializations
+const CAREER_TAXONOMY = {
+  cse: [
+    { id: "ai_ml", name: "AI & Machine Learning", category: "AI & Data Science", icon: "FiCpu", description: "Build intelligent systems, neural networks, and predictive models." },
+    { id: "data_science", name: "Data Science & Big Data", category: "AI & Data Science", icon: "FiActivity", description: "Extract actionable insights from massive datasets using analytics & statistics." },
+    { id: "software_engineering", name: "Full Stack & Software Engineering", category: "Software Development", icon: "FiBriefcase", description: "Design scalable Web & Mobile applications and enterprise software architecture." },
+    { id: "cyber_security", name: "Cyber Security & Ethical Hacking", category: "Security & Systems", icon: "FiShield", description: "Protect networks, applications, and infrastructure from cyber threats." },
+    { id: "cloud_devops", name: "Cloud Computing & DevOps", category: "Infrastructure", icon: "FiGlobe", description: "Automate CI/CD pipelines and orchestrate cloud infrastructure on AWS/GCP/Azure." },
+    { id: "data_engineering", name: "Data Engineering & Analytics", category: "AI & Data Science", icon: "FiZap", description: "Construct data pipelines, data warehouses, and ETL streaming infrastructure." },
+    { id: "systems_iot", name: "Systems Programming & IoT", category: "Core Software", icon: "FiRadio", description: "Develop low-level C/C++ operating system drivers and IoT firmware." }
+  ],
+  it: [
+    { id: "fullstack_web", name: "Full Stack Web Development", category: "Software Development", icon: "FiGlobe", description: "Build high-performance web applications using modern frontend and backend frameworks." },
+    { id: "cloud_architecture", name: "Cloud Architecture & DevOps", category: "Infrastructure", icon: "FiZap", description: "Design resilient cloud architectures and automated container deployment." },
+    { id: "cyber_defense", name: "Cybersecurity & Information Assurance", category: "Security", icon: "FiShield", description: "Defend organizational digital assets and enforce security protocols." },
+    { id: "database_admin", name: "Database Administration & Big Data", category: "Data Management", icon: "FiActivity", description: "Optimize database queries, distributed storage, and data security." },
+    { id: "it_consulting", name: "IT Solutions & Enterprise Architecture", category: "IT Strategy", icon: "FiBriefcase", description: "Implement enterprise IT strategies and digital transformation solutions." }
+  ],
+  aids: [
+    { id: "ai_scientist", name: "AI & Machine Learning Scientist", category: "AI & Data Science", icon: "FiCpu", description: "Research state-of-the-art machine learning algorithms and LLMs." },
+    { id: "data_engineer", name: "Big Data & Data Pipeline Engineer", category: "Data Infrastructure", icon: "FiZap", description: "Build high-throughput data processing pipelines and real-time streaming." },
+    { id: "business_analyst", name: "Data Analyst & Business Intelligence", category: "Analytics", icon: "FiActivity", description: "Transform complex data into strategic business insights using dashboards." },
+    { id: "deep_learning", name: "Deep Learning & NLP Specialist", category: "AI Research", icon: "FiFeather", description: "Develop natural language understanding, computer vision, and transformer models." },
+    { id: "mlops_engineer", name: "MLOps & AI Systems Engineer", category: "AI Operations", icon: "FiGlobe", description: "Deploy, monitor, and scale machine learning models in production environments." }
+  ],
+  ece: [
+    { id: "embedded_iot", name: "Embedded Systems & IoT Specialist", category: "Hardware & Firmware", icon: "FiCpu", description: "Program microcontrollers, real-time operating systems (RTOS), and IoT devices." },
+    { id: "vlsi_design", name: "VLSI & Chip Design Engineer", category: "Semiconductors", icon: "FiRadio", description: "Design integrated circuits, microprocessors, and FPGA digital systems." },
+    { id: "signal_processing", name: "Signal Processing & Telecommunication", category: "Networks & Signals", icon: "FiActivity", description: "Develop algorithms for digital signal processing, audio/video, and 5G networks." },
+    { id: "robotics_automation", name: "Robotics & Automation Engineer", category: "Robotics", icon: "FiZap", description: "Integrate sensors, actuators, and control systems for industrial robotics." },
+    { id: "firmware_dev", name: "Embedded Software & Firmware Developer", category: "Software & Hardware", icon: "FiBriefcase", description: "Write low-level firmware in C/C++ for automotive and consumer electronics." }
+  ],
+  eee: [
+    { id: "power_systems", name: "Power Systems & Smart Grid Engineer", category: "Electrical Power", icon: "FiSun", description: "Design, monitor, and optimize high-voltage power transmission and smart grids." },
+    { id: "renewable_energy", name: "Renewable & Clean Energy Tech", category: "Sustainability", icon: "FiSun", description: "Engineer solar, wind, and sustainable power generation systems." },
+    { id: "ev_powertrain", name: "Electric Vehicle Powertrain & Battery Tech", category: "Automotive Tech", icon: "FiZap", description: "Develop battery management systems (BMS) and electric motor drives for EVs." },
+    { id: "control_automation", name: "Industrial Automation & Control Systems", category: "Automation", icon: "FiCpu", description: "Program PLCs, SCADA systems, and industrial automation equipment." },
+    { id: "power_electronics", name: "Power Electronics & Circuit Design", category: "Electronics", icon: "FiRadio", description: "Design DC-DC converters, inverters, and power management ICs." }
+  ],
+  mechanical: [
+    { id: "cad_product_design", name: "CAD / CAM & Product Design Engineer", category: "Design & Manufacturing", icon: "FiBriefcase", description: "Design mechanical components using 3D CAD, SolidWorks, and rapid prototyping." },
+    { id: "automotive_ev", name: "Automotive & EV System Design", category: "Automotive Engineering", icon: "FiZap", description: "Engineer vehicle chassis, thermal management, and electric vehicle dynamics." },
+    { id: "robotics_mechatronics", name: "Robotics & Mechatronic Systems", category: "Automation", icon: "FiCpu", description: "Integrate mechanical structures with electronic controllers and actuators." },
+    { id: "thermal_fluid", name: "Thermal & Fluid Dynamics Specialist", category: "Thermodynamics", icon: "FiSun", description: "Analyze heat transfer, HVAC systems, and Computational Fluid Dynamics (CFD)." },
+    { id: "smart_manufacturing", name: "Industry 4.0 & Smart Manufacturing", category: "Manufacturing", icon: "FiGlobe", description: "Optimize automated manufacturing lines, CNC programming, and quality control." }
+  ],
+  civil: [
+    { id: "structural_eng", name: "Structural & Earthquake Engineering", category: "Structures", icon: "FiHome", description: "Design earthquake-resistant buildings, bridges, and heavy infrastructure." },
+    { id: "construction_mgmt", name: "Construction Project Management & BIM", category: "Management", icon: "FiBriefcase", description: "Manage large construction projects using Building Information Modeling (BIM)." },
+    { id: "environmental_eng", name: "Environmental & Water Resources", category: "Environment", icon: "FiSun", description: "Engineer water treatment plants, waste management, and environmental sustainability." },
+    { id: "transportation_eng", name: "Transportation & Highway Engineering", category: "Infrastructure", icon: "FiGlobe", description: "Plan highways, traffic networks, and urban transport infrastructure." },
+    { id: "urban_planning", name: "Urban Planning & GIS Spatial Analysis", category: "Planning", icon: "FiActivity", description: "Analyze geospatial data for smart city master planning and GIS development." }
+  ],
+  chemical: [
+    { id: "process_eng", name: "Process & Chemical Plant Engineer", category: "Chemical Processing", icon: "FiActivity", description: "Design chemical reactors, separation processes, and industrial plant operations." },
+    { id: "bioprocess_tech", name: "Bioprocess & Pharmaceutical Tech", category: "Biotechnology", icon: "FiHeart", description: "Develop biopharmaceuticals, vaccine manufacturing, and bioprocess technology." },
+    { id: "bioinformatics", name: "Bioinformatics & Computational Biology", category: "Bio-IT", icon: "FiCpu", description: "Analyze genomic sequences and biological data using computational algorithms." },
+    { id: "materials_nano", name: "Materials Science & Nanotechnology", category: "Advanced Materials", icon: "FiFeather", description: "Synthesize novel nanomaterials, polymers, and advanced catalysts." }
+  ],
+  mechatronics: [
+    { id: "robotics_automation", name: "Robotics Systems Integrator", category: "Robotics", icon: "FiCpu", description: "Design and program industrial robots, cobots, and automated assembly lines." },
+    { id: "embedded_systems", name: "Embedded Hardware & Firmware", category: "Hardware", icon: "FiRadio", description: "Develop hardware interfaces, sensors, and firmware for mechatronic products." },
+    { id: "autonomous_agv", name: "Autonomous Systems & AGVs", category: "Autonomous Vehicles", icon: "FiZap", description: "Develop navigation, obstacle avoidance, and sensor fusion for mobile robots." },
+    { id: "control_sensors", name: "Control Systems & Sensor Fusion", category: "Controls", icon: "FiActivity", description: "Design feedback control loops and multi-sensor data fusion algorithms." }
+  ]
+};
+
+// Default fallback career domains if branch is general or unmapped
+const DEFAULT_CAREER_DOMAINS = [
+  { id: "software_eng", name: "Software Engineering & Architecture", category: "Software", icon: "FiBriefcase", description: "Design scalable software applications and system architecture." },
+  { id: "ai_data", name: "Artificial Intelligence & Data Science", category: "AI & Analytics", icon: "FiCpu", description: "Build intelligent machine learning models and data analytics." },
+  { id: "cloud_cyber", name: "Cloud Computing & Cybersecurity", category: "Infrastructure", icon: "FiShield", description: "Secure digital infrastructure and manage cloud deployments." },
+  { id: "management_tech", name: "Tech Management & Product Operations", category: "Management", icon: "FiGlobe", description: "Lead technical teams, product strategy, and agile operations." },
+  { id: "r_and_d", name: "Research & Development Specialist", category: "Research", icon: "FiFeather", description: "Conduct innovative academic and industrial research projects." }
+];
+
+const BRANCH_ALIAS_MAP = {
+  "computer science": "cse",
+  "computer science & engineering": "cse",
+  "computer science and engineering": "cse",
+  "cse": "cse",
+  "information technology": "it",
+  "it": "it",
+  "artificial intelligence": "aids",
+  "artificial intelligence & data science": "aids",
+  "artificial intelligence and data science": "aids",
+  "ai & data science": "aids",
+  "aids": "aids",
+  "electronics & communication": "ece",
+  "electronics & communication engineering": "ece",
+  "electronics and communication engineering": "ece",
+  "ece": "ece",
+  "electrical & electronics": "eee",
+  "electrical & electronics engineering": "eee",
+  "electrical and electronics engineering": "eee",
+  "eee": "eee",
+  "mechanical engineering": "mechanical",
+  "mechanical": "mechanical",
+  "civil engineering": "civil",
+  "civil": "civil",
+  "chemical engineering": "chemical",
+  "chemical": "chemical",
+  "mechatronics engineering": "mechatronics",
+  "mechatronics": "mechatronics"
+};
+
+function resolveBranchId(branchId = "cse") {
+  if (!branchId) return "cse";
+  const str = branchId.toLowerCase().trim();
+
+  if (str.includes("cse") || str.includes("computer science")) return "cse";
+  if (str.includes("ai & ds") || str.includes("artificial intelligence") || str.includes("aids")) return "aids";
+  if (str.includes("it (") || str === "it" || str.includes("information technology")) return "it";
+  if (str.includes("ece") || str.includes("electronics")) return "ece";
+  if (str.includes("eee") || str.includes("electrical")) return "eee";
+  if (str.includes("mechanical")) return "mechanical";
+  if (str.includes("civil")) return "civil";
+  if (str.includes("chemical") || str.includes("biotech")) return "chemical";
+  if (str.includes("mechatronic") || str.includes("robotic")) return "mechatronics";
+
+  return BRANCH_ALIAS_MAP[str] || "cse";
+}
+
+const SPEC_TO_DOMAIN_ID_MAP = {
+  // CSE / IT / AIDS
+  "software engineering": ["software_engineering", "fullstack_web"],
+  "full stack": ["software_engineering", "fullstack_web"],
+  "mobile development": ["software_engineering"],
+  "artificial intelligence": ["ai_ml", "ai_scientist"],
+  "machine learning": ["ai_ml", "ai_scientist"],
+  "cyber security": ["cyber_security", "cyber_defense"],
+  "ethical hacking": ["cyber_security"],
+  "cybersecurity": ["cyber_security", "cyber_defense"],
+  "data science": ["data_science", "business_analyst"],
+  "big data": ["data_science", "data_engineer", "database_admin"],
+  "cloud computing": ["cloud_devops", "cloud_architecture"],
+  "devops": ["cloud_devops", "cloud_architecture"],
+  "cloud systems": ["cloud_devops", "cloud_architecture"],
+  "system programming": ["systems_iot"],
+  "algorithms": ["systems_iot"],
+  "data engineering": ["data_engineering", "data_engineer"],
+  "database administration": ["database_admin"],
+  "nlp": ["deep_learning"],
+  "natural language": ["deep_learning"],
+  "computer vision": ["deep_learning"],
+  "generative ai": ["ai_scientist"],
+  "llm": ["ai_scientist"],
+  "business intelligence": ["business_analyst"],
+  "predictive modeling": ["business_analyst"],
+
+  // ECE / EEE
+  "vlsi": ["vlsi_design"],
+  "semiconductor": ["vlsi_design"],
+  "embedded": ["embedded_iot", "firmware_dev", "embedded_systems"],
+  "microcontrollers": ["embedded_iot", "firmware_dev"],
+  "wireless": ["signal_processing"],
+  "5g": ["signal_processing"],
+  "signal processing": ["signal_processing"],
+  "rf & microwave": ["signal_processing"],
+  "power systems": ["power_systems"],
+  "renewable": ["renewable_energy"],
+  "solar": ["renewable_energy"],
+  "electric vehicle": ["ev_powertrain", "automotive_ev"],
+  "ev technology": ["ev_powertrain", "automotive_ev"],
+  "control systems": ["control_automation", "control_sensors"],
+  "power electronics": ["power_electronics"],
+
+  // Mechanical / Civil / Chemical / Mechatronics
+  "cad": ["cad_product_design"],
+  "product design": ["cad_product_design"],
+  "robotics": ["robotics_mechatronics", "robotics_automation"],
+  "mechatronics": ["robotics_mechatronics"],
+  "thermal": ["thermal_fluid"],
+  "fluid": ["thermal_fluid"],
+  "automotive": ["automotive_ev"],
+  "manufacturing": ["smart_manufacturing"],
+  "structural": ["structural_eng"],
+  "urban planning": ["urban_planning"],
+  "environmental": ["environmental_eng"],
+  "transportation": ["transportation_eng"],
+  "construction": ["construction_mgmt"],
+  "process": ["process_eng"],
+  "bioprocess": ["bioprocess_tech"],
+  "genetic": ["bioprocess_tech"],
+  "nanotechnology": ["materials_nano"],
+  "pharmaceutical": ["bioprocess_tech"],
+  "autonomous": ["autonomous_agv"],
+  "drones": ["autonomous_agv"]
+};
+
+/**
+ * Returns candidate career domains strictly filtered by Step 4 branch & selected specializations
+ */
+function getCandidateDomainsForBranch(branchId = "cse", selectedSpecializations = []) {
+  const normBranch = resolveBranchId(branchId);
+  let baseDomains = CAREER_TAXONOMY[normBranch] || DEFAULT_CAREER_DOMAINS;
+
+  // Filter strictly if specializations are passed
+  if (Array.isArray(selectedSpecializations) && selectedSpecializations.length > 0) {
+    const specLowerList = selectedSpecializations
+      .map(s => s.toLowerCase().trim())
+      .filter(Boolean);
+
+    if (specLowerList.length > 0) {
+      const matchedDomainIds = new Set();
+
+      // Check key phrase matches first
+      specLowerList.forEach(spec => {
+        Object.keys(SPEC_TO_DOMAIN_ID_MAP).forEach(key => {
+          if (spec.includes(key)) {
+            SPEC_TO_DOMAIN_ID_MAP[key].forEach(id => matchedDomainIds.add(id));
+          }
+        });
+      });
+
+      let filteredDomains = baseDomains.filter(d => matchedDomainIds.has(d.id));
+
+      // Fallback matching if phrase map did not match
+      if (filteredDomains.length === 0) {
+        const GENERIC_STOPWORDS = new Set(["engineering", "development", "systems", "system", "technology", "tech", "science", "analytics", "architecture", "and", "for", "the", "with", "ops"]);
+        const extractTokens = (str) =>
+          str
+            .toLowerCase()
+            .replace(/[^\w\s]/g, " ")
+            .split(/\s+/)
+            .filter(t => t.length > 2 && !GENERIC_STOPWORDS.has(t));
+
+        const specTokenSets = specLowerList.map(s => new Set(extractTokens(s)));
+
+        filteredDomains = baseDomains.filter(domain => {
+          const domainText = `${domain.name} ${domain.category} ${domain.description || ""}`.toLowerCase();
+          const domainTokens = new Set(extractTokens(domainText));
+
+          return specTokenSets.some(specTokens => {
+            let matches = 0;
+            for (const token of specTokens) {
+              if (domainTokens.has(token) || domainText.includes(token)) {
+                matches++;
+              }
+            }
+            return matches >= 1;
+          });
+        });
+      }
+
+      // If filtering produces at least 2 candidate domains, return ONLY matching domains
+      if (filteredDomains.length >= 2) {
+        return filteredDomains;
+      }
+      
+      // If filtering produces 1 domain, include 1 next best fallback from baseDomains to reach 2 for pairwise comparison
+      if (filteredDomains.length === 1) {
+        const remaining = baseDomains.filter(d => !filteredDomains.some(fd => fd.id === d.id));
+        return [...filteredDomains, ...remaining.slice(0, 1)];
+      }
+    }
+  }
+
+  // Default fallback if no specializations selected
+  return baseDomains.slice(0, 7);
+}
+
+/**
+ * Constructs an n x n pairwise comparison matrix A
+ * @param {Array<String>} domainIds - Array of candidate domain IDs
+ * @param {Array<Object>} comparisons - Array of { domainA, domainB, selectedDomain, intensity }
+ */
+function buildAhpMatrix(domainIds = [], comparisons = []) {
+  const n = domainIds.length;
+  if (n === 0) return [];
+
+  // Initialize n x n matrix with 1s on diagonal
+  const matrix = Array.from({ length: n }, () => Array(n).fill(1.0));
+
+  const indexMap = new Map();
+  domainIds.forEach((id, idx) => indexMap.set(id, idx));
+
+  comparisons.forEach(comp => {
+    const i = indexMap.get(comp.domainA);
+    const j = indexMap.get(comp.domainB);
+
+    if (i !== undefined && j !== undefined && i !== j) {
+      let v = Number(comp.intensity) || 3;
+      if (v < 1) v = 1;
+
+      if (comp.selectedDomain === comp.domainA) {
+        matrix[i][j] = v;
+        matrix[j][i] = 1 / v;
+      } else if (comp.selectedDomain === comp.domainB) {
+        matrix[j][i] = v;
+        matrix[i][j] = 1 / v;
+      } else {
+        matrix[i][j] = 1.0;
+        matrix[j][i] = 1.0;
+      }
+    }
+  });
+
+  return matrix;
+}
+
+/**
+ * Calculates normalized priority weights from an n x n matrix
+ * 1. Column sums
+ * 2. Matrix element / Column sum
+ * 3. Average of normalized row elements
+ * 4. Normalize weight sum to 1.0
+ */
+function calculatePriorityVector(matrix = []) {
+  const n = matrix.length;
+  if (n === 0) return [];
+
+  // 1. Column sums
+  const colSums = Array(n).fill(0);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      colSums[j] += matrix[i][j];
+    }
+  }
+
+  // 2 & 3. Normalize matrix and compute row averages
+  const weights = Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    let rowSumNorm = 0;
+    for (let j = 0; j < n; j++) {
+      const normVal = colSums[j] > 0 ? matrix[i][j] / colSums[j] : 1 / n;
+      rowSumNorm += normVal;
+    }
+    weights[i] = rowSumNorm / n;
+  }
+
+  // 4. Ensure sum(weights) = 1.0
+  const totalW = weights.reduce((a, b) => a + b, 0) || 1.0;
+  return weights.map(w => w / totalW);
+}
+
+/**
+ * Calculates Consistency Index (CI), λmax, and Consistency Ratio (CR)
+ */
+function calculateConsistencyRatio(matrix = [], priorityWeights = []) {
+  const n = matrix.length;
+  if (n <= 2) {
+    return {
+      lambdaMax: n,
+      consistencyIndex: 0.0,
+      consistencyRatio: 0.0,
+      consistencyStatus: "Acceptable",
+      isConsistent: true
+    };
+  }
+
+  // 1. Weighted Sum Vector W = A * w
+  const weightedSum = Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      weightedSum[i] += matrix[i][j] * priorityWeights[j];
+    }
+  }
+
+  // 2. Consistency Vector c_i = W_i / w_i
+  const consistencyVector = Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    consistencyVector[i] = priorityWeights[i] > 0 ? weightedSum[i] / priorityWeights[i] : n;
+  }
+
+  // 3. λmax = mean(c_i)
+  const lambdaMax = consistencyVector.reduce((a, b) => a + b, 0) / n;
+
+  // 4. CI = (λmax - n) / (n - 1)
+  const CI = (lambdaMax - n) / (n - 1);
+
+  // 5. CR = CI / RI
+  const RI = RANDOM_INDEX[n] || 1.49;
+  const CR = RI > 0 ? CI / RI : 0.0;
+
+  const isConsistent = CR <= 0.10;
+  const consistencyStatus = isConsistent ? "Acceptable" : "Inconsistent";
+
+  return {
+    lambdaMax: Number(lambdaMax.toFixed(4)),
+    consistencyIndex: Number(Math.max(0, CI).toFixed(4)),
+    consistencyRatio: Number(Math.max(0, CR).toFixed(4)),
+    consistencyStatus,
+    isConsistent
+  };
+}
+
+/**
+ * Complete AHP Engine Calculation
+ */
+function computeAhpEngine({ candidateDomains = [], pairwiseComparisons = [] }) {
+  const domainIds = candidateDomains.map(d => d.id);
+  const matrix = buildAhpMatrix(domainIds, pairwiseComparisons);
+  const weights = calculatePriorityVector(matrix);
+  const consistency = calculateConsistencyRatio(matrix, weights);
+
+  // Map priority weights back to domain details
+  const priorityWeightsMap = {};
+  const rankedDomains = candidateDomains.map((domain, idx) => {
+    const weight = weights[idx] || 0;
+    const scorePercent = Number((weight * 100).toFixed(1));
+    priorityWeightsMap[domain.id] = Number(weight.toFixed(4));
+    return {
+      ...domain,
+      weight: Number(weight.toFixed(4)),
+      scorePercent
+    };
+  }).sort((a, b) => b.weight - a.weight);
+
+  const topDomain = rankedDomains[0] || null;
+  const secondDomain = rankedDomains[1] || null;
+  const thirdDomain = rankedDomains[2] || null;
+
+  const candidateDomainsForStep6 = [topDomain, secondDomain, thirdDomain].filter(Boolean);
+
+  return {
+    success: true,
+    candidateDomains,
+    pairwiseComparisons,
+    ahpMatrix: matrix,
+    priorityWeights: priorityWeightsMap,
+    consistencyIndex: consistency.consistencyIndex,
+    consistencyRatio: consistency.consistencyRatio,
+    consistencyStatus: consistency.consistencyStatus,
+    isConsistent: consistency.isConsistent,
+    lambdaMax: consistency.lambdaMax,
+    rankedDomains,
+    topDomain,
+    secondDomain,
+    thirdDomain,
+    candidateDomainsForStep6
+  };
+}
+
+module.exports = {
+  CAREER_TAXONOMY,
+  DEFAULT_CAREER_DOMAINS,
+  getCandidateDomainsForBranch,
+  buildAhpMatrix,
+  calculatePriorityVector,
+  calculateConsistencyRatio,
+  computeAhpEngine
+};

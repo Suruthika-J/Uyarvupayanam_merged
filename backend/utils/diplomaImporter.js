@@ -335,18 +335,17 @@ const importDiplomaCSV = async (forceSync = false) => {
                 status: 'active'
               }
             },
-            { upsert: true, returnDocument: 'after', rawResult: true }
+            { upsert: true, new: true }
           );
 
-          const upsertedCourse = upsertResult.value;
-          matchedCourse = upsertedCourse;
-          courseMapByFullName.set(fullKey, upsertedCourse);
-          courseMapByNormName.set(courseNorm, upsertedCourse);
-
-          if (upsertResult.lastErrorDocument && upsertResult.lastErrorDocument.upserted) {
-            report.coursesCreated++;
+          matchedCourse = (upsertResult && upsertResult.value) ? upsertResult.value : upsertResult;
+          if (matchedCourse) {
+            courseMapByFullName.set(fullKey, matchedCourse);
+            courseMapByNormName.set(courseNorm, matchedCourse);
           }
         }
+
+        if (!matchedCourse || !matchedCourse._id) continue;
 
         const courseIdStr = matchedCourse._id.toString();
         courseIdsForCollege.push(matchedCourse._id);
