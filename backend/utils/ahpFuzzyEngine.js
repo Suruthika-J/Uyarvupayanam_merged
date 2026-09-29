@@ -1,9 +1,9 @@
 /**
  * AHP (Analytic Hierarchy Process) + Fuzzy Logic Recommendation Engine
  *
- * 1. AHP computes priority vectors across engineering domain branches.
- * 2. Fuzzy Logic membership functions (LOW, MEDIUM, HIGH) & Mamdani inference rules
- *    defuzzify student response intensities to break ties when 2 domains have equal or close AHP scores.
+ * 1. Default diagnostic test across all engineering domains (CSE, IT, AI&DS, ECE, EEE, Mechanical, Civil, Chemical, Mechatronics).
+ * 2. Questions are weighted by difficulty: Easy (1.0x), Medium (1.5x), Hard (2.0x).
+ * 3. Fuzzy Logic membership functions (LOW, MEDIUM, HIGH) & Mamdani inference rules defuzzify response intensities.
  */
 
 const DOMAIN_MAP = {
@@ -16,6 +16,12 @@ const DOMAIN_MAP = {
   civil: { id: "civil", name: "Civil Engineering", category: "Infrastructure & Built Environment" },
   chemical: { id: "chemical", name: "Chemical & Biotechnology Engineering", category: "Process & Bio Engineering" },
   mechatronics: { id: "mechatronics", name: "Mechatronics & Robotics Engineering", category: "Robotics & Automation" }
+};
+
+const DIFFICULTY_WEIGHTS = {
+  Easy: 1.0,
+  Medium: 1.5,
+  Hard: 2.0
 };
 
 // Fuzzy Membership Functions (Triangular & Trapezoidal)
@@ -46,7 +52,6 @@ const defuzzify = (memberships) => {
 const evaluateAhpFuzzy = (userAnswers = [], questions = []) => {
   const domainKeys = Object.keys(DOMAIN_MAP);
 
-  // Initialize raw AHP score accumulators and intensity accumulators
   const ahpScores = {};
   const fuzzyIntensities = {};
   const counts = {};
@@ -57,27 +62,42 @@ const evaluateAhpFuzzy = (userAnswers = [], questions = []) => {
     counts[k] = 0;
   });
 
-  // Map answers to questions
+  const difficultyStats = {
+    Easy: { total: 0, answered: 0 },
+    Medium: { total: 0, answered: 0 },
+    Hard: { total: 0, answered: 0 }
+  };
+
   const answerMap = new Map();
   userAnswers.forEach(a => {
     answerMap.set(Number(a.questionNumber), a.optionId);
   });
 
   questions.forEach(q => {
+    const diff = q.difficulty || "Medium";
+    if (difficultyStats[diff]) {
+      difficultyStats[diff].total++;
+    }
+
     const selectedOptId = answerMap.get(q.questionNumber);
     if (!selectedOptId) return;
+
+    if (difficultyStats[diff]) {
+      difficultyStats[diff].answered++;
+    }
 
     const opt = q.options.find(o => o.optionId === selectedOptId);
     if (!opt) return;
 
+    const diffMultiplier = DIFFICULTY_WEIGHTS[diff] || 1.5;
     const weights = opt.ahpWeights || {};
     const intensity = opt.fuzzyIntensity || 5;
 
     domainKeys.forEach(k => {
-      const w = weights[k] || 0;
+      const w = (weights[k] || 0) * diffMultiplier;
       ahpScores[k] += w;
-      if (w > 0.05) {
-        fuzzyIntensities[k].push(intensity);
+      if ((weights[k] || 0) > 0.05) {
+        fuzzyIntensities[k].push(intensity * (diffMultiplier / 1.5));
         counts[k]++;
       }
     });
@@ -90,7 +110,7 @@ const evaluateAhpFuzzy = (userAnswers = [], questions = []) => {
     ahpNormalized[k] = ahpScores[k] / totalAhpSum;
   });
 
-  // 2. Fuzzy Logic Processing
+  // 2. Fuzzy Logic Processing (Mamdani Inference + CoG Defuzzification)
   const fuzzyScores = {};
   domainKeys.forEach(k => {
     const intensities = fuzzyIntensities[k];
@@ -120,7 +140,7 @@ const evaluateAhpFuzzy = (userAnswers = [], questions = []) => {
     }))
     .sort((a, b) => b.combinedScorePercent - a.combinedScorePercent);
 
-  // Check for Tie Condition (if top 2 domains within 3% score difference)
+  // Check for Tie Condition
   let isTieCondition = false;
   let tieBreakReason = "";
   if (sortedDomains.length >= 2) {
@@ -141,8 +161,9 @@ const evaluateAhpFuzzy = (userAnswers = [], questions = []) => {
     rankings: sortedDomains,
     isTieCondition,
     tieBreakReason,
-    consistencyRatio: 0.042 // Valid CR < 0.10
+    difficultyStats,
+    consistencyRatio: 0.042
   };
 };
 
-module.exports = { evaluateAhpFuzzy, DOMAIN_MAP, fuzzifyIntensity, defuzzify };
+module.exports = { evaluateAhpFuzzy, DOMAIN_MAP, DIFFICULTY_WEIGHTS, fuzzifyIntensity, defuzzify };

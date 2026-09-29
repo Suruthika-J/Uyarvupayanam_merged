@@ -254,6 +254,9 @@ app.use("/api/admin/seat-matrix", require("./routes/seatMatrixRoutes"));
 // AHP (Analytic Hierarchy Process) + Fuzzy Logic Assessment Engine
 app.use("/api/ahp-fuzzy", require("./routes/ahpFuzzyRoutes"));
 
+// CSE Technical Skill MCQ Assessment Route (Step 6)
+app.use("/api/cse-skills", require("./routes/cseSkillRoutes"));
+
 // Step 5 AHP Career Interest Discovery Route
 app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
 

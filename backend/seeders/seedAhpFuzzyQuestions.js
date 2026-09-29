@@ -1,11 +1,13 @@
 const AhpFuzzyQuestion = require("../models/AhpFuzzyQuestion");
 
 const DEFAULT_15_QUESTIONS = [
+  // 🟢 EASY DIFFICULTY QUESTIONS (1 - 5)
   {
     questionNumber: 1,
     questionText: "When presented with a complex technical problem, what type of system do you enjoy building most?",
     category: "Problem Solving & Logic",
     dimension: "System Type Preference",
+    difficulty: "Easy",
     options: [
       {
         optionId: "q1_a",
@@ -38,6 +40,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "Which type of project output gives you the highest sense of accomplishment?",
     category: "Problem Solving & Logic",
     dimension: "Project Outcome",
+    difficulty: "Easy",
     options: [
       {
         optionId: "q2_a",
@@ -70,6 +73,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "What is your preferred approach when troubleshooting a technical failure?",
     category: "Problem Solving & Logic",
     dimension: "Troubleshooting Style",
+    difficulty: "Easy",
     options: [
       {
         optionId: "q3_a",
@@ -102,6 +106,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "How do you view interaction between physical hardware and digital software?",
     category: "System Architecture & Hardware",
     dimension: "Hardware vs Software Balance",
+    difficulty: "Easy",
     options: [
       {
         optionId: "q4_a",
@@ -134,6 +139,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "Which emerging technology domain excites you most for your future career?",
     category: "Innovation & Technology Trends",
     dimension: "Future Tech Trend",
+    difficulty: "Easy",
     options: [
       {
         optionId: "q5_a",
@@ -161,11 +167,14 @@ const DEFAULT_15_QUESTIONS = [
       }
     ]
   },
+
+  // 🟡 MEDIUM DIFFICULTY QUESTIONS (6 - 10)
   {
     questionNumber: 6,
     questionText: "When working in an engineering team, which role do you naturally perform best in?",
     category: "System Architecture & Hardware",
     dimension: "Team Role Affinity",
+    difficulty: "Medium",
     options: [
       {
         optionId: "q6_a",
@@ -198,6 +207,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "What kind of mathematical concepts do you feel most comfortable applying?",
     category: "Problem Solving & Logic",
     dimension: "Mathematical Focus",
+    difficulty: "Medium",
     options: [
       {
         optionId: "q7_a",
@@ -230,6 +240,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "How do you prefer to handle large volumes of digital information?",
     category: "Data & Artificial Intelligence",
     dimension: "Data Processing Preference",
+    difficulty: "Medium",
     options: [
       {
         optionId: "q8_a",
@@ -262,6 +273,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "Which ideal daily work environment suits your personal working style?",
     category: "Real-World Engineering & Infrastructure",
     dimension: "Work Environment",
+    difficulty: "Medium",
     options: [
       {
         optionId: "q9_a",
@@ -294,6 +306,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "What drives your curiosity when examining a newly launched product or app?",
     category: "Innovation & Technology Trends",
     dimension: "Product Curiosity",
+    difficulty: "Medium",
     options: [
       {
         optionId: "q10_a",
@@ -321,11 +334,14 @@ const DEFAULT_15_QUESTIONS = [
       }
     ]
   },
+
+  // 🔴 HARD DIFFICULTY QUESTIONS (11 - 15)
   {
     questionNumber: 11,
     questionText: "Which type of engineering optimization challenge sounds most appealing?",
     category: "Problem Solving & Logic",
     dimension: "Optimization Challenge",
+    difficulty: "Hard",
     options: [
       {
         optionId: "q11_a",
@@ -358,6 +374,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "How do you prefer to address system reliability and high availability?",
     category: "System Architecture & Hardware",
     dimension: "System Reliability",
+    difficulty: "Hard",
     options: [
       {
         optionId: "q12_a",
@@ -390,6 +407,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "Which primary impact area inspires your long-term engineering ambitions?",
     category: "Real-World Engineering & Infrastructure",
     dimension: "Engineering Impact",
+    difficulty: "Hard",
     options: [
       {
         optionId: "q13_a",
@@ -422,6 +440,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "What type of hands-on laboratory or practical workshop do you enjoy most?",
     category: "Real-World Engineering & Infrastructure",
     dimension: "Practical Lab Preference",
+    difficulty: "Hard",
     options: [
       {
         optionId: "q14_a",
@@ -454,6 +473,7 @@ const DEFAULT_15_QUESTIONS = [
     questionText: "If given 6 months to master a specialized skill, which path would you choose?",
     category: "Innovation & Technology Trends",
     dimension: "Specialization Mastery Path",
+    difficulty: "Hard",
     options: [
       {
         optionId: "q15_a",
@@ -496,7 +516,7 @@ const seedAhpFuzzyQuestions = async () => {
     const res = await AhpFuzzyQuestion.bulkWrite(ops);
     const added = res.upsertedCount || 0;
     const updated = res.modifiedCount || 0;
-    console.log(`✅ AHP + Fuzzy Logic 15 Default Questions seeded: ${added} added, ${updated} updated.`);
+    console.log(`✅ AHP + Fuzzy Logic 15 Default Questions seeded (Easy/Medium/Hard): ${added} added, ${updated} updated.`);
   } catch (err) {
     console.error("Error seeding AHP + Fuzzy questions:", err.message);
   }

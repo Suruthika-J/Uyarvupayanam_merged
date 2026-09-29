@@ -1,11 +1,12 @@
 const AhpFuzzyQuestion = require("../models/AhpFuzzyQuestion");
 const { evaluateAhpFuzzy } = require("../utils/ahpFuzzyEngine");
 
-// GET 15 Default Questions
+// GET 15 Default Questions (Easy, Medium, Hard)
 const getAhpFuzzyQuestions = async (req, res) => {
   try {
     let questions = await AhpFuzzyQuestion.find({ status: "active" }).sort({ questionNumber: 1 });
-    if (!questions || questions.length === 0) {
+    const missingDifficulty = questions.some(q => !q.difficulty);
+    if (!questions || questions.length === 0 || missingDifficulty) {
       const { seedAhpFuzzyQuestions } = require("../seeders/seedAhpFuzzyQuestions");
       await seedAhpFuzzyQuestions();
       questions = await AhpFuzzyQuestion.find({ status: "active" }).sort({ questionNumber: 1 });

@@ -4,6 +4,12 @@ const ahpFuzzyQuestionSchema = new mongoose.Schema(
   {
     questionNumber: { type: Number, required: true, unique: true },
     questionText: { type: String, required: true },
+    difficulty: {
+      type: String,
+      enum: ["Easy", "Medium", "Hard"],
+      default: "Medium",
+      required: true
+    },
     category: {
       type: String,
       enum: [
