@@ -24,6 +24,7 @@ export default function CollegeDashboardPage() {
 
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
+  const [discoveryResult, setDiscoveryResult] = useState(null)
   const [showCustomizeModal, setShowCustomizeModal] = useState(false)
   const [hiddenWidgetIds, setHiddenWidgetIds] = useState([])
 
@@ -43,6 +44,17 @@ export default function CollegeDashboardPage() {
           })
           if (res.data?.success) {
             setData(res.data)
+          }
+
+          try {
+            const discRes = await axios.get('http://localhost:5000/api/onboarding/discovery/result', {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+            if (discRes.data?.success && discRes.data.recommendedDomain) {
+              setDiscoveryResult(discRes.data)
+            }
+          } catch (e) {
+            console.warn('Discovery result not ready yet')
           }
         }
       } catch (err) {
@@ -118,31 +130,31 @@ export default function CollegeDashboardPage() {
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Profile Completion</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiCheckCircle size={14} /> {header.profileCompletion || 90}%
+              <FiCheckCircle size={14} /> {profile?.profileCompletion !== undefined ? `${profile.profileCompletion}%` : (header.profileCompletion !== undefined ? `${header.profileCompletion}%` : '0%')}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>CGPA</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2 }}>
-              {profile?.cgpa || header.cgpa || '8.4'}
+              {profile?.cgpa || (header.cgpa && header.cgpa !== '8.4' ? header.cgpa : null) || 'Not set'}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Target Career</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#34d399', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiTarget size={14} /> {profile?.targetCareer || 'Domain Target'}
+              <FiTarget size={14} /> {discoveryResult?.recommendedDomain?.domainName || profile?.targetCareer || profile?.domain || 'Not set'}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Roadmap Progress</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2 }}>
-              {header.roadmapProgress || 65}%
+              {header.roadmapProgress !== undefined ? `${header.roadmapProgress}%` : '0%'}
             </div>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Current Streak</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#fef08a', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiZap size={14} /> {header.currentStreak || 5} Days 🔥
+              <FiZap size={14} /> {header.currentStreak !== undefined ? `${header.currentStreak} Days 🔥` : '0 Days 🔥'}
             </div>
           </div>
         </div>
@@ -152,7 +164,172 @@ export default function CollegeDashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 28 }} className="s-grid-2col">
 
         {/* LEFT COLUMN: DYNAMIC ELIGIBLE & PRIORITY CARDS */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+
+          {/* PART 15 & 16: YOUR ACADEMIC DIRECTION & RECOMMENDED NEXT STEPS */}
+          {discoveryResult && discoveryResult.recommendedDomain && (() => {
+            const rec = discoveryResult.recommendedDomain;
+            const scoreVal = rec.score ? (rec.score > 1 ? rec.score : Math.round(rec.score * 100)) : 74.9;
+            const domId = (rec.domainId || "ai_ml").toLowerCase();
+
+            const DOMAIN_RECOMMENDED_STEPS = {
+              ai_ml: {
+                title: "Artificial Intelligence & Machine Learning",
+                roadmap: "Neural Networks, Deep Learning & LLM Systems Roadmap",
+                skills: ["Python", "PyTorch", "Scikit-Learn", "Deep Learning", "TensorFlow"],
+                projects: ["Computer Vision Classifier", "Transformer NLP Pipeline", "Predictive Analytics Model"],
+                questions: "AI/ML Model Evaluation & Math Logic Questions",
+                interview: "Machine Learning System Design & Optimization",
+                courses: "Advanced Deep Learning, MLOps Architecture",
+                resume: "Highlight ML model metrics, GitHub repos, and dataset preprocessing"
+              },
+              cyber_security: {
+                title: "Cyber Security & Ethical Hacking",
+                roadmap: "Network Security, Ethical Hacking & Digital Forensics Roadmap",
+                skills: ["Penetration Testing", "Linux", "Cryptography", "Wireshark", "SIEM"],
+                projects: ["Vulnerability Scanner", "Intrusion Detection System", "Malware Sandbox"],
+                questions: "Network Security Protocols & Cryptographic Challenges",
+                interview: "SOC Analyst & Penetration Testing Scenarios",
+                courses: "Certified Ethical Hacking (CEH), Cyber Defense Operations",
+                resume: "Highlight CTF achievements, security tools, and vulnerability reports"
+              },
+              full_stack: {
+                title: "Full Stack Web & Mobile Development",
+                roadmap: "Modern Full-Stack Web & Mobile Architecture Roadmap",
+                skills: ["TypeScript", "React", "Node.js", "Express", "MongoDB", "PostgreSQL"],
+                projects: ["SaaS Dashboard App", "Real-time Multi-User Chat", "E-Commerce Platform"],
+                questions: "Full-Stack Architecture & Async JS Challenges",
+                interview: "Frontend Performance, API Security & Database Scaling",
+                courses: "Full Stack Masterclass, Cloud Microservices Architecture",
+                resume: "Highlight live web app URLs, state management, and backend REST APIs"
+              },
+              cloud_devops: {
+                title: "Cloud Computing & DevOps",
+                roadmap: "Cloud Infrastructure, Kubernetes & CI/CD Pipelines Roadmap",
+                skills: ["AWS / GCP", "Docker", "Kubernetes", "Terraform", "CI/CD Actions"],
+                projects: ["Automated Kubernetes Cluster", "Terraform Infrastructure Pipeline"],
+                questions: "Container Orchestration & Cloud Security Governance",
+                interview: "Site Reliability Engineering (SRE) & Incident Management",
+                courses: "AWS Solutions Architect, Certified Kubernetes Administrator (CKA)",
+                resume: "Highlight cloud deployment pipelines, uptime metrics, and Docker containers"
+              },
+              data_science: {
+                title: "Data Science & Big Data Analytics",
+                roadmap: "Big Data Processing, Statistical Modeling & Visualizations Roadmap",
+                skills: ["Python", "SQL", "Pandas", "Apache Spark", "Tableau", "Feature Engineering"],
+                projects: ["Customer Churn Analytics", "Real-Time Streaming Data Pipeline"],
+                questions: "Statistical Inference & Complex SQL Aggregation Challenges",
+                interview: "Data Engineering System Design & Experimental A/B Testing",
+                courses: "Big Data Processing with Apache Spark, Advanced Statistics",
+                resume: "Highlight data cleaning notebooks, SQL queries, and visualization dashboards"
+              },
+              software_engineering: {
+                title: "Software Engineering & Architecture",
+                roadmap: "Software Design Patterns & Scalable Architecture Roadmap",
+                skills: ["Java / C++", "Design Patterns", "OOP", "Unit Testing", "System Design", "Git"],
+                projects: ["Distributed Key-Value Store", "Multi-Threaded Task Scheduler"],
+                questions: "Object-Oriented Design & Clean Architecture Questions",
+                interview: "Low-Level & High-Level System Design (LLD/HLD)",
+                courses: "Advanced Software Architecture, Distributed Systems",
+                resume: "Highlight clean code practices, modular design, and test coverage"
+              },
+              algorithms_systems: {
+                title: "Algorithms & System Programming",
+                roadmap: "Operating Systems, Memory & High-Performance Computing Roadmap",
+                skills: ["C / C++", "Assembly", "Linux Kernel", "Memory Allocations", "Multi-Threading"],
+                projects: ["Custom Memory Allocator", "Embedded OS Kernel Shell"],
+                questions: "Pointers, Concurrency & Data Structure Optimizations",
+                interview: "Kernel Internals & High-Performance Systems Engineering",
+                courses: "Systems Programming in C, Operating System Architecture",
+                resume: "Highlight low-level memory benchmarks and concurrency primitives"
+              }
+            };
+
+            const steps = DOMAIN_RECOMMENDED_STEPS[domId] || DOMAIN_RECOMMENDED_STEPS.ai_ml;
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* YOUR ACADEMIC DIRECTION CARD (PART 15) */}
+                <SCard style={{
+                  padding: 28, borderRadius: 22,
+                  background: "linear-gradient(135deg, #064e3b 0%, #047857 100%)",
+                  color: "#fff", boxShadow: "0 8px 24px rgba(4, 120, 87, 0.25)"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", color: "#a7f3d0", letterSpacing: "0.08em" }}>
+                      🎯 YOUR ACADEMIC DIRECTION
+                    </span>
+                    <span style={{ background: "rgba(255,255,255,0.2)", color: "#fff", padding: "4px 14px", borderRadius: 14, fontSize: 12, fontWeight: 800 }}>
+                      Primary Domain Recommendation
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 44 }}>{rec.icon || "🧠"}</div>
+                    <div style={{ flex: 1 }}>
+                      <h2 style={{ fontSize: 24, fontWeight: 900, color: "#fff", margin: "0 0 4px" }}>
+                        {rec.domainName}
+                      </h2>
+                      <div style={{ display: "inline-block", background: "#34d399", color: "#064e3b", fontWeight: 900, fontSize: 15, padding: "4px 14px", borderRadius: 12, marginTop: 4 }}>
+                        {scoreVal}% Match
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: 13, color: "#d1fae5", margin: "16px 0 0", borderTop: "1px solid rgba(255,255,255,0.2)", paddingTop: 14, lineHeight: 1.5 }}>
+                    Based on your AHP preferences and diagnostic assessment, this is your highest compatibility specialization.
+                  </p>
+                </SCard>
+
+                {/* RECOMMENDED NEXT STEPS CARD (PART 15 & 16) */}
+                <SCard style={{ padding: 26, borderRadius: 20, borderLeft: "5px solid #047857" }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#064e3b", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    📌 RECOMMENDED NEXT STEPS FOR {rec.domainName.toUpperCase()}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>1. Learning Roadmap</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#065f46" }}>{steps.roadmap}</div>
+                    </div>
+
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>2. Recommended Skills</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                        {steps.skills.map(sk => (
+                          <span key={sk} style={{ background: "#d1fae5", color: "#065f46", fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 8 }}>
+                            {sk}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>3. Recommended Projects</div>
+                      <div style={{ fontSize: 12, color: "#065f46", fontWeight: 700 }}>
+                        • {steps.projects.join(" • ")}
+                      </div>
+                    </div>
+
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>4. Practice Questions</div>
+                      <div style={{ fontSize: 12, color: "#065f46", fontWeight: 700 }}>{steps.questions}</div>
+                    </div>
+
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>5. Interview Preparation</div>
+                      <div style={{ fontSize: 12, color: "#065f46", fontWeight: 700 }}>{steps.interview}</div>
+                    </div>
+
+                    <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: 14, padding: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 4 }}>6. Relevant Courses</div>
+                      <div style={{ fontSize: 12, color: "#065f46", fontWeight: 700 }}>{steps.courses}</div>
+                    </div>
+                  </div>
+                </SCard>
+              </div>
+            );
+          })()}
 
           {/* FOCUS LEARNING BANNER CARD */}
           {!hiddenWidgetIds.includes('focus-learning') && (
@@ -404,9 +581,13 @@ export default function CollegeDashboardPage() {
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857' }}>Demonstrated Strengths</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {(profile?.onboardingBaseline?.strengths || profile?.strengths || ['Domain Core Concepts']).map((s, i) => (
-                  <span key={i} style={{ fontSize: 11, background: '#d1fae5', color: '#047857', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>✓ {s}</span>
-                ))}
+                {((profile?.onboardingBaseline?.strengths || profile?.strengths || discoveryResult?.strongDimensions) && (profile?.onboardingBaseline?.strengths || profile?.strengths || discoveryResult?.strongDimensions).length > 0) ? (
+                  (profile?.onboardingBaseline?.strengths || profile?.strengths || discoveryResult?.strongDimensions).map((s, i) => (
+                    <span key={i} style={{ fontSize: 11, background: '#d1fae5', color: '#047857', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>✓ {s}</span>
+                  ))
+                ) : (
+                  <span style={{ fontSize: 12, color: 'var(--s-text3)' }}>Complete career assessment to discover strengths</span>
+                )}
               </div>
             </div>
 
@@ -424,9 +605,13 @@ export default function CollegeDashboardPage() {
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8' }}>Active Profile Skills</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {(profile?.skills || ['Domain Fundamentals']).map((s, i) => (
-                  <span key={i} style={{ fontSize: 11, background: '#dbeafe', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>⚡ {s}</span>
-                ))}
+                {profile?.skills && profile.skills.length > 0 ? (
+                  profile.skills.map((s, i) => (
+                    <span key={i} style={{ fontSize: 11, background: '#dbeafe', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>⚡ {s}</span>
+                  ))
+                ) : (
+                  <span style={{ fontSize: 12, color: 'var(--s-text3)' }}>No profile skills added yet</span>
+                )}
               </div>
             </div>
           </SCard>

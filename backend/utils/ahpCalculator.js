@@ -208,76 +208,13 @@ const SPEC_TO_DOMAIN_ID_MAP = {
   "drones": ["autonomous_agv"]
 };
 
+const { resolveCandidateDomains } = require("../config/domainMappingConfig");
+
 /**
- * Returns candidate career domains strictly filtered by Step 4 branch & selected specializations
+ * Returns candidate career domains strictly resolved from Step 4 specializations & branch
  */
 function getCandidateDomainsForBranch(branchId = "cse", selectedSpecializations = []) {
-  const normBranch = resolveBranchId(branchId);
-  let baseDomains = CAREER_TAXONOMY[normBranch] || DEFAULT_CAREER_DOMAINS;
-
-  // Filter strictly if specializations are passed
-  if (Array.isArray(selectedSpecializations) && selectedSpecializations.length > 0) {
-    const specLowerList = selectedSpecializations
-      .map(s => s.toLowerCase().trim())
-      .filter(Boolean);
-
-    if (specLowerList.length > 0) {
-      const matchedDomainIds = new Set();
-
-      // Check key phrase matches first
-      specLowerList.forEach(spec => {
-        Object.keys(SPEC_TO_DOMAIN_ID_MAP).forEach(key => {
-          if (spec.includes(key)) {
-            SPEC_TO_DOMAIN_ID_MAP[key].forEach(id => matchedDomainIds.add(id));
-          }
-        });
-      });
-
-      let filteredDomains = baseDomains.filter(d => matchedDomainIds.has(d.id));
-
-      // Fallback matching if phrase map did not match
-      if (filteredDomains.length === 0) {
-        const GENERIC_STOPWORDS = new Set(["engineering", "development", "systems", "system", "technology", "tech", "science", "analytics", "architecture", "and", "for", "the", "with", "ops"]);
-        const extractTokens = (str) =>
-          str
-            .toLowerCase()
-            .replace(/[^\w\s]/g, " ")
-            .split(/\s+/)
-            .filter(t => t.length > 2 && !GENERIC_STOPWORDS.has(t));
-
-        const specTokenSets = specLowerList.map(s => new Set(extractTokens(s)));
-
-        filteredDomains = baseDomains.filter(domain => {
-          const domainText = `${domain.name} ${domain.category} ${domain.description || ""}`.toLowerCase();
-          const domainTokens = new Set(extractTokens(domainText));
-
-          return specTokenSets.some(specTokens => {
-            let matches = 0;
-            for (const token of specTokens) {
-              if (domainTokens.has(token) || domainText.includes(token)) {
-                matches++;
-              }
-            }
-            return matches >= 1;
-          });
-        });
-      }
-
-      // If filtering produces at least 2 candidate domains, return ONLY matching domains
-      if (filteredDomains.length >= 2) {
-        return filteredDomains;
-      }
-      
-      // If filtering produces 1 domain, include 1 next best fallback from baseDomains to reach 2 for pairwise comparison
-      if (filteredDomains.length === 1) {
-        const remaining = baseDomains.filter(d => !filteredDomains.some(fd => fd.id === d.id));
-        return [...filteredDomains, ...remaining.slice(0, 1)];
-      }
-    }
-  }
-
-  // Default fallback if no specializations selected
-  return baseDomains.slice(0, 7);
+  return resolveCandidateDomains(branchId, selectedSpecializations);
 }
 
 /**

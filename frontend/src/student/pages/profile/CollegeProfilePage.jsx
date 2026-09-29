@@ -15,6 +15,7 @@ export default function CollegeProfilePage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
+  const [discoveryResult, setDiscoveryResult] = useState(null)
   const [error, setError] = useState('')
   const isGamified = themeKey === 'gamified'
 
@@ -28,6 +29,15 @@ export default function CollegeProfilePage() {
           setProfile(res.data.profile)
         } else {
           setError('Profile not set up yet.')
+        }
+
+        try {
+          const discRes = await axiosInstance.get('/onboarding/discovery/result')
+          if (discRes.data?.success && discRes.data.recommendedDomain) {
+            setDiscoveryResult(discRes.data)
+          }
+        } catch (e) {
+          // Discovery result optional if not completed yet
         }
       } catch (err) {
         setError('Could not load profile. Please complete your onboarding.')
@@ -130,6 +140,42 @@ export default function CollegeProfilePage() {
           </div>
         </div>
       </SCard>
+
+      {/* PART 17: AI-BASED CAREER DISCOVERY CARD */}
+      {discoveryResult && discoveryResult.recommendedDomain && (
+        <SCard style={{
+          padding: '24px 28px', borderRadius: 20, marginBottom: 28,
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+          border: '2px solid #6ee7b7', boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#047857', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🎯 AI-BASED CAREER DISCOVERY
+            </div>
+            <span style={{ background: '#d1fae5', color: '#047857', border: '1px solid #86efac', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
+              Assessment Status: ✓ Completed
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#065f46', fontWeight: 800, marginBottom: 2 }}>
+                Primary Recommended Domain
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#064e3b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                {discoveryResult.recommendedDomain.icon || '🧠'} {discoveryResult.recommendedDomain.domainName}
+              </div>
+            </div>
+
+            <div style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '10px 20px', borderRadius: 16, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#047857', fontWeight: 800 }}>Match Score</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: '#047857' }}>
+                {discoveryResult.recommendedDomain.score ? Math.round(discoveryResult.recommendedDomain.score * (discoveryResult.recommendedDomain.score <= 1 ? 100 : 1)) : 74.9}%
+              </div>
+            </div>
+          </div>
+        </SCard>
+      )}
 
       {/* 2-Column Section Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="s-grid-2col">

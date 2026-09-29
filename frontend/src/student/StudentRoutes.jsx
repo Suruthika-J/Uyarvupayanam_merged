@@ -84,6 +84,7 @@ import MyEnglishProgress from './components/english/MyEnglishProgress'
 import RequireEnglishLogin from './components/english/RequireEnglishLogin'
 
 // College student pages
+import CollegeDashboardPage from './pages/dashboard/CollegeDashboardPage'
 import CollegeAdvisorDashboardPage from './pages/advisor/CollegeAdvisorDashboardPage'
 import CollegeProfilePage from './pages/profile/CollegeProfilePage'
 import StudyPlannerPage from './pages/academic/StudyPlannerPage'
@@ -289,7 +290,7 @@ export default function StudentRoutes() {
             path="/college"
             element={<StudentProtectedRoute><CollegeStudentLayout /></StudentProtectedRoute>}
           >
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard" element={<CollegeDashboardPage />} />
             <Route path="profile" element={<CollegeProfilePage />} />
             <Route path="advisor" element={<CollegeAdvisorDashboardPage />} />
             <Route path="advisor/chat" element={<ProfileAwareAskAIChatbotPage />} />

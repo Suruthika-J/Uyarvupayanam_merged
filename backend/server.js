@@ -215,6 +215,8 @@ app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
+app.use("/api/onboarding/discovery", require("./routes/ahpFuzzyRoutes"));
+app.use("/api/onboarding/fuzzy", require("./routes/ahpFuzzyRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));
 app.use("/api/college-profile", require("./routes/collegeProfileRoutes"));
 app.use("/api/college-advisor", require("./routes/collegeAdvisorRoutes"));
@@ -253,6 +255,7 @@ app.use("/api/admin/seat-matrix", require("./routes/seatMatrixRoutes"));
 
 // AHP (Analytic Hierarchy Process) + Fuzzy Logic Assessment Engine
 app.use("/api/ahp-fuzzy", require("./routes/ahpFuzzyRoutes"));
+app.use("/api/onboarding/discovery", require("./routes/ahpFuzzyRoutes"));
 
 // CSE Technical Skill MCQ Assessment Route (Step 6)
 app.use("/api/cse-skills", require("./routes/cseSkillRoutes"));

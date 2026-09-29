@@ -282,43 +282,30 @@ export default function CollegeOnboardingPage() {
   // Profile Form State
   const [profile, setProfile] = useState({
     institution: '',
-    institutionDistrict: 'Coimbatore',
-    currentYear: '1st Year',
+    institutionDistrict: '',
+    currentYear: '',
     studyMode: 'Regular Full-Time',
-    fieldId: 'engineering',
-    degreeProgramme: 'B.E. / B.Tech Computer Science',
-    domain: 'Computer Science & Engineering',
-    specialization: 'Artificial Intelligence & Data Science',
+    fieldId: '',
+    degreeProgramme: '',
+    domain: '',
+    specialization: '',
     certifications: [],
-    academicInterests: ['Applied Industry Projects', 'Internship Readiness & Placement Prep'],
-    careerInterests: ['Software Engineering / Product Development', 'AI & Machine Learning Scientist'],
-    skills: ['Python / Data Science', 'Problem Solving & Logic'],
-    strengths: ['Analytical Thinking', 'Team Collaboration']
+    academicInterests: [],
+    careerInterests: [],
+    skills: [],
+    strengths: []
   })
 
-  // Grok Assessment State (Step 7)
-  const [grokQuestions, setGrokQuestions] = useState([])
-  const [grokAnswers, setGrokAnswers] = useState({})
-  const [loadingGrok, setLoadingGrok] = useState(false)
-  const [grokSource, setGrokSource] = useState('')
-
-  // AHP + Fuzzy Logic 15 Default Questions State
-  const [ahpQuestions, setAhpQuestions] = useState([])
-  const [ahpAnswers, setAhpAnswers] = useState({})
-  const [loadingAhp, setLoadingAhp] = useState(false)
-  const [evaluatingAhp, setEvaluatingAhp] = useState(false)
-  const [ahpResult, setAhpResult] = useState(null)
+  // Step 6: MongoDB Discovery Assessment State
+  const [discoveryQuestions, setDiscoveryQuestions] = useState([])
+  const [discoveryAnswers, setDiscoveryAnswers] = useState({})
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
+  const [evaluatingAssessment, setEvaluatingAssessment] = useState(false)
+  const [discoveryResult, setDiscoveryResult] = useState(null)
   const [difficultyFilter, setDifficultyFilter] = useState('All')
-
-  // Step 6: CSE Skill MCQ Assessment State
-  const [cseMcqQuestions, setCseMcqQuestions] = useState([])
-  const [cseMcqAnswers, setCseMcqAnswers] = useState({})
-  const [loadingCseMcq, setLoadingCseMcq] = useState(false)
-  const [evaluatingCseMcq, setEvaluatingCseMcq] = useState(false)
-  const [cseSkillResult, setCseSkillResult] = useState(null)
-  const [cseDomainFilter, setCseDomainFilter] = useState('All')
-  const [cseDifficultyFilter, setCseDifficultyFilter] = useState('All')
-  const [showManualSkillsToggle, setShowManualSkillsToggle] = useState(false)
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now())
+  const [showCelebrationScreen, setShowCelebrationScreen] = useState(false)
+  const [calcSteps, setCalcSteps] = useState({ step1: false, step2: false, step3: false, step4: false })
 
   // Step 5 Flip-Flap Cards & AHP Priorities State
   const [flippedCards, setFlippedCards] = useState({})
@@ -335,10 +322,12 @@ export default function CollegeOnboardingPage() {
   const [loadingAhpDiscovery, setLoadingAhpDiscovery] = useState(false)
   const [calculatingAhpDiscovery, setCalculatingAhpDiscovery] = useState(false)
 
-  // Load candidate domains for Step 5 Pairwise AHP Discovery when step === 5
+  // Load candidate domains for Step 5 & Step 6
   useEffect(() => {
-    if (step === 5) {
-      loadAhpDiscoveryData()
+    if (step === 5 || step === 6) {
+      if (ahpCandidates.length === 0 && !ahpDiscoveryResult) {
+        loadAhpDiscoveryData()
+      }
     }
   }, [step, profile.domain, profile.specialization])
 
@@ -529,7 +518,7 @@ export default function CollegeOnboardingPage() {
               skills: p.skills?.length ? p.skills : prev.skills
             }))
             if (p.currentStep && p.currentStep > 1) {
-              setStep(Math.min(7, p.currentStep))
+              setStep(Math.min(6, p.currentStep))
             }
           }
         }
@@ -593,125 +582,138 @@ export default function CollegeOnboardingPage() {
     loadSpecializations()
   }, [profile.fieldId, profile.domain])
 
-  // Fetch CSE Skill MCQ Questions when Step 6 is reached
+  // Fetch MongoDB Career Discovery Questions when Step 6 is reached
   useEffect(() => {
     if (step === 6) {
-      if (cseMcqQuestions.length === 0) fetchCseMcqQuestions()
+      fetchDiscoveryQuestions()
     }
   }, [step])
 
-  const fetchCseMcqQuestions = async () => {
-    setLoadingCseMcq(true)
+  const fetchDiscoveryQuestions = async () => {
+    setLoadingQuestions(true)
     try {
-      const res = await axiosInstance.get('/cse-skills/questions')
-      if (res.data?.success && Array.isArray(res.data.questions)) {
-        setCseMcqQuestions(res.data.questions)
+      console.log("[STEP 6] RAW AHP CANDIDATES:", ahpCandidates)
+      const candidateList = ahpDiscoveryResult?.candidateDomainsForStep6 || ahpDiscoveryResult?.candidateDomains || ahpCandidates || []
+      console.log("[STEP 6] CANDIDATE DOMAIN OBJECTS:", candidateList)
+
+      let extractedIds = candidateList.map(d => typeof d === 'string' ? d : (d.id || d.domainId || d.name)).filter(Boolean)
+
+      const DOMAIN_ALIAS_MAP = {
+        'full_stack': 'full_stack',
+        'Full Stack & Software Engineering': 'full_stack',
+        'Full Stack Web & Mobile Development': 'full_stack',
+        'software_engineering': 'software_engineering',
+        'Software Engineering & Architecture': 'software_engineering',
+        'ai_ml': 'ai_ml',
+        'AI & Machine Learning': 'ai_ml',
+        'Artificial Intelligence & Machine Learning': 'ai_ml',
+        'data_science': 'data_science',
+        'Data Science & Big Data Analytics': 'data_science',
+        'cyber_security': 'cyber_security',
+        'Cyber Security & Ethical Hacking': 'cyber_security',
+        'cloud_devops': 'cloud_devops',
+        'Cloud Computing & DevOps': 'cloud_devops',
+        'algorithms_systems': 'algorithms_systems',
+        'Algorithms & System Programming': 'algorithms_systems'
+      };
+
+      let candidateIds = extractedIds.map(id => DOMAIN_ALIAS_MAP[id] || id).filter(Boolean)
+
+      if (candidateIds.length === 0) {
+        candidateIds = ['full_stack', 'ai_ml']
       }
+
+      console.log("[STEP 6] CANDIDATE DOMAIN IDS:", candidateIds)
+
+      const requestUrl = `/onboarding/discovery/questions?branch=CSE&domains=${encodeURIComponent(candidateIds.join(','))}`
+      console.log("[STEP 6] FINAL REQUEST URL:", requestUrl)
+
+      const res = await axiosInstance.get(requestUrl)
+      console.log("[STEP 6] RAW API RESPONSE:", res.data)
+      console.log("[STEP 6] RESPONSE TYPE:", typeof res.data)
+      console.log("[STEP 6] RESPONSE:", JSON.stringify(res.data, null, 2))
+
+      const retrievedQuestions = res.data?.questions || res.data?.data?.questions || []
+      setDiscoveryQuestions(retrievedQuestions)
+
+      console.log("[STEP 6] Questions loaded:", retrievedQuestions.length)
+      console.log("[STEP 6] Question source: MongoDB")
     } catch (err) {
-      console.warn('Failed to fetch CSE Skill MCQ questions')
+      console.warn('Failed to fetch discovery questions from MongoDB', err)
+      setDiscoveryQuestions([])
     } finally {
-      setLoadingCseMcq(false)
+      setLoadingQuestions(false)
+      setQuestionStartTime(Date.now())
     }
   }
 
-  const handleEvaluateCseMcq = async () => {
-    const formattedAnswers = Object.entries(cseMcqAnswers).map(([qNum, optId]) => ({
-      questionNumber: Number(qNum),
+  const handleSelectAnswer = async (qKey, optId) => {
+    const isChanged = !!discoveryAnswers[qKey]
+    const responseTime = Math.round((Date.now() - questionStartTime) / 1000)
+
+    setDiscoveryAnswers(prev => ({ ...prev, [qKey]: optId }))
+    setQuestionStartTime(Date.now())
+
+    try {
+      await axiosInstance.post('/onboarding/discovery/answer', {
+        questionId: qKey,
+        selectedOption: optId,
+        responseTime,
+        answerChanged: isChanged
+      })
+    } catch (err) {
+      console.warn('Answer recording failed', err)
+    }
+  }
+
+  const handleEvaluateDiscovery = async () => {
+    const formattedAnswers = Object.entries(discoveryAnswers).map(([qKey, optId]) => ({
+      questionId: qKey,
+      selectedOption: optId,
       optionId: optId
     }))
+
     if (formattedAnswers.length === 0) {
-      setError('Please select an answer for at least one MCQ question.')
+      setError('Please select an option for at least one question to run evaluation.')
       return
     }
 
-    setEvaluatingCseMcq(true)
+    setEvaluatingAssessment(true)
     setError('')
+    setCalcSteps({ step1: false, step2: false, step3: false, step4: false })
+
     try {
-      const res = await axiosInstance.post('/cse-skills/evaluate', { answers: formattedAnswers })
+      setCalcSteps(s => ({ ...s, step1: true }))
+      await new Promise(r => setTimeout(r, 200))
+      setCalcSteps(s => ({ ...s, step2: true }))
+      await new Promise(r => setTimeout(r, 200))
+
+      const res = await axiosInstance.post('/onboarding/discovery/evaluate', {
+        answers: formattedAnswers,
+        ahpPriorityWeights: ahpDiscoveryResult?.priorityVector || {}
+      })
+
+      setCalcSteps(s => ({ ...s, step3: true }))
+      await new Promise(r => setTimeout(r, 200))
+      setCalcSteps(s => ({ ...s, step4: true }))
+      await new Promise(r => setTimeout(r, 200))
+
       if (res.data?.success && res.data.evaluation) {
-        setCseSkillResult(res.data.evaluation)
-        // Automatically add verified skills to student profile
-        if (res.data.evaluation.verifiedSkills && res.data.evaluation.verifiedSkills.length > 0) {
-          setProfile(prev => {
-            const merged = Array.from(new Set([...prev.skills, ...res.data.evaluation.verifiedSkills]))
-            return { ...prev, skills: merged }
-          })
+        setDiscoveryResult(res.data.evaluation)
+        setShowCelebrationScreen(true)
+        if (res.data.evaluation.recommendedDomain) {
+          setProfile(prev => ({ ...prev, domain: res.data.evaluation.recommendedDomain.domainName }))
         }
-      }
-    } catch (err) {
-      setError('CSE Skill evaluation failed. Please try again.')
-    } finally {
-      setEvaluatingCseMcq(false)
-    }
-  }
-
-  // Fetch AHP + Fuzzy 15 Default Questions when Step 7 is reached
-  useEffect(() => {
-    if (step === 7) {
-      if (grokQuestions.length === 0) fetchGrokQuestions()
-      if (ahpQuestions.length === 0) fetchAhpQuestions()
-    }
-  }, [step])
-
-  const fetchAhpQuestions = async () => {
-    setLoadingAhp(true)
-    try {
-      const res = await axiosInstance.get('/ahp-fuzzy/questions')
-      if (res.data?.success && Array.isArray(res.data.questions)) {
-        setAhpQuestions(res.data.questions)
-      }
-    } catch (err) {
-      console.warn('Failed to fetch AHP Fuzzy questions')
-    } finally {
-      setLoadingAhp(false)
-    }
-  }
-
-  const handleEvaluateAhpFuzzy = async () => {
-    const formattedAnswers = Object.entries(ahpAnswers).map(([qNum, optId]) => ({
-      questionNumber: Number(qNum),
-      optionId: optId
-    }))
-    if (formattedAnswers.length === 0) {
-      setError('Please select an option for at least one question to run AHP + Fuzzy evaluation.')
-      return
-    }
-
-    setEvaluatingAhp(true)
-    setError('')
-    try {
-      const res = await axiosInstance.post('/ahp-fuzzy/evaluate', { answers: formattedAnswers })
-      if (res.data?.success && res.data.evaluation) {
-        setAhpResult(res.data.evaluation)
       }
     } catch (err) {
       setError('Evaluation failed. Please try again.')
     } finally {
-      setEvaluatingAhp(false)
-    }
-  }
-
-  const fetchGrokQuestions = async () => {
-    setLoadingGrok(true)
-    try {
-      const res = await axiosInstance.post('/assessment/generate-grok-questions', {
-        degreeProgramme: profile.degreeProgramme,
-        domain: profile.domain,
-        userType: 'college_student'
-      })
-      if (res.data?.success && Array.isArray(res.data.questions)) {
-        setGrokQuestions(res.data.questions)
-        setGrokSource(res.data.source || 'xAI Grok API')
-      }
-    } catch (err) {
-      console.warn('Failed to fetch Grok questions')
-    } finally {
-      setLoadingGrok(false)
+      setEvaluatingAssessment(false)
     }
   }
 
   const currentFieldName = fieldsList.find(f => f.fieldId === profile.fieldId)?.fieldName || 'Engineering & Technology'
-  const progressPercent = Math.round((step / 7) * 100)
+  const progressPercent = Math.round((step / 6) * 100)
 
   const handleFieldSelect = (selectedFieldId) => {
     if (selectedFieldId === profile.fieldId) return
@@ -785,7 +787,7 @@ export default function CollegeOnboardingPage() {
 
     await saveProgressToBackend(false)
 
-    if (step < 7) {
+    if (step < 6) {
       setStep(s => s + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -840,7 +842,7 @@ export default function CollegeOnboardingPage() {
         {/* Progress Bar Header */}
         <div style={{ background: '#fff', borderRadius: 16, padding: '16px 24px', marginBottom: 28, border: '1px solid var(--s-border)', boxShadow: 'var(--s-shadow)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 13, fontWeight: 800 }}>
-            <span style={{ color: 'var(--s-primary)' }}>STEP {step} OF 7</span>
+            <span style={{ color: 'var(--s-primary)' }}>STEP {step} OF 6</span>
             <span style={{ color: 'var(--s-text3)' }}>{progressPercent}% Completed</span>
           </div>
           <div style={{ height: 8, width: '100%', background: 'var(--s-surface2)', borderRadius: 4, overflow: 'hidden' }}>
@@ -1097,7 +1099,7 @@ export default function CollegeOnboardingPage() {
                   {/* AHP PRIORITY DISTRIBUTION BARS */}
                   <div style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 20, padding: 24, marginBottom: 28, boxShadow: 'var(--s-shadow)' }}>
                     <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--s-text3)', marginBottom: 20 }}>
-                      AHP Relative Priority Distribution ("Strongest Interest Signals")
+                      Your Strongest Career-Interest Signals (AHP Priority Vector)
                     </h4>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -1127,7 +1129,7 @@ export default function CollegeOnboardingPage() {
                               </div>
 
                               <div style={{ fontWeight: 900, fontSize: 15, color: isTopThree ? '#047857' : 'var(--s-text2)' }}>
-                                {item.scorePercent}%
+                                {item.scorePercent}% Interest Signal
                               </div>
                             </div>
 
@@ -1149,10 +1151,10 @@ export default function CollegeOnboardingPage() {
                   {/* STEP 6 HANDOFF CANDIDATES CARD */}
                   <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', border: '2px solid #86efac', borderRadius: 20, padding: 24 }}>
                     <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#047857', letterSpacing: '0.05em', marginBottom: 6 }}>
-                      ➡️ Candidate Domains Passed to Step 6 (Fuzzy Assessment)
+                      ➡️ Candidate Domains Passed to Step 6 (Adaptive Skill Discovery)
                     </div>
                     <div style={{ fontSize: 14, color: '#065f46', marginBottom: 16, lineHeight: 1.5 }}>
-                      The top 2–3 domains below will dictate the domain-specific scenario questions presented in Step 6:
+                      The top 2–3 candidate interest domains below will dictate the domain-specific scenario questions presented in Step 6:
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
@@ -1415,221 +1417,260 @@ export default function CollegeOnboardingPage() {
             )
           })()}
 
-          {/* STEP 6: Skills & Technical Competencies (CSE MCQ Assessment) */}
+          {/* STEP 6: MongoDB Career Domain Discovery Assessment */}
           {step === 6 && (
             <div className="s-anim-up">
-              <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)', border: '1px solid #bfdbfe', borderRadius: 20, padding: 24, marginBottom: 28 }}>
+              <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', border: '1px solid #a7f3d0', borderRadius: 20, padding: 24, marginBottom: 28 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                   <div>
-                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#1d4ed8', background: '#dbeafe', padding: '4px 12px', borderRadius: 20 }}>
-                      ⚡ Technical MCQ Assessment • All CSE & Computing Domains
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857', background: '#d1fae5', padding: '4px 12px', borderRadius: 20 }}>
+                      🎯 PERSONALIZED CAREER DISCOVERY
                     </span>
-                    <h3 style={{ fontSize: 22, fontWeight: 800, margin: '8px 0 0', color: '#1e3a8a' }}>
-                      Step 6: Technical Skills & Competencies MCQ Test
+                    <h3 style={{ fontSize: 22, fontWeight: 800, margin: '8px 0 0', color: '#064e3b' }}>
+                      Step 6: Career Domain Discovery Assessment
                     </h3>
                   </div>
-                  <span style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>
-                    18 Default Questions across CSE Fields
+                  <span style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
+                    {discoveryQuestions.length || 15} Personalized Discovery Questions
                   </span>
                 </div>
 
-                <p style={{ fontSize: 13, color: '#1e40af', margin: '0 0 20px', lineHeight: 1.6 }}>
-                  Complete the standard MCQ technical test below covering key Computer Science domains (Full-Stack Web, AI & ML, Data Science, Cybersecurity, Cloud & DevOps, and Algorithms). Answering MCQs evaluates your technical proficiency and automatically verifies skills on your career profile.
+                <p style={{ fontSize: 13, color: '#065f46', margin: '0 0 20px', lineHeight: 1.6 }}>
+                  Your questions are selected from the career domains identified by your AHP career-interest profile.
                 </p>
 
-                {/* EVALUATION RESULTS CARD */}
-                {cseSkillResult && (
-                  <div style={{ background: '#fff', border: '2px solid #3b82f6', borderRadius: 18, padding: 22, marginBottom: 24, boxShadow: '0 4px 14px rgba(59, 130, 246, 0.12)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        🎯 Technical Skill Diagnostic Score
-                      </span>
-                      <span style={{ fontSize: 12, background: '#dbeafe', color: '#1e40af', padding: '4px 12px', borderRadius: 12, fontWeight: 800 }}>
-                        {cseSkillResult.totalCorrectCount} / {cseSkillResult.totalQuestions} Correct ({cseSkillResult.overallAccuracyPercent}%)
-                      </span>
-                    </div>
+                {/* YOUR AHP CANDIDATE DOMAINS BADGES */}
+                <div style={{ background: '#fff', border: '1px solid #a7f3d0', borderRadius: 16, padding: 18, marginBottom: 24 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#047857', letterSpacing: '0.05em', marginBottom: 10 }}>
+                    YOUR AHP CANDIDATE DOMAINS
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+                    {(() => {
+                      const list = ahpDiscoveryResult?.candidateDomainsForStep6 || ahpDiscoveryResult?.candidateDomains || ahpCandidates || []
+                      const displayList = list.length > 0 ? list : [
+                        { id: 'ai_ml', name: 'AI & Machine Learning' },
+                        { id: 'data_science', name: 'Data Science & Big Data Analytics' },
+                        { id: 'software_engineering', name: 'Software Engineering & Architecture' }
+                      ]
+                      return displayList.map((cd, idx) => (
+                        <span key={cd.id || idx} style={{ background: '#d1fae5', border: '1px solid #6ee7b7', color: '#065f46', fontSize: 13, fontWeight: 800, padding: '8px 16px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          🧠 {cd.name || cd.id}
+                        </span>
+                      ))
+                    })()}
+                  </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: 220 }}>
-                        <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>Strongest Technical Domain:</div>
-                        <div style={{ fontSize: 20, fontWeight: 900, color: '#1e3a8a', margin: '2px 0 4px' }}>
-                          {cseSkillResult.topDomain}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
-                          ✓ {cseSkillResult.verifiedSkills.length} Technical Skills Verified & Saved to Profile
-                        </div>
-                      </div>
+                  {/* DIFFICULTY PROGRESS BREAKDOWN HEADER */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, fontSize: 12, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+                    {[
+                      { key: 'easy', label: '🟢 Easy', color: '#059669', target: 5 },
+                      { key: 'medium', label: '🟡 Medium', color: '#d97706', target: 5 },
+                      { key: 'hard', label: '🔴 Hard', color: '#dc2626', target: 5 }
+                    ].map(diffObj => {
+                      const diffQs = discoveryQuestions.filter(q => (q.difficulty || 'medium').toLowerCase() === diffObj.key)
+                      const diffAns = diffQs.filter(q => discoveryAnswers[q.questionId || q._id]).length
+                      const totalDiff = diffQs.length || diffObj.target
+                      const pct = Math.round((diffAns / totalDiff) * 100)
 
-                      {/* VERIFIED SKILLS BADGES */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, flex: 2 }}>
-                        {cseSkillResult.verifiedSkills.map(sk => (
-                          <span key={sk} style={{ background: '#d1fae5', border: '1px solid #6ee7b7', color: '#047857', fontSize: 12, fontWeight: 800, padding: '6px 12px', borderRadius: 16 }}>
-                            ✓ {sk}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* CSE DOMAIN PERFORMANCE BREAKDOWN */}
-                    <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: 14, marginTop: 14 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#1e3a8a', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        📊 Domain Performance Breakdown
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                        {cseSkillResult.domainBreakdown.map(db => (
-                          <div key={db.domainName} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 14px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                              <span style={{ fontSize: 12, fontWeight: 800, color: '#334155' }}>{db.domainName}</span>
-                              <span style={{ fontSize: 12, fontWeight: 900, color: '#1d4ed8' }}>{db.scorePercent}%</span>
-                            </div>
-                            <div style={{ width: '100%', height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{ width: `${db.scorePercent}%`, height: '100%', background: db.scorePercent >= 60 ? '#10b981' : db.scorePercent >= 30 ? '#f59e0b' : '#ef4444', borderRadius: 3, transition: 'width 0.3s ease' }} />
-                            </div>
+                      return (
+                        <div key={diffObj.key} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '8px 12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, color: diffObj.color, marginBottom: 4 }}>
+                            <span>{diffObj.label}</span>
+                            <span>{diffAns} / {totalDiff}</span>
                           </div>
-                        ))}
+                          <div style={{ width: '100%', height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: diffObj.color, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#065f46' }}>Overall Progress</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#047857' }}>
+                        {Object.keys(discoveryAnswers).length} / {discoveryQuestions.length || 15} completed
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {/* 18 DEFAULT MCQ QUESTIONS LIST */}
-                {loadingCseMcq ? (
-                  <SLoader label="Loading 18 standard CSE MCQ technical questions..." />
-                ) : cseMcqQuestions.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {/* DOMAIN & DIFFICULTY FILTER TABS */}
-                    <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-                        {/* DOMAIN FILTER TABS */}
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {['All', 'Full-Stack Web & Software', 'Artificial Intelligence & ML', 'Data Science & Analytics', 'Cybersecurity & DevSecOps', 'Cloud Computing & DevOps', 'Algorithms & Data Structures'].map(dom => {
-                            const count = dom === 'All' ? cseMcqQuestions.length : cseMcqQuestions.filter(q => q.domain === dom).length
-                            const isActive = cseDomainFilter === dom
-                            const shortLabel = dom === 'All' ? '📋 All (18)' : dom === 'Full-Stack Web & Software' ? '🌐 Web' : dom === 'Artificial Intelligence & ML' ? '🧠 AI/ML' : dom === 'Data Science & Analytics' ? '📊 Data' : dom === 'Cybersecurity & DevSecOps' ? '🛡️ Cyber' : dom === 'Cloud Computing & DevOps' ? '☁️ Cloud' : '⚡ Algorithms'
+                {/* PART 14: CAREER DISCOVERY COMPLETE CELEBRATION RESULT SCREEN */}
+                {discoveryResult && (discoveryResult.recommendedDomain || discoveryResult.topDomain) && (() => {
+                  const rec = discoveryResult.recommendedDomain || discoveryResult.topDomain
+                  const scoreVal = rec.score ? (rec.score > 1 ? rec.score : Math.round(rec.score * 100)) : (rec.compatibilityScorePercent || 74.9)
+                  const domainTitle = rec.domainName || rec.name || 'AI & Machine Learning'
+                  const icon = rec.icon || '🧠'
 
-                            return (
-                              <button
-                                key={dom}
-                                type="button"
-                                onClick={() => setCseDomainFilter(dom)}
-                                style={{
-                                  padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
-                                  border: isActive ? '2px solid #1d4ed8' : '1px solid #cbd5e1',
-                                  background: isActive ? '#1d4ed8' : '#f8fafc',
-                                  color: isActive ? '#fff' : '#334155',
-                                  fontSize: 12, fontWeight: 800, transition: 'all 0.15s ease'
-                                }}
-                              >
-                                {shortLabel} ({count})
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleEvaluateCseMcq}
-                          disabled={evaluatingCseMcq}
-                          style={{
-                            background: '#1d4ed8', color: '#fff', border: 'none',
-                            borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 800,
-                            cursor: 'pointer', boxShadow: '0 2px 8px rgba(29, 78, 216, 0.25)'
-                          }}
-                        >
-                          {evaluatingCseMcq ? 'Evaluating Answers...' : '⚡ Submit & Evaluate MCQ Test'}
-                        </button>
+                  return (
+                    <div className="s-anim-up" style={{ background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)', color: '#fff', borderRadius: 24, padding: 32, marginBottom: 28, boxShadow: '0 10px 30px rgba(4, 120, 87, 0.3)', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', color: '#a7f3d0', fontSize: 13, fontWeight: 800, padding: '6px 16px', borderRadius: 20, marginBottom: 12 }}>
+                        🎯 CAREER DISCOVERY COMPLETE
                       </div>
+                      <h2 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 6px', color: '#fff' }}>
+                        Your Academic DNA has been analyzed.
+                      </h2>
+                      <p style={{ fontSize: 13, color: '#d1fae5', margin: '0 0 24px' }}>
+                        AHP Preference &amp; Fuzzy Diagnostic Engine Alignment
+                      </p>
 
-                      {/* DIFFICULTY FILTER TABS & ANSWER COUNTER */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Difficulty:</span>
-                          {['All', 'Easy', 'Medium', 'Hard'].map(diff => {
-                            const isActive = cseDifficultyFilter === diff
-                            let activeBg = '#1d4ed8'
-                            if (diff === 'Easy') activeBg = '#059669'
-                            else if (diff === 'Medium') activeBg = '#d97706'
-                            else if (diff === 'Hard') activeBg = '#dc2626'
-
-                            return (
-                              <button
-                                key={diff}
-                                type="button"
-                                onClick={() => setCseDifficultyFilter(diff)}
-                                style={{
-                                  padding: '4px 12px', borderRadius: 14, cursor: 'pointer',
-                                  border: isActive ? `2px solid ${activeBg}` : '1px solid #cbd5e1',
-                                  background: isActive ? activeBg : '#f8fafc',
-                                  color: isActive ? '#fff' : '#475569',
-                                  fontSize: 11, fontWeight: 800
-                                }}
-                              >
-                                {diff === 'Easy' && '🟢 '}
-                                {diff === 'Medium' && '🟡 '}
-                                {diff === 'Hard' && '🔴 '}
-                                {diff}
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#1e3a8a' }}>
-                          Answer Progress: {Object.keys(cseMcqAnswers).length} of {cseMcqQuestions.length} Answered
+                      {/* ANIMATED CALCULATION STEPS */}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
+                        <span style={{ background: 'rgba(255,255,255,0.12)', color: '#34d399', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 16 }}>
+                          AHP Career Interest ✓
+                        </span>
+                        <span style={{ background: 'rgba(255,255,255,0.12)', color: '#34d399', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 16 }}>
+                          Diagnostic Responses ✓
+                        </span>
+                        <span style={{ background: 'rgba(255,255,255,0.12)', color: '#34d399', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 16 }}>
+                          Fuzzy Analysis ✓
+                        </span>
+                        <span style={{ background: 'rgba(255,255,255,0.12)', color: '#34d399', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 16 }}>
+                          Domain Matching ✓
                         </span>
                       </div>
-                    </div>
 
-                    {/* MCQ QUESTIONS LIST */}
-                    {cseMcqQuestions
-                      .filter(q => cseDomainFilter === 'All' || q.domain === cseDomainFilter)
-                      .filter(q => cseDifficultyFilter === 'All' || q.difficulty === cseDifficultyFilter)
-                      .map((q, qIdx) => {
-                        const selectedOptId = cseMcqAnswers[q.questionNumber]
-                        const diff = q.difficulty || 'Medium'
-                        let badgeStyle = { bg: '#d1fae5', color: '#047857', label: '🟢 EASY' }
-                        if (diff === 'Medium') badgeStyle = { bg: '#fef3c7', color: '#b45309', label: '🟡 MEDIUM' }
-                        else if (diff === 'Hard') badgeStyle = { bg: '#fee2e2', color: '#b91c1c', label: '🔴 HARD' }
+                      {/* PRIMARY RECOMMENDED DOMAIN CARD */}
+                      <div style={{ background: '#fff', color: '#064e3b', borderRadius: 20, padding: 28, maxWidth: 540, margin: '0 auto 24px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: '#059669', letterSpacing: '0.08em', marginBottom: 8 }}>
+                          YOUR PRIMARY DOMAIN
+                        </div>
+                        <div style={{ fontSize: 40, margin: '8px 0' }}>{icon}</div>
+                        <h3 style={{ fontSize: 24, fontWeight: 900, margin: '0 0 10px', color: '#065f46' }}>
+                          {domainTitle}
+                        </h3>
+                        <div style={{ display: 'inline-block', background: '#d1fae5', color: '#047857', border: '1px solid #6ee7b7', padding: '6px 20px', borderRadius: 20, fontSize: 18, fontWeight: 900 }}>
+                          {scoreVal}% MATCH
+                        </div>
+
+                        {/* WHY THIS DOMAIN EXPLAINABILITY */}
+                        <div style={{ marginTop: 24, textAlign: 'left', borderTop: '1px solid #e2e8f0', paddingTop: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 10 }}>
+                            Why this domain?
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, color: '#047857', fontWeight: 700 }}>
+                            <div>✓ Strong career preference</div>
+                            <div>✓ Strong diagnostic alignment</div>
+                            <div>✓ Problem-solving mastery</div>
+                            <div>✓ Multi-difficulty consistency</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* EXPLORE MY DASHBOARD BUTTON */}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await saveProgressToBackend(true)
+                          navigate('/college/dashboard')
+                        }}
+                        style={{
+                          background: '#34d399', color: '#064e3b', border: 'none',
+                          borderRadius: 16, padding: '16px 42px', fontSize: 16, fontWeight: 900,
+                          cursor: 'pointer', boxShadow: '0 6px 20px rgba(52, 211, 153, 0.4)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Explore My Dashboard →
+                      </button>
+                    </div>
+                  )
+                })()}
+
+                {/* 15 MONGODB DISCOVERY QUESTIONS */}
+                {loadingQuestions ? (
+                  <SLoader label="Loading career discovery questions from MongoDB database..." />
+                ) : discoveryQuestions.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    {/* DIFFICULTY FILTER TABS */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {['All', 'easy', 'medium', 'hard'].map(diff => {
+                        const count = diff === 'All' ? discoveryQuestions.length : discoveryQuestions.filter(q => (q.difficulty || 'medium').toLowerCase() === diff).length
+                        const isActive = (difficultyFilter || 'All').toLowerCase() === diff
+                        let activeBg = '#047857'
+                        if (diff === 'easy') activeBg = '#059669'
+                        else if (diff === 'medium') activeBg = '#d97706'
+                        else if (diff === 'hard') activeBg = '#dc2626'
 
                         return (
-                          <div key={q.questionNumber || qIdx} style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 20 }}>
+                          <button
+                            key={diff}
+                            type="button"
+                            onClick={() => setDifficultyFilter(diff === 'All' ? 'All' : diff)}
+                            style={{
+                              padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
+                              border: isActive ? `2px solid ${activeBg}` : '1px solid #cbd5e1',
+                              background: isActive ? activeBg : '#f8fafc',
+                              color: isActive ? '#fff' : '#334155',
+                              fontSize: 12, fontWeight: 800, transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {diff === 'All' && `📋 All (${count})`}
+                            {diff === 'easy' && `🟢 Easy (${count})`}
+                            {diff === 'medium' && `🟡 Medium (${count})`}
+                            {diff === 'hard' && `🔴 Hard (${count})`}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* QUESTION CARDS */}
+                    {discoveryQuestions
+                      .filter(q => difficultyFilter === 'All' || (q.difficulty || 'medium').toLowerCase() === difficultyFilter.toLowerCase())
+                      .map((q, qIdx) => {
+                        const qKey = q.questionId || q._id
+                        const selectedOptId = discoveryAnswers[qKey]
+                        const diff = (q.difficulty || 'medium').toLowerCase()
+                        let badgeStyle = { bg: '#d1fae5', color: '#047857', label: '🟢 EASY (+10 XP)' }
+                        if (diff === 'medium') badgeStyle = { bg: '#fef3c7', color: '#b45309', label: '🟡 MEDIUM (+20 XP)' }
+                        else if (diff === 'hard') badgeStyle = { bg: '#fee2e2', color: '#b91c1c', label: '🔴 HARD (+30 XP)' }
+
+                        const skillName = (Array.isArray(q.skillDimensions) && q.skillDimensions[0])
+                          ? q.skillDimensions[0].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                          : (q.dimension || 'Pattern Recognition')
+
+                        return (
+                          <div key={qKey} style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 20 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 6 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, fontWeight: 800, color: '#1d4ed8' }}>
-                                  Question {q.questionNumber} of 18 • {q.domain}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: '#047857' }}>
+                                  Question {qIdx + 1} of {discoveryQuestions.length}
+                                </span>
+                                <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '2px 10px', borderRadius: 12, fontWeight: 800 }}>
+                                  🧠 {q.domainName || q.domainId}
                                 </span>
                                 <span style={{ fontSize: 11, background: badgeStyle.bg, color: badgeStyle.color, padding: '2px 8px', borderRadius: 8, fontWeight: 800 }}>
-                                  {badgeStyle.label}
+                                  Difficulty: {badgeStyle.label}
                                 </span>
                               </div>
-                              <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '2px 10px', borderRadius: 8, fontWeight: 700 }}>
-                                Target Skill: {q.skillTag}
+                              <span style={{ fontSize: 11, background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: 8, fontWeight: 700 }}>
+                                Skill Dimension: {skillName}
                               </span>
                             </div>
 
-                            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14, lineHeight: 1.5 }}>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14, lineHeight: 1.5 }}>
                               {q.questionText}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
                               {q.options?.map((opt, optIdx) => {
-                                const isSelected = selectedOptId === opt.optionId
-                                const optionLetter = String.fromCharCode(65 + optIdx) // A, B, C, D
+                                const optId = opt.id || opt.optionId || String.fromCharCode(65 + optIdx)
+                                const isSelected = selectedOptId === optId
 
                                 return (
                                   <button
-                                    key={opt.optionId}
+                                    key={optId}
                                     type="button"
-                                    onClick={() => setCseMcqAnswers({ ...cseMcqAnswers, [q.questionNumber]: opt.optionId })}
+                                    onClick={() => handleSelectAnswer(qKey, optId)}
                                     style={{
                                       padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                      border: isSelected ? '2px solid #1d4ed8' : '1px solid #e2e8f0',
-                                      background: isSelected ? '#eff6ff' : '#f8fafc',
-                                      color: isSelected ? '#1d4ed8' : 'var(--s-text)', fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                                      border: isSelected ? '2px solid #047857' : '1px solid #e2e8f0',
+                                      background: isSelected ? '#d1fae5' : '#f8fafc',
+                                      color: isSelected ? '#047857' : 'var(--s-text)', fontSize: 13, fontWeight: isSelected ? 700 : 500,
                                       lineHeight: 1.4, transition: 'all 0.12s ease', display: 'flex', gap: 10, alignItems: 'flex-start'
                                     }}
                                   >
-                                    <span style={{ background: isSelected ? '#1d4ed8' : '#e2e8f0', color: isSelected ? '#fff' : '#475569', width: 22, height: 22, borderRadius: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
-                                      {optionLetter}
+                                    <span style={{ background: isSelected ? '#047857' : '#e2e8f0', color: isSelected ? '#fff' : '#475569', width: 22, height: 22, borderRadius: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
+                                      {optId}
                                     </span>
                                     <span>{opt.text}</span>
                                   </button>
@@ -1640,320 +1681,11 @@ export default function CollegeOnboardingPage() {
                         )
                       })}
 
-                    <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <div style={{ textAlign: 'center', marginTop: 16 }}>
                       <button
                         type="button"
-                        onClick={handleEvaluateCseMcq}
-                        disabled={evaluatingCseMcq}
-                        style={{
-                          background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
-                          color: '#fff', border: 'none', borderRadius: 14,
-                          padding: '14px 36px', fontSize: 15, fontWeight: 800,
-                          cursor: 'pointer', boxShadow: '0 4px 12px rgba(29, 78, 216, 0.25)'
-                        }}
-                      >
-                        {evaluatingCseMcq ? 'Evaluating CSE Technical Skills...' : '⚡ Evaluate Technical Skills & Verify Profile Badges'}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {/* MANUAL SKILLS TAG CUSTOMIZER TOGGLE */}
-              <div style={{ borderTop: '1px dashed var(--s-border)', paddingTop: 20, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowManualSkillsToggle(!showManualSkillsToggle)}
-                  style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                >
-                  {showManualSkillsToggle ? '▲ Hide Manual Skill Selection' : '▼ Plus manually customize or select additional skill tags'}
-                </button>
-
-                {showManualSkillsToggle && (
-                  <div style={{ marginTop: 16, background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 20 }}>
-                    <p style={{ fontSize: 13, color: 'var(--s-text3)', marginBottom: 14 }}>
-                      Select additional tools or technologies you practice to include them in your profile:
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                      {SKILLS_OPTIONS.map(sk => {
-                        const isSelected = profile.skills.includes(sk)
-                        return (
-                          <button
-                            key={sk}
-                            type="button"
-                            onClick={() => toggleArrayItem('skills', sk)}
-                            style={{
-                              padding: '8px 16px', borderRadius: 20, cursor: 'pointer',
-                              border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                              background: isSelected ? 'var(--s-primary)' : '#fff',
-                              color: isSelected ? '#fff' : 'var(--s-text2)', fontWeight: 700, fontSize: 13
-                            }}
-                          >
-                            {isSelected ? '✓ ' : '+ '} {sk}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 7: Standard Default Diagnostic Test across All Domains (Easy, Medium, Hard) */}
-          {step === 7 && (
-            <div className="s-anim-up">
-              {/* AHP + FUZZY LOGIC DOMAIN PRIORITY DIAGNOSTIC */}
-              <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', border: '1px solid #a7f3d0', borderRadius: 20, padding: 24, marginBottom: 32 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#047857', background: '#d1fae5', padding: '4px 12px', borderRadius: 20 }}>
-                      📊 Standard Default Assessment • 🧠 Fuzzy Logic Domain Finder
-                    </span>
-                    <h3 style={{ fontSize: 20, fontWeight: 800, margin: '8px 0 0', color: '#064e3b' }}>
-                      Step 7: Universal Engineering Domain Assessment Test
-                    </h3>
-                  </div>
-                  <span style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
-                    15 Standard Default Questions (Easy, Medium, Hard)
-                  </span>
-                </div>
-
-                <p style={{ fontSize: 13, color: '#065f46', margin: '0 0 20px', lineHeight: 1.6 }}>
-                  Every student takes the same standardized test across all engineering domains (CSE, IT, AI & DS, ECE, EEE, Mechanical, Civil, Chemical, Mechatronics). Questions are categorized into <strong>Easy (1x)</strong>, <strong>Medium (1.5x)</strong>, and <strong>Hard (2x)</strong> difficulties. Our <strong>Mamdani Fuzzy Logic Inference Engine</strong> defuzzifies your answers to suggest your optimal domain.
-                </p>
-
-                {/* AHP + FUZZY EVALUATION RESULTS CARD */}
-                {ahpResult && ahpResult.topDomain && (
-                  <div style={{ background: '#fff', border: '2px solid #10b981', borderRadius: 18, padding: 22, marginBottom: 24, boxShadow: '0 4px 14px rgba(16, 185, 129, 0.12)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        🏆 Recommended Engineering Domain (Fuzzy Logic Analysis)
-                      </span>
-                      {ahpResult.isTieCondition && (
-                        <span style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: 12, fontWeight: 700 }}>
-                          🔀 Fuzzy Logic Tie-Breaker Applied
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: 220 }}>
-                        <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>Optimal Domain Match:</div>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: '#065f46', margin: '2px 0 6px' }}>
-                          {ahpResult.topDomain.name}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--s-text2)' }}>
-                          Category: <strong>{ahpResult.topDomain.category}</strong>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 12 }}>
-                        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, color: '#166534', fontWeight: 700 }}>Domain Priority</div>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#047857' }}>{ahpResult.topDomain.ahpScorePercent}%</div>
-                        </div>
-                        <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, color: '#1e40af', fontWeight: 700 }}>Fuzzy Match</div>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#1d4ed8' }}>{ahpResult.topDomain.fuzzyMatchScore}%</div>
-                        </div>
-                        <div style={{ background: '#faf5ff', border: '1px solid #d8b4fe', padding: '10px 16px', borderRadius: 14, textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, color: '#6b21a8', fontWeight: 700 }}>Combined Match</div>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#7e22ce' }}>{ahpResult.topDomain.combinedScorePercent}%</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {ahpResult.isTieCondition && (
-                      <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '10px 14px', borderRadius: 12, fontSize: 12, color: '#92400e', marginBottom: 14, lineHeight: 1.5 }}>
-                        💡 <strong>Tie-Breaker Explanation:</strong> {ahpResult.tieBreakReason}
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfile(prev => ({
-                            ...prev,
-                            domain: ahpResult.topDomain.name
-                          }))
-                        }}
-                        style={{
-                          background: '#047857', color: '#fff', border: 'none',
-                          borderRadius: 12, padding: '10px 20px', fontSize: 13, fontWeight: 800,
-                          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6
-                        }}
-                      >
-                        ✓ Apply Suggested Domain ({ahpResult.topDomain.name}) to My Profile
-                      </button>
-                      <span style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
-                        {profile.domain === ahpResult.topDomain.name ? '✓ Currently Selected in Profile' : ''}
-                      </span>
-                    </div>
-
-                    {/* DOMAIN RANKINGS LIST */}
-                    {ahpResult.rankings && ahpResult.rankings.length > 0 && (
-                      <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed #cbd5e1' }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#065f46', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          📊 Full Domain Suitability Rankings (Across All Engineering Fields)
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
-                          {ahpResult.rankings.slice(0, 6).map((rk, idx) => (
-                            <div key={rk.id} style={{ background: idx === 0 ? '#ecfdf5' : '#f8fafc', border: idx === 0 ? '1px solid #6ee7b7' : '1px solid #e2e8f0', borderRadius: 10, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <span style={{ fontSize: 11, fontWeight: 800, color: idx === 0 ? '#047857' : '#64748b' }}>#{idx + 1}</span>{' '}
-                                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text)' }}>{rk.name}</span>
-                              </div>
-                              <span style={{ fontSize: 12, fontWeight: 900, color: idx === 0 ? '#047857' : '#334155' }}>{rk.combinedScorePercent}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 15 DEFAULT QUESTIONS WITH EASY, MEDIUM, HARD FILTERS */}
-                {loadingAhp ? (
-                  <SLoader label="Loading standard default diagnostic questions from database..." />
-                ) : ahpQuestions.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {/* DIFFICULTY FILTER TABS & PROGRESS BAR */}
-                    <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          {['All', 'Easy', 'Medium', 'Hard'].map(diff => {
-                            const count = diff === 'All' ? ahpQuestions.length : ahpQuestions.filter(q => (q.difficulty || 'Medium') === diff).length
-                            const isActive = difficultyFilter === diff
-                            let activeBg = '#047857'
-                            if (diff === 'Easy') activeBg = '#059669'
-                            else if (diff === 'Medium') activeBg = '#d97706'
-                            else if (diff === 'Hard') activeBg = '#dc2626'
-
-                            return (
-                              <button
-                                key={diff}
-                                type="button"
-                                onClick={() => setDifficultyFilter(diff)}
-                                style={{
-                                  padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
-                                  border: isActive ? `2px solid ${activeBg}` : '1px solid #cbd5e1',
-                                  background: isActive ? activeBg : '#f8fafc',
-                                  color: isActive ? '#fff' : '#334155',
-                                  fontSize: 12, fontWeight: 800, transition: 'all 0.15s ease'
-                                }}
-                              >
-                                {diff === 'All' && '📋 '}
-                                {diff === 'Easy' && '🟢 '}
-                                {diff === 'Medium' && '🟡 '}
-                                {diff === 'Hard' && '🔴 '}
-                                {diff} ({count})
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleEvaluateAhpFuzzy}
-                          disabled={evaluatingAhp}
-                          style={{
-                            background: '#047857', color: '#fff', border: 'none',
-                            borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 800,
-                            cursor: 'pointer', boxShadow: '0 2px 8px rgba(4, 120, 87, 0.2)'
-                          }}
-                        >
-                          {evaluatingAhp ? 'Evaluating Answers...' : '⚡ Calculate Matching Domain'}
-                        </button>
-                      </div>
-
-                      {/* DIFFICULTY ANSWERED PROGRESS STATS */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, fontSize: 12 }}>
-                        {['Easy', 'Medium', 'Hard'].map(diff => {
-                          const diffQs = ahpQuestions.filter(q => (q.difficulty || 'Medium') === diff)
-                          const diffAns = diffQs.filter(q => ahpAnswers[q.questionNumber]).length
-                          const totalDiff = diffQs.length
-                          const pct = totalDiff > 0 ? Math.round((diffAns / totalDiff) * 100) : 0
-                          let color = '#059669'
-                          if (diff === 'Medium') color = '#d97706'
-                          if (diff === 'Hard') color = '#dc2626'
-
-                          return (
-                            <div key={diff} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '8px 12px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, color: color, marginBottom: 4 }}>
-                                <span>{diff === 'Easy' ? '🟢 Easy' : diff === 'Medium' ? '🟡 Medium' : '🔴 Hard'}</span>
-                                <span>{diffAns}/{totalDiff}</span>
-                              </div>
-                              <div style={{ width: '100%', height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                                <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.3s ease' }} />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* QUESTIONS DISPLAY */}
-                    {ahpQuestions
-                      .filter(q => difficultyFilter === 'All' || (q.difficulty || 'Medium') === difficultyFilter)
-                      .map((q, qIdx) => {
-                        const selectedOptId = ahpAnswers[q.questionNumber]
-                        const diff = q.difficulty || 'Medium'
-                        let badgeStyle = { bg: '#d1fae5', color: '#047857', label: '🟢 EASY (1.0x)' }
-                        if (diff === 'Medium') badgeStyle = { bg: '#fef3c7', color: '#b45309', label: '🟡 MEDIUM (1.5x)' }
-                        else if (diff === 'Hard') badgeStyle = { bg: '#fee2e2', color: '#b91c1c', label: '🔴 HARD (2.0x)' }
-
-                        return (
-                          <div key={q.questionNumber || qIdx} style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 18 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, fontWeight: 800, color: '#047857' }}>
-                                  Question {q.questionNumber} of 15 • {q.category}
-                                </span>
-                                <span style={{ fontSize: 11, background: badgeStyle.bg, color: badgeStyle.color, padding: '2px 8px', borderRadius: 8, fontWeight: 800 }}>
-                                  {badgeStyle.label}
-                                </span>
-                              </div>
-                              <span style={{ fontSize: 11, background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: 8, fontWeight: 700 }}>
-                                Dimension: {q.dimension}
-                              </span>
-                            </div>
-
-                            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 14, lineHeight: 1.5 }}>
-                              {q.questionText}
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-                              {q.options?.map((opt) => {
-                                const isSelected = selectedOptId === opt.optionId
-                                return (
-                                  <button
-                                    key={opt.optionId}
-                                    type="button"
-                                    onClick={() => setAhpAnswers({ ...ahpAnswers, [q.questionNumber]: opt.optionId })}
-                                    style={{
-                                      padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                      border: isSelected ? '2px solid #047857' : '1px solid #e2e8f0',
-                                      background: isSelected ? '#d1fae5' : '#f8fafc',
-                                      color: isSelected ? '#047857' : 'var(--s-text)', fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                                      lineHeight: 1.4, transition: 'all 0.12s ease'
-                                    }}
-                                  >
-                                    {isSelected ? '✓ ' : ''}{opt.text}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )
-                      })}
-
-                    <div style={{ textAlign: 'center', marginTop: 12 }}>
-                      <button
-                        type="button"
-                        onClick={handleEvaluateAhpFuzzy}
-                        disabled={evaluatingAhp}
+                        onClick={handleEvaluateDiscovery}
+                        disabled={evaluatingAssessment}
                         style={{
                           background: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
                           color: '#fff', border: 'none', borderRadius: 14,
@@ -1961,72 +1693,31 @@ export default function CollegeOnboardingPage() {
                           cursor: 'pointer', boxShadow: '0 4px 12px rgba(4, 120, 87, 0.25)'
                         }}
                       >
-                        {evaluatingAhp ? 'Running Fuzzy Inference Engine...' : '⚡ Run AHP + Fuzzy Logic Domain Recommendation'}
+                        {evaluatingAssessment ? 'Calculating Domain Suitability...' : '⚡ Submit Assessment & Calculate Career Recommendation'}
                       </button>
                     </div>
                   </div>
-                ) : null}
-              </div>
-
-              {/* SECONDARY GROK DIAGNOSTIC QUIZ */}
-              <div style={{ borderTop: '2px dashed var(--s-border)', paddingTop: 28, marginTop: 28 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: '#6d28d9', letterSpacing: '0.06em' }}>
-                      ⚡ Powered by xAI Grok API
-                    </div>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: '4px 0 0', color: 'var(--s-text)' }}>
-                      Selected Domain Skill Diagnostic Quiz ({profile.domain})
-                    </h3>
+                ) : (
+                  <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 16, padding: 24, textAlign: 'center' }}>
+                    <h4 style={{ fontSize: 16, fontWeight: 800, color: '#991b1b', margin: '0 0 8px' }}>
+                      Unable to load your career discovery questions.
+                    </h4>
+                    <p style={{ fontSize: 13, color: '#9f1239', marginBottom: 16 }}>
+                      Candidate domains: {((ahpDiscoveryResult?.candidateDomainsForStep6 || ahpCandidates || []).map(d => d.name || d.id)).join(', ') || 'ai_ml, data_science, software_engineering'} | API status: Ready | Questions received: 0
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => fetchDiscoveryQuestions()}
+                      style={{
+                        background: '#e11d48', color: '#fff', border: 'none',
+                        borderRadius: 10, padding: '10px 22px', fontSize: 13, fontWeight: 800,
+                        cursor: 'pointer', boxShadow: '0 2px 8px rgba(225, 29, 72, 0.25)'
+                      }}
+                    >
+                      🔄 Retry Loading Questions
+                    </button>
                   </div>
-                </div>
-
-                {loadingGrok ? (
-                  <div style={{ padding: 30, textAlign: 'center' }}>
-                    <SLoader label="Generating dynamic diagnostic questions using xAI Grok API..." />
-                  </div>
-                ) : grokQuestions.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {grokQuestions.map((q, qIdx) => {
-                      const selectedOpt = grokAnswers[q.id]
-                      return (
-                        <div key={q.id || qIdx} style={{ background: '#fff', border: '1px solid var(--s-border)', borderRadius: 16, padding: 18 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
-                              Diagnostic Question {qIdx + 1} of {grokQuestions.length} • {q.topic || 'Concept Check'}
-                            </span>
-                          </div>
-
-                          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)', marginBottom: 12 }}>
-                            {q.question}
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                            {q.options?.map((opt, oIdx) => {
-                              const isChosen = selectedOpt === oIdx
-                              const isCorrect = oIdx === q.correctIndex
-                              return (
-                                <button
-                                  key={oIdx}
-                                  type="button"
-                                  onClick={() => setGrokAnswers({ ...grokAnswers, [q.id]: oIdx })}
-                                  style={{
-                                    padding: 12, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                    border: isChosen ? (isCorrect ? '2px solid #047857' : '2px solid #dc2626') : '1px solid var(--s-border)',
-                                    background: isChosen ? (isCorrect ? '#d1fae5' : '#fee2e2') : '#fff',
-                                    color: 'var(--s-text)', fontSize: 13, fontWeight: 600
-                                  }}
-                                >
-                                  <strong>{String.fromCharCode(65 + oIdx)}.</strong> {opt}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : null}
+                )}
               </div>
             </div>
           )}
@@ -2062,7 +1753,7 @@ export default function CollegeOnboardingPage() {
                 <FiSave size={16} /> Save & Continue Later
               </button>
 
-              {step < 7 ? (
+              {step < 6 ? (
                 <SBtn variant="primary" onClick={handleNextStep} style={{ padding: '12px 28px', borderRadius: 12 }}>
                   Next Step <FiArrowRight style={{ marginLeft: 6 }} />
                 </SBtn>

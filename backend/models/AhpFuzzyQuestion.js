@@ -1,50 +1,53 @@
 const mongoose = require("mongoose");
 
+const optionSchema = new mongoose.Schema({
+  id: { type: String }, // e.g. "A", "B", "C", "D"
+  optionId: { type: String }, // e.g. "opt_aiml_e1_a"
+  text: { type: String, required: true },
+  fuzzyImpact: { type: Map, of: Number, default: {} },
+  skillMappings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  fuzzyIntensity: { type: Number, default: 5 }
+}, { _id: false });
+
 const ahpFuzzyQuestionSchema = new mongoose.Schema(
   {
-    questionNumber: { type: Number, required: true, unique: true },
-    questionText: { type: String, required: true },
+    questionId: { type: String, required: true, unique: true },
+    questionNumber: { type: Number },
+    branch: { type: String, default: "CSE", index: true },
+    domainId: { type: String, required: true, index: true }, // e.g. 'ai_ml', 'cyber_security'
+    domainName: { type: String, required: true }, // e.g. 'Artificial Intelligence & Machine Learning'
+    domain: { type: String, index: true }, // alias for domainId
     difficulty: {
       type: String,
-      enum: ["Easy", "Medium", "Hard"],
-      default: "Medium",
-      required: true
+      enum: ["easy", "medium", "hard", "Easy", "Medium", "Hard"],
+      default: "medium",
+      required: true,
+      index: true
     },
-    category: {
+    questionType: {
       type: String,
-      enum: [
-        "Problem Solving & Logic",
-        "System Architecture & Hardware",
-        "Data & Artificial Intelligence",
-        "Real-World Engineering & Infrastructure",
-        "Innovation & Technology Trends"
-      ],
-      required: true
+      enum: ["conceptual", "scenario", "problem_solving", "debugging", "architecture", "decision", "technical"],
+      default: "scenario"
     },
-    dimension: { type: String, required: true },
-    options: [
-      {
-        optionId: { type: String, required: true },
-        text: { type: String, required: true },
-        // AHP Priority Weights for candidate domains (sums normalized during evaluation)
-        ahpWeights: {
-          cse: { type: Number, default: 0 },
-          it: { type: Number, default: 0 },
-          aids: { type: Number, default: 0 },
-          ece: { type: Number, default: 0 },
-          eee: { type: Number, default: 0 },
-          mechanical: { type: Number, default: 0 },
-          civil: { type: Number, default: 0 },
-          chemical: { type: Number, default: 0 },
-          mechatronics: { type: Number, default: 0 }
-        },
-        // Fuzzy membership intensity scale (1 to 10)
-        fuzzyIntensity: { type: Number, required: true, min: 1, max: 10 }
-      }
-    ],
+    category: { type: String, default: "General" },
+    dimension: { type: String, default: "Skill & Behaviour" },
+    questionText: { type: String, required: true },
+    options: [optionSchema],
+    correctOption: { type: String },
+    explanation: { type: String, default: "" },
+    skillDimensions: [{ type: String }],
+    skillVariables: [{ type: String }], // alias for skillDimensions
+    fuzzyMappings: { type: mongoose.Schema.Types.Mixed, default: {} },
+    xp: { type: Number, default: 10 },
+    active: { type: Boolean, default: true, index: true },
     status: { type: String, enum: ["active", "inactive"], default: "active" }
   },
   { timestamps: true }
 );
 
+ahpFuzzyQuestionSchema.index({ branch: 1, domainId: 1, difficulty: 1, active: 1 });
+ahpFuzzyQuestionSchema.index({ domainId: 1, difficulty: 1, active: 1 });
+ahpFuzzyQuestionSchema.index({ domain: 1, difficulty: 1, status: 1 });
+
 module.exports = mongoose.model("AhpFuzzyQuestion", ahpFuzzyQuestionSchema);
+
