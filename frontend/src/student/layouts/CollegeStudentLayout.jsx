@@ -22,10 +22,17 @@ const SIDEBAR_SECTIONS = [
       { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
       { id: 'roadmap',   icon: FiTarget,        label: 'Learning Roadmap',   to: '/college/academic/roadmap' },
       { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
-      { id: 'resume',    icon: FiFileText,      label: 'Resume Builder',     to: '/college/career/resume' },
-      { id: 'interview', icon: FiBriefcase,     label: 'Interview Prep',     to: '/college/career/interview-prep' },
-      { id: 'notes',     icon: FiBookOpen,      label: 'Notes Summarizer',   to: '/college/study-tools/notes-summarizer' },
-      { id: 'practice',  icon: FiHelpCircle,    label: 'Practice Questions', to: '/college/study-tools/practice' },
+      { id: 'resume',    icon: FiFileText,       label: 'Resume Builder',     to: '/college/career/resume' },
+      { id: 'interview', icon: FiBriefcase,      label: 'Interview Prep',     to: '/college/career/interview-prep' },
+      { id: 'notes',     icon: FiBookOpen,       label: 'Notes Summarizer',   to: '/college/study-tools/notes-summarizer' },
+      { id: 'practice',  icon: FiHelpCircle,     label: 'Practice Questions', to: '/college/study-tools/practice' },
+    ],
+  },
+  {
+    title: 'Focus & Productivity',
+    items: [
+      { id: 'focus',     icon: FiCpu,     label: 'Intelligent Focus',   to: '/college/academic/focus' },
+      { id: 'analytics', icon: FiBarChart2, label: 'Focus Analytics',   to: '/college/focus/analytics' },
     ],
   },
   {
@@ -39,10 +46,11 @@ const SIDEBAR_SECTIONS = [
   {
     title: 'Community & Resources',
     items: [
-      { id: 'mentors',      icon: FiUsers,     label: 'Peer Mentors',    to: '/college/community/mentors' },
-      { id: 'doubts',       icon: FiHelpCircle,label: 'Doubt Resolution', to: '/college/community/doubts' },
-      { id: 'scholarships', icon: FiAward,     label: 'Scholarships',    to: '/college/scholarships' },
-      { id: 'bookmarks',    icon: FiBookmark,  label: 'Saved Items',     to: '/college/bookmarks' },
+      { id: 'peer-chat',    icon: FiMessageSquare, label: 'Peer Chat',       to: '/college/peer-chat' },
+      { id: 'mentors',      icon: FiUsers,         label: 'Peer Mentors',    to: '/college/community/mentors' },
+      { id: 'doubts',       icon: FiHelpCircle,    label: 'Doubt Resolution', to: '/college/community/doubts' },
+      { id: 'scholarships', icon: FiAward,         label: 'Scholarships',    to: '/college/scholarships' },
+      { id: 'bookmarks',    icon: FiBookmark,      label: 'Saved Items',     to: '/college/bookmarks' },
     ],
   },
 ]

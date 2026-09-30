@@ -12,7 +12,7 @@ import {
   FiArrowRight, FiCheckCircle, FiTarget, FiZap, FiBookmark,
   FiTrendingUp, FiSliders, FiUser, FiCalendar, FiClock,
   FiBookOpen, FiUsers, FiHelpCircle, FiActivity, FiCheckSquare,
-  FiAlertCircle, FiCode, FiX, FiEye, FiSettings
+  FiAlertCircle, FiCode, FiX, FiEye, FiSettings, FiCpu, FiMessageSquare, FiBarChart2, FiPlay
 } from 'react-icons/fi'
 
 export default function CollegeDashboardPage() {
@@ -27,6 +27,11 @@ export default function CollegeDashboardPage() {
   const [discoveryResult, setDiscoveryResult] = useState(null)
   const [showCustomizeModal, setShowCustomizeModal] = useState(false)
   const [hiddenWidgetIds, setHiddenWidgetIds] = useState([])
+  // Focus stats for dashboard widget
+  const [focusToday, setFocusToday] = useState(null)
+  const [focusStats, setFocusStats] = useState(null)
+  // Peer chat recent conversations
+  const [recentConvos, setRecentConvos] = useState([])
 
   // Feature Eligibility Flags for current student profile
   const flags = getCollegeFeatureEligibility(profile)
@@ -39,23 +44,19 @@ export default function CollegeDashboardPage() {
       try {
         const token = localStorage.getItem('studentToken')
         if (token) {
-          const res = await axios.get('http://localhost:5000/api/study-tools/dashboard-summary', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          if (res.data?.success) {
-            setData(res.data)
-          }
-
-          try {
-            const discRes = await axios.get('http://localhost:5000/api/onboarding/discovery/result', {
-              headers: { Authorization: `Bearer ${token}` }
-            })
-            if (discRes.data?.success && discRes.data.recommendedDomain) {
-              setDiscoveryResult(discRes.data)
-            }
-          } catch (e) {
-            console.warn('Discovery result not ready yet')
-          }
+          const h = { headers: { Authorization: `Bearer ${token}` } }
+          const [res, discRes, focusTodayRes, focusStatsRes, convosRes] = await Promise.allSettled([
+            axios.get('http://localhost:5000/api/study-tools/dashboard-summary', h),
+            axios.get('http://localhost:5000/api/onboarding/discovery/result', h),
+            axios.get('http://localhost:5000/api/focus/today', h),
+            axios.get('http://localhost:5000/api/focus/stats', h),
+            axios.get('http://localhost:5000/api/peer-chat/conversations', h),
+          ])
+          if (res.status === 'fulfilled' && res.value.data?.success) setData(res.value.data)
+          if (discRes.status === 'fulfilled' && discRes.value.data?.recommendedDomain) setDiscoveryResult(discRes.value.data)
+          if (focusTodayRes.status === 'fulfilled' && focusTodayRes.value.data?.success) setFocusToday(focusTodayRes.value.data.today)
+          if (focusStatsRes.status === 'fulfilled' && focusStatsRes.value.data?.success) setFocusStats(focusStatsRes.value.data.stats)
+          if (convosRes.status === 'fulfilled' && convosRes.value.data?.success) setRecentConvos(convosRes.value.data.conversations?.slice(0, 3) || [])
         }
       } catch (err) {
         console.warn('Failed to load dashboard summary:', err)
@@ -157,6 +158,85 @@ export default function CollegeDashboardPage() {
               <FiZap size={14} /> {header.currentStreak !== undefined ? `${header.currentStreak} Days 🔥` : '0 Days 🔥'}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── TODAY'S FOCUS & PEER CHAT QUICK ACCESS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+
+        {/* Focus Widget */}
+        <div style={{ background: isGamified ? '#0f1f3d' : '#fff', borderRadius: 20, padding: 24, border: `1px solid ${isGamified ? 'rgba(0,245,212,0.15)' : '#e2e8f0'}`, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiCpu size={18} color="#fff" />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: isGamified ? '#f8fafc' : '#0f172a' }}>Today's Focus</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>Intelligent Focus Mode</div>
+              </div>
+            </div>
+            <Link to="/college/focus/analytics" style={{ fontSize: 11, fontWeight: 800, color: '#0284c7', textDecoration: 'none' }}>Analytics →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: 'Focus Time', value: focusToday?.totalFocusMinutes ? `${focusToday.totalFocusMinutes}m` : '—' },
+              { label: 'Sessions',   value: focusToday?.sessionsCompleted ?? '—' },
+              { label: 'Streak',     value: focusStats?.streak ? `${focusStats.streak}d 🔥` : '—' },
+              { label: 'Score',      value: focusToday?.averageFocusScore ?? '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ textAlign: 'center', background: isGamified ? 'rgba(0,245,212,0.05)' : '#f8fafc', borderRadius: 10, padding: '10px 6px', border: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: 16, fontWeight: 900, color: '#0284c7' }}>{value}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', marginTop: 2 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Link to="/college/academic/focus"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#0284c7', color: '#fff', padding: '10px 16px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+              <FiPlay size={14} /> Start Focus
+            </Link>
+            <Link to="/college/peer-chat"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#f1f5f9', color: '#475569', padding: '10px 16px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+              <FiUsers size={14} /> Find Peer
+            </Link>
+          </div>
+        </div>
+
+        {/* Peer Chat Widget */}
+        <div style={{ background: isGamified ? '#0f1f3d' : '#fff', borderRadius: 20, padding: 24, border: `1px solid ${isGamified ? 'rgba(0,245,212,0.15)' : '#e2e8f0'}`, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiMessageSquare size={18} color="#fff" />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: isGamified ? '#f8fafc' : '#0f172a' }}>Peer Chat</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>Study with classmates</div>
+              </div>
+            </div>
+            <Link to="/college/peer-chat" style={{ fontSize: 11, fontWeight: 800, color: '#7c3aed', textDecoration: 'none' }}>Open →</Link>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16, minHeight: 64 }}>
+            {recentConvos.length === 0
+              ? <div style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>No conversations yet. Find a peer to get started!</div>
+              : recentConvos.map(c => (
+                <Link key={c._id} to="/college/peer-chat"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 10, textDecoration: 'none', border: '1px solid #f1f5f9' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#dbeafe', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{c.peerName?.[0] || 'S'}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{c.peerName}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start chatting'}</div>
+                  </div>
+                  {c.unreadCount > 0 && <div style={{ background: '#3b82f6', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 8, flexShrink: 0 }}>{c.unreadCount}</div>}
+                </Link>
+              ))
+            }
+          </div>
+          <Link to="/college/peer-chat"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff', padding: '10px 16px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+            <FiMessageSquare size={14} /> Open Chat
+          </Link>
         </div>
       </div>
 

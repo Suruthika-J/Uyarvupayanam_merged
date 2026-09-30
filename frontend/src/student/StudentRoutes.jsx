@@ -101,6 +101,9 @@ import PracticeQuestionsPage from './pages/study-tools/PracticeQuestionsPage'
 import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 import CollegeSettingsPage from './pages/settings/CollegeSettingsPage'
+import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
+import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
+import PeerChatPage from './pages/community/PeerChatPage'
 
 import './student.css'
 
@@ -305,6 +308,9 @@ export default function StudentRoutes() {
             <Route path="study-tools/practice" element={<PracticeQuestionsPage />} />
             <Route path="community/mentors" element={<PeerMentorshipPage />} />
             <Route path="community/doubts" element={<DoubtResolutionPage />} />
+            <Route path="peer-chat" element={<PeerChatPage />} />
+            <Route path="academic/focus" element={<IntelligentFocusPage />} />
+            <Route path="focus/analytics" element={<FocusAnalyticsPage />} />
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="bookmarks" element={<BookmarksPage />} />
             <Route path="notifications" element={<NotificationsPage />} />

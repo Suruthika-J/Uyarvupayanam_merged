@@ -177,6 +177,22 @@ io.on("connection", (socket) => {
     console.log(`📌 Socket ${socket.id} joined room: user_${userId}`);
   });
 
+  // ── Peer Chat — typing indicator ─────────────────────────────────────────
+  // Client emits { conversationId, userId, peerId } to signal typing.
+  // We forward it to the peer's personal room only.
+  socket.on("peer:typing", ({ conversationId, userId, peerId }) => {
+    if (peerId) {
+      socket.to(`user_${peerId}`).emit("peer:typing", { conversationId, userId });
+    }
+  });
+
+  // ── Focus Mode — status broadcast to peer study partner ─────────────────
+  socket.on("focus:status", ({ toUserId, status, subject }) => {
+    if (toUserId) {
+      socket.to(`user_${toUserId}`).emit("focus:status", { status, subject });
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log(`🔌 Socket disconnected: ${socket.id}`);
   });
@@ -262,6 +278,12 @@ app.use("/api/cse-skills", require("./routes/cseSkillRoutes"));
 
 // Step 5 AHP Career Interest Discovery Route
 app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
+
+// ── Intelligent Focus Mode (College Students) ───────────────────────────────
+app.use("/api/focus", require("./routes/focusRoutes"));
+
+// ── Peer Chat & Study Partner System (College Students) ─────────────────────
+app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
