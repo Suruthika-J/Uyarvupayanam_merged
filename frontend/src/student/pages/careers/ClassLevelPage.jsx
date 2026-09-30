@@ -4,7 +4,7 @@ import {
   FiArrowLeft, FiArrowRight, FiHeart, FiFlag, FiTarget, FiStar,
   FiAward, FiVideo, FiBriefcase,
   FiBookmark, FiCompass, FiLayers, FiDollarSign,
-  FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin
+  FiFileText, FiLink, FiHelpCircle, FiBookOpen, FiChevronDown, FiChevronUp, FiMapPin, FiDivide
 } from 'react-icons/fi'
 import { classContentService } from '../../../services/classContentService'
 import { userActionService } from '../../../services/userActionService'
@@ -45,6 +45,7 @@ const CLASS_SECTIONS = {
     { id: 'Entrance Exams', label: 'Entrance Exams', icon: FiFileText, color: '#f59e0b' },
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
+    { id: 'Maths Missions', label: 'Maths Missions', icon: FiDivide, color: ACCENT },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
   "10": [
@@ -262,6 +263,52 @@ const Class10ExamPanel = () => (
     </div>
   </div>
 )
+
+// The Maths Missions entry card — green brand card used inside the
+// dedicated "Maths Missions" section of the Class 8 page (section tab is
+// defined in CLASS_SECTIONS["8"], rendered through the active-sec branch).
+function MathsMissionsCard({ onStart }) {
+  return (
+    <div
+      className="hover-lift"
+      onClick={onStart}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onStart() }}
+      style={{
+        background: 'linear-gradient(120deg, #e6f4ec 0%, #f6fbf8 55%, #ffffff 100%)',
+        border: '1.5px solid #b7dcc9', borderRadius: 20, boxShadow: 'var(--s-shadow)',
+        padding: '24px 28px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap',
+        transition: 'all 0.25s ease',
+      }}
+    >
+      <div style={{ width: 62, height: 62, borderRadius: 18, background: '#fff', border: '1.5px solid #d9e6df', color: ACCENT, display: 'grid', placeItems: 'center', flexShrink: 0, boxShadow: 'var(--s-shadow)' }}>
+        <FiTarget size={28} />
+      </div>
+      <div style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0, fontSize: 21, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em' }}>Maths Missions</h3>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: ACCENT, background: '#fff', border: '1px solid #cfe9db', borderRadius: 99, padding: '4px 11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learning</span>
+        </div>
+        <p style={{ margin: '6px 0 0', fontSize: 14, color: '#5b6b80', lineHeight: 1.6, maxWidth: 620 }}>
+          Turn difficult Maths concepts into small challenges. Learn the concept, solve missions, and unlock new levels.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          {['15 topics', '5 levels each', 'Boss missions'].map((chip) => (
+            <span key={chip} style={{ fontSize: 11.5, fontWeight: 700, color: '#047857', background: '#d1fae5', borderRadius: 99, padding: '4px 11px' }}>{chip}</span>
+          ))}
+        </div>
+      </div>
+      <SBtn
+        variant="primary"
+        style={{ background: ACCENT, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 26px', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+      >
+        Start Maths Mission <FiArrowRight size={16} />
+      </SBtn>
+    </div>
+  )
+}
 
 export default function ClassLevelPage(props) {
   const params = useParams()
@@ -513,7 +560,7 @@ export default function ClassLevelPage(props) {
   const availableSections = useMemo(() => {
     if (loading) return sections;
     return sections.filter(s => {
-      if (s.id === 'Colleges' || s.id === 'College Mapping') return true;
+      if (s.id === 'Colleges' || s.id === 'College Mapping' || s.id === 'Maths Missions') return true;
       const allItems = [...(contents || []), ...(scholarships || [])];
       return allItems.some(c => c.sectionType === s.id);
     });
@@ -684,7 +731,20 @@ export default function ClassLevelPage(props) {
           </div>
         )}
 
-        {loading ? (
+        {/* Maths Missions is its own section — rendered via the active-sec
+            branch below (tab added to CLASS_SECTIONS["8"] right after Skills). */}
+
+        {activeSec === 'Maths Missions' && cleanLevel === '8' ? (
+          <div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
+              <div>
+                <h2 style={{ fontSize:28, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>Maths Missions</h2>
+                <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Learn, practise and unlock new challenges in Class 8 Maths.</p>
+              </div>
+            </div>
+            <MathsMissionsCard onStart={() => navigate('/student/class8/maths')} />
+          </div>
+        ) : loading ? (
           <div style={{ padding: '100px 0' }}><SLoader /></div>
         ) : (
           <div>

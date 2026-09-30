@@ -1,0 +1,227 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Maths Missions (Class 8) — subtle motion & shared presentational helpers.
+   Follows the Uyarvu Payanam design language: green brand, white surfaces,
+   soft borders, restrained, professional. No neon, no cartoons, no emojis.
+   Everything else is styled inline in the pages (same convention as the rest
+   of the student tree). ────────────────────────────────────────────────────── */
+
+.student-root .mm-fade-in {
+  animation: mm-fade-in 0.28s ease both;
+}
+
+.student-root .mm-feedback-pop {
+  animation: mm-feedback-pop 0.24s ease both;
+}
+
+.student-root .mm-progress-fill {
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Mission-map journey rail: hide the horizontal scrollbar but keep it usable */
+.student-root .mm-rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--s-primary-l) transparent;
+}
+.student-root .mm-rail::-webkit-scrollbar {
+  height: 6px;
+}
+.student-root .mm-rail::-webkit-scrollbar-thumb {
+  background: var(--s-primary-l);
+  border-radius: 99px;
+}
+.student-root .mm-rail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Achievements card reveal (subtle) */
+.student-root .mm-achievement {
+  animation: mm-achievement-in 0.45s ease both;
+}
+
+.student-root .mm-connected {
+  background-clip: padding-box;
+}
+
+/* Status dots on topic cards */
+.student-root .mm-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+@keyframes mm-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mm-feedback-pop {
+  0%   { opacity: 0; transform: scale(0.985); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mm-achievement-in {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Spinner (in-flight API work) */
+.student-root .mm-spin {
+  animation: mm-spin 0.9s linear infinite;
+  display: inline-block;
+}
+
+@keyframes mm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Gentle hover-bob for the guide character (subtle, never flashy) */
+.student-root .mm-float {
+  animation: mm-float 3.2s ease-in-out infinite;
+}
+
+@keyframes mm-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* Soft heartbeat ring on the currently-playable mission node */
+.student-root .mm-current-pulse {
+  animation: mm-current-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes mm-current-pulse {
+  0%, 100% { box-shadow: 0 14px 30px -16px rgba(26,122,80,0.5), 0 0 0 0 rgba(26,122,80,0.25); }
+  50%      { box-shadow: 0 14px 30px -16px rgba(26,122,80,0.5), 0 0 0 8px rgba(26,122,80,0); }
+}
+
+/* Slightly larger pop for the big completion panel */
+.student-root .mm-achievement {
+  animation: mm-achievement-in 0.45s ease both;
+}
+
+.student-root .mm-rise {
+  animation: mm-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mm-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Two-pane layouts that collapse to one column on smaller screens */
+.student-root .mm-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+  gap: 30px;
+  align-items: center;
+}
+
+.student-root .mm-split {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 30px;
+  align-items: start;
+}
+
+@media (max-width: 920px) {
+  .student-root .mm-hero-grid,
+  .student-root .mm-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Big readability: mission visuels and progress bars never shrink to dust */
+.student-root .mm-rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--s-primary-l) transparent;
+}
+.student-root .mm-rail::-webkit-scrollbar {
+  height: 6px;
+}
+.student-root .mm-rail::-webkit-scrollbar-thumb {
+  background: var(--s-primary-l);
+  border-radius: 99px;
+}
+.student-root .mm-rail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Maths Space Adventure — Class 8 map + planet journeys.
+   Space (deep blue/purple) lives ONLY inside the Maths game area; the rest of
+   the site keeps the light Uyarvu Payanam look. Planets are original inline
+   SVG (see components/class8/Planet.jsx) — no images, no emojis.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Twinkling starfield dots (drawn as spans by SpaceScene) */
+.student-root .mm-star {
+  animation: mm-twinkle ease-in-out infinite;
+}
+@keyframes mm-twinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1; transform: scale(1.15); }
+}
+
+/* Glowing halo behind the currently-playable planet (green on white) */
+.student-root .mm-planet-glow {
+  animation: mm-planet-glow 2.8s ease-in-out infinite;
+}
+@keyframes mm-planet-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(55, 176, 124, 0.35), 0 0 26px 4px rgba(55, 176, 124, 0.18); }
+  50%      { box-shadow: 0 0 0 10px rgba(55, 176, 124, 0), 0 0 34px 8px rgba(55, 176, 124, 0.3); }
+}
+
+/* Gentle drift for the astronaut beside the current planet */
+.student-root .mm-drift {
+  animation: mm-drift 4.2s ease-in-out infinite;
+}
+@keyframes mm-drift {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-7px) rotate(1deg); }
+}
+
+/* Map node focus ring (keyboard accessibility, never colour-only states) */
+.student-root .mm-map-node:focus-visible {
+  outline: 3px solid rgba(26, 122, 80, 0.85);
+  outline-offset: 3px;
+  border-radius: 18px;
+}
+
+/* The serpentine journey map is desktop-first; mobile swaps to a vertical
+   journey so the trail always reads as a path, never a tiny map. */
+.student-root .mm-map-desktop { display: block; }
+.student-root .mm-map-mobile { display: none; }
+
+@media (max-width: 900px) {
+  .student-root .mm-map-desktop { display: none; }
+  .student-root .mm-map-mobile { display: block; }
+}
+
+/* Dotted connector in the mobile vertical journey */
+.student-root .mm-journey-dash {
+  border-left: 3px dotted #8ea9d6;
+}
+
+/* Planet journey nodes on the topic page: finished link glows */
+.student-root .mm-linked {
+  transition: box-shadow 0.25s ease;
+}
+.student-root .mm-linked:hover {
+  box-shadow: 0 14px 34px -18px rgba(15, 23, 42, 0.45);
+}
+
+/* Big-space labels on the journeys (ink on the white theme) */
+.student-root .mm-space-title {
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-weight: 900;
+}
+.student-root .mm-space-kicker {
+  color: rgba(15, 23, 42, 0.64);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 12px;
+}

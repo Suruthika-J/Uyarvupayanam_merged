@@ -50,6 +50,11 @@ import Class5CommunicationPage from './pages/careers/Class5CommunicationPage'
 import Class5PassportPage from './pages/careers/Class5PassportPage'
 import PatternMasterPage from './pages/careers/PatternMasterPage'
 
+// Class 8 Maths Missions (gamified learning)
+import MathsMissionsPage from './pages/class8/maths/MathsMissionsPage'
+import MathsTopicPage from './pages/class8/maths/MathsTopicPage'
+import MathsMissionPage from './pages/class8/maths/MathsMissionPage'
+
 // Class 5 career-discovery redesign (Uyarvu Payanam)
 import Class5Dashboard from './pages/class5/Class5Dashboard'
 import ScholarshipsSection from './pages/class5/ScholarshipsSection'
@@ -215,6 +220,13 @@ export default function StudentRoutes() {
             <Route path="class8" element={<Navigate to="/student/class8" replace />} />
             <Route path="student/class8/content/:slug" element={<ContentDetailPage />} />
             <Route path="class8/content/:slug" element={<PreserveParamRedirect to="/student/class8/content/:slug" />} />
+            {/* Class 8 Maths Missions — gamified learning */}
+            <Route path="student/class8/maths" element={<StudentProtectedRoute><MathsMissionsPage /></StudentProtectedRoute>} />
+            <Route path="class8/maths" element={<Navigate to="/student/class8/maths" replace />} />
+            <Route path="student/class8/maths/topic/:topicId" element={<StudentProtectedRoute><MathsTopicPage /></StudentProtectedRoute>} />
+            <Route path="class8/maths/topic/:topicId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId" />} />
+            <Route path="student/class8/maths/topic/:topicId/mission/:missionId" element={<StudentProtectedRoute><MathsMissionPage /></StudentProtectedRoute>} />
+            <Route path="class8/maths/topic/:topicId/mission/:missionId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId/mission/:missionId" />} />
             <Route path="student/class10" element={<ClassLevelPage level="10" />} />
             <Route path="class10" element={<Navigate to="/student/class10" replace />} />
             <Route path="student/class10/content/:slug" element={<ContentDetailPage />} />

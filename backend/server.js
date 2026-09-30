@@ -95,6 +95,16 @@ connectDB().then(() => {
     console.error("Failed to require/run World Explorer seeding:", err);
   }
   try {
+    const { seedMathMissions } = require("./seeders/seedMathMissions");
+    seedMathMissions()
+      .then(results => {
+        console.log("Maths Missions seed:", results);
+      })
+      .catch(err => console.error("Error in Maths Missions seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run Maths Missions seeding:", err);
+  }
+  try {
     const { seedScience } = require("./seeders/seedScience");
     seedScience()
       .then(results => {
@@ -250,6 +260,9 @@ app.use("/api/tamil", require("./routes/tamilRoutes"));
 
 // Math Adventure Worlds (Class 5 maths)
 app.use("/api/maths", require("./routes/mathsRoutes"));
+
+// Class 8 Maths Missions (Fractions reference implementation)
+app.use("/api/maths", require("./routes/mathsMissionsRoutes"));
 
 // World Explorer (Class 5 social science)
 app.use("/api/social", require("./routes/socialRoutes"));
