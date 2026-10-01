@@ -193,7 +193,7 @@ export function SEmpty({ icon, title = 'Nothing here', desc = '' }) {
 }
 
 /* ── Input ───────────────────────────────────────────────── */
-export function SInput({ label, error, icon, style = {}, ...props }) {
+export function SInput({ label, error, icon, rightElement, style = {}, ...props }) {
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -203,13 +203,14 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
           fontFamily: 'var(--s-font-display)',
         }}>{label}</label>
       )}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         {icon && (
           <span style={{
             position: 'absolute', left: 12, top: '50%',
             transform: 'translateY(-50%)', fontSize: 15,
             color: focused ? 'var(--s-primary)' : 'var(--s-text3)',
             pointerEvents: 'none', transition: 'color 0.15s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>{icon}</span>
         )}
         <input
@@ -220,12 +221,24 @@ export function SInput({ label, error, icon, style = {}, ...props }) {
             background: 'var(--s-surface)',
             border: `1.5px solid ${focused ? 'var(--s-primary)' : error ? '#dc2626' : 'var(--s-border)'}`,
             borderRadius: 10,
-            padding: icon ? '11px 14px 11px 38px' : '11px 14px',
+            paddingLeft: icon ? 38 : 14,
+            paddingRight: rightElement ? 40 : 14,
+            paddingTop: 11,
+            paddingBottom: 11,
             fontSize: 14, color: 'var(--s-text)', outline: 'none',
             transition: 'border-color 0.2s ease', ...style,
           }}
           {...props}
         />
+        {rightElement && (
+          <span style={{
+            position: 'absolute', right: 12, top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {rightElement}
+          </span>
+        )}
       </div>
       {error && <span style={{ fontSize: 12, color: '#dc2626', marginTop: 1 }}>{error}</span>}
     </div>

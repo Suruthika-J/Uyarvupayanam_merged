@@ -253,20 +253,25 @@ export default function ForgotPasswordPage() {
 
               {step === 'password' && (
                 <form onSubmit={resetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <div style={{ position: 'relative' }}>
-                    <SInput
-                      label="New Password" type={showPwd ? 'text' : 'password'} placeholder="Min 6 characters"
-                      icon={<FiLock />} value={form.password} onChange={set('password')}
-                      error={errors.password} id="reset-password"
-                    />
-                    <button type="button" onClick={() => setShowPwd(s => !s)} style={{
-                      position: 'absolute', right: 12, top: errors.password ? 30 : '50%',
-                      transform: errors.password ? 'none' : 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', padding: 0,
-                    }}>
-                      {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                    </button>
-                  </div>
+                  <SInput
+                    label="New Password" type={showPwd ? 'text' : 'password'} placeholder="Min 6 characters"
+                    icon={<FiLock />} value={form.password} onChange={set('password')}
+                    error={errors.password} id="reset-password"
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd(s => !s)}
+                        aria-label={showPwd ? 'Hide password' : 'Show password'}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--s-text3)', padding: 4, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                      </button>
+                    }
+                  />
 
                   {form.password && (
                     <div style={{ marginTop: -10 }}>
@@ -285,20 +290,25 @@ export default function ForgotPasswordPage() {
                     </div>
                   )}
 
-                  <div style={{ position: 'relative' }}>
-                    <SInput
-                      label="Confirm Password" type={showConfirm ? 'text' : 'password'} placeholder="Repeat your new password"
-                      icon={<FiLock />} value={form.confirmPassword} onChange={set('confirmPassword')}
-                      error={errors.confirmPassword} id="reset-confirm-password"
-                    />
-                    <button type="button" onClick={() => setShowConfirm(s => !s)} style={{
-                      position: 'absolute', right: 12, top: errors.confirmPassword ? 30 : '50%',
-                      transform: errors.confirmPassword ? 'none' : 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', padding: 0,
-                    }}>
-                      {showConfirm ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                    </button>
-                  </div>
+                  <SInput
+                    label="Confirm Password" type={showConfirm ? 'text' : 'password'} placeholder="Repeat your new password"
+                    icon={<FiLock />} value={form.confirmPassword} onChange={set('confirmPassword')}
+                    error={errors.confirmPassword} id="reset-confirm-password"
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm(s => !s)}
+                        aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--s-text3)', padding: 4, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        {showConfirm ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                      </button>
+                    }
+                  />
 
                   <SBtn type="submit" variant="primary" style={{ width: '100%', justifyContent: 'center', marginTop: 4 }} disabled={loading} id="reset-submit">
                     {loading ? 'Resetting Password…' : 'Reset Password'}

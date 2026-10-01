@@ -285,22 +285,25 @@ export default function SignupPage() {
                 <SInput label="Email Address" type="email" placeholder="you@email.com" icon={<FiMail />} value={form.email} onChange={set('email')} error={errors.email} />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="s-grid-2col">
-                  <div style={{ position: 'relative' }}>
-                    <SInput
-                      label="Password" type={showPwd ? 'text' : 'password'}
-                      placeholder="Min 6 chars" icon={<FiLock />}
-                      value={form.password} onChange={set('password')} error={errors.password}
-                    />
-                    <button type="button" onClick={() => setShowPwd(s => !s)} style={{
-                      position: 'absolute', right: 12,
-                      top: errors.password ? 30 : '50%',
-                      transform: errors.password ? 'none' : 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--s-text3)', padding: 0,
-                    }}>
-                      {showPwd ? <FiEyeOff size={15} /> : <FiEye size={15} />}
-                    </button>
-                  </div>
+                  <SInput
+                    label="Password" type={showPwd ? 'text' : 'password'}
+                    placeholder="Min 6 chars" icon={<FiLock />}
+                    value={form.password} onChange={set('password')} error={errors.password}
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd(s => !s)}
+                        aria-label={showPwd ? 'Hide password' : 'Show password'}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--s-text3)', padding: 4, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        {showPwd ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                      </button>
+                    }
+                  />
                   <SInput label="Confirm Password" type={showPwd ? 'text' : 'password'} placeholder="Repeat password" icon={<FiLock />} value={form.confirmPassword} onChange={set('confirmPassword')} error={errors.confirmPassword} />
                 </div>
 

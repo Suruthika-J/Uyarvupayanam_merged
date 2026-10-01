@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import axiosInstance from '../../../config/axios'
 import { SBtn, SCard, SInput, SSelect, SAlert, SLoader } from '../../components/ui'
@@ -75,13 +75,27 @@ function Step1InstitutionBlock({ profile, setProfile }) {
   const [dbColleges, setDbColleges] = React.useState([]) // colleges from backend
   const [loadingColleges, setLoadingColleges] = React.useState(false)
   const [collegeError, setCollegeError] = React.useState('')
-  const [manualCollegeName, setManualCollegeName] = React.useState('')
+  const [selectedDbCollege, setSelectedDbCollege] = React.useState(null)
+  const [manualCollegeName, setManualCollegeName] = React.useState(profile.institution || '')
   const searchInputRef = React.useRef(null)
   const dropdownRef = React.useRef(null)
 
-  // Determine if the currently selected college came from the DB list or manual
-  const isFromDb = profile.institution && dbColleges.some(c => c.collegeName === profile.institution)
-  const isManual = profile.institution && !isFromDb && profile.institution === manualCollegeName
+  // Synchronize initial selection once colleges are loaded
+  React.useEffect(() => {
+    if (profile.institution) {
+      const match = dbColleges.find(c => c.collegeName === profile.institution)
+      if (match) {
+        setSelectedDbCollege(match.collegeName)
+        setManualCollegeName('')
+      } else {
+        setSelectedDbCollege(null)
+        setManualCollegeName(profile.institution)
+      }
+    } else {
+      setSelectedDbCollege(null)
+      setManualCollegeName('')
+    }
+  }, [dbColleges])
 
   // Load colleges from backend when district changes
   React.useEffect(() => {
@@ -129,24 +143,31 @@ function Step1InstitutionBlock({ profile, setProfile }) {
 
   const selectCollege = (college) => {
     const name = college.collegeName || college
+    setSelectedDbCollege(name)
+    setManualCollegeName('')
     setProfile(prev => ({ ...prev, institution: name }))
-    setManualCollegeName('') // clear manual entry
     setCollegeSearch('')
     setDropdownOpen(false)
-    // blur search input to prevent accidental additional typing
     if (searchInputRef.current) searchInputRef.current.blur()
   }
 
   const clearSelectedCollege = () => {
+    setSelectedDbCollege(null)
     setProfile(prev => ({ ...prev, institution: '' }))
-    setManualCollegeName('')
     setCollegeSearch('')
     setDropdownOpen(false)
   }
 
+  const handleManualChange = (val) => {
+    setSelectedDbCollege(null)
+    setManualCollegeName(val)
+    setProfile(prev => ({ ...prev, institution: val }))
+  }
+
   const changeDistrict = (newDistrict) => {
-    setProfile(prev => ({ ...prev, institutionDistrict: newDistrict, institution: '' }))
+    setSelectedDbCollege(null)
     setManualCollegeName('')
+    setProfile(prev => ({ ...prev, institutionDistrict: newDistrict, institution: '' }))
     setCollegeSearch('')
     setDropdownOpen(false)
     setDbColleges([])
@@ -187,25 +208,25 @@ function Step1InstitutionBlock({ profile, setProfile }) {
               )}
             </label>
 
-            {/* ── SELECTED STATE: shows compact chip when college selected ── */}
-            {profile.institution ? (
+            {/* ── SELECTED STATE: shows compact chip when college selected from list ── */}
+            {selectedDbCollege ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '12px 16px',
-                background: isFromDb ? '#f0fdf4' : '#fffbeb',
-                border: `2px solid ${isFromDb ? '#86efac' : '#fcd34d'}`,
+                background: '#f0fdf4',
+                border: '2px solid #86efac',
                 borderRadius: 12,
                 fontSize: 14, fontWeight: 700,
-                color: isFromDb ? '#166534' : '#b45309',
+                color: '#166534',
               }}>
-                <span style={{ fontSize: 18 }}>{isFromDb ? '🎓' : '✏️'}</span>
-                <span style={{ flex: 1 }}>{profile.institution}</span>
+                <span style={{ fontSize: 18 }}>🎓</span>
+                <span style={{ flex: 1 }}>{selectedDbCollege}</span>
                 <span style={{
-                  fontSize: 10, fontWeight: 800, background: isFromDb ? '#dcfce7' : '#fef9c3',
-                  color: isFromDb ? '#166534' : '#a16207', padding: '2px 8px', borderRadius: 10,
+                  fontSize: 10, fontWeight: 800, background: '#dcfce7',
+                  color: '#166534', padding: '2px 8px', borderRadius: 10,
                   textTransform: 'uppercase', letterSpacing: '0.05em'
                 }}>
-                  {isFromDb ? 'Selected' : 'Manual'}
+                  Selected from list
                 </span>
                 <button
                   type="button"
@@ -344,11 +365,11 @@ function Step1InstitutionBlock({ profile, setProfile }) {
               </div>
             )}
 
-            {/* ── MANUAL ENTRY — only shown & enabled when no DB college is selected ── */}
+            {/* ── MANUAL ENTRY ── */}
             <div style={{ marginTop: 14 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6,
-                opacity: profile.institution ? 0.4 : 1,
+                opacity: selectedDbCollege ? 0.4 : 1,
                 transition: 'opacity 0.2s ease'
               }}>
                 <div style={{ height: 1, flex: 1, background: 'var(--s-border)' }} />
@@ -357,32 +378,45 @@ function Step1InstitutionBlock({ profile, setProfile }) {
                 </span>
                 <div style={{ height: 1, flex: 1, background: 'var(--s-border)' }} />
               </div>
-              <p style={{ fontSize: 12, color: profile.institution ? '#94a3b8' : 'var(--s-text3)', margin: '0 0 6px' }}>
-                {profile.institution
-                  ? '✓ College already selected above. Remove it to type manually.'
+              <p style={{ fontSize: 12, color: selectedDbCollege ? '#94a3b8' : 'var(--s-text3)', margin: '0 0 6px' }}>
+                {selectedDbCollege
+                  ? '✓ College selected from list above. Click × to type manually.'
                   : "Can't find your college in the list? Type it manually:"}
               </p>
               <input
                 type="text"
-                placeholder={profile.institution ? 'Disabled – college already selected' : 'Type your college name...'}
-                value={profile.institution ? '' : manualCollegeName}
-                disabled={!!profile.institution}
-                onChange={e => {
-                  const val = e.target.value
-                  setManualCollegeName(val)
-                  setProfile(prev => ({ ...prev, institution: val }))
-                }}
+                placeholder={selectedDbCollege ? 'Disabled – college already selected from list' : 'Type your college name...'}
+                value={selectedDbCollege ? '' : manualCollegeName}
+                disabled={!!selectedDbCollege}
+                onChange={e => handleManualChange(e.target.value)}
                 style={{
                   width: '100%', padding: '10px 14px', borderRadius: 10,
-                  border: profile.institution ? '1px dashed #cbd5e1' : '1px dashed var(--s-border)',
+                  border: selectedDbCollege ? '1px dashed #cbd5e1' : manualCollegeName ? '1.5px solid var(--s-primary, #047857)' : '1px dashed var(--s-border)',
                   fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                  background: profile.institution ? '#f8fafc' : '#fff',
-                  color: profile.institution ? '#94a3b8' : 'var(--s-text)',
-                  cursor: profile.institution ? 'not-allowed' : 'text',
+                  background: selectedDbCollege ? '#f8fafc' : '#fff',
+                  color: selectedDbCollege ? '#94a3b8' : 'var(--s-text)',
+                  cursor: selectedDbCollege ? 'not-allowed' : 'text',
                   boxSizing: 'border-box',
                   transition: 'all 0.2s ease'
                 }}
               />
+              {manualCollegeName && !selectedDbCollege && (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: 12, color: '#166534', fontWeight: 600, background: '#f0fdf4',
+                  padding: '6px 12px', borderRadius: 8, border: '1px solid #bbf7d0'
+                }}>
+                  <span>✓ Using manual college: <strong>{manualCollegeName}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => handleManualChange('')}
+                    style={{ background: 'none', border: 'none', color: '#166534', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}
+                    title="Clear manual entry"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -420,8 +454,17 @@ function Step1InstitutionBlock({ profile, setProfile }) {
 export default function CollegeOnboardingPage() {
   const { student, updateStudent } = useStudentAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const [step, setStep] = useState(1)
+  const urlStep = parseInt(searchParams.get('step'), 10)
+  const [step, setStep] = useState(urlStep >= 1 && urlStep <= 6 ? urlStep : 1)
+
+  useEffect(() => {
+    const s = parseInt(searchParams.get('step'), 10)
+    if (s >= 1 && s <= 6) {
+      setStep(s)
+    }
+  }, [searchParams])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -677,7 +720,10 @@ export default function CollegeOnboardingPage() {
               careerInterests: p.careerInterests?.length ? p.careerInterests : prev.careerInterests,
               skills: p.skills?.length ? p.skills : prev.skills
             }))
-            if (p.currentStep && p.currentStep > 1) {
+            const qStep = parseInt(searchParams.get('step'), 10)
+            if (qStep >= 1 && qStep <= 6) {
+              setStep(qStep)
+            } else if (p.currentStep && p.currentStep > 1) {
               setStep(Math.min(6, p.currentStep))
             }
           }

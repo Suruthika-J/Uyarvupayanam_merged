@@ -23,6 +23,7 @@ const TABS = [
 
 export default function BookmarksPage() {
   const { student } = useStudentAuth()
+  const { studentContext, profile } = useStudentContext()
   const navigate = useNavigate()
   
   const [items, setItems] = useState([])
@@ -34,16 +35,16 @@ export default function BookmarksPage() {
 
   useEffect(() => {
     fetchBookmarks()
-  }, [student?._id])
+  }, [student?._id, student?.id])
 
   const fetchBookmarks = async () => {
-    if (!student?._id) return
     try {
       setLoading(true)
       const res = await userActionService.getSavedList()
-      setItems(res.data || [])
+      setItems(res?.data || [])
     } catch (err) {
       console.error('Failed to fetch bookmarks:', err)
+      setItems([])
     } finally {
       setLoading(false)
     }
@@ -95,12 +96,13 @@ export default function BookmarksPage() {
     if (!c) return null
 
     const config = {
-      ClassContent: { color: 'blue',   link: `/student/class${c.targetClass}/content/${c.slug}` },
-      Course:       { color: 'indigo', link: `/student/course/${c.slug}` },
-      College:      { color: 'purple', link: `/student/colleges/${c._id}` },
-      Scholarship:  { color: 'green',  link: `/student/scholarships/${c._id}` },
+      ClassContent: { color: 'blue',   link: `/student/class${c.targetClass || '12'}/content/${c.slug || ''}` },
+      Course:       { color: 'indigo', link: `/student/course/${c.slug || ''}` },
+      College:      { color: 'purple', link: `/student/colleges/${c._id || ''}` },
+      Scholarship:  { color: 'green',  link: `/student/scholarships/${c._id || ''}` },
       Exam:         { color: 'orange', link: `/student/careers` },
-      CareerPath:   { color: 'gold',   link: `/student/careers/path/${c._id}` }
+      CareerPath:   { color: 'gold',   link: `/student/careers/path/${c._id || ''}` },
+      Career:       { color: 'gold',   link: `/student/careers` }
     }[type] || { color: 'gray', link: '#' }
 
     return (
@@ -267,12 +269,12 @@ export default function BookmarksPage() {
               Recommended Resources for Your Profile
             </h2>
             <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '4px 0 0' }}>
-              Handpicked resources matched to your degree ({studentContext?.degree || 'College'}), specialization, and target career ({studentContext?.targetCareer || 'Career Objective'}).
+              Handpicked resources matched to your degree ({studentContext?.degree || profile?.degreeProgramme || 'College'}), specialization, and target career ({studentContext?.targetCareer || profile?.targetCareer || 'Career Objective'}).
             </p>
           </div>
-          {studentContext?.targetCareer && (
+          {(studentContext?.targetCareer || profile?.targetCareer) && (
             <SBadge color="blue">
-              <FiTarget style={{ marginRight: 4 }} /> Goal: {studentContext.targetCareer}
+              <FiTarget style={{ marginRight: 4 }} /> Goal: {studentContext?.targetCareer || profile?.targetCareer}
             </SBadge>
           )}
         </div>
@@ -286,7 +288,7 @@ export default function BookmarksPage() {
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>98% Match</span>
               </div>
               <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
-                {studentContext?.targetCareer ? `${studentContext.targetCareer} Mastery Curriculum` : `${studentContext?.course || 'Computer Science'} Specialization`}
+                {(studentContext?.targetCareer || profile?.targetCareer) ? `${studentContext?.targetCareer || profile?.targetCareer} Mastery Curriculum` : `${studentContext?.course || profile?.domain || 'Computer Science'} Specialization`}
               </h4>
               <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
                 Comprehensive coursework and lab modules designed to acquire core skills for your career target.
@@ -307,14 +309,14 @@ export default function BookmarksPage() {
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Career Prep</span>
               </div>
               <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
-                {studentContext?.targetCareer ? `${studentContext.targetCareer} Placement & Interview Pack` : 'Technical Placement Revision Guide'}
+                {(studentContext?.targetCareer || profile?.targetCareer) ? `${studentContext?.targetCareer || profile?.targetCareer} Placement & Interview Pack` : 'Technical Placement Revision Guide'}
               </h4>
               <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
                 Curated technical problem sets, system design templates, and mock questions.
               </p>
             </div>
             <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
-              <SBtn variant="primary" size="sm" onClick={() => navigate('/college/career/interview')} style={{ flex: 1 }}>
+              <SBtn variant="primary" size="sm" onClick={() => navigate('/college/career/interview-prep')} style={{ flex: 1 }}>
                 Open Guide
               </SBtn>
             </div>

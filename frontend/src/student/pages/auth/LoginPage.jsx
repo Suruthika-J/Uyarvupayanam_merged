@@ -188,25 +188,30 @@ export default function LoginPage() {
                 onChange={set('email')} error={errors.email}
                 id="login-email"
               />
-              <div style={{ position: 'relative' }}>
-                <SInput
-                  label="Password"
-                  type={showPwd ? 'text' : 'password'}
-                  placeholder="Your password"
-                  icon={<FiLock />} value={form.password}
-                  onChange={set('password')} error={errors.password}
-                  id="login-password"
-                />
-                <button type="button" onClick={() => setShowPwd(s => !s)} style={{
-                  position: 'absolute', right: 12,
-                  top: errors.password ? 30 : '50%',
-                  transform: errors.password ? 'none' : 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--s-text3)', padding: 0,
-                }}>
-                  {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                </button>
-              </div>
+              <SInput
+                label="Password"
+                type={showPwd ? 'text' : 'password'}
+                placeholder="Your password"
+                icon={<FiLock />}
+                value={form.password}
+                onChange={set('password')}
+                error={errors.password}
+                id="login-password"
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(s => !s)}
+                    aria-label={showPwd ? 'Hide password' : 'Show password'}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--s-text3)', padding: 4, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                }
+              />
 
               <div style={{ textAlign: 'right', marginTop: -10 }}>
                 <Link
