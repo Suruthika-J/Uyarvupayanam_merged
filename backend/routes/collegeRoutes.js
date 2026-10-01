@@ -2,6 +2,7 @@ const express = require("express");
 const {
   createCollege,
   getAllColleges,
+  getCollegesByDistrict,
   getCollegeById,
   updateCollege,
   deleteCollege,
@@ -21,6 +22,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/", getAllColleges);
+router.get("/by-district/:district", getCollegesByDistrict);
 router.get("/:id", getCollegeById);
 router.get("/:id/offered-courses", getOfferedCourses);
 

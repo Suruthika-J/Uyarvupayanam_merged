@@ -68,29 +68,95 @@ const CAREER_INTEREST_OPTIONS = [
   'Agricultural Scientist / Agronomist', 'Food Technology & Processing'
 ]
 
-// ── Step 1 sub-component with district-first + filtered college picker ────────
+// ── Step 1 sub-component with district-first + backend API filtered college picker ───
 function Step1InstitutionBlock({ profile, setProfile }) {
   const [collegeSearch, setCollegeSearch] = React.useState('')
-  const districtColleges = TN_COLLEGES_BY_DISTRICT[profile.institutionDistrict] || []
-  const filtered = districtColleges.filter(c =>
-    c.toLowerCase().includes(collegeSearch.toLowerCase())
-  )
-  const isCustom = profile.institution && !districtColleges.includes(profile.institution)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
+  const [dbColleges, setDbColleges] = React.useState([]) // colleges from backend
+  const [loadingColleges, setLoadingColleges] = React.useState(false)
+  const [collegeError, setCollegeError] = React.useState('')
+  const [manualCollegeName, setManualCollegeName] = React.useState('')
+  const searchInputRef = React.useRef(null)
+  const dropdownRef = React.useRef(null)
+
+  // Determine if the currently selected college came from the DB list or manual
+  const isFromDb = profile.institution && dbColleges.some(c => c.collegeName === profile.institution)
+  const isManual = profile.institution && !isFromDb && profile.institution === manualCollegeName
+
+  // Load colleges from backend when district changes
+  React.useEffect(() => {
+    if (!profile.institutionDistrict) {
+      setDbColleges([])
+      setCollegeError('')
+      return
+    }
+    setLoadingColleges(true)
+    setCollegeError('')
+    axiosInstance
+      .get(`/colleges/by-district/${encodeURIComponent(profile.institutionDistrict)}`)
+      .then(res => {
+        if (res.data?.success) {
+          setDbColleges(res.data.data || [])
+          if ((res.data.data || []).length === 0) {
+            setCollegeError(res.data.message || `No colleges found in ${profile.institutionDistrict}.`)
+          }
+        }
+      })
+      .catch(() => {
+        setCollegeError('Unable to load colleges. Please try again.')
+        // Fall back to static list from local data
+        const staticList = TN_COLLEGES_BY_DISTRICT[profile.institutionDistrict] || []
+        setDbColleges(staticList.map(name => ({ collegeName: name, _id: name })))
+      })
+      .finally(() => setLoadingColleges(false))
+  }, [profile.institutionDistrict])
+
+  // Close dropdown on outside click
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Filter colleges by search term (district-scoped)
+  const filtered = collegeSearch.trim()
+    ? dbColleges.filter(c => c.collegeName.toLowerCase().includes(collegeSearch.toLowerCase()))
+    : dbColleges
 
   const selectCollege = (college) => {
-    setProfile(prev => ({ ...prev, institution: college }))
+    const name = college.collegeName || college
+    setProfile(prev => ({ ...prev, institution: name }))
+    setManualCollegeName('') // clear manual entry
     setCollegeSearch('')
+    setDropdownOpen(false)
+    // blur search input to prevent accidental additional typing
+    if (searchInputRef.current) searchInputRef.current.blur()
+  }
+
+  const clearSelectedCollege = () => {
+    setProfile(prev => ({ ...prev, institution: '' }))
+    setManualCollegeName('')
+    setCollegeSearch('')
+    setDropdownOpen(false)
   }
 
   const changeDistrict = (newDistrict) => {
     setProfile(prev => ({ ...prev, institutionDistrict: newDistrict, institution: '' }))
+    setManualCollegeName('')
     setCollegeSearch('')
+    setDropdownOpen(false)
+    setDbColleges([])
+    setCollegeError('')
   }
 
   return (
     <div className="s-anim-up">
       <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-        Step 1: Institution &amp; Academic Level
+        Step 1: Institution & Academic Level
       </h3>
       <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
         Where are you currently pursuing your college education?
@@ -114,116 +180,207 @@ function Step1InstitutionBlock({ profile, setProfile }) {
           <div>
             <label style={{ fontWeight: 800, fontSize: 13, display: 'block', marginBottom: 8, color: 'var(--s-text)' }}>
               College / Institution Name *
-              <span style={{ fontWeight: 600, fontSize: 11, color: 'var(--s-text3)', marginLeft: 8 }}>
-                ({districtColleges.length} colleges in {profile.institutionDistrict})
-              </span>
+              {!loadingColleges && dbColleges.length > 0 && (
+                <span style={{ fontWeight: 600, fontSize: 11, color: 'var(--s-text3)', marginLeft: 8 }}>
+                  ({dbColleges.length} institutions in {profile.institutionDistrict})
+                </span>
+              )}
             </label>
 
-            {/* Search + list box */}
-            <div style={{
-              border: '1px solid var(--s-border)', borderRadius: 12,
-              overflow: 'hidden', background: '#fff',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
-              {/* Search bar inside the box */}
+            {/* ── SELECTED STATE: shows compact chip when college selected ── */}
+            {profile.institution ? (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 14px',
-                borderBottom: '1px solid var(--s-border)',
-                background: '#f8fafc',
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '12px 16px',
+                background: isFromDb ? '#f0fdf4' : '#fffbeb',
+                border: `2px solid ${isFromDb ? '#86efac' : '#fcd34d'}`,
+                borderRadius: 12,
+                fontSize: 14, fontWeight: 700,
+                color: isFromDb ? '#166534' : '#b45309',
               }}>
-                <span style={{ fontSize: 16 }}>🔍</span>
-                <input
-                  type="text"
-                  placeholder={`Search in ${profile.institutionDistrict} colleges...`}
-                  value={collegeSearch}
-                  onChange={e => setCollegeSearch(e.target.value)}
-                  style={{
-                    border: 'none', outline: 'none', background: 'none',
-                    fontSize: 13, flex: 1, color: 'var(--s-text)',
-                    fontFamily: 'inherit'
-                  }}
-                />
-                {collegeSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setCollegeSearch('')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', fontSize: 16, lineHeight: 1 }}
-                  >✕</button>
-                )}
-              </div>
-
-              {/* Scrollable college list */}
-              <div style={{ maxHeight: 260, overflowY: 'auto', padding: '4px 0' }}>
-                {filtered.length === 0 ? (
-                  <div style={{ padding: '16px 14px', fontSize: 13, color: 'var(--s-text3)', textAlign: 'center' }}>
-                    No colleges found. Type your college name in the manual field below.
-                  </div>
-                ) : (
-                  filtered.map(college => {
-                    const isSelected = profile.institution === college
-                    return (
-                      <button
-                        key={college}
-                        type="button"
-                        onClick={() => selectCollege(college)}
-                        style={{
-                          display: 'block', width: '100%', textAlign: 'left',
-                          padding: '9px 16px', border: 'none',
-                          background: isSelected ? 'var(--s-primary-l)' : 'transparent',
-                          color: isSelected ? 'var(--s-primary)' : 'var(--s-text)',
-                          fontSize: 13, fontWeight: isSelected ? 800 : 500,
-                          cursor: 'pointer',
-                          borderLeft: isSelected ? '3px solid var(--s-primary)' : '3px solid transparent',
-                          transition: 'background 0.12s',
-                        }}
-                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#f1f5f9' }}
-                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
-                      >
-                        {isSelected && '✓ '}{college}
-                      </button>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Selected college display */}
-            {profile.institution && (
-              <div style={{
-                marginTop: 10, padding: '10px 14px',
-                background: isCustom ? '#fffbeb' : '#f0fdf4',
-                border: `1px solid ${isCustom ? '#fcd34d' : '#86efac'}`,
-                borderRadius: 10, fontSize: 13, fontWeight: 700,
-                color: isCustom ? '#b45309' : '#166534',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span>{isCustom ? '✏️ Custom:' : '🎓'}</span>
+                <span style={{ fontSize: 18 }}>{isFromDb ? '🎓' : '✏️'}</span>
                 <span style={{ flex: 1 }}>{profile.institution}</span>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, background: isFromDb ? '#dcfce7' : '#fef9c3',
+                  color: isFromDb ? '#166534' : '#a16207', padding: '2px 8px', borderRadius: 10,
+                  textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}>
+                  {isFromDb ? 'Selected' : 'Manual'}
+                </span>
                 <button
                   type="button"
-                  onClick={() => setProfile(prev => ({ ...prev, institution: '' }))}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8', lineHeight: 1 }}
-                >✕</button>
+                  onClick={clearSelectedCollege}
+                  title="Remove selection"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#94a3b8', fontSize: 18, lineHeight: 1,
+                    padding: '2px 4px', borderRadius: 6,
+                    transition: 'color 0.1s ease'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              /* ── SEARCH STATE: shows dropdown when no college selected ── */
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                {/* Search bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px',
+                  border: '1px solid var(--s-border)',
+                  borderRadius: dropdownOpen && filtered.length > 0 ? '12px 12px 0 0' : 12,
+                  background: '#fff',
+                  boxShadow: dropdownOpen ? '0 4px 16px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
+                  transition: 'box-shadow 0.15s ease'
+                }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>🔍</span>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder={loadingColleges ? 'Loading colleges...' : `Search colleges in ${profile.institutionDistrict}...`}
+                    value={collegeSearch}
+                    disabled={loadingColleges}
+                    onChange={e => {
+                      setCollegeSearch(e.target.value)
+                      if (!dropdownOpen) setDropdownOpen(true)
+                    }}
+                    onFocus={() => setDropdownOpen(true)}
+                    style={{
+                      border: 'none', outline: 'none', background: 'none',
+                      fontSize: 13, flex: 1, color: 'var(--s-text)',
+                      fontFamily: 'inherit',
+                      cursor: loadingColleges ? 'wait' : 'text'
+                    }}
+                  />
+                  {collegeSearch && (
+                    <button
+                      type="button"
+                      onClick={() => { setCollegeSearch(''); searchInputRef.current?.focus() }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', fontSize: 16, lineHeight: 1 }}
+                    >✕</button>
+                  )}
+                  {!loadingColleges && (
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen(v => !v)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--s-text3)', fontSize: 12, lineHeight: 1, padding: '0 2px' }}
+                    >
+                      {dropdownOpen ? '▲' : '▼'}
+                    </button>
+                  )}
+                  {loadingColleges && (
+                    <span style={{ fontSize: 12, color: 'var(--s-text3)', fontWeight: 600 }}>Loading…</span>
+                  )}
+                </div>
+
+                {/* Dropdown list */}
+                {dropdownOpen && !loadingColleges && (
+                  <div style={{
+                    position: 'absolute', left: 0, right: 0, zIndex: 100,
+                    background: '#fff',
+                    border: '1px solid var(--s-border)', borderTop: 'none',
+                    borderRadius: '0 0 12px 12px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    maxHeight: 280, overflowY: 'auto',
+                    overscrollBehavior: 'contain'
+                  }}>
+                    {collegeError && dbColleges.length === 0 ? (
+                      <div style={{ padding: '14px 16px', fontSize: 13, color: '#b91c1c', textAlign: 'center' }}>
+                        ⚠️ {collegeError}
+                      </div>
+                    ) : filtered.length === 0 ? (
+                      <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--s-text3)', textAlign: 'center' }}>
+                        No colleges match your search. Use manual entry below.
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ padding: '6px 14px 4px', fontSize: 11, color: 'var(--s-text3)', fontWeight: 700, borderBottom: '1px solid #f1f5f9', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {filtered.length} college{filtered.length !== 1 ? 's' : ''} found
+                        </div>
+                        {filtered.map((college, idx) => {
+                          const name = college.collegeName || college
+                          const type = college.type || college.stream || ''
+                          return (
+                            <button
+                              key={college._id || name || idx}
+                              type="button"
+                              onClick={() => selectCollege(college)}
+                              style={{
+                                display: 'block', width: '100%', textAlign: 'left',
+                                padding: '9px 16px', border: 'none',
+                                background: 'transparent',
+                                color: 'var(--s-text)',
+                                fontSize: 13, fontWeight: 500,
+                                cursor: 'pointer',
+                                borderLeft: '3px solid transparent',
+                                transition: 'background 0.1s',
+                                borderBottom: idx < filtered.length - 1 ? '1px solid #f8fafc' : 'none'
+                              }}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.background = '#f0fdf4'
+                                e.currentTarget.style.borderLeftColor = 'var(--s-primary)'
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.background = 'transparent'
+                                e.currentTarget.style.borderLeftColor = 'transparent'
+                              }}
+                            >
+                              <span style={{ display: 'block', fontWeight: 600 }}>{name}</span>
+                              {type && (
+                                <span style={{ fontSize: 11, color: 'var(--s-text3)', marginTop: 2, display: 'block' }}>
+                                  {type}{college.location ? ` · ${college.location}` : ''}
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Manual type option */}
-            <div style={{ marginTop: 10 }}>
-              <p style={{ fontSize: 12, color: 'var(--s-text3)', margin: '0 0 6px' }}>
-                Can't find your college in the list? Type it manually:
+            {/* ── MANUAL ENTRY — only shown & enabled when no DB college is selected ── */}
+            <div style={{ marginTop: 14 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6,
+                opacity: profile.institution ? 0.4 : 1,
+                transition: 'opacity 0.2s ease'
+              }}>
+                <div style={{ height: 1, flex: 1, background: 'var(--s-border)' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--s-text3)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  or type manually
+                </span>
+                <div style={{ height: 1, flex: 1, background: 'var(--s-border)' }} />
+              </div>
+              <p style={{ fontSize: 12, color: profile.institution ? '#94a3b8' : 'var(--s-text3)', margin: '0 0 6px' }}>
+                {profile.institution
+                  ? '✓ College already selected above. Remove it to type manually.'
+                  : "Can't find your college in the list? Type it manually:"}
               </p>
               <input
                 type="text"
-                placeholder="Type your college name..."
-                value={isCustom ? profile.institution : ''}
-                onChange={e => setProfile(prev => ({ ...prev, institution: e.target.value }))}
+                placeholder={profile.institution ? 'Disabled – college already selected' : 'Type your college name...'}
+                value={profile.institution ? '' : manualCollegeName}
+                disabled={!!profile.institution}
+                onChange={e => {
+                  const val = e.target.value
+                  setManualCollegeName(val)
+                  setProfile(prev => ({ ...prev, institution: val }))
+                }}
                 style={{
                   width: '100%', padding: '10px 14px', borderRadius: 10,
-                  border: '1px dashed var(--s-border)', fontSize: 13,
-                  outline: 'none', fontFamily: 'inherit',
-                  background: '#f8fafc', color: 'var(--s-text)',
+                  border: profile.institution ? '1px dashed #cbd5e1' : '1px dashed var(--s-border)',
+                  fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                  background: profile.institution ? '#f8fafc' : '#fff',
+                  color: profile.institution ? '#94a3b8' : 'var(--s-text)',
+                  cursor: profile.institution ? 'not-allowed' : 'text',
                   boxSizing: 'border-box',
+                  transition: 'all 0.2s ease'
                 }}
               />
             </div>
@@ -237,7 +394,7 @@ function Step1InstitutionBlock({ profile, setProfile }) {
             display: 'flex', alignItems: 'center', gap: 10
           }}>
             <span style={{ fontSize: 20 }}>📍</span>
-            Select your district above to see colleges in your area.
+            Select your district above to see all colleges in your area.
           </div>
         )}
 
@@ -258,6 +415,7 @@ function Step1InstitutionBlock({ profile, setProfile }) {
     </div>
   )
 }
+
 
 export default function CollegeOnboardingPage() {
   const { student, updateStudent } = useStudentAuth()
@@ -306,6 +464,8 @@ export default function CollegeOnboardingPage() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const [showCelebrationScreen, setShowCelebrationScreen] = useState(false)
   const [calcSteps, setCalcSteps] = useState({ step1: false, step2: false, step3: false, step4: false })
+  const [unansweredHighlight, setUnansweredHighlight] = useState(null) // questionId of highlighted unanswered Q
+  const questionRefs = React.useRef({}) // refs keyed by questionId for scroll-to navigation
 
   // Step 5 Flip-Flap Cards & AHP Priorities State
   const [flippedCards, setFlippedCards] = useState({})
@@ -667,6 +827,33 @@ export default function CollegeOnboardingPage() {
   }
 
   const handleEvaluateDiscovery = async () => {
+    // ── FRONTEND VALIDATION: find first unanswered question ──────────────────
+    const allQuestionsShown = discoveryQuestions // evaluate all questions regardless of filter
+    const firstUnanswered = allQuestionsShown.find(q => {
+      const qKey = q.questionId || q._id
+      return !discoveryAnswers[qKey]
+    })
+
+    if (firstUnanswered) {
+      const qKey = firstUnanswered.questionId || firstUnanswered._id
+      // highlight this question
+      setUnansweredHighlight(qKey)
+      // reset difficulty filter to show all so the question is visible
+      setDifficultyFilter('All')
+      // scroll to the question
+      setTimeout(() => {
+        const el = questionRefs.current[qKey]
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // try to focus first option button
+          const firstOpt = el.querySelector('button[data-opt]')
+          if (firstOpt) firstOpt.focus()
+        }
+      }, 100)
+      setError(`Please answer Question ${allQuestionsShown.indexOf(firstUnanswered) + 1} before submitting.`)
+      return
+    }
+
     const formattedAnswers = Object.entries(discoveryAnswers).map(([qKey, optId]) => ({
       questionId: qKey,
       selectedOption: optId,
@@ -680,6 +867,7 @@ export default function CollegeOnboardingPage() {
 
     setEvaluatingAssessment(true)
     setError('')
+    setUnansweredHighlight(null)
     setCalcSteps({ step1: false, step2: false, step3: false, step4: false })
 
     try {
@@ -688,9 +876,13 @@ export default function CollegeOnboardingPage() {
       setCalcSteps(s => ({ ...s, step2: true }))
       await new Promise(r => setTimeout(r, 200))
 
+      // Send all required question IDs for backend validation
+      const requiredQuestionIds = discoveryQuestions.map(q => q.questionId || q._id).filter(Boolean)
+
       const res = await axiosInstance.post('/onboarding/discovery/evaluate', {
         answers: formattedAnswers,
-        ahpPriorityWeights: ahpDiscoveryResult?.priorityVector || {}
+        ahpPriorityWeights: ahpDiscoveryResult?.priorityVector || {},
+        requiredQuestionIds
       })
 
       setCalcSteps(s => ({ ...s, step3: true }))
@@ -704,9 +896,35 @@ export default function CollegeOnboardingPage() {
         if (res.data.evaluation.recommendedDomain) {
           setProfile(prev => ({ ...prev, domain: res.data.evaluation.recommendedDomain.domainName }))
         }
+      } else if (res.data?.code === 'INCOMPLETE_ASSESSMENT') {
+        // backend says some questions unanswered
+        const firstUnansweredId = res.data.unansweredQuestionIds?.[0]
+        if (firstUnansweredId) {
+          setUnansweredHighlight(firstUnansweredId)
+          setDifficultyFilter('All')
+          setTimeout(() => {
+            const el = questionRefs.current[firstUnansweredId]
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }, 100)
+        }
+        setError(`Please answer all questions before submitting. ${res.data.unansweredQuestionIds?.length || 0} question(s) remain.`)
       }
     } catch (err) {
-      setError('Evaluation failed. Please try again.')
+      // Handle 422 INCOMPLETE_ASSESSMENT from backend
+      if (err.response?.status === 422 && err.response.data?.code === 'INCOMPLETE_ASSESSMENT') {
+        const firstUnansweredId = err.response.data.unansweredQuestionIds?.[0]
+        if (firstUnansweredId) {
+          setUnansweredHighlight(firstUnansweredId)
+          setDifficultyFilter('All')
+          setTimeout(() => {
+            const el = questionRefs.current[firstUnansweredId]
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }, 100)
+          setError(`Please answer all questions. ${err.response.data.unansweredQuestionIds.length} unanswered.`)
+        }
+      } else {
+        setError('Evaluation failed. Please try again.')
+      }
     } finally {
       setEvaluatingAssessment(false)
     }
@@ -1613,12 +1831,53 @@ export default function CollegeOnboardingPage() {
                       })}
                     </div>
 
-                    {/* QUESTION CARDS */}
+                    {/* PROGRESS BAR: answered / total */}
+                    {(() => {
+                      const totalQ = discoveryQuestions.length
+                      const answeredQ = Object.keys(discoveryAnswers).length
+                      const progressPct = totalQ > 0 ? Math.round((answeredQ / totalQ) * 100) : 0
+                      const allDone = answeredQ >= totalQ
+                      return (
+                        <div style={{
+                          background: allDone ? '#f0fdf4' : '#fff',
+                          border: `1px solid ${allDone ? '#86efac' : '#e2e8f0'}`,
+                          borderRadius: 12, padding: '12px 16px', marginBottom: 4,
+                          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ fontSize: 12, fontWeight: 800, color: allDone ? '#047857' : 'var(--s-text)' }}>
+                                {allDone ? '✅ All questions answered!' : `📝 ${answeredQ} of ${totalQ} questions answered`}
+                              </span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: allDone ? '#047857' : 'var(--s-text3)' }}>
+                                {progressPct}%
+                              </span>
+                            </div>
+                            <div style={{ height: 6, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{
+                                height: '100%', width: `${progressPct}%`,
+                                background: allDone
+                                  ? 'linear-gradient(90deg, #10b981, #047857)'
+                                  : 'linear-gradient(90deg, #94a3b8, #64748b)',
+                                borderRadius: 4, transition: 'width 0.4s ease'
+                              }} />
+                            </div>
+                          </div>
+                          {!allDone && (
+                            <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 700 }}>
+                              {totalQ - answeredQ} remaining
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })()}
+
                     {discoveryQuestions
                       .filter(q => difficultyFilter === 'All' || (q.difficulty || 'medium').toLowerCase() === difficultyFilter.toLowerCase())
                       .map((q, qIdx) => {
                         const qKey = q.questionId || q._id
                         const selectedOptId = discoveryAnswers[qKey]
+                        const isUnansweredHighlighted = unansweredHighlight === qKey
                         const diff = (q.difficulty || 'medium').toLowerCase()
                         let badgeStyle = { bg: '#d1fae5', color: '#047857', label: '🟢 EASY (+10 XP)' }
                         if (diff === 'medium') badgeStyle = { bg: '#fef3c7', color: '#b45309', label: '🟡 MEDIUM (+20 XP)' }
@@ -1629,11 +1888,30 @@ export default function CollegeOnboardingPage() {
                           : (q.dimension || 'Pattern Recognition')
 
                         return (
-                          <div key={qKey} style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 20 }}>
+                          <div
+                            key={qKey}
+                            ref={el => { if (el) questionRefs.current[qKey] = el }}
+                            style={{
+                              background: isUnansweredHighlighted ? '#fff1f2' : '#fff',
+                              border: isUnansweredHighlighted ? '2px solid #f87171' : '1px solid #cbd5e1',
+                              borderRadius: 16, padding: 20,
+                              transition: 'border-color 0.2s ease, background 0.2s ease'
+                            }}
+                          >
+                            {isUnansweredHighlighted && (
+                              <div style={{
+                                background: '#fee2e2', color: '#b91c1c',
+                                borderRadius: 8, padding: '6px 12px',
+                                fontSize: 12, fontWeight: 800, marginBottom: 10,
+                                display: 'flex', alignItems: 'center', gap: 6
+                              }}>
+                                ⚠️ Please answer this question before submitting
+                              </div>
+                            )}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 6 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: 12, fontWeight: 800, color: '#047857' }}>
-                                  Question {qIdx + 1} of {discoveryQuestions.length}
+                                <span style={{ fontSize: 12, fontWeight: 800, color: isUnansweredHighlighted ? '#b91c1c' : '#047857' }}>
+                                  Question {discoveryQuestions.findIndex(dq => (dq.questionId || dq._id) === qKey) + 1} of {discoveryQuestions.length}
                                 </span>
                                 <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '2px 10px', borderRadius: 12, fontWeight: 800 }}>
                                   🧠 {q.domainName || q.domainId}
@@ -1660,11 +1938,16 @@ export default function CollegeOnboardingPage() {
                                   <button
                                     key={optId}
                                     type="button"
-                                    onClick={() => handleSelectAnswer(qKey, optId)}
+                                    data-opt="true"
+                                    onClick={() => {
+                                      handleSelectAnswer(qKey, optId)
+                                      // Clear unanswered highlight when student answers
+                                      if (unansweredHighlight === qKey) setUnansweredHighlight(null)
+                                    }}
                                     style={{
                                       padding: '12px 14px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
-                                      border: isSelected ? '2px solid #047857' : '1px solid #e2e8f0',
-                                      background: isSelected ? '#d1fae5' : '#f8fafc',
+                                      border: isSelected ? '2px solid #047857' : (isUnansweredHighlighted ? '1px solid #fca5a5' : '1px solid #e2e8f0'),
+                                      background: isSelected ? '#d1fae5' : (isUnansweredHighlighted ? '#fff5f5' : '#f8fafc'),
                                       color: isSelected ? '#047857' : 'var(--s-text)', fontSize: 13, fontWeight: isSelected ? 700 : 500,
                                       lineHeight: 1.4, transition: 'all 0.12s ease', display: 'flex', gap: 10, alignItems: 'flex-start'
                                     }}
@@ -1681,21 +1964,42 @@ export default function CollegeOnboardingPage() {
                         )
                       })}
 
-                    <div style={{ textAlign: 'center', marginTop: 16 }}>
-                      <button
-                        type="button"
-                        onClick={handleEvaluateDiscovery}
-                        disabled={evaluatingAssessment}
-                        style={{
-                          background: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
-                          color: '#fff', border: 'none', borderRadius: 14,
-                          padding: '14px 36px', fontSize: 15, fontWeight: 800,
-                          cursor: 'pointer', boxShadow: '0 4px 12px rgba(4, 120, 87, 0.25)'
-                        }}
-                      >
-                        {evaluatingAssessment ? 'Calculating Domain Suitability...' : '⚡ Submit Assessment & Calculate Career Recommendation'}
-                      </button>
-                    </div>
+                    {(() => {
+                      const totalQ = discoveryQuestions.length
+                      const answeredQ = Object.keys(discoveryAnswers).length
+                      const allDone = answeredQ >= totalQ && totalQ > 0
+                      return (
+                        <div style={{ textAlign: 'center', marginTop: 20 }}>
+                          {!allDone && (
+                            <p style={{ fontSize: 12, color: '#64748b', marginBottom: 10, fontWeight: 600 }}>
+                              📋 Answer all {totalQ} questions to unlock submission ({totalQ - answeredQ} remaining)
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={handleEvaluateDiscovery}
+                            disabled={evaluatingAssessment}
+                            style={{
+                              background: allDone
+                                ? 'linear-gradient(135deg, #047857 0%, #059669 100%)'
+                                : 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                              color: '#fff', border: 'none', borderRadius: 14,
+                              padding: '14px 36px', fontSize: 15, fontWeight: 800,
+                              cursor: evaluatingAssessment ? 'wait' : 'pointer',
+                              boxShadow: allDone ? '0 4px 12px rgba(4, 120, 87, 0.25)' : 'none',
+                              transition: 'all 0.3s ease',
+                              opacity: evaluatingAssessment ? 0.7 : 1,
+                            }}
+                          >
+                            {evaluatingAssessment
+                              ? '🔄 Calculating Domain Suitability...'
+                              : allDone
+                                ? '⚡ Submit Assessment & Calculate Career Recommendation'
+                                : `📝 Answer All Questions (${answeredQ}/${totalQ}) to Submit`}
+                          </button>
+                        </div>
+                      )
+                    })()}
                   </div>
                 ) : (
                   <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 16, padding: 24, textAlign: 'center' }}>

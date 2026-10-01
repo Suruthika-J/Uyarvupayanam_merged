@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   FiBookmark, FiSearch, FiFilter, FiTrash2, FiExternalLink, 
-  FiClock, FiTrendingUp, FiMapPin, FiCalendar, FiArrowRight 
+  FiClock, FiTrendingUp, FiMapPin, FiCalendar, FiArrowRight,
+  FiBriefcase, FiBookOpen, FiPlus, FiCheck, FiZap, FiTarget
 } from 'react-icons/fi'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import { useStudentContext, useCollegeProfile } from '../../context/CollegeProfileContext'
 import { userActionService } from '../../../services/userActionService'
 import { SCard, SBtn, SBadge, SLoader, SEmpty, SInput, SSelect } from '../../components/ui'
 import s from './BookmarksPage.module.css'
@@ -15,7 +17,8 @@ const TABS = [
   { id: 'College',      label: 'Colleges',       icon: FiMapPin },
   { id: 'Scholarship',  label: 'Scholarships',   icon: FiCalendar },
   { id: 'Exam',         label: 'Exams',          icon: FiClock },
-  { id: 'ClassContent', label: 'Study Guides',   icon: FiBookmark },
+  { id: 'Career',       label: 'Careers',        icon: FiBriefcase },
+  { id: 'ClassContent', label: 'Study Guides',   icon: FiBookOpen },
 ]
 
 export default function BookmarksPage() {
@@ -206,16 +209,160 @@ export default function BookmarksPage() {
       {loading ? (
         <div style={{ padding: '100px 0' }}><SLoader /></div>
       ) : filteredItems.length === 0 ? (
-        <SEmpty 
-          icon={<FiBookmark size={48} />} 
-          title="No items found" 
-          desc="You haven't saved any items in this category yet. Start exploring to build your roadmap!"
-        />
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 20, border: '1px solid var(--s-border)', margin: '20px 0' }}>
+          <FiBookmark size={48} color="var(--s-primary)" style={{ marginBottom: 12, opacity: 0.8 }} />
+          <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 8px' }}>
+            {activeTab === 'Course' ? 'No saved courses yet' :
+             activeTab === 'College' ? 'No saved colleges yet' :
+             activeTab === 'Scholarship' ? 'No saved scholarships yet' :
+             activeTab === 'Exam' ? 'No saved entrance exams yet' :
+             activeTab === 'Career' ? 'No saved career pathways yet' :
+             activeTab === 'ClassContent' ? 'No saved study guides yet' :
+             'No saved resources yet'}
+          </h3>
+          <p style={{ fontSize: 14, color: 'var(--s-text3)', maxWidth: 500, margin: '0 auto 20px', lineHeight: 1.5 }}>
+            {activeTab === 'Course' ? 'Explore undergraduate and specialized courses tailored to your degree and target career.' :
+             activeTab === 'College' ? 'Explore and bookmark leading institutions across Tamil Nadu offering your specialization.' :
+             activeTab === 'Scholarship' ? 'Discover state, national merit, and department scholarships available for your profile.' :
+             activeTab === 'Exam' ? 'Track upcoming entrance, competitive, and recruitment exams relevant to your field.' :
+             activeTab === 'Career' ? 'Bookmark career trajectories generated through your AHP assessment and skill gap matrix.' :
+             activeTab === 'ClassContent' ? 'Save semester notes, revision packs, and laboratory study guides.' :
+             'Start bookmarking courses, colleges, scholarships, and career milestones to build your personal academic library.'}
+          </p>
+          <SBtn
+            variant="primary"
+            onClick={() => {
+              if (activeTab === 'College') navigate('/student/colleges')
+              else if (activeTab === 'Scholarship') navigate('/student/scholarships')
+              else if (activeTab === 'Exam') navigate('/student/careers')
+              else if (activeTab === 'Career') navigate('/student/careers')
+              else if (activeTab === 'ClassContent') navigate('/college/study-tools/practice')
+              else navigate('/student/courses')
+            }}
+          >
+            {activeTab === 'Course' ? 'Browse Relevant Courses' :
+             activeTab === 'College' ? 'Browse Colleges' :
+             activeTab === 'Scholarship' ? 'Browse Scholarships' :
+             activeTab === 'Exam' ? 'Browse Entrance Exams' :
+             activeTab === 'Career' ? 'Explore Recommended Careers' :
+             activeTab === 'ClassContent' ? 'Explore Study Materials' :
+             'Browse Relevant Courses'}
+            <FiArrowRight style={{ marginLeft: 6 }} />
+          </SBtn>
+        </div>
       ) : (
         <div className={s.grid}>
           {filteredItems.map(renderCard)}
         </div>
       )}
+
+      {/* ── PROFILE-AWARE RECOMMENDED TO SAVE SECTION ── */}
+      <div style={{ marginTop: 48, paddingTop: 32, borderTop: '2px solid var(--s-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--s-primary)', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              <FiZap size={14} /> Profile Telemetry
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+              Recommended Resources for Your Profile
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '4px 0 0' }}>
+              Handpicked resources matched to your degree ({studentContext?.degree || 'College'}), specialization, and target career ({studentContext?.targetCareer || 'Career Objective'}).
+            </p>
+          </div>
+          {studentContext?.targetCareer && (
+            <SBadge color="blue">
+              <FiTarget style={{ marginRight: 4 }} /> Goal: {studentContext.targetCareer}
+            </SBadge>
+          )}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+          {/* Card 1: Target Career Course */}
+          <SCard style={{ padding: 22, borderRadius: 18, border: '1px solid var(--s-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <SBadge color="indigo">Course</SBadge>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>98% Match</span>
+              </div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
+                {studentContext?.targetCareer ? `${studentContext.targetCareer} Mastery Curriculum` : `${studentContext?.course || 'Computer Science'} Specialization`}
+              </h4>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                Comprehensive coursework and lab modules designed to acquire core skills for your career target.
+              </p>
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
+              <SBtn variant="primary" size="sm" onClick={() => navigate('/student/courses')} style={{ flex: 1 }}>
+                View Course
+              </SBtn>
+            </div>
+          </SCard>
+
+          {/* Card 2: Interview & Placement Guide */}
+          <SCard style={{ padding: 22, borderRadius: 18, border: '1px solid var(--s-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <SBadge color="blue">Study Guide</SBadge>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Career Prep</span>
+              </div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
+                {studentContext?.targetCareer ? `${studentContext.targetCareer} Placement & Interview Pack` : 'Technical Placement Revision Guide'}
+              </h4>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                Curated technical problem sets, system design templates, and mock questions.
+              </p>
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
+              <SBtn variant="primary" size="sm" onClick={() => navigate('/college/career/interview')} style={{ flex: 1 }}>
+                Open Guide
+              </SBtn>
+            </div>
+          </SCard>
+
+          {/* Card 3: Competitive Exam */}
+          <SCard style={{ padding: 22, borderRadius: 18, border: '1px solid var(--s-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <SBadge color="orange">Entrance Exam</SBadge>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309' }}>Registration Open</span>
+              </div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
+                {`GATE & TANCET Examination (${studentContext?.course || 'Engineering'})`}
+              </h4>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                National and state level entrance examinations for postgraduate studies and PSU recruitment.
+              </p>
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
+              <SBtn variant="primary" size="sm" onClick={() => navigate('/student/careers')} style={{ flex: 1 }}>
+                View Exam Details
+              </SBtn>
+            </div>
+          </SCard>
+
+          {/* Card 4: Merit Scholarship */}
+          <SCard style={{ padding: 22, borderRadius: 18, border: '1px solid var(--s-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <SBadge color="green">Scholarship</SBadge>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Eligible</span>
+              </div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
+                Tamil Nadu Higher Education Merit & Technical Scholarship
+              </h4>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', lineHeight: 1.5, margin: 0 }}>
+                Financial grant support for eligible college students pursuing professional degree programmes.
+              </p>
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
+              <SBtn variant="primary" size="sm" onClick={() => navigate('/student/scholarships')} style={{ flex: 1 }}>
+                Check Eligibility
+              </SBtn>
+            </div>
+          </SCard>
+        </div>
+      </div>
     </div>
   )
 }

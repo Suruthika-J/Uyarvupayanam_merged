@@ -1,6 +1,7 @@
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const Recommendation = require("../models/Recommendation");
+const StudentSkillProgress = require("../models/StudentSkillProgress");
 
 // Helper: Calculate Multi-Dimensional Match & Explanations
 const evaluateCareerMatch = (profile, career) => {
@@ -399,9 +400,19 @@ const getStudentSkillGap = async (req, res) => {
     }
 
     const targetTitle = profile.targetCareer || profile.careerInterests?.[0] || "Software Engineer";
-    let career = await CollegeCareerCatalog.findOne({ title: targetTitle });
+    let [career, allCareers] = await Promise.all([
+      CollegeCareerCatalog.findOne({
+        $or: [
+          { title: new RegExp(`^${targetTitle}$`, "i") },
+          { slug: targetTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
+          { title: new RegExp(targetTitle, "i") }
+        ]
+      }),
+      CollegeCareerCatalog.find().select("title category requiredDomains requiredFields growthOutlook").lean()
+    ]);
+
     if (!career) {
-      career = await CollegeCareerCatalog.findOne();
+      career = allCareers[0] || (await CollegeCareerCatalog.findOne());
     }
 
     const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
@@ -435,7 +446,22 @@ const getStudentSkillGap = async (req, res) => {
     });
 
     const total = allCareerSkills.length || 1;
-    const readinessScore = Math.round(((strong.length * 1.0 + developing.length * 0.5) / total) * 100);
+    const readinessScore = Math.min(100, Math.round(((strong.length * 1.0 + developing.length * 0.5) / total) * 100));
+
+    // Dynamic career recommendations filtered by student's domain and field (Recommended for You)
+    const userDomain = (profile.domain || "").toLowerCase();
+    const userField = (profile.field || "").toLowerCase();
+
+    const recommendedCareers = allCareers
+      .filter(c => {
+        const domMatch = (c.requiredDomains || []).some(d => d.toLowerCase().includes(userDomain) || userDomain.includes(d.toLowerCase()));
+        const fieldMatch = (c.requiredFields || []).some(f => f.toLowerCase().includes(userField) || userField.includes(f.toLowerCase()));
+        return domMatch || fieldMatch;
+      })
+      .map(c => c.title);
+
+    // If filter produced too few, ensure at least 4 careers exist in recommended
+    const finalRecommended = recommendedCareers.length > 0 ? recommendedCareers : allCareers.slice(0, 5).map(c => c.title);
 
     res.status(200).json({
       success: true,
@@ -449,8 +475,11 @@ const getStudentSkillGap = async (req, res) => {
       summary: {
         acquiredCount: strong.length,
         developingCount: developing.length,
-        missingCount: missing.length
-      }
+        missingCount: missing.length,
+        totalRequired: total
+      },
+      recommendedCareers: finalRecommended,
+      allCareers: allCareers.map(c => c.title)
     });
   } catch (error) {
     console.error("Get student skill gap error:", error);
@@ -462,30 +491,98 @@ const getStudentSkillGap = async (req, res) => {
 const getStudentRoadmap = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
-    const profile = await CollegeStudentProfile.findOne({ userId });
+    const [profile, skillProgress] = await Promise.all([
+      CollegeStudentProfile.findOne({ userId }),
+      StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] }).lean()
+    ]);
 
     if (!profile) {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
     const targetTitle = profile.targetCareer || "Software Engineer";
-    let career = await CollegeCareerCatalog.findOne({ title: targetTitle });
+    let career = await CollegeCareerCatalog.findOne({
+      $or: [
+        { title: new RegExp(`^${targetTitle}$`, "i") },
+        { slug: targetTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
+        { title: new RegExp(targetTitle, "i") }
+      ]
+    });
     if (!career) {
       career = await CollegeCareerCatalog.findOne();
     }
 
     const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
-    const milestones = fullCareer.recommendedRoadmap;
+    const rawMilestones = fullCareer.recommendedRoadmap;
+    const completedSteps = skillProgress?.completedSteps || [];
+
+    // Map each milestone with real saved progress
+    const milestones = rawMilestones.map((m, idx) => {
+      const stepKey = `roadmap_${fullCareer.title.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${idx}`;
+      const isCompleted = completedSteps.includes(stepKey) || (idx === 0 && completedSteps.length === 0);
+      const isCurrent = !isCompleted && (idx === 0 || completedSteps.includes(`roadmap_${fullCareer.title.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${idx - 1}`));
+      return {
+        ...m,
+        id: `m-${idx + 1}`,
+        stepKey,
+        status: isCompleted ? "completed" : (isCurrent ? "current" : "upcoming"),
+        defaultStatus: isCompleted ? "completed" : (isCurrent ? "current" : "upcoming")
+      };
+    });
+
+    const completedCount = milestones.filter(m => m.status === "completed").length;
+    const progressPercent = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
 
     res.status(200).json({
       success: true,
       targetCareer: fullCareer.title,
       milestones,
+      progressPercent,
+      completedCount,
       profileTarget: profile.targetCareer
     });
   } catch (error) {
     console.error("Get student roadmap error:", error);
     res.status(500).json({ success: false, message: "Failed to fetch roadmap" });
+  }
+};
+
+// ── 5b. Update Roadmap Milestone Progress ─────────────────────────────────────
+const updateRoadmapProgress = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { milestoneIndex, targetCareer, isCompleted } = req.body;
+
+    let skillProgress = await StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] });
+    if (!skillProgress) skillProgress = new StudentSkillProgress({ studentId: userId });
+
+    const roleName = targetCareer || "general";
+    const stepKey = `roadmap_${roleName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${milestoneIndex}`;
+
+    if (isCompleted) {
+      if (!skillProgress.completedSteps.includes(stepKey)) {
+        skillProgress.completedSteps.push(stepKey);
+        skillProgress.xp = (skillProgress.xp || 0) + 50;
+        skillProgress.level = Math.floor(skillProgress.xp / 100) + 1;
+      }
+    } else {
+      skillProgress.completedSteps = skillProgress.completedSteps.filter(s => s !== stepKey);
+    }
+
+    const now = new Date();
+    skillProgress.lastActivityDate = now;
+    await skillProgress.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Roadmap milestone ${isCompleted ? 'marked completed (+50 XP)' : 'reopened'}`,
+      completedSteps: skillProgress.completedSteps,
+      xp: skillProgress.xp,
+      level: skillProgress.level
+    });
+  } catch (error) {
+    console.error("Update roadmap progress error:", error);
+    res.status(500).json({ success: false, message: "Failed to update roadmap progress" });
   }
 };
 
@@ -711,6 +808,7 @@ module.exports = {
   setTargetCareer,
   getStudentSkillGap,
   getStudentRoadmap,
+  updateRoadmapProgress,
   runAcceptanceTestProfiles,
   compareCareers,
   getAllCareersAdmin,

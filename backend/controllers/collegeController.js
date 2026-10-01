@@ -79,18 +79,17 @@ exports.getAllColleges = async (req, res) => {
       andConditions.push({ $or: [{ stream }, { streamsOffered: stream }] });
     }
 
-    // Filter by district
+    // Filter by district — strict case-insensitive match
     if (district && district !== "All") {
-      filter.district = { $regex: district, $options: "i" };
+      filter.district = { $regex: `^${district.trim()}$`, $options: "i" };
     }
 
-    // Search by college name or location
+    // Search by college name or location (scoped to district if provided)
     if (search) {
       andConditions.push({
         $or: [
           { collegeName: { $regex: search, $options: "i" } },
           { location: { $regex: search, $options: "i" } },
-          { district: { $regex: search, $options: "i" } },
         ],
       });
     }
@@ -100,8 +99,8 @@ exports.getAllColleges = async (req, res) => {
     }
 
     const colleges = await College.find(filter)
-      .select("collegeName stream streamsOffered category type district location state feesPerYear rank accreditation website collegeCode fetchStatus totalCoursesFound createdAt")
-      .sort({ createdAt: -1 })
+      .select("collegeName stream streamsOffered category type district location state feesPerYear rank accreditation website collegeCode fetchStatus totalCoursesFound collegeType universityAffiliation createdAt")
+      .sort({ collegeName: 1 })
       .lean();
 
     res.status(200).json({
@@ -114,6 +113,74 @@ exports.getAllColleges = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch colleges",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get all colleges in a district (all institution types)
+// @route   GET /api/colleges/by-district/:district
+// @access  Public
+exports.getCollegesByDistrict = async (req, res) => {
+  try {
+    const district = req.params.district || req.query.district;
+    const search = req.query.search || "";
+
+    if (!district) {
+      return res.status(400).json({ success: false, message: "District parameter is required." });
+    }
+
+    const filter = {
+      district: { $regex: `^${district.trim()}$`, $options: "i" }
+    };
+
+    // If a search term is provided, add it as a name filter
+    if (search) {
+      filter.$and = [
+        { $or: [
+          { collegeName: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
+          { type: { $regex: search, $options: "i" } },
+          { stream: { $regex: search, $options: "i" } },
+        ]}
+      ];
+    }
+
+    const colleges = await College.find(filter)
+      .select("collegeName stream streamsOffered category type district location state feesPerYear rank accreditation website collegeCode collegeType universityAffiliation")
+      .sort({ collegeName: 1 })
+      .lean();
+
+    if (colleges.length === 0) {
+      return res.status(200).json({
+        success: true,
+        district,
+        count: 0,
+        collegeTypes: [],
+        data: [],
+        message: `No colleges found in ${district}. You may type your college name manually.`
+      });
+    }
+
+    // Extract distinct institution types present in this district
+    const typeSet = new Set();
+    colleges.forEach(c => {
+      if (c.type) typeSet.add(c.type);
+      else if (c.stream) typeSet.add(c.stream);
+    });
+
+    res.status(200).json({
+      success: true,
+      district,
+      count: colleges.length,
+      collegeTypes: Array.from(typeSet),
+      data: colleges,
+    });
+  } catch (error) {
+    console.error("Get colleges by district error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch colleges for this district. Please try again.",
       error: error.message,
     });
   }

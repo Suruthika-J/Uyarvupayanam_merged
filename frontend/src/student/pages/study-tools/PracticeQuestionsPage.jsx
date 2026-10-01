@@ -1,15 +1,45 @@
 import React, { useState, useEffect } from 'react'
 import axiosInstance from '../../../config/axios'
 import { SCard, SSelect, SBtn, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
-import { FiCheckSquare, FiZap, FiHelpCircle, FiCheck, FiX, FiRefreshCw, FiArrowRight, FiAward } from 'react-icons/fi'
+import { FiCheckSquare, FiZap, FiHelpCircle, FiCheck, FiX, FiRefreshCw, FiArrowRight, FiAward, FiBookOpen } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
+import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 
 export default function PracticeQuestionsPage() {
   const navigate = useNavigate()
-  const [subject, setSubject] = useState('Data Structures & Algorithms')
+  const { profile } = useCollegeProfile()
+  const { studentContext } = useStudentContext()
+  const [subject, setSubject] = useState('')
+  const [exploreAll, setExploreAll] = useState(false)
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Build subject choices
+  const studentSubjects = (studentContext?.subjects || profile?.subjects || []).filter(Boolean)
+  const fallbackRecommended = [
+    'Data Structures & Algorithms',
+    'Database Management Systems',
+    'Operating Systems',
+    'Machine Learning',
+    'Computer Networks'
+  ]
+  const recommendedSubjects = studentSubjects.length > 0 ? studentSubjects : fallbackRecommended
+  
+  const allSystemSubjects = [
+    'Data Structures & Algorithms', 'Database Management Systems', 'Operating Systems',
+    'Machine Learning', 'Computer Networks', 'Software Engineering', 'Artificial Intelligence',
+    'Thermodynamics', 'Fluid Mechanics', 'Engineering Mathematics', 'Digital Signal Processing',
+    'VLSI Design', 'Microprocessors & Microcontrollers', 'Electric Circuits', 'Structural Analysis'
+  ]
+
+  const activeSubjectList = exploreAll ? allSystemSubjects : recommendedSubjects
+
+  useEffect(() => {
+    if (!subject) {
+      setSubject(recommendedSubjects[0] || 'Data Structures & Algorithms')
+    }
+  }, [recommendedSubjects])
 
   // Quiz execution state
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -123,17 +153,23 @@ export default function PracticeQuestionsPage() {
 
       {/* SUBJECT SELECTOR */}
       <SCard style={{ padding: 20, borderRadius: 16, marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--s-text3)' }}>
+            {exploreAll ? 'Exploring All University Subjects' : `Enrolled & Recommended Subjects (${studentContext?.course || profile?.domain || 'Engineering'})`}
+          </span>
+          <button
+            type="button"
+            onClick={() => setExploreAll(!exploreAll)}
+            style={{ background: 'none', border: 'none', color: 'var(--s-primary)', fontSize: 12, fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {exploreAll ? 'Show Enrolled Only' : 'Explore All Subjects'}
+          </button>
+        </div>
         <SSelect
           label="Select Domain Subject"
           value={subject}
           onChange={e => setSubject(e.target.value)}
-          options={[
-            { value: 'Data Structures & Algorithms', label: 'Data Structures & Algorithms' },
-            { value: 'Database Management Systems', label: 'Database Management Systems' },
-            { value: 'Operating Systems', label: 'Operating Systems' },
-            { value: 'Machine Learning', label: 'Machine Learning & AI' },
-            { value: 'Computer Networks', label: 'Computer Networks' }
-          ]}
+          options={activeSubjectList.map(s => ({ value: s, label: s }))}
         />
       </SCard>
 

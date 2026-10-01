@@ -3,28 +3,24 @@ import { useNavigate } from 'react-router-dom'
 import { SCard, SSelect, SBtn, SBadge, AIGenerating, AIFailure } from '../../components/ui'
 import {
   FiZap, FiCheckCircle, FiAlertCircle, FiPlusCircle,
-  FiArrowRight, FiUser, FiTarget, FiTrendingUp, FiLayers
+  FiArrowRight, FiUser, FiTarget, FiTrendingUp, FiLayers, FiCompass
 } from 'react-icons/fi'
-import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 import axiosInstance from '../../../config/axios'
-
-const CAREER_TARGETS = [
-  'Software Engineer', 'Software Developer', 'Data Scientist',
-  'Machine Learning Engineer', 'Artificial Intelligence Engineer',
-  'Data Analyst', 'Robotics Engineer', 'Mechanical Engineer',
-  'Aerospace Engineer', 'Electrical Engineer', 'Civil Engineer',
-  'Biomedical Engineer', 'Computer Hardware Engineer'
-]
 
 export default function SkillGapAnalysisPage() {
   const navigate = useNavigate()
-  const { profile } = useCollegeProfile()
+  const { profile, setTargetCareer: updateGlobalTargetCareer } = useCollegeProfile()
+  const { studentContext } = useStudentContext()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [readinessScore, setReadinessScore] = useState(0)
   const [skills, setSkills] = useState({ strong: [], developing: [], missing: [] })
+  const [recommendedCareers, setRecommendedCareers] = useState([])
+  const [allCareers, setAllCareers] = useState([])
+  const [exploreAll, setExploreAll] = useState(false)
   const [updating, setUpdating] = useState(false)
 
   const fetchSkillGap = async () => {
@@ -33,9 +29,11 @@ export default function SkillGapAnalysisPage() {
     try {
       const res = await axiosInstance.get('/college-advisor/skill-gap')
       if (res.data?.success) {
-        setTargetRole(res.data.targetCareer || 'Software Engineer')
+        setTargetRole(res.data.targetCareer || studentContext?.targetCareer || 'Software Engineer')
         setReadinessScore(res.data.readinessScore || 0)
         setSkills(res.data.skills || { strong: [], developing: [], missing: [] })
+        setRecommendedCareers(res.data.recommendedCareers || [])
+        setAllCareers(res.data.allCareers || [])
       } else {
         setError('The skill-gap engine couldn’t evaluate your profile for this career.')
       }
@@ -52,16 +50,14 @@ export default function SkillGapAnalysisPage() {
   }, [])
 
   const handleTargetRoleChange = async (newRole) => {
+    if (!newRole) return
     setTargetRole(newRole)
     setUpdating(true)
     try {
-      await axiosInstance.post(
-        '/college-advisor/target-career',
-        { targetCareer: newRole }
-      )
+      await updateGlobalTargetCareer(newRole)
       await fetchSkillGap()
     } catch (err) {
-      alert('Failed to update target career.')
+      console.warn('Failed to update target career:', err)
     } finally {
       setUpdating(false)
     }
@@ -108,13 +104,33 @@ export default function SkillGapAnalysisPage() {
           </p>
         </div>
 
-        <div style={{ width: 280 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 280 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)' }}>
+              {exploreAll ? 'Browsing All Careers' : 'Personalized Recommendations'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setExploreAll(!exploreAll)}
+              style={{
+                background: 'none', border: 'none', color: 'var(--s-primary)',
+                fontSize: 12, fontWeight: 800, cursor: 'pointer', textDecoration: 'underline'
+              }}
+            >
+              {exploreAll ? 'Show Recommended Only' : 'Explore All Careers'}
+            </button>
+          </div>
           <SSelect
             label="Target Role Selection"
             value={targetRole}
             onChange={e => handleTargetRoleChange(e.target.value)}
             disabled={updating}
-            options={CAREER_TARGETS.map(c => ({ value: c, label: c }))}
+            options={
+              (exploreAll ? allCareers : (recommendedCareers.length > 0 ? recommendedCareers : allCareers)).map(c => ({
+                value: typeof c === 'string' ? c : c.careerName,
+                label: typeof c === 'string' ? c : c.careerName
+              }))
+            }
           />
         </div>
       </div>

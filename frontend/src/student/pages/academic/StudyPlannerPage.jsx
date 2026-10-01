@@ -6,18 +6,31 @@ import {
   FiZap, FiBookOpen, FiRefreshCw, FiUser, FiAlertCircle,
   FiEdit2, FiRepeat, FiSkipForward, FiAward, FiTarget
 } from 'react-icons/fi'
-import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 
 export default function StudyPlannerPage() {
   const { profile } = useCollegeProfile()
+  const { studentContext } = useStudentContext()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // Customization inputs
+  // Customization inputs derived dynamically from student context
   const [availableHours, setAvailableHours] = useState('10')
-  const [upcomingExams, setUpcomingExams] = useState('Data Structures Exam (in 5 days)')
-  const [weakSubjects, setWeakSubjects] = useState('Database Management Systems')
-  const [focusAreas, setFocusAreas] = useState(profile?.subjects?.slice(0, 3).join(', ') || 'Data Structures, DBMS, Machine Learning')
+  const [upcomingExams, setUpcomingExams] = useState('')
+  const [weakSubjects, setWeakSubjects] = useState('')
+  const [focusAreas, setFocusAreas] = useState('')
+
+  // Populate personalized inputs once student context loads
+  useEffect(() => {
+    if (studentContext) {
+      const activeSubjects = studentContext.subjects || profile?.subjects || []
+      const weakTopics = studentContext.quizPerformance?.weakTopics || []
+      
+      setUpcomingExams(activeSubjects[0] ? `${activeSubjects[0]} Exam (in 7 days)` : 'Semester Examinations')
+      setWeakSubjects(weakTopics.length > 0 ? weakTopics.slice(0, 2).join(', ') : (activeSubjects[1] || 'Core Subject Concepts'))
+      setFocusAreas(activeSubjects.slice(0, 3).join(', ') || studentContext.targetCareer || 'Core Specialization')
+    }
+  }, [studentContext, profile])
 
   // Schedule output & state
   const [studyPlan, setStudyPlan] = useState(null)
@@ -34,9 +47,9 @@ export default function StudyPlannerPage() {
         '/study-tools/planner',
         {
           availableHoursPerWeek: availableHours,
-          upcomingExams,
-          weakSubjects,
-          focusAreas
+          upcomingExams: upcomingExams || (studentContext?.subjects?.[0] ? `${studentContext.subjects[0]} Exam` : 'Semester Exam'),
+          weakSubjects: weakSubjects || (studentContext?.quizPerformance?.weakTopics?.[0] || 'Core Concepts'),
+          focusAreas: focusAreas || studentContext?.targetCareer || 'Specialization'
         }
       )
       if (res.data?.success && res.data.plan) {
@@ -54,8 +67,10 @@ export default function StudyPlannerPage() {
   }
 
   useEffect(() => {
-    handleGeneratePlan()
-  }, [])
+    if (studentContext) {
+      handleGeneratePlan()
+    }
+  }, [studentContext?.userId])
 
   const handleCompleteTask = async (taskId) => {
     const isCompleted = taskStatuses[taskId] === 'completed'
@@ -183,8 +198,18 @@ export default function StudyPlannerPage() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>
-            Student Profile: <strong>{profile?.degreeProgramme || 'Degree Student'}</strong> ({profile?.domain || 'CS'})
+          <div style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span>Profile: <strong>{studentContext?.degree || profile?.degreeProgramme || 'Degree Student'}</strong> ({studentContext?.course || profile?.domain || 'Engineering'})</span>
+            {studentContext?.targetCareer && (
+              <span style={{ background: '#dbeafe', color: '#1e40af', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <FiTarget size={12} /> Target: {studentContext.targetCareer}
+              </span>
+            )}
+            {studentContext?.quizPerformance?.weakTopics?.length > 0 && (
+              <span style={{ background: '#fef3c7', color: '#92400e', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
+                ⚠️ Diagnostic: {studentContext.quizPerformance.weakTopics.length} Weak Topics Detected
+              </span>
+            )}
           </div>
 
           <SBtn variant="primary" onClick={handleGeneratePlan} disabled={loading} style={{ padding: '10px 24px', borderRadius: 14, fontSize: 14 }}>

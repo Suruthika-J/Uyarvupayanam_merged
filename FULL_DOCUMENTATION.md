@@ -174,7 +174,8 @@ otificationService.js: In-app and Socket.io real-time notifications.
 *   generateToken.js: JWT creation.
 *   passwordUtils.js: bcrypt hashing.
 *   logger.js: Winston-based logging.
-*   esponseHandler.js: Standardized API JSON responses.
+*   
+esponseHandler.js: Standardized API JSON responses.
 
 ## 9. Frontend Application
 
@@ -242,7 +243,8 @@ The backend mounts 45 distinct route groups in server.js. Key routes include:
 - /api/career-advisor: AI/algorithm career advisor (careerAdvisorRoutes.js)
 - /api/college-advisor: College advisory tools (collegeAdvisorRoutes.js)
 - /api/study-planner: Study planning tools (studyPlannerRoutes.js)
-- /api/resume-builder: Resume creation tools (esumeRoutes.js)
+- /api/resume-builder: Resume creation tools (
+esumeRoutes.js)
 - /api/interview-prep: Interview preparation tools (interviewRoutes.js)
 - /api/job-board: Job listings for graduates (jobRoutes.js)
 
@@ -257,7 +259,8 @@ otificationRoutes.js)
 ### Admin
 - /api/admin: Admin analytics, user management, system config (dminRoutes.js)
 - /api/admin/content: CMS for updating platform content (contentRoutes.js)
-- /api/admin/reports: System reporting (eportRoutes.js)
+- /api/admin/reports: System reporting (
+eportRoutes.js)
 
 *(Note: 45 total route files mapped to specific domains for modularity)*
 
@@ -312,7 +315,8 @@ The application encapsulates core business logic in services:
 - ldnbsOrchestrator.js: Manages the Learning Diagnosis & Next Best Skill system, directing students to optimal next concepts.
 - collegePredictorService.js: Algorithm to match a student's profile (marks, interests, category) with historical college cutoffs.
 - careerMatchingService.js: Matches user profiles (skills, interests, psychometric data) with the career database.
-- ecommendationEngine.js: General recommendation logic for courses and scholarships.
+- 
+ecommendationEngine.js: General recommendation logic for courses and scholarships.
 - gamificationService.js: Handles logic for awarding points, calculating levels, and issuing badges based on events.
 - 
 otificationService.js: Dispatches in-app, email, or socket-based notifications.

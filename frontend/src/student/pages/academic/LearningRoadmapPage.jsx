@@ -3,12 +3,15 @@ import { useNavigate, Link } from 'react-router-dom'
 import { SCard, SLoader, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
 import {
   FiTarget, FiCheckCircle, FiCircle, FiArrowRight, FiAward,
-  FiBriefcase, FiBookOpen, FiCode, FiZap, FiCheck, FiMap
+  FiBriefcase, FiBookOpen, FiCode, FiZap, FiCheck, FiMap, FiAlertCircle
 } from 'react-icons/fi'
 import axiosInstance from '../../../config/axios'
+import { useStudentContext, useCollegeProfile } from '../../context/CollegeProfileContext'
 
 export default function LearningRoadmapPage() {
   const navigate = useNavigate()
+  const { studentContext } = useStudentContext()
+  const { profile } = useCollegeProfile()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [targetCareer, setTargetCareer] = useState('')
@@ -22,7 +25,7 @@ export default function LearningRoadmapPage() {
       const res = await axiosInstance.get('/college-advisor/roadmap')
 
       if (res.data?.success) {
-        setTargetCareer(res.data.targetCareer || 'Software Engineer')
+        setTargetCareer(res.data.targetCareer || studentContext?.targetCareer || 'Software Engineer')
         setMilestones(res.data.milestones || [])
       } else {
         setError('The AI couldn’t build a roadmap for your target career yet.')
@@ -37,21 +40,34 @@ export default function LearningRoadmapPage() {
 
   useEffect(() => {
     fetchRoadmap()
-  }, [])
+  }, [studentContext?.targetCareer])
 
-  const toggleMilestoneComplete = (idx) => {
+  const toggleMilestoneComplete = async (idx) => {
+    const m = milestones[idx]
+    if (!m) return
+    const currentStatus = m.status || m.defaultStatus || 'upcoming'
+    const willBeCompleted = currentStatus !== 'completed'
+
+    // Optimistic UI update
     setMilestones(prev => {
       const updated = [...prev]
-      const currentStatus = updated[idx].defaultStatus || updated[idx].status || 'upcoming'
-      if (currentStatus === 'completed') {
-        updated[idx].status = 'upcoming'
-        updated[idx].defaultStatus = 'upcoming'
-      } else {
-        updated[idx].status = 'completed'
-        updated[idx].defaultStatus = 'completed'
+      updated[idx] = {
+        ...updated[idx],
+        status: willBeCompleted ? 'completed' : 'upcoming',
+        defaultStatus: willBeCompleted ? 'completed' : 'upcoming'
       }
       return updated
     })
+
+    try {
+      await axiosInstance.post('/college-advisor/roadmap/progress', {
+        milestoneIndex: idx,
+        targetCareer,
+        isCompleted: willBeCompleted
+      })
+    } catch (err) {
+      console.warn('Failed to persist milestone progress:', err)
+    }
   }
 
   const completedCount = milestones.filter(m => (m.status || m.defaultStatus) === 'completed').length

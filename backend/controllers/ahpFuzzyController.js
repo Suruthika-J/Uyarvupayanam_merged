@@ -179,7 +179,7 @@ const getAhpFuzzyQuestions = async (req, res) => {
 const evaluateStudentAssessment = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?.id || req.user?._id;
-    const { answers, answer, questionId, selectedOption, optionId, ahpPriorityWeights, behavioralSignals } = req.body;
+    const { answers, answer, questionId, selectedOption, optionId, ahpPriorityWeights, behavioralSignals, validateOnly, requiredQuestionIds } = req.body;
 
     let userAnswers = [];
 
@@ -195,6 +195,32 @@ const evaluateStudentAssessment = async (req, res) => {
 
     if (userAnswers.length === 0) {
       return res.status(400).json({ success: false, message: "Please provide student answers for evaluation." });
+    }
+
+    // ── BACKEND VALIDATION: Check all required questions have been answered ───
+    if (Array.isArray(requiredQuestionIds) && requiredQuestionIds.length > 0) {
+      const answeredIds = new Set(userAnswers.map(a => a.questionId || a._id).filter(Boolean));
+      const unansweredQuestionIds = requiredQuestionIds.filter(qId => !answeredIds.has(qId));
+
+      if (unansweredQuestionIds.length > 0) {
+        return res.status(422).json({
+          success: false,
+          code: "INCOMPLETE_ASSESSMENT",
+          message: `Please answer all ${requiredQuestionIds.length} questions before submitting. ${unansweredQuestionIds.length} question(s) unanswered.`,
+          unansweredQuestionIds,
+          answeredCount: answeredIds.size,
+          totalRequired: requiredQuestionIds.length
+        });
+      }
+    }
+
+    // If validateOnly flag, just confirm all questions answered without running fuzzy eval
+    if (validateOnly) {
+      return res.status(200).json({
+        success: true,
+        message: "All required questions answered. Ready for evaluation.",
+        answeredCount: userAnswers.length
+      });
     }
 
     const questionIds = userAnswers.map(a => a.questionId || a._id).filter(Boolean);

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../../config/axios'
 import { SCard, SBtn, SInput, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
-import { FiFileText, FiDownload, FiCheckCircle, FiZap, FiPlus, FiUser, FiEdit3 } from 'react-icons/fi'
-import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { FiFileText, FiDownload, FiCheckCircle, FiZap, FiPlus, FiUser, FiEdit3, FiTarget } from 'react-icons/fi'
+import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 
 export default function ResumeBuilderPage() {
+  const navigate = useNavigate()
   const { profile } = useCollegeProfile()
+  const { studentContext } = useStudentContext()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [resumeData, setResumeData] = useState(null)
@@ -125,10 +128,15 @@ export default function ResumeBuilderPage() {
           {/* Header Contact Block */}
           <div style={{ borderBottom: '2px solid var(--s-primary)', paddingBottom: 16, marginBottom: 24 }}>
             <h2 style={{ fontSize: 26, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 4px' }}>
-              {resumeData?.name || 'College Student'}
+              {resumeData?.name || profile?.user?.name || 'Student Name'}
             </h2>
-            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-primary)' }}>
-              {resumeData?.degree} — {resumeData?.domain} (CGPA: {resumeData?.cgpa})
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-primary)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span>{resumeData?.degree} — {resumeData?.domain} (CGPA: {resumeData?.cgpa || 'N/A'})</span>
+              {studentContext?.targetCareer && (
+                <span style={{ background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 800 }}>
+                  Target: {studentContext.targetCareer}
+                </span>
+              )}
             </div>
           </div>
 
@@ -146,7 +154,7 @@ export default function ResumeBuilderPage() {
               />
             ) : (
               <p style={{ fontSize: 14, color: 'var(--s-text)', lineHeight: 1.6, margin: 0 }}>
-                {summary}
+                {summary || 'Complete your student profile to automatically synthesize a career-targeted professional summary.'}
               </p>
             )}
           </div>
@@ -156,15 +164,30 @@ export default function ResumeBuilderPage() {
             <h4 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.05em', borderBottom: '1px solid var(--s-border)', paddingBottom: 6, marginBottom: 12 }}>
               Portfolio & Academic Projects
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {resumeData?.suggestedProjects?.map((proj, idx) => (
-                <div key={idx}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)' }}>{proj.title}</div>
-                  <div style={{ fontSize: 13, color: 'var(--s-text3)', margin: '2px 0 4px' }}>{proj.description}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#047857' }}>Tech Stack: {proj.techStack}</div>
-                </div>
-              ))}
-            </div>
+            {resumeData?.suggestedProjects?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {resumeData.suggestedProjects.map((proj, idx) => (
+                  <div key={idx} style={{ padding: 12, borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--s-text)' }}>{proj.title}</div>
+                    <div style={{ fontSize: 13, color: 'var(--s-text3)', margin: '2px 0 4px' }}>{proj.description}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#047857' }}>Tech Stack: {proj.techStack}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: '16px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 10px' }}>
+                  No verified projects recorded yet. Add your academic capstone, miniproject, or personal open-source projects.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/profile')}
+                  style={{ background: 'var(--s-primary)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  + Add Projects in Profile
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Technical Competencies */}
@@ -178,13 +201,26 @@ export default function ResumeBuilderPage() {
                 onChange={e => setSkillsText(e.target.value)}
                 placeholder="Comma separated skills..."
               />
-            ) : (
+            ) : skillsText ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {skillsText.split(',').map((s, idx) => (
+                {skillsText.split(',').filter(Boolean).map((s, idx) => (
                   <span key={idx} style={{ fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 8, background: '#f1f5f9', color: 'var(--s-text)' }}>
                     • {s.trim()}
                   </span>
                 ))}
+              </div>
+            ) : (
+              <div style={{ padding: '14px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 8px' }}>
+                  No skills listed. Complete your skill matrix to showcase technical readiness.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/career/skill-gap')}
+                  style={{ background: '#047857', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Go to Skill Matrix
+                </button>
               </div>
             )}
           </div>
@@ -194,11 +230,26 @@ export default function ResumeBuilderPage() {
             <h4 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.05em', borderBottom: '1px solid var(--s-border)', paddingBottom: 6, marginBottom: 10 }}>
               Recognized Certifications
             </h4>
-            {(resumeData?.certifications || []).map((cert, idx) => (
-              <div key={idx} style={{ fontSize: 13, fontWeight: 700, color: '#b45309', margin: '4px 0' }}>
-                🏆 {cert}
+            {resumeData?.certifications?.length > 0 ? (
+              resumeData.certifications.map((cert, idx) => (
+                <div key={idx} style={{ fontSize: 13, fontWeight: 700, color: '#b45309', margin: '4px 0' }}>
+                  🏆 {cert}
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '14px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 10px' }}>
+                  No certifications recorded yet. Add external certifications or NPTEL/Coursera credentials.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/profile')}
+                  style={{ background: '#f1f5f9', color: 'var(--s-text)', border: '1px solid var(--s-border)', padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  + Add Certifications in Profile
+                </button>
               </div>
-            ))}
+            )}
           </div>
 
         </SCard>

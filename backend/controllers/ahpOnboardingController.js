@@ -4,6 +4,7 @@ const { getCandidateDomainsForBranch, computeAhpEngine } = require("../utils/ahp
 
 /**
  * GET candidate career domains for Step 5 based on Step 4 selections
+ * Now also considers careerInterests and skills for fuzzy-context-aware domain selection
  */
 const getCandidateDomains = async (req, res) => {
   try {
@@ -11,6 +12,9 @@ const getCandidateDomains = async (req, res) => {
     let branchId = req.query.branchId || "cse";
     let specializations = req.query.specializations ? req.query.specializations.split(",").map(s => s.trim()).filter(Boolean) : [];
 
+    // Fetch saved student profile context for personalization
+    let studentCareerInterests = [];
+    let studentSkills = [];
     if (userId) {
       const studentProfile = await CollegeStudentProfile.findOne({ userId });
       if (studentProfile) {
@@ -20,15 +24,35 @@ const getCandidateDomains = async (req, res) => {
         if (!req.query.specializations && studentProfile.specialization) {
           specializations = studentProfile.specialization.split(",").map(s => s.trim()).filter(Boolean);
         }
+        if (Array.isArray(studentProfile.careerInterests) && studentProfile.careerInterests.length > 0) {
+          studentCareerInterests = studentProfile.careerInterests;
+        }
+        if (Array.isArray(studentProfile.skills) && studentProfile.skills.length > 0) {
+          studentSkills = studentProfile.skills;
+        }
       }
     }
 
-    const candidateDomains = getCandidateDomainsForBranch(branchId, specializations);
+    // Get base candidate domains from branch + specializations
+    const baseCandidateDomains = getCandidateDomainsForBranch(branchId, specializations);
+
+    // Apply fuzzy relevance filtering using careerInterests + skills context
+    const { filterCandidatesWithFuzzyRelevance } = require("../utils/ahpCalculator");
+    const candidateDomains = filterCandidatesWithFuzzyRelevance(
+      baseCandidateDomains,
+      studentCareerInterests,
+      studentSkills
+    );
 
     res.status(200).json({
       success: true,
       branchId,
       specializations,
+      studentContext: {
+        careerInterestsUsed: studentCareerInterests.length > 0,
+        skillsUsed: studentSkills.length > 0,
+        candidateCount: candidateDomains.length
+      },
       candidateDomains
     });
   } catch (error) {

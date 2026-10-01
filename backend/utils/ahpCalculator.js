@@ -389,6 +389,100 @@ function computeAhpEngine({ candidateDomains = [], pairwiseComparisons = [] }) {
   };
 }
 
+// ── Fuzzy Career Relevance Filter ────────────────────────────────────────────
+// Maps keywords from student profile (careerInterests & skills) to domain IDs
+const CAREER_INTEREST_TO_DOMAIN = {
+  "software": ["full_stack", "software_engineering"],
+  "programming": ["full_stack", "software_engineering", "ai_ml"],
+  "web": ["full_stack"],
+  "mobile": ["full_stack"],
+  "ai": ["ai_ml"],
+  "machine learning": ["ai_ml"],
+  "artificial intelligence": ["ai_ml"],
+  "data": ["data_science", "data_engineering"],
+  "analytics": ["data_science"],
+  "cyber": ["cyber_security"],
+  "security": ["cyber_security"],
+  "hacking": ["cyber_security"],
+  "cloud": ["cloud_devops"],
+  "devops": ["cloud_devops"],
+  "embedded": ["embedded_iot", "systems_iot"],
+  "iot": ["embedded_iot"],
+  "vlsi": ["vlsi_design"],
+  "chip": ["vlsi_design"],
+  "robotics": ["robotics_automation"],
+  "automation": ["robotics_automation"],
+  "electric vehicle": ["ev_powertrain"],
+  "power": ["ev_powertrain"],
+  "cad": ["cad_structural"],
+  "structural": ["cad_structural"],
+  "problem solving": ["ai_ml", "full_stack", "data_science"],
+  "python": ["ai_ml", "data_science", "full_stack"],
+  "java": ["full_stack"],
+  "react": ["full_stack"],
+  "node": ["full_stack"],
+  "sql": ["data_science"],
+  "mathematics": ["ai_ml", "data_science"],
+  "statistics": ["data_science"],
+  "networking": ["cyber_security", "cloud_devops"],
+  "ui": ["full_stack"],
+  "ux": ["full_stack"],
+  "design": ["full_stack"],
+};
+
+/**
+ * Scores each candidate domain against the student's career interests & skills
+ * using fuzzy keyword matching. Reorders candidates by relevance while preserving
+ * minimum coverage from branch defaults.
+ *
+ * @param {Array} candidateDomains - Base domain objects from getCandidateDomainsForBranch
+ * @param {Array} careerInterests  - Student's careerInterests strings
+ * @param {Array} skills           - Student's skills strings
+ * @returns {Array} - Reordered and potentially filtered candidateDomains
+ */
+function filterCandidatesWithFuzzyRelevance(candidateDomains = [], careerInterests = [], skills = []) {
+  // No context available — return base candidates unchanged
+  if (careerInterests.length === 0 && skills.length === 0) {
+    return candidateDomains;
+  }
+
+  const allContext = [...careerInterests, ...skills].map(s => s.toLowerCase());
+
+  // Score each candidate domain
+  const scored = candidateDomains.map(domain => {
+    let relevanceScore = 0;
+    const domainKey = domain.id || "";
+    const domainName = (domain.name || "").toLowerCase();
+    const domainCategory = (domain.category || "").toLowerCase();
+
+    allContext.forEach(contextStr => {
+      // Check keyword dictionary
+      Object.entries(CAREER_INTEREST_TO_DOMAIN).forEach(([keyword, mappedDomains]) => {
+        if (contextStr.includes(keyword) || keyword.includes(contextStr)) {
+          if (mappedDomains.includes(domainKey)) {
+            relevanceScore += 1.0;
+          }
+        }
+      });
+      // Direct domain name / category match
+      if (domainName.includes(contextStr) || contextStr.includes(domainName.split(" ")[0])) {
+        relevanceScore += 0.5;
+      }
+      if (domainCategory.includes(contextStr)) {
+        relevanceScore += 0.3;
+      }
+    });
+
+    return { domain, relevanceScore };
+  });
+
+  // Sort by relevance (highest first) but preserve all candidates
+  scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+  // Return top 5 (already capped from getCandidateDomainsForBranch) sorted by relevance
+  return scored.map(s => s.domain);
+}
+
 module.exports = {
   CAREER_TAXONOMY,
   DEFAULT_CAREER_DOMAINS,
@@ -396,5 +490,6 @@ module.exports = {
   buildAhpMatrix,
   calculatePriorityVector,
   calculateConsistencyRatio,
-  computeAhpEngine
+  computeAhpEngine,
+  filterCandidatesWithFuzzyRelevance
 };

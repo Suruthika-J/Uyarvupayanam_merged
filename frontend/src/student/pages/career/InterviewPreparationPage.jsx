@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import axiosInstance from '../../../config/axios'
 import { SCard, SSelect, SBtn, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
-import { FiCheckSquare, FiZap, FiHelpCircle, FiChevronDown, FiChevronUp, FiRefreshCw, FiArrowRight, FiCheck } from 'react-icons/fi'
-import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { FiCheckSquare, FiZap, FiHelpCircle, FiChevronDown, FiChevronUp, FiRefreshCw, FiArrowRight, FiCheck, FiFolder, FiTarget } from 'react-icons/fi'
+import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 import { useNavigate } from 'react-router-dom'
 
 export default function InterviewPreparationPage() {
   const navigate = useNavigate()
   const { profile } = useCollegeProfile()
+  const { studentContext } = useStudentContext()
   const [interviewType, setInterviewType] = useState('Technical')
-  const defaultRole = profile?.targetCareer || profile?.careerInterests?.[0] || 'Software Developer'
+  const defaultRole = studentContext?.targetCareer || profile?.targetCareer || profile?.careerInterests?.[0] || 'Software Developer'
   const [targetRole, setTargetRole] = useState(defaultRole)
+  const [exploreAll, setExploreAll] = useState(false)
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -19,6 +21,31 @@ export default function InterviewPreparationPage() {
   // Submission & Weak Area Sync state
   const [synced, setSynced] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // Sync defaultRole if studentContext loads
+  useEffect(() => {
+    if (studentContext?.targetCareer && !targetRole) {
+      setTargetRole(studentContext.targetCareer)
+    }
+  }, [studentContext?.targetCareer])
+
+  const recommendedRoles = [
+    studentContext?.targetCareer,
+    ...(studentContext?.careerInterests || []),
+    'Software Developer',
+    'Data Scientist',
+    'Machine Learning Engineer',
+    'Cloud / DevOps Engineer'
+  ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i)
+
+  const allSystemRoles = [
+    'Software Developer', 'Full Stack Developer', 'Data Scientist', 'Machine Learning Engineer',
+    'AI Engineer', 'DevOps Engineer', 'Cybersecurity Analyst', 'Cloud Solutions Architect',
+    'Robotics Engineer', 'Mechanical Design Engineer', 'Embedded Systems Engineer', 'VLSI Design Engineer',
+    'Civil Structural Engineer', 'Biomedical Engineer', 'Product Manager'
+  ]
+
+  const activeRoles = exploreAll ? allSystemRoles : recommendedRoles
 
   const fetchQuestions = async () => {
     setLoading(true)
@@ -46,7 +73,9 @@ export default function InterviewPreparationPage() {
   }
 
   useEffect(() => {
-    fetchQuestions()
+    if (targetRole) {
+      fetchQuestions()
+    }
   }, [interviewType, targetRole])
 
   const toggleAnswer = (qId) => {
@@ -83,7 +112,7 @@ export default function InterviewPreparationPage() {
             Target Career Interview Preparation
           </h1>
           <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '4px 0 0' }}>
-            Practice role-specific technical, behavioral, and system questions aligned to <strong>{targetRole}</strong>.
+            Practice role-specific technical, behavioral, and project defense questions aligned to <strong>{targetRole}</strong>.
           </p>
         </div>
 
@@ -95,28 +124,39 @@ export default function InterviewPreparationPage() {
       {/* ROLE & CATEGORY SELECTORS */}
       <SCard style={{ padding: 20, borderRadius: 16, marginBottom: 28 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <SSelect
-            label="Target Placement Role"
-            value={targetRole}
-            onChange={e => setTargetRole(e.target.value)}
-            options={[
-              { value: 'Software Developer', label: 'Software Developer (DSA, DBMS, OS, Systems)' },
-              { value: 'Data Scientist', label: 'Data Scientist (Python, SQL, Stats, ML)' },
-              { value: 'Machine Learning Engineer', label: 'Machine Learning Engineer (MLOps, PyTorch)' },
-              { value: 'Robotics Engineer', label: 'Robotics Engineer (CAD, Embedded, Mechatronics)' }
-            ]}
-          />
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--s-text3)' }}>
+                {exploreAll ? 'All Industry Roles' : 'Recommended for You'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setExploreAll(!exploreAll)}
+                style={{ background: 'none', border: 'none', color: 'var(--s-primary)', fontSize: 12, fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {exploreAll ? 'Show Recommended Only' : 'Explore All Roles'}
+              </button>
+            </div>
+            <SSelect
+              label="Target Placement Role"
+              value={targetRole}
+              onChange={e => setTargetRole(e.target.value)}
+              options={activeRoles.map(r => ({ value: r, label: r }))}
+            />
+          </div>
 
-          <SSelect
-            label="Interview Round Category"
-            value={interviewType}
-            onChange={e => setInterviewType(e.target.value)}
-            options={[
-              { value: 'Technical', label: 'Technical & Domain Questions' },
-              { value: 'HR & Cultural', label: 'HR & Behavioral Questions' },
-              { value: 'System Design', label: 'System Design & Architecture' }
-            ]}
-          />
+          <div style={{ paddingTop: 22 }}>
+            <SSelect
+              label="Interview Round Category"
+              value={interviewType}
+              onChange={e => setInterviewType(e.target.value)}
+              options={[
+                { value: 'Technical', label: 'Technical & Domain Questions' },
+                { value: 'HR & Cultural', label: 'HR & Behavioral Questions' },
+                { value: 'System Design', label: 'System Design & Architecture' }
+              ]}
+            />
+          </div>
         </div>
       </SCard>
 
@@ -145,10 +185,17 @@ export default function InterviewPreparationPage() {
             const isOpen = openAnswer[q.id || idx]
             return (
               <SCard key={q.id || idx} style={{ padding: 24, borderRadius: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
-                    Question {idx + 1} • {q.category}
-                  </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
+                      Question {idx + 1} • {q.category}
+                    </span>
+                    {q.category === 'Project Defense' && (
+                      <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8, background: '#d1fae5', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        🚀 Profile Project Defense
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => toggleAnswer(q.id || idx)}

@@ -1,6 +1,12 @@
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const User = require("../models/User");
 const COLLEGE_FIELDS_DATA = require("../config/collegeFieldsData");
+const AhpCareerProfile = require("../models/AhpCareerProfile");
+const AhpFuzzyResult = require("../models/AhpFuzzyResult");
+const StudentSkillProgress = require("../models/StudentSkillProgress");
+const StudentTestResult = require("../models/StudentTestResult");
+const SavedItem = require("../models/SavedItem");
+const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 
 // ── Get Metadata (Fields, Degrees, Domains, Certifications) ──────────────────
 const getMetadata = (req, res) => {
@@ -221,9 +227,290 @@ function calculateProfileCompletion(profile) {
   return Math.min(100, score);
 }
 
+// ── GET Central Consolidated Student Context ──────────────────────────────────
+// Returns the authoritative, shared data layer used by all college features:
+// Profile + AHP + Fuzzy + Progress + Career Catalog + Skill Gap + Saved Items
+const getMyContext = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Parallel fetch of all student data
+    const [user, profile, ahpProfile, fuzzyResult, skillProgress, testResults, savedItems] = await Promise.all([
+      User.findById(userId).select("name email phone role userType").lean(),
+      CollegeStudentProfile.findOne({ userId }).lean(),
+      AhpCareerProfile.findOne({ userId }).lean(),
+      AhpFuzzyResult.findOne({ userId }).lean(),
+      StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] }).lean(),
+      StudentTestResult.find({ $or: [{ studentId: userId }, { userId }] }).sort({ createdAt: -1 }).limit(10).lean(),
+      SavedItem.find({ userId }).lean()
+    ]);
+
+    const activeProfile = profile || {
+      userId,
+      field: "engineering",
+      degreeProgramme: "B.E. (Bachelor of Engineering)",
+      domain: "Computer Science",
+      skills: [],
+      subjects: [],
+      projects: [],
+      certifications: [],
+      careerInterests: [],
+      academicInterests: [],
+      profileCompletion: 0,
+      isCompleted: false
+    };
+
+    // 1. Authoritative Target Career Resolution
+    // Priority: Explicit profile.targetCareer -> Fuzzy Result domain -> AHP top domain -> Catalog fallback
+    let targetCareer = activeProfile.targetCareer || "";
+    if (!targetCareer && fuzzyResult?.recommendedDomain?.domainName) {
+      targetCareer = fuzzyResult.recommendedDomain.domainName;
+    }
+    if (!targetCareer && ahpProfile?.topDomain?.name) {
+      targetCareer = ahpProfile.topDomain.name;
+    }
+    if (!targetCareer && activeProfile.careerInterests?.length > 0) {
+      targetCareer = activeProfile.careerInterests[0];
+    }
+
+    // 2. Fetch Catalog details for the Target Career
+    let careerCatalogItem = null;
+    if (targetCareer) {
+      careerCatalogItem = await CollegeCareerCatalog.findOne({
+        $or: [
+          { title: new RegExp(`^${targetCareer}$`, "i") },
+          { slug: targetCareer.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
+          { title: new RegExp(targetCareer, "i") }
+        ]
+      }).lean();
+    }
+    if (!careerCatalogItem) {
+      careerCatalogItem = await CollegeCareerCatalog.findOne({
+        $or: [
+          { requiredDomains: new RegExp(activeProfile.domain || "Computer Science", "i") },
+          { requiredFields: activeProfile.field || "engineering" }
+        ]
+      }).lean();
+    }
+    if (careerCatalogItem && !targetCareer) {
+      targetCareer = careerCatalogItem.title;
+    }
+    if (!targetCareer) {
+      targetCareer = "Software Engineer";
+    }
+
+    // 3. Compute Real Skill Gap Analysis against Target Career
+    const userSkills = (activeProfile.skills || []).map(s => s.toLowerCase());
+    const userSubjects = (activeProfile.subjects || []).map(s => s.toLowerCase());
+
+    const catalogCore = careerCatalogItem?.coreSkills?.map(s => s.name) || careerCatalogItem?.requiredSkills || [];
+    const catalogAdv = careerCatalogItem?.advancedSkills?.map(s => s.name) || [];
+    const catalogOpt = careerCatalogItem?.optionalSkills?.map(s => s.name) || [];
+
+    const allRequiredSkills = [...new Set([...catalogCore, ...catalogAdv, ...catalogOpt])];
+
+    const strong = [];
+    const developing = [];
+    const missing = [];
+
+    allRequiredSkills.forEach(reqSkill => {
+      const rLower = reqSkill.toLowerCase();
+      const hasExactSkill = userSkills.some(u => u.includes(rLower) || rLower.includes(u));
+      const hasSubject = userSubjects.some(sub => sub.includes(rLower) || rLower.includes(sub));
+
+      if (hasExactSkill) {
+        strong.push(reqSkill);
+      } else if (hasSubject) {
+        developing.push(reqSkill);
+      } else {
+        missing.push(reqSkill);
+      }
+    });
+
+    const totalReq = allRequiredSkills.length || 1;
+    const readinessScore = Math.min(100, Math.round(((strong.length * 1.0 + developing.length * 0.5) / totalReq) * 100));
+
+    // 4. Aggregate Weak and Strong Topics from Test Results
+    const weakTopics = [];
+    const strongTopics = [];
+    testResults.forEach(tr => {
+      if (Array.isArray(tr.weaknesses)) {
+        tr.weaknesses.forEach(w => { if (!weakTopics.includes(w)) weakTopics.push(w); });
+      }
+      if (Array.isArray(tr.strengths)) {
+        tr.strengths.forEach(s => { if (!strongTopics.includes(s)) strongTopics.push(s); });
+      }
+    });
+
+    // 5. Aggregate Saved Items by Type
+    const savedCounts = {
+      Course: 0,
+      College: 0,
+      Scholarship: 0,
+      Exam: 0,
+      ClassContent: 0,
+      CareerPath: 0,
+      LearningResource: 0
+    };
+    (savedItems || []).forEach(item => {
+      if (savedCounts[item.contentType] !== undefined) {
+        savedCounts[item.contentType] += 1;
+      } else {
+        savedCounts[item.contentType] = 1;
+      }
+    });
+
+    // 6. Roadmap Calculation
+    const defaultMilestones = careerCatalogItem?.recommendedRoadmap || [
+      { phase: "Phase 1: Academic & Core Fundamentals", title: "Core Theory & Discipline Mastery", items: ["Core Programming", "Data Structures", "Database Systems"], defaultStatus: strong.length > 2 ? "completed" : "current" },
+      { phase: "Phase 2: Applied Technical Skills", title: "Specialization & Frameworks", items: catalogAdv.length > 0 ? catalogAdv : ["Applied Frameworks", "System Design"], defaultStatus: strong.length > 4 ? "completed" : "current" },
+      { phase: "Phase 3: Portfolio & Real-world Projects", title: "Industry Capstone Projects", items: ["End-to-End Capstone Project", "API Integration"], defaultStatus: "upcoming" },
+      { phase: "Phase 4: Placement & Certification", title: "Career Readiness & Certification", items: ["Mock Technical Assessment", "Resume Polish"], defaultStatus: "upcoming" }
+    ];
+
+    const completedMilestonesCount = (skillProgress?.completedSteps || []).filter(step => step.startsWith("roadmap_") || step.startsWith("m-")).length;
+    const roadmapProgressPercent = Math.min(100, Math.round((completedMilestonesCount / Math.max(1, defaultMilestones.length)) * 100));
+
+    // 7. Profile Completeness Verification
+    const checks = {
+      hasCollege: Boolean(activeProfile.institution),
+      hasCourse: Boolean(activeProfile.degreeProgramme),
+      hasYear: Boolean(activeProfile.currentYear),
+      hasSemester: Boolean(activeProfile.currentSemester),
+      hasSpecialisation: Boolean(activeProfile.specialization),
+      hasDomain: Boolean(activeProfile.domain),
+      hasTargetCareer: Boolean(targetCareer),
+      hasSkills: Boolean(activeProfile.skills && activeProfile.skills.length > 0),
+      hasProjects: Boolean(activeProfile.projects && activeProfile.projects.length > 0),
+      hasCertifications: Boolean(activeProfile.certifications && activeProfile.certifications.length > 0),
+      hasCgpa: Boolean(activeProfile.cgpa),
+      hasSubjects: Boolean(activeProfile.subjects && activeProfile.subjects.length > 0),
+      hasAhpOrFuzzy: Boolean(ahpProfile || fuzzyResult)
+    };
+
+    const completionPercent = activeProfile.profileCompletion || calculateProfileCompletion(activeProfile);
+
+    // Consolidated Student Context Object
+    const studentContext = {
+      userId: user?._id || userId,
+      name: user?.name || "Student",
+      email: user?.email || "",
+      phone: activeProfile.phone || user?.phone || "",
+      college: activeProfile.institution || "",
+      district: activeProfile.institutionDistrict || "",
+      department: activeProfile.domain || activeProfile.field || "",
+      degree: activeProfile.degreeProgramme || "",
+      course: activeProfile.degreeProgramme || "",
+      academicYear: activeProfile.currentYear || "",
+      semester: activeProfile.currentSemester || "",
+      specialisation: activeProfile.specialization || "",
+      domain: activeProfile.domain || "",
+      subjects: activeProfile.subjects || [],
+      skills: activeProfile.skills || [],
+      strengths: activeProfile.strengths || [],
+      interests: [...new Set([...(activeProfile.academicInterests || []), ...(activeProfile.careerInterests || [])])],
+      academicInterests: activeProfile.academicInterests || [],
+      careerInterests: activeProfile.careerInterests || [],
+      targetCareer,
+      targetCareerDomain: careerCatalogItem?.category || activeProfile.domain || "",
+      targetCareerDetails: careerCatalogItem ? {
+        title: careerCatalogItem.title,
+        slug: careerCatalogItem.slug,
+        category: careerCatalogItem.category,
+        shortDescription: careerCatalogItem.shortDescription,
+        coreSkills: careerCatalogItem.coreSkills || [],
+        advancedSkills: careerCatalogItem.advancedSkills || [],
+        optionalSkills: careerCatalogItem.optionalSkills || [],
+        suggestedSubjects: careerCatalogItem.suggestedSubjects || [],
+        suggestedNextSteps: careerCatalogItem.suggestedNextSteps || [],
+        relatedCertifications: careerCatalogItem.relatedCertifications || [],
+        growthOutlook: careerCatalogItem.growthOutlook || "High Demand"
+      } : null,
+      ahpResults: ahpProfile ? {
+        topDomain: ahpProfile.topDomain,
+        secondDomain: ahpProfile.secondDomain,
+        thirdDomain: ahpProfile.thirdDomain,
+        candidateDomains: ahpProfile.candidateDomains,
+        consistencyStatus: ahpProfile.consistencyStatus,
+        isConsistent: ahpProfile.isConsistent,
+        completedAt: ahpProfile.completedAt
+      } : null,
+      fuzzyResults: fuzzyResult ? {
+        recommendedDomain: fuzzyResult.recommendedDomain,
+        finalScores: fuzzyResult.finalScores,
+        strongDimensions: fuzzyResult.strongDimensions,
+        confidenceLevel: fuzzyResult.confidenceLevel,
+        completedAt: fuzzyResult.completedAt
+      } : null,
+      academicPerformance: {
+        cgpa: activeProfile.cgpa || "",
+        grokAssessmentScore: activeProfile.grokAssessmentScore || null,
+        recentTests: testResults.map(t => ({
+          id: t._id,
+          date: t.createdAt,
+          percentage: t.totalScore?.percentage || 0,
+          performanceLevel: t.performanceLevel || "Average",
+          strengths: t.strengths || [],
+          weaknesses: t.weaknesses || []
+        }))
+      },
+      studyProgress: {
+        xp: skillProgress?.xp || 0,
+        level: skillProgress?.level || 1,
+        streak: skillProgress?.streak || 0,
+        lastActivityDate: skillProgress?.lastActivityDate || null,
+        completedSteps: skillProgress?.completedSteps || []
+      },
+      completedCourses: activeProfile.completedCourses || [],
+      projects: activeProfile.projects || [],
+      certifications: activeProfile.certifications || [],
+      quizPerformance: {
+        weakTopics,
+        strongTopics,
+        totalQuizzesTaken: testResults.length
+      },
+      skillGap: {
+        strong,
+        developing,
+        missing,
+        readinessScore,
+        totalRequired: allRequiredSkills.length
+      },
+      roadmapProgress: {
+        totalMilestones: defaultMilestones.length,
+        completedMilestones: completedMilestonesCount,
+        progressPercent: roadmapProgressPercent,
+        milestones: defaultMilestones
+      },
+      savedResources: {
+        total: savedItems.length,
+        countsByType: savedCounts
+      },
+      profileCompleteness: {
+        score: completionPercent,
+        isComplete: activeProfile.isCompleted || completionPercent >= 75,
+        checks
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      studentContext,
+      profile: activeProfile
+    });
+  } catch (error) {
+    console.error("Get student context error:", error);
+    res.status(500).json({ success: false, message: "Failed to assemble student context", error: error.message });
+  }
+};
+
 module.exports = {
   getMetadata,
   getMyProfile,
+  getMyContext,
   saveProfile,
   patchProfile
 };
