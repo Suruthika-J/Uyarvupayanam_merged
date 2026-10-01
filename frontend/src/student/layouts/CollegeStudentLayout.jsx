@@ -94,7 +94,7 @@ function CollegeLayoutInner() {
       )}
 
       {/* ── SIDEBAR ── */}
-      <aside style={{
+      <aside className="no-print" style={{
         width: 260,
         background: theme.sidebarBg,
         color: '#fff',
@@ -272,7 +272,7 @@ function CollegeLayoutInner() {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Top Header */}
-        <header style={{
+        <header className="no-print" style={{
           height: 60,
           background: theme.headerBg,
           borderBottom: `1px solid ${theme.headerBorder}`,

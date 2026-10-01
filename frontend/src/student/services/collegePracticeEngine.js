@@ -5,7 +5,7 @@
  * with the server-side College Practice Engine.
  */
 
-import axios from 'axios'
+import axiosInstance from '../../config/axios'
 
 const norm = (str) => (str || '').toString().toLowerCase().trim()
 
@@ -264,11 +264,9 @@ export function getCollegePracticeConfig(profile = {}) {
  * Fetches practice session items from backend engine
  */
 export async function fetchDomainPracticeSession({ subject, difficulty, count, practiceType, topic }) {
-  const token = localStorage.getItem('studentToken')
-  const res = await axios.post(
-    'http://localhost:5000/api/study-tools/practice-questions',
-    { subject, difficulty, count: count || 5, practiceType, topic },
-    { headers: { Authorization: `Bearer ${token}` } }
+  const res = await axiosInstance.post(
+    '/study-tools/practice-questions',
+    { subject, difficulty, count: count || 5, practiceType, topic }
   )
   if (res.data?.success) {
     return {

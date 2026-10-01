@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import axiosInstance from '../../../config/axios'
-import { SBtn, SCard, SBadge, SLoader } from '../../components/ui'
+import { SBtn, SCard, SBadge, SLoader, SInput, SSelect } from '../../components/ui'
 import {
   FiUser, FiEdit2, FiCheckCircle, FiBook, FiMapPin,
-  FiAward, FiTarget, FiZap, FiCalendar, FiArrowRight
+  FiAward, FiTarget, FiZap, FiCalendar, FiArrowRight, FiX, FiCheck
 } from 'react-icons/fi'
 
 export default function CollegeProfilePage() {
@@ -17,36 +17,93 @@ export default function CollegeProfilePage() {
   const [profile, setProfile] = useState(null)
   const [discoveryResult, setDiscoveryResult] = useState(null)
   const [error, setError] = useState('')
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState('')
+
+  // Edit form fields
+  const [editCgpa, setEditCgpa] = useState('')
+  const [editYear, setEditYear] = useState('')
+  const [editSemester, setEditSemester] = useState('')
+  const [editSpecialization, setEditSpecialization] = useState('')
+  const [editTargetCareer, setEditTargetCareer] = useState('')
+  const [editInstitution, setEditInstitution] = useState('')
+  const [editSkillsText, setEditSkillsText] = useState('')
+
   const isGamified = themeKey === 'gamified'
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('studentToken')
-        if (!token) { setLoading(false); return }
-        const res = await axiosInstance.get('/college-profile/my-profile')
-        if (res.data?.success && res.data.profile) {
-          setProfile(res.data.profile)
-        } else {
-          setError('Profile not set up yet.')
-        }
-
-        try {
-          const discRes = await axiosInstance.get('/onboarding/discovery/result')
-          if (discRes.data?.success && discRes.data.recommendedDomain) {
-            setDiscoveryResult(discRes.data)
-          }
-        } catch (e) {
-          // Discovery result optional if not completed yet
-        }
-      } catch (err) {
-        setError('Could not load profile. Please complete your onboarding.')
-      } finally {
-        setLoading(false)
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('studentToken')
+      if (!token) { setLoading(false); return }
+      const res = await axiosInstance.get('/college-profile/my-profile')
+      if (res.data?.success && res.data.profile) {
+        const p = res.data.profile
+        setProfile(p)
+        setEditCgpa(p.cgpa || '')
+        setEditYear(p.currentYear || '3rd Year')
+        setEditSemester(p.currentSemester || 'Semester 5')
+        setEditSpecialization(p.specialization || '')
+        setEditTargetCareer(p.targetCareer || '')
+        setEditInstitution(p.institution || '')
+        setEditSkillsText((p.skills || []).join(', '))
+      } else {
+        setError('Profile not set up yet.')
       }
+
+      try {
+        const discRes = await axiosInstance.get('/onboarding/discovery/result')
+        if (discRes.data?.success && discRes.data.recommendedDomain) {
+          setDiscoveryResult(discRes.data)
+        }
+      } catch (e) {
+        // Discovery result optional if not completed yet
+      }
+    } catch (err) {
+      setError('Could not load profile. Please complete your onboarding.')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchProfile()
   }, [])
+
+  const handleQuickSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveSuccess('')
+    try {
+      const parsedSkills = editSkillsText
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+
+      const res = await axiosInstance.post('/college-profile/save', {
+        cgpa: editCgpa,
+        currentYear: editYear,
+        currentSemester: editSemester,
+        specialization: editSpecialization,
+        targetCareer: editTargetCareer,
+        institution: editInstitution,
+        skills: parsedSkills
+      })
+
+      if (res.data?.success && res.data.profile) {
+        setProfile(res.data.profile)
+        setSaveSuccess('Profile updated successfully!')
+        setTimeout(() => {
+          setSaveSuccess('')
+          setShowEditModal(false)
+        }, 1200)
+      }
+    } catch (err) {
+      alert('Failed to update profile. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) return <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SLoader /></div>
 
@@ -75,13 +132,15 @@ export default function CollegeProfilePage() {
     { icon: FiTarget, label: 'Domain / Branch', value: profile.domain },
     { icon: FiZap, label: 'Specialization', value: profile.specialization || 'Not specified' },
     { icon: FiMapPin, label: 'Institution', value: profile.institution || 'Not specified' },
-    { icon: FiCalendar, label: 'Academic Year', value: profile.currentYear },
-    { icon: FiCalendar, label: 'Current Semester', value: profile.currentSemester },
+    { icon: FiCalendar, label: 'Academic Year', value: profile.currentYear || 'Not set' },
+    { icon: FiCalendar, label: 'Current Semester', value: profile.currentSemester || 'Not set' },
+    { icon: FiAward, label: 'Current CGPA', value: profile.cgpa ? `${profile.cgpa} / 10.0` : 'Not recorded' },
+    { icon: FiTarget, label: 'Target Career Goal', value: profile.targetCareer || 'Not chosen' },
     { icon: FiBook, label: 'Study Mode', value: profile.studyMode || 'Full-time' },
   ]
 
   return (
-    <div className="s-anim-up">
+    <div className="s-anim-up" style={{ maxWidth: 1040, margin: '0 auto', paddingBottom: 40 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
@@ -90,12 +149,17 @@ export default function CollegeProfilePage() {
             My Academic Profile
           </h1>
           <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: 0 }}>
-            Your enrolled degree details, skills, and career interests stored in the platform.
+            Your enrolled degree details, skills, CGPA, and target career goals stored in the platform.
           </p>
         </div>
-        <SBtn variant="primary" onClick={() => navigate('/student/onboarding/college')} style={{ flexShrink: 0 }}>
-          <FiEdit2 size={15} /> Edit / Update Profile
-        </SBtn>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <SBtn variant="primary" onClick={() => setShowEditModal(true)} style={{ borderRadius: 12 }}>
+            <FiEdit2 size={15} style={{ marginRight: 6 }} /> Quick Edit Profile
+          </SBtn>
+          <SBtn variant="secondary" onClick={() => navigate('/student/onboarding/college')} style={{ borderRadius: 12 }}>
+            Full Setup Wizard
+          </SBtn>
+        </div>
       </div>
 
       {/* Profile Completion Bar */}
@@ -135,68 +199,41 @@ export default function CollegeProfilePage() {
               {profile.degreeProgramme} • {profile.domain}
             </div>
             <div style={{ fontSize: 13, color: '#6ee7b7', marginTop: 4 }}>
-              {profile.institution || 'Institution not set'} • {profile.currentYear || 'Year not set'}
+              {profile.institution || 'Institution not set'} • {profile.currentYear || 'Year not set'} {profile.currentSemester ? `(${profile.currentSemester})` : ''}
             </div>
           </div>
+          {profile.cgpa && (
+            <div style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.15)', padding: '10px 20px', borderRadius: 16, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current CGPA</div>
+              <div style={{ fontSize: 24, fontWeight: 900, marginTop: 2 }}>{profile.cgpa}</div>
+            </div>
+          )}
         </div>
       </SCard>
 
-      {/* PART 17: AI-BASED CAREER DISCOVERY CARD */}
-      {discoveryResult && discoveryResult.recommendedDomain && (
-        <SCard style={{
-          padding: '24px 28px', borderRadius: 20, marginBottom: 28,
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
-          border: '2px solid #6ee7b7', boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#047857', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🎯 AI-BASED CAREER DISCOVERY
-            </div>
-            <span style={{ background: '#d1fae5', color: '#047857', border: '1px solid #86efac', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
-              Assessment Status: ✓ Completed
-            </span>
-          </div>
+      {/* Profile Details Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="s-grid-1col">
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#065f46', fontWeight: 800, marginBottom: 2 }}>
-                Primary Recommended Domain
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#064e3b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                {discoveryResult.recommendedDomain.icon || '🧠'} {discoveryResult.recommendedDomain.domainName}
-              </div>
-            </div>
-
-            <div style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '10px 20px', borderRadius: 16, textAlign: 'center' }}>
-              <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#047857', fontWeight: 800 }}>Match Score</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: '#047857' }}>
-                {discoveryResult.recommendedDomain.score ? Math.round(discoveryResult.recommendedDomain.score * (discoveryResult.recommendedDomain.score <= 1 ? 100 : 1)) : 74.9}%
-              </div>
-            </div>
-          </div>
-        </SCard>
-      )}
-
-      {/* 2-Column Section Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="s-grid-2col">
-
-        {/* Academic Details */}
+        {/* Academic Details Column */}
         <SCard style={{ padding: '24px 28px', borderRadius: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FiBook color="var(--s-primary)" /> Academic Details
+            <FiAward color="#1a6fc4" /> Academic Details
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {profileSections.map(({ icon: Icon, label, value }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--s-primary-l)', color: 'var(--s-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                  <Icon size={16} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {profileSections.map((item, idx) => {
+              const Icon = item.icon
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: idx < profileSections.length - 1 ? '1px solid var(--s-border)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Icon size={16} color="var(--s-text3)" />
+                    <span style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>{item.label}</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text)', textAlign: 'right' }}>
+                    {item.value}
+                  </span>
                 </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--s-text)', marginTop: 2 }}>{value || '—'}</div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </SCard>
 
@@ -205,9 +242,18 @@ export default function CollegeProfilePage() {
 
           {/* Skills */}
           <SCard style={{ padding: '22px 24px', borderRadius: 20 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FiZap color="#7c3aed" /> Skills
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 900, color: 'var(--s-text)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FiZap color="#7c3aed" /> Technical Skills
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(true)}
+                style={{ background: 'none', border: 'none', color: 'var(--s-primary)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+              >
+                + Edit Skills
+              </button>
+            </div>
             {profile.skills?.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {profile.skills.map(skill => (
@@ -238,31 +284,170 @@ export default function CollegeProfilePage() {
           {/* Career Interests */}
           <SCard style={{ padding: '22px 24px', borderRadius: 20 }}>
             <h3 style={{ fontSize: 15, fontWeight: 900, color: 'var(--s-text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FiTarget color="#b45309" /> Career Interests
+              <FiTarget color="#b45309" /> Target Career Focus
             </h3>
-            {profile.careerInterests?.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {profile.careerInterests.map(c => (
-                  <SBadge key={c} color="orange">{c}</SBadge>
-                ))}
+            {profile.targetCareer ? (
+              <div style={{ padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, color: '#b45309', fontWeight: 800, fontSize: 14 }}>
+                🎯 {profile.targetCareer}
               </div>
             ) : (
-              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: 0 }}>No career interests added yet.</p>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: 0 }}>No target career specified yet.</p>
             )}
           </SCard>
         </div>
       </div>
 
-      {/* Edit CTA */}
-      <div style={{ marginTop: 28, padding: '24px 28px', background: '#f0fdf4', borderRadius: 16, border: '1px solid #86efac', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#166534', marginBottom: 4 }}>Want to update your information?</div>
-          <div style={{ fontSize: 13, color: '#166534' }}>Keep your academic profile up-to-date for the best AI advisor recommendations.</div>
+      {/* QUICK EDIT MODAL */}
+      {showEditModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 24, width: '100%', maxWidth: 580,
+            maxHeight: '90vh', overflowY: 'auto', padding: 32, position: 'relative',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+                  Quick Edit Academic Profile
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '4px 0 0' }}>
+                  Update your latest semester, CGPA, institution, and skills
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: 10, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <FiX size={18} color="var(--s-text)" />
+              </button>
+            </div>
+
+            {saveSuccess && (
+              <div style={{ padding: 12, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 12, color: '#166534', marginBottom: 18, fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FiCheck size={16} /> {saveSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleQuickSave}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                    Current CGPA (out of 10.0)
+                  </label>
+                  <SInput
+                    placeholder="e.g. 8.4"
+                    value={editCgpa}
+                    onChange={e => setEditCgpa(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                    Academic Year
+                  </label>
+                  <SSelect
+                    value={editYear}
+                    onChange={e => setEditYear(e.target.value)}
+                    options={[
+                      { value: '1st Year', label: '1st Year' },
+                      { value: '2nd Year', label: '2nd Year' },
+                      { value: '3rd Year', label: '3rd Year' },
+                      { value: '4th Year', label: '4th Year' },
+                      { value: 'Passed Out / Graduate', label: 'Passed Out / Graduate' },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                    Current Semester
+                  </label>
+                  <SSelect
+                    value={editSemester}
+                    onChange={e => setEditSemester(e.target.value)}
+                    options={[
+                      { value: 'Semester 1', label: 'Semester 1' },
+                      { value: 'Semester 2', label: 'Semester 2' },
+                      { value: 'Semester 3', label: 'Semester 3' },
+                      { value: 'Semester 4', label: 'Semester 4' },
+                      { value: 'Semester 5', label: 'Semester 5' },
+                      { value: 'Semester 6', label: 'Semester 6' },
+                      { value: 'Semester 7', label: 'Semester 7' },
+                      { value: 'Semester 8', label: 'Semester 8' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                    Specialization
+                  </label>
+                  <SInput
+                    placeholder="e.g. AI & ML, VLSI, Thermal"
+                    value={editSpecialization}
+                    onChange={e => setEditSpecialization(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                  Target Career Goal
+                </label>
+                <SInput
+                  placeholder="e.g. Software Engineer, Robotics Engineer"
+                  value={editTargetCareer}
+                  onChange={e => setEditTargetCareer(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                  College / Institution Name
+                </label>
+                <SInput
+                  placeholder="e.g. College of Engineering Guindy (CEG)"
+                  value={editInstitution}
+                  onChange={e => setEditInstitution(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text)', display: 'block', marginBottom: 6 }}>
+                  Technical Skills (Comma separated)
+                </label>
+                <textarea
+                  rows={3}
+                  value={editSkillsText}
+                  onChange={e => setEditSkillsText(e.target.value)}
+                  placeholder="e.g. Python, React, Data Structures, SQL, Git"
+                  style={{
+                    width: '100%', padding: 12, borderRadius: 12, border: '1px solid var(--s-border)',
+                    fontSize: 13, fontFamily: 'inherit', outline: 'none', resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <SBtn variant="secondary" onClick={() => setShowEditModal(false)} type="button" style={{ borderRadius: 12 }}>
+                  Cancel
+                </SBtn>
+                <SBtn variant="primary" type="submit" disabled={saving} style={{ borderRadius: 12 }}>
+                  {saving ? 'Saving...' : 'Save Profile Changes'}
+                </SBtn>
+              </div>
+            </form>
+          </div>
         </div>
-        <SBtn variant="primary" onClick={() => navigate('/student/onboarding/college')}>
-          <FiEdit2 size={15} /> Update Profile
-        </SBtn>
-      </div>
+      )}
+
     </div>
   )
 }

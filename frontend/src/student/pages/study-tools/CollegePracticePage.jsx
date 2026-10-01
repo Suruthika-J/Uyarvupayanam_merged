@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import axiosInstance from '../../../config/axios'
 import { SCard, SSelect, SBtn, SLoader, SBadge } from '../../components/ui'
 import {
   FiZap, FiCheck, FiX, FiRefreshCw, FiAward,
@@ -37,10 +37,7 @@ export default function CollegePracticePage() {
   useEffect(() => {
     const fetchBackendConfig = async () => {
       try {
-        const token = localStorage.getItem('studentToken')
-        const res = await axios.get('http://localhost:5000/api/study-tools/practice/config', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await axiosInstance.get('/study-tools/practice/config')
         if (res.data?.success && res.data.practiceConfig) {
           const pConfig = res.data.practiceConfig
           setPracticeConfig(pConfig)
@@ -117,15 +114,14 @@ export default function CollegePracticePage() {
         }
       })
 
-      const res = await axios.post(
-        'http://localhost:5000/api/study-tools/assessment/submit',
+      const res = await axiosInstance.post(
+        '/study-tools/assessment/submit',
         {
           subject: selectedSubject,
           assessmentType: `${practiceConfig.navLabel} Session`,
           userAnswers,
           totalQuestions: questions.length
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       )
 
       if (res.data?.success) {

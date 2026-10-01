@@ -5,7 +5,7 @@ import { useCollegeProfile } from '../../context/CollegeProfileContext'
 import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import { getCollegeFeatureEligibility, getDashboardWidgetPriority } from '../../services/collegeFeatureEligibilityEngine'
 import { getCollegePracticeConfig } from '../../services/collegePracticeEngine'
-import axios from 'axios'
+import axiosInstance from '../../../config/axios'
 import { SBtn, SCard, SBadge, SLoader } from '../../components/ui'
 import {
   FiCompass, FiAward, FiFileText, FiBell,
@@ -44,13 +44,12 @@ export default function CollegeDashboardPage() {
       try {
         const token = localStorage.getItem('studentToken')
         if (token) {
-          const h = { headers: { Authorization: `Bearer ${token}` } }
           const [res, discRes, focusTodayRes, focusStatsRes, convosRes] = await Promise.allSettled([
-            axios.get('http://localhost:5000/api/study-tools/dashboard-summary', h),
-            axios.get('http://localhost:5000/api/onboarding/discovery/result', h),
-            axios.get('http://localhost:5000/api/focus/today', h),
-            axios.get('http://localhost:5000/api/focus/stats', h),
-            axios.get('http://localhost:5000/api/peer-chat/conversations', h),
+            axiosInstance.get('/study-tools/dashboard-summary'),
+            axiosInstance.get('/onboarding/discovery/result'),
+            axiosInstance.get('/focus/today'),
+            axiosInstance.get('/focus/stats'),
+            axiosInstance.get('/peer-chat/conversations'),
           ])
           if (res.status === 'fulfilled' && res.value.data?.success) setData(res.value.data)
           if (discRes.status === 'fulfilled' && discRes.value.data?.recommendedDomain) setDiscoveryResult(discRes.value.data)

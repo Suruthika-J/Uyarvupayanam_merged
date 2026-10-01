@@ -25,8 +25,8 @@ import {
   FiArrowLeft, FiPlus
 } from 'react-icons/fi'
 
-const API        = 'http://localhost:5000/api'
-const SOCKET_URL = 'http://localhost:5000'
+const API        = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+const SOCKET_URL = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/api\/?$/, '')
 const getToken   = () => localStorage.getItem('studentToken')
 
 // ── Quick action templates ───────────────────────────────────────────────────

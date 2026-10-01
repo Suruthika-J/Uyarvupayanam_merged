@@ -82,7 +82,35 @@ export default function ResumeBuilderPage() {
 
   return (
     <div style={{ maxWidth: 1050, margin: '0 auto' }} className="s-anim-up">
-      <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+      <style>{`
+        @media print {
+          @page {
+            margin: 10mm 15mm;
+            size: A4 portrait;
+          }
+          body, html, #root {
+            background: #fff !important;
+            color: #000 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .resume-builder-grid {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+          }
+          .printable-resume-card {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
+      <div className="no-print" style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#d1fae5', color: '#047857', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             <FiZap size={14} /> Telemetry Auto-Populated Resume
@@ -106,7 +134,7 @@ export default function ResumeBuilderPage() {
       </div>
 
       {/* RESUME STRENGTH SCORE BAR */}
-      <SCard style={{ padding: 22, borderRadius: 20, marginBottom: 28, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff' }}>
+      <SCard className="no-print" style={{ padding: 22, borderRadius: 20, marginBottom: 28, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>Profile Resume Strength</div>
@@ -121,10 +149,10 @@ export default function ResumeBuilderPage() {
         </div>
       </SCard>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24 }} className="s-grid-1col">
+      <div className="resume-builder-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24 }}>
         
         {/* PRINTABLE RESUME CANVAS */}
-        <SCard style={{ padding: 38, borderRadius: 24, background: '#fff', border: '1px solid var(--s-border)' }}>
+        <SCard className="printable-resume-card" style={{ padding: 38, borderRadius: 24, background: '#fff', border: '1px solid var(--s-border)' }}>
           {/* Header Contact Block */}
           <div style={{ borderBottom: '2px solid var(--s-primary)', paddingBottom: 16, marginBottom: 24 }}>
             <h2 style={{ fontSize: 26, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 4px' }}>
@@ -255,7 +283,7 @@ export default function ResumeBuilderPage() {
         </SCard>
 
         {/* AI SUGGESTIONS SIDEBAR */}
-        <SCard style={{ padding: 24, borderRadius: 20 }}>
+        <SCard className="no-print" style={{ padding: 24, borderRadius: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 16px' }}>
             💡 Missing Section Alerts
           </h3>
