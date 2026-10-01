@@ -6,6 +6,8 @@ const {
   setTargetCareer,
   getStudentSkillGap,
   acquireSkillProgress,
+  getSkillAssessmentQuestions,
+  verifySkillAssessment,
   getStudentRoadmap,
   updateRoadmapProgress,
   runAcceptanceTestProfiles,
@@ -23,6 +25,8 @@ router.get("/career/:slug", verifyStudent, getCareerDetail);
 router.post("/target-career", verifyStudent, setTargetCareer);
 router.get("/skill-gap", verifyStudent, getStudentSkillGap);
 router.post("/skill/acquire", verifyStudent, acquireSkillProgress);
+router.get("/skill/assessment", verifyStudent, getSkillAssessmentQuestions);
+router.post("/skill/verify", verifyStudent, verifySkillAssessment);
 router.get("/roadmap", verifyStudent, getStudentRoadmap);
 router.post("/roadmap/progress", verifyStudent, updateRoadmapProgress);
 router.post("/compare", verifyStudent, compareCareers);

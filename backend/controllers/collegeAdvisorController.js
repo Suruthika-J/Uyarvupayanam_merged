@@ -559,6 +559,577 @@ function getLearningResourceForSkill(skillName, careerTitle) {
   };
 }
 
+// ── 5-QUESTION DOMAIN TECHNICAL ASSESSMENT REGISTRY ─────────────────────────
+const SKILL_ASSESSMENT_BANK = {
+  "robot operating system (ros)": [
+    {
+      id: "ros_q1",
+      question: "In ROS 2, which underlying communication middleware layer replaces the centralized 'roscore' master from ROS 1?",
+      options: ["Data Distribution Service (DDS)", "Remote Procedure Call (gRPC)", "WebSockets Protocol", "ZeroMQ Broker"],
+      correctIndex: 0,
+      topic: "ROS2 Architecture",
+      explanation: "ROS 2 adopts OMG Data Distribution Service (DDS) as its decentralized discovery and publish/subscribe communication layer, eliminating the single point of failure (roscore)."
+    },
+    {
+      id: "ros_q2",
+      question: "Which ROS communication paradigm is strictly asynchronous, many-to-many, and ideal for continuous sensor data streams?",
+      options: ["Services", "Actions", "Topics", "Parameters"],
+      correctIndex: 2,
+      topic: "ROS Communication Primitives",
+      explanation: "ROS Topics use unidirectional publish/subscribe messaging best suited for continuous streaming data such as LiDAR, odometry, and camera frames."
+    },
+    {
+      id: "ros_q3",
+      question: "In robot modeling with URDF (Unified Robot Description Format), which joint type allows rotational motion bounded by minimum and maximum angle limits?",
+      options: ["Continuous", "Revolute", "Prismatic", "Planar"],
+      correctIndex: 1,
+      topic: "URDF Kinematic Modeling",
+      explanation: "A 'revolute' joint rotates around an axis with defined upper and lower angle limits. A 'continuous' joint can rotate indefinitely without limits."
+    },
+    {
+      id: "ros_q4",
+      question: "When is a ROS Action preferred over a ROS Service?",
+      options: ["When sending quick instant sensor updates", "When executing long-running robot tasks that require continuous feedback and cancellation capability", "When loading read-only configuration parameters", "When logging debugging statements to terminal"],
+      correctIndex: 1,
+      topic: "ROS Actions",
+      explanation: "Actions are built on goal, feedback, and result topics, allowing clients to track execution progress and cancel long-running behaviors (such as autonomous navigation to a waypoint)."
+    },
+    {
+      id: "ros_q5",
+      question: "What is the primary role of the 'tf2' transform library in ROS and ROS 2?",
+      options: ["To compress video streams from stereo cameras", "To track multiple coordinate frames over time and compute geometric coordinate transforms", "To generate motor PWM duty cycles", "To compile C++ nodes into binary executables"],
+      correctIndex: 1,
+      topic: "Coordinate Frame Transforms (tf2)",
+      explanation: "tf2 maintains a tree of coordinate frames (e.g. world -> odom -> base_link -> laser_frame) over time, allowing nodes to transform 3D points and vectors between frames."
+    }
+  ],
+
+  "c++ & python for robotics": [
+    {
+      id: "cpp_q1",
+      question: "In modern C++ (C++11 and later), which smart pointer guarantees strict, exclusive ownership of a dynamically allocated heap object?",
+      options: ["std::shared_ptr", "std::unique_ptr", "std::weak_ptr", "std::auto_ptr"],
+      correctIndex: 1,
+      topic: "C++ Memory Management",
+      explanation: "std::unique_ptr enforces exclusive ownership with zero runtime overhead over raw pointers and automatically frees the managed resource when it goes out of scope."
+    },
+    {
+      id: "cpp_q2",
+      question: "Why should an abstract base class containing virtual methods always declare a virtual destructor in C++?",
+      options: ["To allow private variables to be serialized", "To ensure derived class destructors are properly invoked when deleting through a base class pointer", "To prevent linker errors during compilation", "To allocate the object on the CPU register stack"],
+      correctIndex: 1,
+      topic: "Polymorphism & Object Lifecycle",
+      explanation: "Deleting an object of a derived class via a pointer to base without a virtual destructor results in undefined behavior and memory/resource leaks."
+    },
+    {
+      id: "cpp_q3",
+      question: "In robotics C++ programming, what core principle does RAII (Resource Acquisition Is Initialization) establish?",
+      options: ["All objects must be managed by a background garbage collector", "Resource acquisition is tied to constructor execution and cleanup to destructor execution, guaranteeing leak-free scope cleanup", "Loops must be unrolled by the compiler", "Multi-core threads must run asynchronously"],
+      correctIndex: 1,
+      topic: "RAII Idiom",
+      explanation: "RAII guarantees that resources (memory, mutex locks, file handles, socket descriptors) are tied to object lifetime and automatically released during scope exit."
+    },
+    {
+      id: "cpp_q4",
+      question: "Which Python numerical computation library provides the vectorized array operations and matrix algebra essential for robot kinematics and OpenCV?",
+      options: ["NumPy", "Tkinter", "Requests", "Flask"],
+      correctIndex: 0,
+      topic: "Python Vectorization",
+      explanation: "NumPy provides multidimensional arrays and pre-compiled C routines that enable high-speed vectorized matrix operations indispensable for robotics mathematics."
+    },
+    {
+      id: "cpp_q5",
+      question: "What is the computational time complexity of accessing an arbitrary element in an std::vector by index in C++?",
+      options: ["O(log n)", "O(1)", "O(n)", "O(n log n)"],
+      correctIndex: 1,
+      topic: "C++ Data Structures",
+      explanation: "std::vector stores elements in contiguous memory, providing constant time O(1) random access via pointer arithmetic."
+    }
+  ],
+
+  "microcontrollers & embedded c": [
+    {
+      id: "mc_q1",
+      question: "In Embedded C firmware, why is the 'volatile' qualifier applied to variables accessed inside an Interrupt Service Routine (ISR)?",
+      options: ["To place the variable in Flash ROM memory", "To instruct the compiler optimizer not to cache the variable in CPU registers, forcing fresh reads from RAM", "To automatically encrypt the variable value", "To make the variable global across the network"],
+      correctIndex: 1,
+      topic: "Embedded C Optimization",
+      explanation: "'volatile' informs the compiler that the variable's value can change unexpectedly (by an ISR or hardware register), preventing aggressive register caching optimizations."
+    },
+    {
+      id: "mc_q2",
+      question: "If a 12-bit ADC has a reference voltage of 3.3V, what analog voltage corresponds to an ADC conversion reading of 2048?",
+      options: ["0.825 V", "1.65 V", "2.475 V", "3.3 V"],
+      correctIndex: 1,
+      topic: "Analog-to-Digital Conversion (ADC)",
+      explanation: "A 12-bit ADC has 2^12 = 4096 levels. 2048 is exactly half-scale: (2048 / 4096) * 3.3V = 1.65V."
+    },
+    {
+      id: "mc_q3",
+      question: "In microcontroller hardware timers, what is the role of the Timer Prescaler?",
+      options: ["To divide the system clock frequency into a slower, manageable timer tick rate", "To boost the operating voltage of digital pins", "To filter high-frequency analog noise", "To invert the direction of PWM pulses"],
+      correctIndex: 0,
+      topic: "Timers & Clock Division",
+      explanation: "The prescaler divides the main CPU clock frequency by a configurable factor (e.g. 8, 64, 256), allowing timer registers to count at appropriate resolution and duration."
+    },
+    {
+      id: "mc_q4",
+      question: "Which synchronous serial communication protocol utilizes separate MOSI, MISO, SCK, and CS lines for full-duplex transmission?",
+      options: ["UART", "I2C", "SPI", "CAN Bus"],
+      correctIndex: 2,
+      topic: "Embedded Communication Busses",
+      explanation: "SPI (Serial Peripheral Interface) uses dedicated Master-Out-Slave-In, Master-In-Slave-Out, Serial Clock, and Chip Select lines for high-speed full-duplex communication."
+    },
+    {
+      id: "mc_q5",
+      question: "Why must blocking delays (such as delay_ms()) and heavy calculations be strictly avoided inside an Interrupt Service Routine (ISR)?",
+      options: ["They erase Flash memory sectors", "They block lower or equal priority interrupts and compromise hard real-time system responsiveness", "They reverse the microcontroller phase locked loop", "They cause stack underflow exceptions"],
+      correctIndex: 1,
+      topic: "Interrupt Handling Best Practices",
+      explanation: "ISRs execute in privileged interrupt context. Prolonged execution in an ISR blocks other critical real-time interrupts and risks deadline violations."
+    }
+  ],
+
+  "kinematics & dynamics": [
+    {
+      id: "kin_q1",
+      question: "In robotic manipulator kinematics, what four standard parameters are defined in the Denavit-Hartenberg (DH) convention?",
+      options: ["Mass, Inertia, Center of Gravity, Friction", "Link length (a), Link twist (alpha), Link offset (d), Joint angle (theta)", "Roll, Pitch, Yaw, Linear velocity", "Motor torque, Angular acceleration, Damping ratio, Gear ratio"],
+      correctIndex: 1,
+      topic: "Denavit-Hartenberg Parameters",
+      explanation: "The standard DH convention represents transformation between adjacent link coordinate frames using 4 geometric parameters: a (length), alpha (twist), d (offset), and theta (joint angle)."
+    },
+    {
+      id: "kin_q2",
+      question: "What is the operational difference between Forward Kinematics and Inverse Kinematics for a robotic arm?",
+      options: ["Forward computes joint velocities; Inverse computes joint forces", "Forward computes end-effector pose from known joint angles; Inverse calculates joint angles required for a target end-effector pose", "Forward applies to mobile rovers; Inverse applies exclusively to drones", "Forward is iterative; Inverse is always single-step"],
+      correctIndex: 1,
+      topic: "Forward vs Inverse Kinematics",
+      explanation: "Forward kinematics calculates the spatial position/orientation of the tool from given joint variables. Inverse kinematics solves the mathematical inverse to find joint angles to reach a desired coordinate."
+    },
+    {
+      id: "kin_q3",
+      question: "What is a kinematic 'Singularity' in a robotic manipulator?",
+      options: ["The physical anchor point where the robot is bolted to the floor", "A configuration where the Jacobian matrix loses rank, causing the robot to lose degrees of freedom and requiring infinite joint velocities for certain end-effector directions", "The point of maximum payload capacity", "The initial zero calibration homing position"],
+      correctIndex: 1,
+      topic: "Jacobian Singularities",
+      explanation: "A singularity occurs when the manipulator Jacobian loses rank. At singular configurations, mobility in one or more Cartesian directions is lost, and small Cartesian speeds require unbounded joint speeds."
+    },
+    {
+      id: "kin_q4",
+      question: "According to Grübler's criterion for planar mechanisms, what is the Mobility (Degrees of Freedom) of a standard closed planar 4-bar linkage with 4 revolute joints?",
+      options: ["0 (Rigid Structure)", "1 DoF", "2 DoF", "3 DoF"],
+      correctIndex: 1,
+      topic: "Grübler Mechanism Mobility",
+      explanation: "Using Grübler's equation M = 3(n - 1) - 2j1 - j2: with n = 4 links and j1 = 4 revolute joints, M = 3(3) - 2(4) = 9 - 8 = 1 DoF."
+    },
+    {
+      id: "kin_q5",
+      question: "Why are Unit Quaternions preferred over Euler Angles (Roll, Pitch, Yaw) for 3D rotations in robotic simulations?",
+      options: ["Quaternions avoid Gimbal Lock and provide smooth spherical linear interpolation (SLERP)", "Quaternions require 6 floating-point values instead of 3", "Quaternions only work in 2D coordinate spaces", "Quaternions directly compute motor drive currents"],
+      correctIndex: 0,
+      topic: "Spatial Rotation Representation",
+      explanation: "Euler angles suffer from Gimbal Lock (loss of 1 DoF when two rotation axes align). Unit quaternions represent 3D orientations without singularities and interpolate smoothly."
+    }
+  ],
+
+  "control systems & pid tuning": [
+    {
+      id: "ctrl_q1",
+      question: "In a closed-loop PID controller, what is the primary operational effect of increasing the Derivative gain (Kd)?",
+      options: ["It eliminates steady-state error completely", "It anticipates error rate-of-change, improving system damping and reducing overshoot", "It multiplies the high-frequency steady-state gain indefinitely", "It converts the transfer function to an open-loop response"],
+      correctIndex: 1,
+      topic: "PID Controller Tuning",
+      explanation: "The derivative term (Kd) reacts to the rate of error change, introducing predictive damping that counteracts rapid changes, reducing overshoot and settling time."
+    },
+    {
+      id: "ctrl_q2",
+      question: "In classical frequency response analysis, what do a positive Phase Margin (PM) and positive Gain Margin (GM) on a Bode plot signify?",
+      options: ["The closed-loop feedback system is stable", "The closed-loop system is strictly unstable with unbounded oscillations", "The system has zero damping and oscillates continuously", "The open-loop transfer function has right-half-plane poles"],
+      correctIndex: 0,
+      topic: "Frequency Domain Stability",
+      explanation: "A positive gain margin and positive phase margin indicate that additional gain or phase lag can be tolerated before the system reaches the verge of instability (0 dB at -180 degrees)."
+    },
+    {
+      id: "ctrl_q3",
+      question: "Which term in a PID controller is responsible for driving steady-state tracking error to zero under constant disturbance?",
+      options: ["Proportional (Kp)", "Integral (Ki)", "Derivative (Kd)", "Feedforward (Kff)"],
+      correctIndex: 1,
+      topic: "Steady-State Error Elimination",
+      explanation: "The Integral term (Ki) continuously accumulates past error over time, generating increasing control effort until the steady-state error is driven to zero."
+    },
+    {
+      id: "ctrl_q4",
+      question: "For a second-order feedback system G(s) = omega_n^2 / (s^2 + 2*zeta*omega_n*s + omega_n^2), what response behavior occurs when the damping ratio zeta < 1?",
+      options: ["Overdamped (no oscillations, sluggish rise)", "Critically damped (fastest rise without overshoot)", "Underdamped (oscillatory response with transient overshoot)", "Unstable divergent exponential growth"],
+      correctIndex: 2,
+      topic: "Second-Order Transient Response",
+      explanation: "When 0 < zeta < 1, the system has complex conjugate poles, resulting in an underdamped response characterized by transient oscillations and overshoot."
+    },
+    {
+      id: "ctrl_q5",
+      question: "According to the Routh-Hurwitz stability criterion, what condition in the first column of the Routh array indicates system instability?",
+      options: ["All coefficients in the column are positive", "The number of sign changes equals the number of right-half s-plane poles", "The determinant equals zero", "The first element equals 1"],
+      correctIndex: 1,
+      topic: "Routh-Hurwitz Stability Criterion",
+      explanation: "The Routh-Hurwitz criterion states that the number of roots of the characteristic equation in the right-half s-plane equals the number of sign changes in the first column."
+    }
+  ],
+
+  "circuit theory & network analysis": [
+    {
+      id: "circ_q1",
+      question: "According to Thevenin's theorem, any linear bilateral two-terminal resistive circuit can be simplified to:",
+      options: ["A single current source in parallel with a Norton resistor", "A single independent voltage source (Vth) in series with an equivalent resistance (Rth)", "A capacitor in series with an inductor", "A dependent voltage source with zero impedance"],
+      correctIndex: 1,
+      topic: "Thevenin Equivalent Theorem",
+      explanation: "Thevenin's theorem proves that any linear two-terminal circuit can be replaced by an open-circuit voltage source (Vth) in series with the input equivalent resistance (Rth)."
+    },
+    {
+      id: "circ_q2",
+      question: "Under what condition is maximum active power transferred from an AC source with internal impedance Zs = Rs + jXs to an adjustable load impedance ZL?",
+      options: ["ZL = Zs", "ZL = Rs - jXs (the complex conjugate Zs*)", "ZL = 0 (short circuit)", "ZL = infinity (open circuit)"],
+      correctIndex: 1,
+      topic: "Maximum Power Transfer Theorem",
+      explanation: "Maximum power transfer in AC circuits occurs when the load impedance is the complex conjugate of the source impedance: ZL = Zs* (cancelling net reactance while matching resistance)."
+    },
+    {
+      id: "circ_q3",
+      question: "In a series RLC resonant circuit at its resonant frequency (f0 = 1 / [2*pi*sqrt(L*C)]), what is the net circuit impedance?",
+      options: ["Zero", "Purely resistive (Z = R) and at its minimum value", "Purely reactive (Z = j*omega*L)", "Infinite"],
+      correctIndex: 1,
+      topic: "AC Series Resonance",
+      explanation: "At series resonance, inductive reactance XL equals capacitive reactance XC, cancelling each other out. Net impedance equals purely R, maximizing current."
+    },
+    {
+      id: "circ_q4",
+      question: "What fundamental physical conservation law is the basis of Kirchhoff's Current Law (KCL)?",
+      options: ["Conservation of electric charge", "Conservation of mechanical energy", "Conservation of momentum", "Conservation of magnetic flux"],
+      correctIndex: 0,
+      topic: "Kirchhoff Current Law",
+      explanation: "KCL states that the algebraic sum of currents entering a node is zero, which is a direct consequence of the conservation of electric charge."
+    },
+    {
+      id: "circ_q5",
+      question: "In transient DC circuit analysis, how does an ideal uncharged inductor behave at the exact instant (t = 0+) after a switch is closed?",
+      options: ["As a short circuit (0 ohms)", "As an open circuit (blocking instantaneous change in current)", "As a charged capacitor", "As a constant voltage source"],
+      correctIndex: 1,
+      topic: "Transient Inductor Behavior",
+      explanation: "Since current through an inductor cannot change instantaneously (v = L*di/dt), an inductor with zero initial current behaves as an open circuit at t = 0+."
+    }
+  ],
+
+  "electrical machines (transformers & motors)": [
+    {
+      id: "mach_q1",
+      question: "Why are the magnetic cores of power transformers laminated with thin insulated silicon steel sheets?",
+      options: ["To decrease structural weight", "To minimize eddy current losses by restricting circular induced current paths", "To reduce copper wire resistance", "To increase leakage reactance"],
+      correctIndex: 1,
+      topic: "Transformer Core Loss Reduction",
+      explanation: "Laminations with insulating varnish break up closed circulating loops for induced eddy currents, significantly lowering I^2*R eddy current power losses in the core."
+    },
+    {
+      id: "mach_q2",
+      question: "In an open-circuit (no-load) test of a transformer, what losses are primarily measured?",
+      options: ["Full-load copper losses", "Core / Iron losses (hysteresis and eddy current losses)", "Stray load losses", "Frictional brush losses"],
+      correctIndex: 1,
+      topic: "Transformer Testing",
+      explanation: "During an open-circuit test with rated voltage applied, the no-load current is very small (rendering copper losses negligible), so the wattmeter reading represents core/iron losses."
+    },
+    {
+      id: "mach_q3",
+      question: "For a 3-phase induction motor running with synchronous speed Ns and rotor speed Nr, what is the rotor slip (s) when Nr = Ns?",
+      options: ["s = 1", "s = 0.5", "s = 0", "s = -1"],
+      correctIndex: 2,
+      topic: "Induction Motor Slip",
+      explanation: "Slip is defined as s = (Ns - Nr) / Ns. If the rotor were to reach synchronous speed (Nr = Ns), s = 0 (and no torque would be induced)."
+    },
+    {
+      id: "mach_q4",
+      question: "In a DC shunt motor, what happens to the motor speed if the field winding circuit accidentally opens while operating under light load?",
+      options: ["The motor stops immediately", "The motor dangerously surges to excessively high runaway speeds", "The motor reverses direction smoothly", "The speed drops to zero with heavy buzzing"],
+      correctIndex: 1,
+      topic: "DC Shunt Motor Field Failure",
+      explanation: "Speed is inversely proportional to field flux (N proportional to Eb / Phi). When the field opens, flux drops to residual magnetism, causing speed to surge dangerously to runaway speeds."
+    },
+    {
+      id: "mach_q5",
+      question: "How can a 3-phase synchronous motor be operated to deliver a leading power factor to the electrical grid?",
+      options: ["By decreasing the stator terminal voltage", "By over-exciting the DC rotor field winding", "By operating with open rotor windings", "By applying heavy mechanical overload"],
+      correctIndex: 1,
+      topic: "Synchronous Condenser & Power Factor",
+      explanation: "Over-exciting the DC field winding causes the synchronous motor to draw a leading current, behaving as a synchronous condenser that supplies reactive power to the grid."
+    }
+  ],
+
+  "power systems & smart grids": [
+    {
+      id: "pwr_q1",
+      question: "In power system load flow studies, what variables are specified as known at a Generator Bus (PV Bus)?",
+      options: ["Real Power (P) and Reactive Power (Q)", "Real Power (P) and Voltage Magnitude (|V|)", "Voltage Magnitude (|V|) and Phase Angle (delta)", "Reactive Power (Q) and Phase Angle (delta)"],
+      correctIndex: 1,
+      topic: "Load Flow Bus Classification",
+      explanation: "At a PV (generator) bus, the active power injection (P) and voltage magnitude (|V|) are held constant by governor and excitation controls."
+    },
+    {
+      id: "pwr_q2",
+      question: "What phenomenon causes the receiving-end voltage of a long, lightly-loaded transmission line to exceed the sending-end voltage?",
+      options: ["Corona effect", "Ferranti effect", "Skin effect", "Proximity effect"],
+      correctIndex: 1,
+      topic: "Transmission Line Ferranti Effect",
+      explanation: "The Ferranti effect occurs on long transmission lines under no-load or light-load conditions due to line charging capacitance drawing current through line inductance, elevating receiving voltage."
+    },
+    {
+      id: "pwr_q3",
+      question: "In symmetrical component fault analysis, which sequence network is present exclusively when a fault involves ground (e.g. Single Line-to-Ground fault)?",
+      options: ["Positive sequence network", "Negative sequence network", "Zero sequence network", "Direct sequence network"],
+      correctIndex: 2,
+      topic: "Symmetrical Components & Faults",
+      explanation: "Zero-sequence currents require a path to return to the neutral/ground. Without ground involvement, zero-sequence current cannot flow."
+    },
+    {
+      id: "pwr_q4",
+      question: "In modern smart grid wide-area monitoring (WAMS), what device provides synchronized voltage and current phasor measurements with microsecond GPS timestamps?",
+      options: ["Electromechanical induction disc meter", "Phasor Measurement Unit (PMU)", "Thermal bimetallic relay", "Dynamometer wattmeter"],
+      correctIndex: 1,
+      topic: "Smart Grid Phasor Measurement",
+      explanation: "Phasor Measurement Units (PMUs) sample grid waveforms at 30-60 samples/sec, synchronized with GPS timestamps, providing real-time synchrophasor observability."
+    },
+    {
+      id: "pwr_q5",
+      question: "What is the primary technical advantage of using 'Bundle Conductors' in Extra High Voltage (EHV) transmission lines?",
+      options: ["To increase overall line resistance", "To increase effective conductor radius, thereby reducing Corona discharge, audible noise, and line reactance", "To reduce tower structural height", "To eliminate the need for ground shield wires"],
+      correctIndex: 1,
+      topic: "EHV Bundle Conductors",
+      explanation: "Bundling multiple conductors per phase increases the geometric mean radius (GMR), lowering the electric field gradient at the conductor surface, which minimizes corona discharge and line inductance."
+    }
+  ],
+
+  "power electronics & drives": [
+    {
+      id: "pe_q1",
+      question: "In a DC-DC Buck converter operating in Continuous Conduction Mode (CCM) with duty cycle D (0 < D < 1), what is the relationship between output voltage Vo and input voltage Vs?",
+      options: ["Vo = Vs / D", "Vo = D * Vs", "Vo = Vs / (1 - D)", "Vo = (1 - D) * Vs"],
+      correctIndex: 1,
+      topic: "Buck Converter Transfer Ratio",
+      explanation: "In an ideal step-down buck converter under volt-second balance, Vo = D * Vs, producing an output voltage strictly lower than input voltage."
+    },
+    {
+      id: "pe_q2",
+      question: "In high-power medium-voltage converter drives, why are IGBTs widely preferred over power MOSFETs?",
+      options: ["IGBTs have zero conduction losses", "IGBTs offer higher breakdown voltage ratings and lower on-state conduction losses at high currents due to conductivity modulation", "IGBTs switch at 50 MHz frequencies", "IGBTs do not require gate drive circuitry"],
+      correctIndex: 1,
+      topic: "Power Semiconductor Selection (IGBT vs MOSFET)",
+      explanation: "IGBTs combine the high input impedance of MOSFETs with the low on-state saturation voltage of bipolar transistors (via minority carrier injection conductivity modulation)."
+    },
+    {
+      id: "pe_q3",
+      question: "In Sinusoidal PWM (SPWM) for 3-phase voltage source inverters, what occurs when the modulation index ma exceeds 1 (ma > 1)?",
+      options: ["The inverter enters overmodulation, producing higher fundamental output voltage at the expense of lower-order harmonic distortion", "The inverter immediately trips on overvoltage", "The output frequency automatically doubles", "The DC bus capacitor discharges instantly"],
+      correctIndex: 0,
+      topic: "Inverter Modulation & Harmonics",
+      explanation: "When modulation index ma > 1, the reference sine wave peaks above the triangular carrier wave. This increases the fundamental voltage up to square-wave mode, but introduces low-order harmonics."
+    },
+    {
+      id: "pe_q4",
+      question: "In Variable Frequency Drives (VFD) for 3-phase induction motors, why is the V/f ratio kept constant below base speed?",
+      options: ["To keep the air-gap magnetic flux constant and maintain maximum rated motor torque without core saturation", "To minimize mechanical bearing wear", "To convert AC supply into direct DC battery storage", "To reduce inverter pole pairs"],
+      correctIndex: 0,
+      topic: "V/f Induction Motor Speed Control",
+      explanation: "Motor magnetic flux is proportional to V / f. Maintaining constant V/f ensures constant rated torque throughout the speed range below base speed without saturating the magnetic core."
+    },
+    {
+      id: "pe_q5",
+      question: "What is the primary operational difference between an SCR (Thyristor) and a TRIAC?",
+      options: ["An SCR conducts bidirectionally, whereas a TRIAC is unidirectional", "An SCR is unidirectional (conducts only when forward biased and gate triggered), whereas a TRIAC can conduct current in both directions", "An SCR turns off via gate signal, while a TRIAC cannot", "A TRIAC only operates on DC systems"],
+      correctIndex: 1,
+      topic: "Thyristors vs TRIACs",
+      explanation: "An SCR is a unidirectional 4-layer PNPN device. A TRIAC is essentially two inverse-parallel connected SCRs with a common gate, allowing bidirectional AC current conduction."
+    }
+  ],
+
+  "computer vision & opencv": [
+    {
+      id: "cv_q1",
+      question: "In the Canny edge detector pipeline, what is the specific role of Non-Maximum Suppression?",
+      options: ["To blur the image using a 5x5 Gaussian kernel", "To thin edge candidates down to 1-pixel width by suppressing pixels that are not local gradient maximums along the gradient direction", "To classify bounding box labels", "To compute optical flow vectors"],
+      correctIndex: 1,
+      topic: "Canny Edge Detection",
+      explanation: "Non-Maximum Suppression inspects the gradient magnitude along the gradient vector and suppresses any pixel that is not the local maximum, yielding thin, sharp 1-pixel edges."
+    },
+    {
+      id: "cv_q2",
+      question: "Which geometric transformation matrix relates two planar perspectives of the same flat surface in projective geometry?",
+      options: ["Covariance matrix", "Homography matrix (3x3)", "Laplacian matrix", "Adjacency matrix"],
+      correctIndex: 1,
+      topic: "Planar Homography",
+      explanation: "A 3x3 Homography matrix (H) maps points from one planar projection to another (x' = H * x) and is widely used in camera calibration, image stitching, and AR."
+    },
+    {
+      id: "cv_q3",
+      question: "Why is RGB image data frequently converted to the HSV (Hue, Saturation, Value) color space for robotic vision color segmentation?",
+      options: ["HSV uses less computer memory", "HSV isolates chromatic color information (Hue) from lighting intensity (Value), making color detection resilient to shadows and variable lighting", "HSV converts 2D images directly into 3D meshes", "HSV automatically performs facial detection"],
+      correctIndex: 1,
+      topic: "Color Space Invariance",
+      explanation: "In RGB, intensity variations affect all three channels simultaneously. HSV decouples color tone (Hue) from illumination brightness (Value), allowing stable color thresholding under varying lighting."
+    },
+    {
+      id: "cv_q4",
+      question: "In deep learning object detection (e.g. YOLO, SSD), what does the metric Intersection over Union (IoU) evaluate?",
+      options: ["The network inference frame rate", "The overlap ratio between the predicted bounding box and the ground-truth annotation box", "The percentage of dropped camera frames", "The learning rate schedule"],
+      correctIndex: 1,
+      topic: "Object Detection Evaluation (IoU)",
+      explanation: "IoU measures localization accuracy by dividing the area of overlap between predicted and ground-truth bounding boxes by the total area of their union."
+    },
+    {
+      id: "cv_q5",
+      question: "What fundamental feature does the Hough Transform algorithm detect in binary edge images?",
+      options: ["Image compression ratio", "Parametric geometric primitives such as straight lines and circles", "Facial expression landmarks", "Exposure dynamic range"],
+      correctIndex: 1,
+      topic: "Hough Transform",
+      explanation: "The Hough Transform maps edge points into an accumulator parameter space (e.g. rho-theta for lines), finding geometric primitives by detecting peaks in voting space."
+    }
+  ],
+
+  "slam & path planning (a*/dijkstra)": [
+    {
+      id: "slam_q1",
+      question: "In the A* pathfinding algorithm, what condition must the heuristic function h(n) satisfy to guarantee that the search returns the strictly optimal, shortest path?",
+      options: ["h(n) must be strictly greater than the actual cost", "h(n) must be admissible (it must never overestimate the true remaining cost to the goal)", "h(n) must equal zero everywhere", "h(n) must grow exponentially"],
+      correctIndex: 1,
+      topic: "A* Algorithm Admissibility",
+      explanation: "An admissible heuristic never overestimates the true distance to the goal (h(n) <= c*(n, goal)). Admissibility guarantees that A* finds the optimal shortest path."
+    },
+    {
+      id: "slam_q2",
+      question: "Under what condition does standard Dijkstra's algorithm fail to guarantee optimal pathfinding?",
+      options: ["Graphs with cycles", "Graphs with negative edge weights", "Directed acyclic graphs", "Grid maps with 8-connectivity"],
+      correctIndex: 1,
+      topic: "Dijkstra Limitation",
+      explanation: "Dijkstra's algorithm assumes that adding an edge always increases total path cost. When negative edge weights exist, visited nodes may be finalized prematurely with suboptimal costs."
+    },
+    {
+      id: "slam_q3",
+      question: "What does the acronym SLAM represent in robotics and autonomous systems?",
+      options: ["Spatial Localization and Automated Motion", "Simultaneous Localization and Mapping", "Serial Laser Actuator Mechanism", "Synchronous Link Access Management"],
+      correctIndex: 1,
+      topic: "SLAM Core Definition",
+      explanation: "SLAM stands for Simultaneous Localization and Mapping: building a map of an unknown environment while simultaneously estimating the robot's pose within that map."
+    },
+    {
+      id: "slam_q4",
+      question: "In a 2D Occupancy Grid Map (such as in ROS 2 Nav2 Costmaps), what does each grid cell value signify?",
+      options: ["The temperature of the robot chassis", "The estimated probability that a spatial coordinate cell is occupied by an obstacle", "The linear velocity of the robot", "The motor torque in Newton-meters"],
+      correctIndex: 1,
+      topic: "Occupancy Grid Mapping",
+      explanation: "Occupancy grids discretize the environment into cells, with values ranging from 0 (free space) to 100 (definitely occupied), with 255 representing unknown space."
+    },
+    {
+      id: "slam_q5",
+      question: "Why is the Rapidly-exploring Random Tree (RRT / RRT*) algorithm preferred over grid-based A* for 6-DoF or 7-DoF robotic arm trajectory planning?",
+      options: ["RRT requires no collision detection", "RRT efficiently samples high-dimensional continuous configuration spaces without suffering from exponential grid discretization explosion", "RRT always finishes in under 1 millisecond", "RRT operates exclusively on 2D images"],
+      correctIndex: 1,
+      topic: "Sampling-Based Path Planning (RRT)",
+      explanation: "Discretizing a 6 or 7 DoF robotic arm joint space into a grid suffers from the curse of dimensionality (exponential cell explosion). RRT samples randomly in continuous space to find collision-free paths efficiently."
+    }
+  ]
+};
+
+// Helper: Generate or select 5 profile-specific questions for any skill
+function generateAssessmentForSkill(skillName, careerTitle, degree, domain) {
+  const sLower = (skillName || "").toLowerCase().trim();
+
+  // 1. Direct or partial match from curated bank
+  for (const [key, questions] of Object.entries(SKILL_ASSESSMENT_BANK)) {
+    if (sLower.includes(key) || key.includes(sLower)) {
+      return questions;
+    }
+  }
+
+  // Check sub-keywords
+  if (/ros|robot operating/.test(sLower)) return SKILL_ASSESSMENT_BANK["robot operating system (ros)"];
+  if (/c\+\+|cpp/.test(sLower)) return SKILL_ASSESSMENT_BANK["c++ & python for robotics"];
+  if (/microcontroller|embedded c|firmware|arm|cortex|dsp/.test(sLower)) return SKILL_ASSESSMENT_BANK["microcontrollers & embedded c"];
+  if (/kinematic|dynamic|manipulator/.test(sLower)) return SKILL_ASSESSMENT_BANK["kinematics & dynamics"];
+  if (/pid|control system|feedback|bode|nyquist/.test(sLower)) return SKILL_ASSESSMENT_BANK["control systems & pid tuning"];
+  if (/circuit|network analysis|thevenin|kcl|kvl/.test(sLower)) return SKILL_ASSESSMENT_BANK["circuit theory & network analysis"];
+  if (/machine|transformer|induction motor|dc motor/.test(sLower)) return SKILL_ASSESSMENT_BANK["electrical machines (transformers & motors)"];
+  if (/power system|smart grid|substation|transmission/.test(sLower)) return SKILL_ASSESSMENT_BANK["power systems & smart grids"];
+  if (/power electronics|converter|inverter|vfd|igbt/.test(sLower)) return SKILL_ASSESSMENT_BANK["power electronics & drives"];
+  if (/vision|opencv|image processing|yolo/.test(sLower)) return SKILL_ASSESSMENT_BANK["computer vision & opencv"];
+  if (/slam|path planning|a\*|navigation/.test(sLower)) return SKILL_ASSESSMENT_BANK["slam & path planning (a*/dijkstra)"];
+
+  // 2. High-quality tailored dynamic questions for other specific skills
+  const cleanSkill = skillName || "Engineering Core";
+  return [
+    {
+      id: "gen_q1",
+      question: `In professional ${careerTitle || 'Engineering'} practice, what is the primary fundamental objective of applying ${cleanSkill}?`,
+      options: [
+        `To establish verified mathematical models and system specifications adhering to ${domain || 'industry'} standards`,
+        `To bypass standard verification benchmarks and minimize design documentation`,
+        `To replace physical sensor readings with unvalidated heuristic estimates`,
+        `To eliminate multithreading and parallel execution in downstream systems`
+      ],
+      correctIndex: 0,
+      topic: `${cleanSkill} Fundamentals`,
+      explanation: `Applying ${cleanSkill} in ${careerTitle || 'Engineering'} ensures rigorous compliance with domain specifications and sound mathematical modeling.`
+    },
+    {
+      id: "gen_q2",
+      question: `When implementing ${cleanSkill} in a production environment, which factor is most critical for ensuring system robustness?`,
+      options: [
+        `Disabling error boundary handlers to maximize raw throughput`,
+        `Comprehensive boundary-value testing, continuous feedback loops, and error handling`,
+        `Hardcoding static calibration parameters directly into the core runtime`,
+        `Avoiding real-time telemetry logging and performance benchmarks`
+      ],
+      correctIndex: 1,
+      topic: `${cleanSkill} Implementation Quality`,
+      explanation: `Production-grade ${cleanSkill} mandates defensive programming, error handling, and rigorous boundary-condition testing.`
+    },
+    {
+      id: "gen_q3",
+      question: `What is the most effective diagnostic methodology when troubleshooting unexpected deviations in ${cleanSkill}?`,
+      options: [
+        `Restarting host hardware without analyzing logs or telemetry data`,
+        `Systematic signal tracing, modular isolation, and comparing measurements against benchmark specifications`,
+        `Immediately rewriting the entire codebase from scratch`,
+        `Increasing system power supply voltage above rated tolerance`
+      ],
+      correctIndex: 1,
+      topic: `${cleanSkill} Diagnostics & Debugging`,
+      explanation: `Root-cause analysis requires isolating subsystems, checking sensor telemetry, and comparing observed outputs with verified simulation benchmarks.`
+    },
+    {
+      id: "gen_q4",
+      question: `How does proficiency in ${cleanSkill} directly enhance efficiency in ${careerTitle || 'technical roles'}?`,
+      options: [
+        `By enabling automated verification pipelines, reducing design cycle times, and minimizing rework`,
+        `By replacing all physical testing with speculative assumptions`,
+        `By eliminating the need for cross-disciplinary collaboration`,
+        `By restricting the architecture to single-vendor proprietary protocols`
+      ],
+      correctIndex: 0,
+      topic: `${cleanSkill} Performance & Scalability`,
+      explanation: `Mastery of ${cleanSkill} enables engineers to architect scalable, automated, and repeatable solutions that accelerate development cycles.`
+    },
+    {
+      id: "gen_q5",
+      question: `Which international or industrial standard framework governs quality assurance and validation for ${cleanSkill}?`,
+      options: [
+        `IEEE / ISO / IEC recognized technical benchmarks and certification standards`,
+        `Unregulated proprietary community guidelines`,
+        `Deprecated legacy vacuum tube design norms`,
+        `Consumer electronics packaging aesthetic criteria`
+      ],
+      correctIndex: 0,
+      topic: `${cleanSkill} Industry Standards`,
+      explanation: `Engineering competencies are governed by globally recognized IEEE, ISO, and IEC standards to guarantee safety, interoperability, and quality.`
+    }
+  ];
+}
+
 // Default Detailed Career Features Generator (for complete detail view)
 const getComprehensiveCareerDetails = (career) => {
   const title = career.title || "";
@@ -991,6 +1562,130 @@ const acquireSkillProgress = async (req, res) => {
   }
 };
 
+// ── 4C. GET Skill Assessment Questions (5 domain-specific verification questions) ──
+const getSkillAssessmentQuestions = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { skillName, careerTitle } = req.query;
+
+    if (!skillName) {
+      return res.status(400).json({ success: false, message: "skillName query parameter is required" });
+    }
+
+    const profile = await CollegeStudentProfile.findOne({ userId }).lean();
+    const degree = profile?.degreeProgramme || "Engineering";
+    const domain = profile?.domain || "Core Engineering";
+
+    const masterQuestions = generateAssessmentForSkill(skillName, careerTitle, degree, domain);
+
+    // Return sanitized questions (omitting correctIndex to prevent inspect-element cheating)
+    const sanitizedQuestions = masterQuestions.map((q, idx) => ({
+      id: q.id || `q_${idx + 1}`,
+      question: q.question,
+      options: q.options,
+      topic: q.topic || skillName
+    }));
+
+    res.status(200).json({
+      success: true,
+      skillName,
+      careerTitle: careerTitle || "Target Career",
+      totalQuestions: sanitizedQuestions.length,
+      passingScore: 60, // 60% passing requirement (at least 3 out of 5)
+      questions: sanitizedQuestions
+    });
+  } catch (error) {
+    console.error("Get skill assessment questions error:", error);
+    res.status(500).json({ success: false, message: "Failed to load skill assessment questions" });
+  }
+};
+
+// ── 4D. POST Verify Skill Assessment (Grade, evaluate, and acquire if >= 60%) ──
+const verifySkillAssessment = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { skillName, careerTitle, answers } = req.body; // answers: { [questionId]: selectedOptionIndex }
+
+    if (!skillName || !answers) {
+      return res.status(400).json({ success: false, message: "skillName and answers are required" });
+    }
+
+    const [profile, skillProgress] = await Promise.all([
+      CollegeStudentProfile.findOne({ userId }),
+      StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] })
+    ]);
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    const degree = profile.degreeProgramme || "Engineering";
+    const domain = profile.domain || "Core Engineering";
+
+    // Retrieve master questions with correct answers
+    const masterQuestions = generateAssessmentForSkill(skillName, careerTitle, degree, domain);
+    let correctCount = 0;
+    const totalQuestions = masterQuestions.length || 5;
+
+    const review = masterQuestions.map((q, idx) => {
+      const qId = q.id || `q_${idx + 1}`;
+      const userSelectedIdx = answers[qId] !== undefined ? parseInt(answers[qId], 10) : -1;
+      const isCorrect = userSelectedIdx === q.correctIndex;
+      if (isCorrect) correctCount++;
+
+      return {
+        id: qId,
+        question: q.question,
+        userSelectedIndex: userSelectedIdx,
+        userSelectedText: userSelectedIdx >= 0 ? q.options[userSelectedIdx] : "Unanswered",
+        correctIndex: q.correctIndex,
+        correctText: q.options[q.correctIndex],
+        isCorrect,
+        explanation: q.explanation || "Core foundational concept verified."
+      };
+    });
+
+    const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
+    const passed = scorePercentage >= 60; // 60% passing requirement (at least 3 out of 5)
+
+    if (passed) {
+      // 1. Add to profile skills if not already present
+      const alreadyHas = (profile.skills || []).some(s => s.toLowerCase() === skillName.toLowerCase().trim());
+      if (!alreadyHas) {
+        profile.skills.push(skillName.trim());
+        await profile.save();
+      }
+
+      // 2. Update StudentSkillProgress & reward XP
+      if (skillProgress) {
+        const stepKey = `skill_${skillName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+        if (!skillProgress.completedSteps.includes(stepKey)) {
+          skillProgress.completedSteps.push(stepKey);
+          skillProgress.xp = (skillProgress.xp || 0) + 50;
+          await skillProgress.save();
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      passed,
+      scorePercentage,
+      correctCount,
+      totalQuestions,
+      passingScore: 60,
+      skillName,
+      message: passed
+        ? `Congratulations! You scored ${scorePercentage}% (${correctCount}/${totalQuestions}). "${skillName}" has been certified and synced to your Profile, Resume, and Study Plan!`
+        : `Assessment incomplete: You scored ${scorePercentage}% (${correctCount}/${totalQuestions}). A minimum score of 60% is required to certify this skill. Please review the course resources and re-take the assessment.`,
+      review
+    });
+  } catch (error) {
+    console.error("Verify skill assessment error:", error);
+    res.status(500).json({ success: false, message: "Failed to evaluate skill assessment" });
+  }
+};
+
 // ── 5. GET & UPDATE Learning Roadmap ──────────────────────────────────────────
 const getStudentRoadmap = async (req, res) => {
   try {
@@ -1312,6 +2007,8 @@ module.exports = {
   setTargetCareer,
   getStudentSkillGap,
   acquireSkillProgress,
+  getSkillAssessmentQuestions,
+  verifySkillAssessment,
   getStudentRoadmap,
   updateRoadmapProgress,
   runAcceptanceTestProfiles,
@@ -1321,5 +2018,7 @@ module.exports = {
   adminDeleteCareer,
   ROLE_SPECIALIZED_DATA,
   SKILL_RESOURCE_MAP,
-  getLearningResourceForSkill
+  getLearningResourceForSkill,
+  SKILL_ASSESSMENT_BANK,
+  generateAssessmentForSkill
 };
