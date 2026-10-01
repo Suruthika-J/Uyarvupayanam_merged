@@ -23,12 +23,30 @@ export default function StudyPlannerPage() {
   // Populate personalized inputs once student context loads
   useEffect(() => {
     if (studentContext) {
-      const activeSubjects = studentContext.subjects || profile?.subjects || []
+      const profileDomainText = `${studentContext?.domain || profile?.domain || ''} ${studentContext?.specialisation || profile?.specialization || ''} ${studentContext?.degree || profile?.degreeProgramme || ''} ${profile?.field || ''}`.toLowerCase()
+
+      let domainFallbackSubjects = []
+      if (/eee|electrical|power|voltage|energy/.test(profileDomainText)) {
+        domainFallbackSubjects = ['Circuit Theory & Network Analysis', 'Electrical Machines (Transformers & Motors)', 'Control Systems Engineering', 'Power Systems Analysis']
+      } else if (/robot|robotics|mechatronics|automation/.test(profileDomainText) || (studentContext?.targetCareer && /robot/i.test(studentContext.targetCareer))) {
+        domainFallbackSubjects = ['Robot Operating System (ROS 2)', 'Robotics Kinematics & Dynamics', 'Microcontrollers & Embedded C', 'Control Systems & PID Tuning']
+      } else if (/ece|electronics|communication|telecom|vlsi/.test(profileDomainText)) {
+        domainFallbackSubjects = ['Electronic Devices & Circuits', 'Digital Signal Processing', 'VLSI Design & Semiconductor Tech', 'Microcontrollers & Embedded Systems']
+      } else if (/mechanical|mech|thermal|automobile|aerospace/.test(profileDomainText)) {
+        domainFallbackSubjects = ['Engineering Thermodynamics & Heat Transfer', 'Fluid Mechanics & Machinery', 'Strength of Materials & Mechanics of Solids', 'Kinematics & Dynamics of Machinery']
+      } else if (/civil|structural|construction|geotechnical/.test(profileDomainText)) {
+        domainFallbackSubjects = ['Structural Analysis & Solid Mechanics', 'Soil Mechanics & Foundation Engineering', 'Fluid Mechanics & Hydraulics', 'Concrete Technology & RCC Design']
+      } else {
+        domainFallbackSubjects = ['Data Structures & Algorithms', 'Database Management Systems', 'Operating Systems', 'Computer Networks']
+      }
+
+      const activeSubjects = (studentContext.subjects || profile?.subjects || []).filter(Boolean)
+      const effectiveSubjects = activeSubjects.length > 0 ? activeSubjects : domainFallbackSubjects
       const weakTopics = studentContext.quizPerformance?.weakTopics || []
       
-      setUpcomingExams(activeSubjects[0] ? `${activeSubjects[0]} Exam (in 7 days)` : 'Semester Examinations')
-      setWeakSubjects(weakTopics.length > 0 ? weakTopics.slice(0, 2).join(', ') : (activeSubjects[1] || 'Core Subject Concepts'))
-      setFocusAreas(activeSubjects.slice(0, 3).join(', ') || studentContext.targetCareer || 'Core Specialization')
+      setUpcomingExams(effectiveSubjects[0] ? `${effectiveSubjects[0]} Exam (in 7 days)` : 'Semester Examinations')
+      setWeakSubjects(weakTopics.length > 0 ? weakTopics.slice(0, 2).join(', ') : (effectiveSubjects[1] || 'Core Subject Concepts'))
+      setFocusAreas(effectiveSubjects.slice(0, 3).join(', ') || studentContext.targetCareer || 'Core Specialization')
     }
   }, [studentContext, profile])
 

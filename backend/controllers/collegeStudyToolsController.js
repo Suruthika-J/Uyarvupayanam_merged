@@ -734,6 +734,178 @@ Respond strictly in valid JSON array of objects with keys:
           explanation: "Thrashing occurs when active processes lack sufficient page frames, forcing continuous disk page faults."
         }
       ];
+    } else if (sLower.includes("circuit") || sLower.includes("electrical") || sLower.includes("power") || sLower.includes("machine") || sLower.includes("control")) {
+      fallback = [
+        {
+          id: "ee1",
+          question: "Which theorem states that any linear bilateral network can be replaced by an equivalent voltage source in series with an impedance?",
+          options: ["Norton's Theorem", "Thevenin's Theorem", "Superposition Theorem", "Maximum Power Transfer Theorem"],
+          correctIndex: 1,
+          topic: "Network Analysis & Circuit Theorems",
+          explanation: "Thevenin's theorem reduces complex linear two-terminal circuits into an open-circuit voltage Vth in series with an equivalent resistance Rth."
+        },
+        {
+          id: "ee2",
+          question: "In a 3-phase induction motor, what is the relative speed between the rotating magnetic field and the stator structure?",
+          options: ["Zero", "Synchronous Speed (Ns = 120f / P)", "Rotor Speed (Nr)", "Slip Speed (s * Ns)"],
+          correctIndex: 1,
+          topic: "Electrical Machines",
+          explanation: "The stator windings produce a magnetic flux wave revolving at constant synchronous speed Ns = 120f / P."
+        },
+        {
+          id: "ee3",
+          question: "Which power semiconductor device combines the simple gate-drive characteristics of MOSFETs with the high-current/low-saturation-voltage capability of bipolar transistors?",
+          options: ["SCR (Thyristor)", "TRIAC", "IGBT (Insulated Gate Bipolar Transistor)", "BJT alone"],
+          correctIndex: 2,
+          topic: "Power Electronics",
+          explanation: "IGBTs feature high input impedance voltage control from a MOS gate combined with low on-state conduction loss from a bipolar collector."
+        },
+        {
+          id: "ee4",
+          question: "For a negative feedback closed-loop system, what condition on the Nyquist plot guarantees closed-loop stability?",
+          options: ["The Nyquist path must encircle the critical point (-1 + j0) twice", "The critical point (-1 + j0) must NOT be encircled by the Nyquist contour for open-loop stable systems", "The phase margin must be negative", "The gain margin must be zero dB"],
+          correctIndex: 1,
+          topic: "Control Systems",
+          explanation: "By the Nyquist stability criterion, N = Z - P. If open-loop poles P = 0, stability requires encirclements N = 0 of the point -1+j0."
+        },
+        {
+          id: "ee5",
+          question: "In high-voltage power transmission, why is bundling of sub-conductors employed per phase?",
+          options: ["To increase line resistance", "To reduce corona discharge loss and decrease line inductive reactance", "To reduce mechanical tower height", "To eliminate the need for insulators"],
+          correctIndex: 1,
+          topic: "Power Transmission & High Voltage",
+          explanation: "Bundled conductors increase the effective conductor radius (GMR), lowering electric field intensity at the surface to suppress corona and reduce line reactance."
+        }
+      ];
+    } else if (sLower.includes("robot") || sLower.includes("kinematic") || sLower.includes("ros")) {
+      fallback = [
+        {
+          id: "rob1",
+          question: "In robotic manipulator kinematics, what convention standardizes link coordinate frames using four parameters (a, alpha, d, theta)?",
+          options: ["Euler-Lagrange Matrix", "Denavit-Hartenberg (D-H) Convention", "Rodrigues Formula", "Quaternion Mapping"],
+          correctIndex: 1,
+          topic: "Robot Kinematics",
+          explanation: "The D-H convention uses link length (a), link twist (alpha), link offset (d), and joint angle (theta) to represent spatial kinematic chains."
+        },
+        {
+          id: "rob2",
+          question: "In the Robot Operating System (ROS 2), which communication pattern is asynchronous and follows a many-to-many publish-subscribe model?",
+          options: ["Services", "Actions", "Topics", "Parameters"],
+          correctIndex: 2,
+          topic: "Robot Operating System (ROS 2)",
+          explanation: "ROS Topics provide unidirectional, streaming, asynchronous publish-subscribe transport between independent sensor and controller nodes."
+        },
+        {
+          id: "rob3",
+          question: "What mathematical operator maps joint velocities to operational end-effector Cartesian velocities in a robotic manipulator?",
+          options: ["Hessian Matrix", "Jacobian Matrix", "Inertia Tensor", "Rotation Quaternions"],
+          correctIndex: 1,
+          topic: "Differential Kinematics",
+          explanation: "The geometric Jacobian J(q) relates joint velocity vectors to linear and angular velocities of the end-effector: v = J(q) * q_dot."
+        },
+        {
+          id: "rob4",
+          question: "Which sensor is most essential for real-time 2D/3D Simultaneous Localization and Mapping (SLAM) in autonomous mobile robots?",
+          options: ["Thermistor", "Ultrasonic Transducer", "LiDAR (Light Detection and Ranging)", "Strain Gauge"],
+          correctIndex: 2,
+          topic: "Robotic Perception & SLAM",
+          explanation: "LiDAR produces millimeter-accurate distance point clouds enabling scan-matching algorithms to build environmental maps while tracking robot pose."
+        },
+        {
+          id: "rob5",
+          question: "What is the primary role of a PID controller's derivative (D) term in robotic motor position control?",
+          options: ["Eliminating steady-state error", "Providing predictive damping to reduce overshoot and settling oscillations", "Maximizing steady-state torque", "Inverting motor polarity"],
+          correctIndex: 1,
+          topic: "Control Systems & PID",
+          explanation: "The derivative term acts on the rate of change of error, exerting a braking/damping force that mitigates system overshoot."
+        }
+      ];
+    } else if (sLower.includes("thermo") || sLower.includes("fluid") || sLower.includes("mechanical") || sLower.includes("strength") || sLower.includes("cad")) {
+      fallback = [
+        {
+          id: "me1",
+          question: "Which ideal thermodynamic cycle operates with maximum theoretical thermal efficiency between two temperature reservoirs?",
+          options: ["Rankine Cycle", "Otto Cycle", "Carnot Cycle", "Brayton Cycle"],
+          correctIndex: 2,
+          topic: "Thermodynamics",
+          explanation: "The Carnot cycle consists of two reversible isothermal and two reversible adiabatic processes, bounding maximum theoretical efficiency."
+        },
+        {
+          id: "me2",
+          question: "In fluid dynamics, what non-dimensional quantity characterizes the ratio of inertial forces to viscous forces in a flowing fluid?",
+          options: ["Mach Number", "Prandtl Number", "Reynolds Number", "Nusselt Number"],
+          correctIndex: 2,
+          topic: "Fluid Mechanics",
+          explanation: "The Reynolds number (Re = rho * v * L / mu) indicates whether fluid flow is laminar (low Re) or turbulent (high Re)."
+        },
+        {
+          id: "me3",
+          question: "On a stress-strain diagram of mild steel, what point marks the boundary where deformation transitions from elastic to permanent plastic deformation?",
+          options: ["Ultimate Tensile Strength", "Yield Point / Proportional Limit", "Breaking Point", "Resilience Point"],
+          correctIndex: 1,
+          topic: "Strength of Materials",
+          explanation: "Beyond the yield strength, atomic planes slip permanently and the material experiences irreversible plastic strain."
+        },
+        {
+          id: "me4",
+          question: "According to Grashof's theorem for a planar four-bar mechanism, what condition guarantees that at least one link can execute a continuous 360-degree rotation?",
+          options: ["s + l <= p + q (shortest + longest link <= sum of remaining two links)", "s + l > p + q", "All link lengths must be strictly identical", "l - s = p + q"],
+          correctIndex: 0,
+          topic: "Kinematics of Machinery",
+          explanation: "Grashof's law states that if s + l <= p + q, at least one revolving crank exists in the four-bar kinematic chain."
+        },
+        {
+          id: "me5",
+          question: "In Finite Element Analysis (FEA), what is the primary consequence of refining the mesh grid across high-stress concentration zones?",
+          options: ["Stress results diverge to zero", "Convergence toward the true continuous analytical stress solution", "Computation time drops significantly", "Material stiffness matrix becomes singular"],
+          correctIndex: 1,
+          topic: "FEA & Computational Mechanics",
+          explanation: "Finer mesh elements capture steep stress gradients near notches or holes, converging numerical displacement approximations."
+        }
+      ];
+    } else if (sLower.includes("civil") || sLower.includes("structur") || sLower.includes("concrete") || sLower.includes("soil") || sLower.includes("survey")) {
+      fallback = [
+        {
+          id: "ce1",
+          question: "According to Terzaghi's bearing capacity theory for shallow foundations, which factor is NOT included in the ultimate bearing capacity equation?",
+          options: ["Cohesion factor (Nc)", "Surcharge depth factor (Nq)", "Soil unit weight factor (Ngamma)", "Atmospheric pressure factor (Np)"],
+          correctIndex: 3,
+          topic: "Soil Mechanics & Foundations",
+          explanation: "Terzaghi's ultimate capacity is q_ult = c*Nc + q*Nq + 0.5*gamma*B*Ngamma, governed by soil shear strength parameters."
+        },
+        {
+          id: "ce2",
+          question: "In reinforced concrete design, what is the primary structural purpose of providing transverse stirrup reinforcement?",
+          options: ["Resisting longitudinal bending tension", "Resisting diagonal shear stresses and preventing brittle shear failure", "Increasing concrete thermal expansion", "Reducing dead weight of the beam"],
+          correctIndex: 1,
+          topic: "Concrete Technology & RCC Design",
+          explanation: "Vertical and inclined stirrups intercept diagonal 45-degree tension cracks caused by high vertical shear forces near beam supports."
+        },
+        {
+          id: "ce3",
+          question: "Which structural method is an iterative moment-relaxation procedure used to analyze statically indeterminate continuous beams and frames?",
+          options: ["Hardy Cross Moment Distribution Method", "Castigliano's Energy Method", "Euler-Bernoulli Beam Theorem", "Maxwell's Reciprocal Theorem"],
+          correctIndex: 0,
+          topic: "Structural Analysis",
+          explanation: "The Moment Distribution Method successively relaxes fixed-end moments to adjacent spans proportionally to their relative stiffness."
+        },
+        {
+          id: "ce4",
+          question: "What test is standardly performed on fresh concrete on construction sites to measure its immediate workability and consistency?",
+          options: ["Vicat Needle Test", "Slump Cone Test", "Core Cutter Test", "Standard Penetration Test"],
+          correctIndex: 1,
+          topic: "Concrete Technology",
+          explanation: "The Slump Cone test measures the vertical subsidence of fresh concrete under its own weight to verify workability."
+        },
+        {
+          id: "ce5",
+          question: "In modern geomatics surveying, what electronic optical instrument integrates digital electronic theodolite angle measurement with an electromagnetic EDM distance meter?",
+          options: ["Dumpy Level", "Total Station", "Plane Table Alidade", "Prismatic Compass"],
+          correctIndex: 1,
+          topic: "Surveying & Geomatics",
+          explanation: "A Total Station measures slope distances, horizontal angles, and vertical angles simultaneously using onboard microprocessors."
+        }
+      ];
     } else {
       fallback = [
         {
@@ -770,11 +942,11 @@ Respond strictly in valid JSON array of objects with keys:
         },
         {
           id: "ds5",
-          question: "Which data structure operates on a First-In-First-Out (FIFO) discipline and is ideal for BFS graph traversals?",
-          options: ["Stack", "Queue", "Max Heap", "Disjoint Set"],
+          question: "Which data structure follows a First-In-First-Out (FIFO) access order?",
+          options: ["Stack", "Queue", "Binary Tree", "Heap"],
           correctIndex: 1,
-          topic: "Graph Traversal",
-          explanation: "Queues process elements in arrival order, making them ideal for level-by-level BFS search."
+          topic: "Core Data Structures",
+          explanation: "Queues enforce FIFO ordering where elements inserted first are removed first."
         }
       ];
     }

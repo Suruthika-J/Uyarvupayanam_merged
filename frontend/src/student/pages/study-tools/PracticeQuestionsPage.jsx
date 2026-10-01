@@ -15,31 +15,95 @@ export default function PracticeQuestionsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Build subject choices
+  // Build authentic domain-specific subject choices
+  const profileDomainText = `${studentContext?.domain || profile?.domain || ''} ${studentContext?.specialisation || profile?.specialization || ''} ${studentContext?.degree || profile?.degreeProgramme || ''} ${profile?.field || ''}`.toLowerCase()
+
+  let domainFallbackSubjects = []
+  if (/eee|electrical|power|voltage|energy/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Circuit Theory & Network Analysis',
+      'Electrical Machines (Transformers & Motors)',
+      'Power Systems & High Voltage Engineering',
+      'Control Systems Engineering',
+      'Power Electronics & Motor Drives',
+      'Microprocessors & Microcontrollers',
+      'Renewable Energy & Smart Grids',
+      'Analog & Digital Electronics'
+    ]
+  } else if (/robot|robotics|mechatronics|automation/.test(profileDomainText) || (studentContext?.targetCareer && /robot/i.test(studentContext.targetCareer))) {
+    domainFallbackSubjects = [
+      'Robot Operating System (ROS 2)',
+      'Robotics Kinematics & Dynamics',
+      'Microcontrollers & Embedded C',
+      'Control Systems & PID Tuning',
+      'Computer Vision & OpenCV',
+      'Sensors & Actuators in Automation',
+      'SLAM & Autonomous Navigation'
+    ]
+  } else if (/ece|electronics|communication|telecom|vlsi/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Electronic Devices & Circuits',
+      'Digital Signal Processing',
+      'VLSI Design & Semiconductor Tech',
+      'Microcontrollers & Embedded Systems',
+      'Communication Systems & Antennas',
+      'Signals and Systems',
+      'Electromagnetic Fields'
+    ]
+  } else if (/mechanical|mech|thermal|automobile|aerospace/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Engineering Thermodynamics & Heat Transfer',
+      'Fluid Mechanics & Machinery',
+      'Strength of Materials & Mechanics of Solids',
+      'Kinematics & Dynamics of Machinery',
+      'Manufacturing Technology & Metallurgy',
+      'CAD / CAM & Finite Element Analysis (FEA)',
+      'Automotive Systems Engineering'
+    ]
+  } else if (/civil|structural|construction|geotechnical/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Structural Analysis & Solid Mechanics',
+      'Soil Mechanics & Foundation Engineering',
+      'Fluid Mechanics & Hydraulics',
+      'Concrete Technology & RCC Design',
+      'Surveying & Geomatics Engineering',
+      'Design of Steel Structures',
+      'Construction Project Management'
+    ]
+  } else {
+    domainFallbackSubjects = [
+      'Data Structures & Algorithms',
+      'Database Management Systems',
+      'Operating Systems',
+      'Computer Networks',
+      'Machine Learning & Artificial Intelligence',
+      'Web Technologies & Cloud Computing',
+      'Software Engineering & System Design'
+    ]
+  }
+
   const studentSubjects = (studentContext?.subjects || profile?.subjects || []).filter(Boolean)
-  const fallbackRecommended = [
-    'Data Structures & Algorithms',
-    'Database Management Systems',
-    'Operating Systems',
-    'Machine Learning',
-    'Computer Networks'
-  ]
-  const recommendedSubjects = studentSubjects.length > 0 ? studentSubjects : fallbackRecommended
+  const recommendedSubjects = studentSubjects.length > 0 ? studentSubjects : domainFallbackSubjects
   
   const allSystemSubjects = [
-    'Data Structures & Algorithms', 'Database Management Systems', 'Operating Systems',
-    'Machine Learning', 'Computer Networks', 'Software Engineering', 'Artificial Intelligence',
-    'Thermodynamics', 'Fluid Mechanics', 'Engineering Mathematics', 'Digital Signal Processing',
-    'VLSI Design', 'Microprocessors & Microcontrollers', 'Electric Circuits', 'Structural Analysis'
+    'Circuit Theory & Network Analysis', 'Electrical Machines (Transformers & Motors)', 'Power Systems & High Voltage Engineering',
+    'Control Systems Engineering', 'Power Electronics & Motor Drives', 'Microprocessors & Microcontrollers',
+    'Robot Operating System (ROS 2)', 'Robotics Kinematics & Dynamics', 'Computer Vision & OpenCV',
+    'Electronic Devices & Circuits', 'Digital Signal Processing', 'VLSI Design & Semiconductor Tech',
+    'Engineering Thermodynamics & Heat Transfer', 'Fluid Mechanics & Machinery', 'Strength of Materials & Mechanics of Solids',
+    'Structural Analysis & Solid Mechanics', 'Soil Mechanics & Foundation Engineering', 'Concrete Technology & RCC Design',
+    'Data Structures & Algorithms', 'Database Management Systems', 'Operating Systems', 'Computer Networks', 'Machine Learning & Artificial Intelligence'
   ]
 
   const activeSubjectList = exploreAll ? allSystemSubjects : recommendedSubjects
 
   useEffect(() => {
-    if (!subject) {
-      setSubject(recommendedSubjects[0] || 'Data Structures & Algorithms')
+    if (recommendedSubjects.length > 0) {
+      if (!subject || !recommendedSubjects.includes(subject)) {
+        setSubject(recommendedSubjects[0])
+      }
     }
-  }, [recommendedSubjects])
+  }, [profileDomainText, exploreAll])
 
   // Quiz execution state
   const [currentIndex, setCurrentIndex] = useState(0)
