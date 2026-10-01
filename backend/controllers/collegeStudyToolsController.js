@@ -479,7 +479,8 @@ exports.submitInterviewResult = async (req, res) => {
 // ── 7. AI Notes Summarizer ───────────────────────────────────────────────────
 exports.summarizeNotes = async (req, res) => {
   try {
-    const { notesText, subject } = req.body;
+    const notesText = req.body.notesText || req.body.notes || req.body.content || "";
+    const { subject } = req.body;
     if (!notesText || notesText.length < 20) {
       return res.status(400).json({ success: false, message: "Please provide sufficient notes text to summarize." });
     }
