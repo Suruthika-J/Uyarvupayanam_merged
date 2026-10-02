@@ -7,6 +7,7 @@ const StudentSkillProgress = require("../models/StudentSkillProgress");
 const StudentTestResult = require("../models/StudentTestResult");
 const SavedItem = require("../models/SavedItem");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
+const StudentProfile = require("../models/StudentProfile");
 
 // ── Get Metadata (Fields, Degrees, Domains, Certifications) ──────────────────
 const getMetadata = (req, res) => {
@@ -128,8 +129,8 @@ const saveProfile = async (req, res) => {
 
     if (isFinalStep || profile.profileCompletion >= 85) {
       profile.isCompleted = true;
-      // Mark onboarding completed on User document as well
-      await User.findByIdAndUpdate(userId, { onboardingCompleted: true });
+      // Mark onboarding completed and ensure userType is college_student on User document
+      await User.findByIdAndUpdate(userId, { onboardingCompleted: true, userType: "college_student" });
     }
 
     await profile.save();
@@ -229,7 +230,7 @@ function calculateProfileCompletion(profile) {
 
 // ── GET Central Consolidated Student Context ──────────────────────────────────
 // Returns the authoritative, shared data layer used by all college features:
-// Profile + AHP + Fuzzy + Progress + Career Catalog + Skill Gap + Saved Items
+// Profile + AHP + Fuzzy + Progress + Career Catalog + Skill Gap + Saved Items + Historical School Context
 const getMyContext = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -237,15 +238,16 @@ const getMyContext = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Parallel fetch of all student data
-    const [user, profile, ahpProfile, fuzzyResult, skillProgress, testResults, savedItems] = await Promise.all([
-      User.findById(userId).select("name email phone role userType").lean(),
+    // Parallel fetch of all student data including historical school profile
+    const [user, profile, ahpProfile, fuzzyResult, skillProgress, testResults, savedItems, schoolProfile] = await Promise.all([
+      User.findById(userId).select("name email phone role userType academicJourney transitionStatus classLevel").lean(),
       CollegeStudentProfile.findOne({ userId }).lean(),
       AhpCareerProfile.findOne({ userId }).lean(),
       AhpFuzzyResult.findOne({ userId }).lean(),
       StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] }).lean(),
       StudentTestResult.find({ $or: [{ studentId: userId }, { userId }] }).sort({ createdAt: -1 }).limit(10).lean(),
-      SavedItem.find({ userId }).lean()
+      SavedItem.find({ userId }).lean(),
+      StudentProfile.findOne({ userId }).lean()
     ]);
 
     const activeProfile = profile || {
@@ -399,6 +401,17 @@ const getMyContext = async (req, res) => {
       name: user?.name || "Student",
       email: user?.email || "",
       phone: activeProfile.phone || user?.phone || "",
+      activeStage: user?.userType || "college_student",
+      academicJourney: user?.academicJourney || [],
+      schoolProfile: schoolProfile ? {
+        schoolName: schoolProfile.schoolName || "",
+        classLevel: schoolProfile.classLevel || user?.classLevel || "12th",
+        stream: schoolProfile.stream || "",
+        board: schoolProfile.board || "",
+        marksPercentage: schoolProfile.marksPercentage || null,
+        careerInterest: schoolProfile.careerInterest || "",
+        strongSubjects: schoolProfile.strongSubjects || []
+      } : null,
       college: activeProfile.institution || "",
       district: activeProfile.institutionDistrict || "",
       department: activeProfile.domain || activeProfile.field || "",

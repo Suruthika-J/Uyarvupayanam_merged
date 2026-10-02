@@ -1,17 +1,22 @@
 import React, { useState } from 'react'
 import { useCollegeTheme, COLLEGE_THEMES } from '../../context/CollegeThemeContext'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import { useCollegeProfile } from '../../context/CollegeProfileContext'
 import { useNavigate } from 'react-router-dom'
+import UpdateCurrentStudyModal from '../../components/profile/UpdateCurrentStudyModal'
 import {
   FiMoon, FiSun, FiMonitor, FiSettings, FiCheck,
-  FiUser, FiLock, FiBell, FiLogOut, FiArrowRight, FiZap, FiLayout
+  FiUser, FiLock, FiBell, FiLogOut, FiArrowRight, FiZap, FiLayout,
+  FiBookOpen, FiAward, FiCheckCircle, FiEdit3, FiLayers, FiCompass, FiMapPin
 } from 'react-icons/fi'
 
 export default function CollegeSettingsPage() {
   const { theme, themeKey, setTheme, themes } = useCollegeTheme()
-  const { student, logout } = useStudentAuth()
+  const { student, logout, refreshStudent } = useStudentAuth()
+  const { profile, refetch } = useCollegeProfile()
   const navigate = useNavigate()
   const [saved, setSaved] = useState(false)
+  const [showStudyModal, setShowStudyModal] = useState(false)
 
   const handleThemeChange = (key) => {
     setTheme(key)
@@ -196,6 +201,154 @@ export default function CollegeSettingsPage() {
         </div>
       </section>
 
+      {/* ── ACADEMIC PROFILE & CURRENT STUDY ── */}
+      <section style={{
+        background: theme.cardBg,
+        border: `1px solid ${theme.cardBorder}`,
+        borderRadius: theme.radiusLg,
+        boxShadow: theme.cardShadow,
+        padding: '24px 28px',
+        marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: theme.radiusSm,
+              background: isGamified ? 'rgba(0,245,212,0.15)' : theme.primaryLight,
+              color: theme.primary,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <FiBookOpen size={16} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: theme.text }}>
+                Academic Profile & Journey
+              </h2>
+              <p style={{ margin: 0, fontSize: 12, color: theme.text2 }}>
+                Current study details and preserved academic progression
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowStudyModal(true)}
+            style={{
+              padding: '8px 16px', borderRadius: theme.radiusMd, cursor: 'pointer',
+              background: theme.primaryLight,
+              border: `1px solid ${theme.primary}`,
+              color: theme.primary, fontWeight: 800, fontSize: 12,
+              display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <FiEdit3 size={13} />
+            Update Current Study
+          </button>
+        </div>
+
+        {/* Current Study Info Card */}
+        <div style={{
+          background: isGamified ? 'rgba(0,245,212,0.03)' : '#f8fafc',
+          border: `1px solid ${isGamified ? 'rgba(0,245,212,0.15)' : '#e2e8f0'}`,
+          borderRadius: theme.radiusMd,
+          padding: '16px 20px',
+          marginBottom: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: theme.text3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Current Study Stage
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: 'rgba(16, 185, 129, 0.12)', color: '#10b981',
+              padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800
+            }}>
+              <FiCheckCircle size={11} /> College Student (Active)
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: theme.text3, fontWeight: 600, marginBottom: 2 }}>Degree / Course</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>
+                {profile?.degreeProgramme || 'Course not specified'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, color: theme.text3, fontWeight: 600, marginBottom: 2 }}>Institution / College</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>
+                {profile?.institution || 'Institution not specified'}
+              </div>
+              {profile?.institutionDistrict && (
+                <div style={{ fontSize: 11, color: theme.text3 }}>{profile.institutionDistrict}</div>
+              )}
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, color: theme.text3, fontWeight: 600, marginBottom: 2 }}>Academic Year</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>
+                {profile?.currentYear || '1st Year'}
+                {profile?.currentSemester ? ` • Semester ${profile.currentSemester}` : ''}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, color: theme.text3, fontWeight: 600, marginBottom: 2 }}>Specialisation / Domain</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>
+                {profile?.specialization || 'General / Core'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Academic Journey Milestones (Preserved History) */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: theme.text, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FiLayers size={13} color={theme.primary} /> Educational Milestones
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 12px', borderRadius: theme.radiusSm,
+              background: isGamified ? 'rgba(255,255,255,0.02)' : '#ffffff',
+              border: `1px solid ${isGamified ? 'rgba(255,255,255,0.05)' : '#f1f5f9'}`
+            }}>
+              <span style={{
+                width: 20, height: 20, borderRadius: '50%',
+                background: '#10b981', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900
+              }}>✓</span>
+              <div style={{ flex: 1, fontSize: 12 }}>
+                <span style={{ fontWeight: 700, color: theme.text }}>Higher Secondary / School Level</span>
+                <span style={{ color: theme.text3, marginLeft: 8 }}>• Assessment history & interests preserved</span>
+              </div>
+              <span style={{ fontSize: 10, color: '#10b981', fontWeight: 800, textTransform: 'uppercase' }}>Completed</span>
+            </div>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 12px', borderRadius: theme.radiusSm,
+              background: isGamified ? 'rgba(0,245,212,0.05)' : '#eff6ff',
+              border: `1px solid ${isGamified ? 'rgba(0,245,212,0.2)' : '#bfdbfe'}`
+            }}>
+              <span style={{
+                width: 20, height: 20, borderRadius: '50%',
+                background: theme.primary, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900
+              }}>→</span>
+              <div style={{ flex: 1, fontSize: 12 }}>
+                <span style={{ fontWeight: 800, color: theme.text }}>Undergraduate / College Study</span>
+                <span style={{ color: theme.text2, marginLeft: 8 }}>
+                  • {profile?.degreeProgramme || 'College Program'} ({profile?.currentYear || '1st Year'})
+                </span>
+              </div>
+              <span style={{ fontSize: 10, color: theme.primary, fontWeight: 800, textTransform: 'uppercase' }}>Current</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── ACCOUNT SECTION ── */}
       <section style={{
         background: theme.cardBg,
@@ -243,7 +396,8 @@ export default function CollegeSettingsPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[
-            { icon: FiUser, label: 'Edit Academic Profile', action: () => navigate('/student/onboarding/college') },
+            { icon: FiBookOpen, label: 'Update Current Study', action: () => setShowStudyModal(true) },
+            { icon: FiUser, label: 'Edit Academic Profile Details', action: () => navigate('/student/onboarding/college') },
             { icon: FiLock, label: 'Change Password', action: () => navigate('/student/forgot-password') },
             { icon: FiBell, label: 'Notification Preferences', action: () => navigate('/college/notifications') },
           ].map(({ icon: Icon, label, action }) => (
@@ -299,6 +453,23 @@ export default function CollegeSettingsPage() {
           <FiLogOut size={15} /> Sign Out of Portal
         </button>
       </section>
+
+      {/* ── UPDATE CURRENT STUDY MODAL ── */}
+      <UpdateCurrentStudyModal
+        isOpen={showStudyModal}
+        onClose={() => setShowStudyModal(false)}
+        initialData={{
+          district: profile?.institutionDistrict || student?.district || 'Chennai',
+          college: profile?.institution || '',
+          course: profile?.degreeProgramme || '',
+          academicYear: profile?.currentYear || '1st Year',
+          specialization: profile?.specialization || ''
+        }}
+        onSuccess={() => {
+          if (refetch) refetch()
+          if (refreshStudent) refreshStudent()
+        }}
+      />
     </div>
   )
 }

@@ -253,6 +253,21 @@ exports.getOfferedCourses = async (req, res) => {
     }
 
     const autoCourses = await CollegeFetchedCourse.find({ collegeId: college._id, isActive: true });
+    
+    // Also fetch mappings from CollegeCourseMapping collection for maximum coverage
+    const mappedRecords = await CollegeCourseMapping.find({ collegeId: college._id, isActive: true }).populate("courseId");
+    const mappedCourses = mappedRecords.map(m => m.courseId).filter(Boolean);
+
+    // Merge and deduplicate verifiedCourses and mappedCourses by _id
+    const courseMap = new Map();
+    (college.coursesOffered || []).forEach(c => {
+      if (c && c._id) courseMap.set(String(c._id), c);
+    });
+    mappedCourses.forEach(c => {
+      if (c && c._id && !courseMap.has(String(c._id))) courseMap.set(String(c._id), c);
+    });
+
+    const combinedCourses = Array.from(courseMap.values());
 
     res.status(200).json({
       success: true,
@@ -262,9 +277,9 @@ exports.getOfferedCourses = async (req, res) => {
         location: college.location,
         district: college.district
       },
-      verifiedCourses: college.coursesOffered || [],
+      verifiedCourses: combinedCourses,
       autoFetchedCourses: autoCourses || [],
-      courses: college.coursesOffered || [] // Fallback for existing components
+      courses: combinedCourses // Fallback for existing components
     });
   } catch (error) {
     console.error("Get offered courses error:", error);

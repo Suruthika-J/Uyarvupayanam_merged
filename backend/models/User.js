@@ -22,6 +22,24 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: true },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    // Academic Journey History (Preserving past educational milestones)
+    academicJourney: [
+      {
+        stage: { type: String, enum: ["school_student", "college_student", "graduate"] },
+        classLevel: { type: String },
+        institution: { type: String },
+        degreeProgramme: { type: String },
+        specialization: { type: String },
+        year: { type: String },
+        completedAt: { type: Date, default: Date.now },
+        transitionNote: { type: String }
+      }
+    ],
+    transitionStatus: {
+      type: String,
+      enum: ["none", "in_progress", "completed"],
+      default: "none"
+    }
   },
   { timestamps: true }
 );

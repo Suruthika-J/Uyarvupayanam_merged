@@ -68,6 +68,11 @@ router.get("/courses/:courseId", getStudentCourseDetails);
 router.get("/profile", verifyStudent, studentProfileController.getStudentProfile);
 router.put("/profile", verifyStudent, studentProfileController.updateStudentProfile);
 
+// Academic Stage Transition & Journey Routes (Controlled transition from 12th -> College)
+router.patch("/current-study", verifyStudent, studentProfileController.updateCurrentStudy);
+router.post("/cancel-transition", verifyStudent, studentProfileController.cancelTransition);
+router.get("/academic-journey", verifyStudent, studentProfileController.getAcademicJourney);
+
 // Phase 6A — consolidated read-only school-dashboard summary. Ownership is
 // derived exclusively from req.student._id (verifyStudent); no client-supplied
 // userId/studentId is accepted anywhere. Additive — existing calls untouched.

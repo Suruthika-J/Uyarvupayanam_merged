@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import axiosInstance from '../../config/axios'
 
 const StudentAuthCtx = createContext(null)
 
@@ -13,9 +14,21 @@ export function StudentAuthProvider({ children }) {
     const saved = localStorage.getItem('studentData')
     if (savedToken && saved) {
       try {
-        setStudent(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        setStudent(parsed)
         setToken(savedToken)
         setIsAuthenticated(true)
+
+        // Background check to sync userType and academic state with database
+        axiosInstance.get('/student/profile')
+          .then(res => {
+            if (res.data?.success && res.data.student) {
+              const fresh = res.data.student
+              localStorage.setItem('studentData', JSON.stringify(fresh))
+              setStudent(fresh)
+            }
+          })
+          .catch(() => {})
       } catch {
         localStorage.removeItem('studentToken')
         localStorage.removeItem('studentData')
@@ -46,8 +59,30 @@ export function StudentAuthProvider({ children }) {
     setStudent(next)
   }
 
+  const refreshStudent = async (freshData) => {
+    if (freshData) {
+      localStorage.setItem('studentData', JSON.stringify(freshData))
+      setStudent(freshData)
+      return freshData
+    }
+    const currentToken = token || localStorage.getItem('studentToken')
+    if (!currentToken) return null
+    try {
+      const res = await axiosInstance.get('/student/profile')
+      if (res.data?.success && res.data.student) {
+        const fresh = res.data.student
+        localStorage.setItem('studentData', JSON.stringify(fresh))
+        setStudent(fresh)
+        return fresh
+      }
+    } catch (e) {
+      console.warn('Failed to refresh student profile from backend', e.message)
+    }
+    return null
+  }
+
   return (
-    <StudentAuthCtx.Provider value={{ student, token, isAuthenticated, loading, login, logout, updateStudent }}>
+    <StudentAuthCtx.Provider value={{ student, token, isAuthenticated, loading, login, logout, updateStudent, refreshStudent }}>
       {children}
     </StudentAuthCtx.Provider>
   )
