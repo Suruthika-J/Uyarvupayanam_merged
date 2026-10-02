@@ -42,9 +42,11 @@ connectDB().then(() => {
     const { seedTaxonomyData } = require("./utils/taxonomySeeder");
     const { seedCollegeCareers } = require("./utils/collegeCareerSeeder");
     const { seedAhpFuzzyQuestions } = require("./seeders/seedAhpFuzzyQuestions");
+    const { seedPdfMasterQuestionBank } = require("./seeders/seedPdfMasterQuestionBank");
     seedTaxonomyData().catch(err => console.error("Error in taxonomy seeding:", err));
     seedCollegeCareers().catch(err => console.error("Error in college careers seeding:", err));
     seedAhpFuzzyQuestions().catch(err => console.error("Error in AHP Fuzzy questions seeding:", err));
+    seedPdfMasterQuestionBank().catch(err => console.error("Error in PDF Master Question Bank seeding:", err));
   } catch (err) {
     console.error("Failed to require/run seeders on startup:", err);
   }
@@ -241,6 +243,7 @@ app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
 app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
+app.use("/api/question-bank", require("./routes/ahpFuzzyRoutes"));
 app.use("/api/onboarding/discovery", require("./routes/ahpFuzzyRoutes"));
 app.use("/api/onboarding/fuzzy", require("./routes/ahpFuzzyRoutes"));
 app.use("/api/onboarding", require("./routes/onboardingRoutes"));

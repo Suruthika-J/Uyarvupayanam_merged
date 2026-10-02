@@ -13,7 +13,7 @@ const onboardingResponseSchema = new mongoose.Schema(
         },
         answers: [
             {
-                questionId: { type: mongoose.Schema.Types.ObjectId, ref: "OnboardingQuestion" },
+                questionId: { type: mongoose.Schema.Types.Mixed },
                 selectedAnswer: String,
                 isCorrect: Boolean,
             },

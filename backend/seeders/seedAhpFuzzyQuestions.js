@@ -1,7 +1,7 @@
-const { seedCseCareerDiscoveryQuestions, CSE_105_QUESTION_BANK } = require("./seedCseCareerDiscoveryQuestions");
+const { seedPdfMasterQuestionBank, PDF_MASTER_QUESTION_BANK } = require("./seedPdfMasterQuestionBank");
 
 const seedAhpFuzzyQuestions = async () => {
-  return await seedCseCareerDiscoveryQuestions();
+  return await seedPdfMasterQuestionBank();
 };
 
-module.exports = { seedAhpFuzzyQuestions, ADAPTIVE_DOMAIN_QUESTION_BANK: CSE_105_QUESTION_BANK };
+module.exports = { seedAhpFuzzyQuestions, ADAPTIVE_DOMAIN_QUESTION_BANK: PDF_MASTER_QUESTION_BANK };

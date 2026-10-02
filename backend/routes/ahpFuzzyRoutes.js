@@ -4,12 +4,19 @@ const verifyStudent = require("../middleware/verifyStudent");
 const {
   getAhpFuzzyQuestions,
   evaluateStudentAssessment,
-  getDiscoveryResult
+  getDiscoveryResult,
+  importQuestionBankPdf
 } = require("../controllers/ahpFuzzyController");
 
-// Public / Authenticated discovery questions
+// Public / Authenticated discovery questions & assessment start
 router.get("/questions", getAhpFuzzyQuestions);
 router.get("/discovery/questions", getAhpFuzzyQuestions);
+router.post("/start", getAhpFuzzyQuestions);
+router.post("/assessment/start", getAhpFuzzyQuestions);
+
+// PDF Master Question Bank Import
+router.post("/import", importQuestionBankPdf);
+router.post("/import-pdf", importQuestionBankPdf);
 
 // Student answer & fuzzy evaluation
 router.post("/evaluate", evaluateStudentAssessment);

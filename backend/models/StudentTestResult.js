@@ -13,7 +13,7 @@ const studentTestResultSchema = new mongoose.Schema(
         },
         answers: [
             {
-                questionId: { type: mongoose.Schema.Types.ObjectId, ref: "AssessmentQuestion" },
+                questionId: { type: mongoose.Schema.Types.Mixed },
                 selectedAnswer: String,
                 isCorrect: Boolean,
                 category: String,

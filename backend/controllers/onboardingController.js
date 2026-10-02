@@ -100,8 +100,17 @@ exports.submitOnboarding = async (req, res) => {
             }
         } else {
             // ── Legacy static-bank evaluation ──
+            const mongoose = require("mongoose");
             for (const ans of answers) {
-                const question = await OnboardingQuestion.findById(ans.questionId);
+                let question = null;
+                if (ans.questionId) {
+                    if (mongoose.Types.ObjectId.isValid(ans.questionId)) {
+                        question = await OnboardingQuestion.findById(ans.questionId);
+                    }
+                    if (!question) {
+                        question = await OnboardingQuestion.findOne({ questionId: ans.questionId });
+                    }
+                }
                 if (!question) continue;
 
                 const isCorrect = question.correctAnswer === ans.selectedAnswer;

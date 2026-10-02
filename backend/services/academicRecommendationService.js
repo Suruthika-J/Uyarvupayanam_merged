@@ -143,11 +143,23 @@ const buildOnboardingSnapshot = async (doc) => {
   // Topic-level aggregation for THIS attempt.
   let topics = [];
   try {
-    const questionIds = (doc.answers || [])
+    const mongoose = require("mongoose");
+    const rawQuestionIds = (doc.answers || [])
       .filter((a) => a.questionId)
       .map((a) => a.questionId);
-    const questions = await OnboardingQuestion.find({ _id: { $in: questionIds } });
-    const byId = new Map(questions.map((q) => [String(q._id), q]));
+    
+    const validObjectIds = rawQuestionIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    const stringIds = rawQuestionIds.map(id => String(id));
+
+    const orConditions = [
+      { questionId: { $in: stringIds } }
+    ];
+    if (validObjectIds.length > 0) {
+      orConditions.push({ _id: { $in: validObjectIds } });
+    }
+
+    const questions = await OnboardingQuestion.find({ $or: orConditions });
+    const byId = new Map(questions.map((q) => [String(q.questionId || q._id), q]));
 
     const topicMap = {};
     for (const ans of doc.answers || []) {

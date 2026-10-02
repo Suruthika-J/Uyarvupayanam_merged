@@ -49,125 +49,162 @@ const DOMAIN_ALIAS_MAP = {
   'Algorithms & System Programming': 'algorithms_systems'
 };
 
-// GET /api/onboarding/discovery/questions
+// GET /api/onboarding/discovery/questions & POST /api/assessment/start
 const getAhpFuzzyQuestions = async (req, res) => {
   try {
+    const userId = req.student?._id || req.user?.id || req.user?._id;
     const { branch = "CSE", domains, domainId, difficulty, limit } = req.query;
+    const bodyDomains = req.body?.domains || req.body?.domainIds;
 
     console.log("[DISCOVERY API] branch:", branch);
-    console.log("[DISCOVERY API] requested domains:", domains || domainId);
+    console.log("[DISCOVERY API] userId:", userId || "guest");
 
-    // Ensure 105 CSE questions are seeded in DB
-    const countTotal = await AhpFuzzyQuestion.countDocuments({ active: true });
+    // 1. Ensure seedPdfMasterQuestionBank is populated in MongoDB
+    const { seedPdfMasterQuestionBank } = require("../seeders/seedPdfMasterQuestionBank");
+    const countTotal = await AhpFuzzyQuestion.countDocuments({ source: "master-question-bank-pdf", active: true });
     if (countTotal < 105) {
-      await seedCseCareerDiscoveryQuestions();
+      await seedPdfMasterQuestionBank();
     }
 
-    // Branch filter: default to CSE if matching CSE variants
     const normalizedBranch = (!branch || branch === "CSE" || branch.toLowerCase().includes("computer science") || branch.toLowerCase().includes("cse"))
       ? "CSE"
       : branch;
     const branchFilter = { $in: ["CSE", "cse", normalizedBranch] };
 
-    let rawCandidateDomains = [];
-    const domainsQuery = domains || domainId;
+    // 2. STEP 1 & STEP 2: Determine Top 3 Ranked Domains from AHP prediction or query parameters
+    let rankedDomains = [];
 
-    if (domainsQuery) {
-      rawCandidateDomains = domainsQuery.split(",").map(d => d.trim()).filter(Boolean);
+    // Priority A: Explicit domain query or body parameters (if user requested specific preview)
+    const rawDomainsInput = domains || domainId || bodyDomains;
+    if (rawDomainsInput) {
+      let domainList = [];
+      if (Array.isArray(rawDomainsInput)) domainList = rawDomainsInput;
+      else if (typeof rawDomainsInput === "string") domainList = rawDomainsInput.split(",").map(s => s.trim()).filter(Boolean);
+
+      domainList.forEach((rawD, idx) => {
+        const canonicalId = DOMAIN_ALIAS_MAP[rawD] || rawD;
+        if (!DOMAIN_ALIAS_MAP[rawD]) {
+          console.warn(`[AHP-DISCOVERY] Domain alias mapping warning: "${rawD}" unmapped.`);
+        }
+        rankedDomains.push({
+          domainId: canonicalId,
+          domainName: rawD.replace(/_/g, " "),
+          rank: idx + 1,
+          ahpScore: Number((1.0 - (idx * 0.1)).toFixed(2))
+        });
+      });
     }
 
-    if (rawCandidateDomains.length === 0) {
-      rawCandidateDomains = ["ai_ml", "data_science", "software_engineering"];
+    // Priority B: Authenticated student's saved AHP profile from Step 5
+    if (rankedDomains.length === 0 && userId) {
+      const ahpProfile = await AhpCareerProfile.findOne({ userId });
+      if (ahpProfile) {
+        const candidateList = ahpProfile.candidateDomainsForStep6 || ahpProfile.candidateDomains || [];
+        if (candidateList.length > 0) {
+          // Sort by AHP priority weight descending
+          const sortedCandidates = [...candidateList].sort((a, b) => (b.weight || b.score || 0) - (a.weight || a.score || 0));
+          sortedCandidates.slice(0, 3).forEach((cand, idx) => {
+            const domainKey = cand.id || cand.domainId || cand.name || cand.domainName;
+            const canonicalId = DOMAIN_ALIAS_MAP[domainKey] || domainKey;
+            if (!DOMAIN_ALIAS_MAP[domainKey]) {
+              console.warn(`[AHP-DISCOVERY] AHP Profile Domain warning: "${domainKey}" unmapped.`);
+            }
+            rankedDomains.push({
+              domainId: canonicalId,
+              domainName: cand.name || cand.domainName || canonicalId,
+              rank: idx + 1,
+              ahpScore: Number((cand.weight || cand.score || 0.8 - (idx * 0.1)).toFixed(4))
+            });
+          });
+        } else if (ahpProfile.topDomain) {
+          const topList = [ahpProfile.topDomain, ahpProfile.secondDomain, ahpProfile.thirdDomain].filter(Boolean);
+          topList.forEach((cand, idx) => {
+            const domainKey = cand.id || cand.domainId || cand.name || cand.domainName;
+            const canonicalId = DOMAIN_ALIAS_MAP[domainKey] || domainKey;
+            rankedDomains.push({
+              domainId: canonicalId,
+              domainName: cand.name || cand.domainName || canonicalId,
+              rank: idx + 1,
+              ahpScore: Number((cand.weight || 0.8 - (idx * 0.1)).toFixed(4))
+            });
+          });
+        }
+      }
     }
 
-    // Resolve canonical domain IDs from alias dictionary
-    const candidateDomains = rawCandidateDomains.map(d => DOMAIN_ALIAS_MAP[d] || d);
-    console.log("[DISCOVERY API] canonical candidate domains:", candidateDomains);
+    // Priority C: Fallback default Top 3 CSE domains in AHP order
+    if (rankedDomains.length === 0) {
+      rankedDomains = [
+        { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", rank: 1, ahpScore: 0.45 },
+        { domainId: "cyber_security", domainName: "Cyber Security & Ethical Hacking", rank: 2, ahpScore: 0.30 },
+        { domainId: "data_science", domainName: "Data Science & Big Data Analytics", rank: 3, ahpScore: 0.25 }
+      ];
+    }
 
-    let questions = [];
+    // Take strictly the TOP 3 domains according to AHP ranking
+    const top3Domains = rankedDomains.slice(0, 3);
+    console.log("[AHP-DISCOVERY] TOP 3 AHP RANKED DOMAINS:", top3Domains.map(d => `${d.rank}. ${d.domainName} (${d.domainId})`));
 
-    // Helper to find questions for a domain & difficulty
-    const findQuestionsForDomain = async (targetDomain, targetDiff, numLimit) => {
-      const canonicalId = DOMAIN_ALIAS_MAP[targetDomain] || targetDomain;
-      return await AhpFuzzyQuestion.find({
+    // 3. STEP 3 & STEP 5 & STEP 7: Query SeedMaster (AhpFuzzyQuestion) in EXACT AHP Domain Rank Order
+    const QUESTIONS_PER_DOMAIN = parseInt(process.env.QUESTIONS_PER_DOMAIN || "5", 10);
+    const selectedQuestions = [];
+
+    for (const dObj of top3Domains) {
+      const canonicalId = dObj.domainId;
+
+      // Query SeedMaster for questions belonging to this domain
+      let domainQuestions = await AhpFuzzyQuestion.find({
         branch: branchFilter,
+        source: "master-question-bank-pdf",
         $or: [
           { domainId: canonicalId },
           { domain: canonicalId },
-          { domainId: targetDomain },
-          { domain: targetDomain },
-          { domainName: new RegExp(targetDomain.replace(/_/g, " "), "i") }
+          { domainName: new RegExp(canonicalId.replace(/_/g, " "), "i") }
         ],
-        difficulty: targetDiff.toLowerCase(),
         active: true
-      }).limit(numLimit);
-    };
+      });
 
-    // Case 1: Single domain + specific difficulty query
-    if (candidateDomains.length === 1 && difficulty) {
-      const rawQuestions = await findQuestionsForDomain(candidateDomains[0], difficulty, limit ? parseInt(limit, 10) : 5);
-      questions = rawQuestions.map(sanitizeQuestionForClient);
-    }
-    // Case 2: Multi-domain or default distribution (1, 2, or 3+ domains)
-    else {
-      const selectedQuestions = [];
-      const numDomains = candidateDomains.length;
+      // Sort by difficulty progression (easy -> medium -> hard)
+      const diffOrder = { easy: 1, medium: 2, hard: 3 };
+      domainQuestions.sort((a, b) => (diffOrder[a.difficulty] || 2) - (diffOrder[b.difficulty] || 2));
 
-      let allocations = [];
-      if (numDomains === 1) {
-        allocations = [{ domain: candidateDomains[0], easy: 5, medium: 5, hard: 5 }];
-      } else if (numDomains === 2) {
-        allocations = [
-          { domain: candidateDomains[0], easy: 3, medium: 3, hard: 2 },
-          { domain: candidateDomains[1], easy: 2, medium: 2, hard: 3 }
-        ];
-      } else {
-        allocations = [
-          { domain: candidateDomains[0], easy: 2, medium: 2, hard: 2 },
-          { domain: candidateDomains[1], easy: 2, medium: 2, hard: 2 },
-          { domain: candidateDomains[2], easy: 1, medium: 1, hard: 1 }
-        ];
+      let chosenForDomain = domainQuestions.slice(0, QUESTIONS_PER_DOMAIN);
+
+      // Fallback search if domain has fewer than QUESTIONS_PER_DOMAIN
+      if (chosenForDomain.length < QUESTIONS_PER_DOMAIN) {
+        const missingCount = QUESTIONS_PER_DOMAIN - chosenForDomain.length;
+        const existingIds = chosenForDomain.map(q => q._id);
+        const fallback = await AhpFuzzyQuestion.find({
+          branch: branchFilter,
+          source: "master-question-bank-pdf",
+          active: true,
+          _id: { $nin: existingIds }
+        }).limit(missingCount);
+        chosenForDomain = [...chosenForDomain, ...fallback];
       }
 
-      for (const alloc of allocations) {
-        for (const diff of ["easy", "medium", "hard"]) {
-          const num = alloc[diff];
-          let fetched = await findQuestionsForDomain(alloc.domain, diff, num);
-          // Fallback search across any domain if specific domain had fewer results
-          if (fetched.length < num) {
-            const missingCount = num - fetched.length;
-            const existingIds = fetched.map(q => q._id);
-            const fallback = await AhpFuzzyQuestion.find({
-              branch: branchFilter,
-              difficulty: diff,
-              active: true,
-              _id: { $nin: existingIds }
-            }).limit(missingCount);
-            fetched = [...fetched, ...fallback];
-          }
-          selectedQuestions.push(...fetched.map(sanitizeQuestionForClient));
-        }
-      }
-
-      questions = selectedQuestions;
+      // Sanitize questions (STEP 9: Hide correctOption from client payload)
+      selectedQuestions.push(...chosenForDomain.map(sanitizeQuestionForClient));
     }
 
-    console.log("[DISCOVERY API] MongoDB result count:", questions.length);
+    const assessmentId = `sess_${userId ? userId.toString() : "guest"}_${Date.now()}`;
 
-    const easyCount = questions.filter(q => q.difficulty === "easy").length;
-    const mediumCount = questions.filter(q => q.difficulty === "medium").length;
-    const hardCount = questions.filter(q => q.difficulty === "hard").length;
+    const easyCount = selectedQuestions.filter(q => q.difficulty === "easy").length;
+    const mediumCount = selectedQuestions.filter(q => q.difficulty === "medium").length;
+    const hardCount = selectedQuestions.filter(q => q.difficulty === "hard").length;
 
     res.status(200).json({
       success: true,
-      count: questions.length,
+      assessmentId,
+      domains: top3Domains,
+      count: selectedQuestions.length,
       difficultyBreakdown: {
         easy: easyCount,
         medium: mediumCount,
         hard: hardCount
       },
-      candidateDomains,
-      questions
+      candidateDomains: top3Domains.map(d => d.domainId),
+      questions: selectedQuestions
     });
   } catch (error) {
     console.error("Get Discovery Questions error:", error);
@@ -223,13 +260,20 @@ const evaluateStudentAssessment = async (req, res) => {
       });
     }
 
-    const questionIds = userAnswers.map(a => a.questionId || a._id).filter(Boolean);
-    const questions = await AhpFuzzyQuestion.find({
-      $or: [
-        { questionId: { $in: questionIds } },
-        { _id: { $in: questionIds } }
-      ]
-    });
+    const mongoose = require("mongoose");
+    const rawQuestionIds = userAnswers.map(a => a.questionId || a._id).filter(Boolean);
+    const validObjectIds = rawQuestionIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    const stringQuestionIds = rawQuestionIds.map(id => String(id));
+
+    const orConditions = [
+      { questionId: { $in: stringQuestionIds } },
+      { domainId: { $in: stringQuestionIds } }
+    ];
+    if (validObjectIds.length > 0) {
+      orConditions.push({ _id: { $in: validObjectIds } });
+    }
+
+    const questions = await AhpFuzzyQuestion.find({ $or: orConditions });
 
     // Check if user has an existing AHP Profile to get authentic AHP priority weights
     let effectiveAhpWeights = ahpPriorityWeights || {};
@@ -378,8 +422,81 @@ const getDiscoveryResult = async (req, res) => {
   }
 };
 
+// POST /api/question-bank/import or /api/onboarding/discovery/import-pdf
+const importQuestionBankPdf = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    let questionsToImport = [];
+
+    if (Array.isArray(questions) && questions.length > 0) {
+      questionsToImport = questions;
+    } else {
+      const { PDF_MASTER_QUESTION_BANK } = require("../seeders/seedPdfMasterQuestionBank");
+      questionsToImport = PDF_MASTER_QUESTION_BANK;
+    }
+
+    let inserted = 0;
+    let updated = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (const q of questionsToImport) {
+      if (!q.questionText || !q.options || (!q.domainId && !q.domain)) {
+        failed++;
+        errors.push({ questionId: q.questionId || "UNKNOWN", reason: "Missing required fields (questionText, options, domainId)" });
+        continue;
+      }
+
+      const domainKey = q.domainId || q.domain || "general";
+      const qDoc = {
+        questionId: q.questionId || `q_${domainKey}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        branch: q.branch || "CSE",
+        domainId: domainKey,
+        domainName: q.domainName || domainKey,
+        domain: domainKey,
+        difficulty: (q.difficulty || "medium").toLowerCase(),
+        questionType: q.questionType || "scenario",
+        questionText: q.questionText,
+        options: (q.options || []).map(opt => ({
+          id: opt.id || opt.optionId || "A",
+          optionId: opt.id || opt.optionId || "A",
+          text: opt.text
+        })),
+        correctOption: q.correctOption || q.correctAnswer || "A",
+        explanation: q.explanation || "",
+        skillDimensions: q.skillDimensions || ["analytical_thinking"],
+        source: "master-question-bank-pdf",
+        active: true
+      };
+
+      const result = await AhpFuzzyQuestion.updateOne(
+        { questionId: qDoc.questionId },
+        { $set: qDoc },
+        { upsert: true }
+      );
+
+      const isNew = result.upsertedId !== null && result.upsertedId !== undefined;
+      if (isNew) inserted++;
+      else updated++;
+    }
+
+    res.status(200).json({
+      success: true,
+      totalQuestions: questionsToImport.length,
+      inserted,
+      updated,
+      failed,
+      errors
+    });
+  } catch (error) {
+    console.error("Import Question Bank PDF error:", error);
+    res.status(500).json({ success: false, message: "PDF import failed" });
+  }
+};
+
 module.exports = {
   getAhpFuzzyQuestions,
   evaluateStudentAssessment,
-  getDiscoveryResult
+  getDiscoveryResult,
+  importQuestionBankPdf
 };

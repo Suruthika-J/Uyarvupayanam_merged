@@ -71,6 +71,9 @@ router.put("/profile", verifyStudent, studentProfileController.updateStudentProf
 // Phase 6A — consolidated read-only school-dashboard summary. Ownership is
 // derived exclusively from req.student._id (verifyStudent); no client-supplied
 // userId/studentId is accepted anywhere. Additive — existing calls untouched.
+const collegeStudyToolsController = require("../controllers/collegeStudyToolsController");
+
+router.get("/dashboard", verifyStudent, collegeStudyToolsController.getCollegeDashboardSummary);
 router.get("/dashboard-summary", verifyStudent, dashboardSummaryController.getDashboardSummary);
 
 router.get("/recommendations", verifyStudent, (req, res) => {

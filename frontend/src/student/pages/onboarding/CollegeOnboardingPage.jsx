@@ -942,6 +942,7 @@ export default function CollegeOnboardingPage() {
         if (res.data.evaluation.recommendedDomain) {
           setProfile(prev => ({ ...prev, domain: res.data.evaluation.recommendedDomain.domainName }))
         }
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       } else if (res.data?.code === 'INCOMPLETE_ASSESSMENT') {
         // backend says some questions unanswered
         const firstUnansweredId = res.data.unansweredQuestionIds?.[0]
@@ -1820,11 +1821,41 @@ export default function CollegeOnboardingPage() {
                         </div>
                       </div>
 
+                      {/* CAREER DOMAIN SUITABILITY BREAKDOWN */}
+                      {discoveryResult.scores && (
+                        <div style={{ maxWidth: 600, margin: '0 auto 28px', background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: 20, textAlign: 'left', border: '1px solid rgba(255,255,255,0.15)' }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#a7f3d0', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            📊 Career Domain Fuzzy Suitability Breakdown
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                            {Object.entries({
+                              'Software Development': discoveryResult.scores.softwareDevelopment,
+                              'Data Science & AI': discoveryResult.scores.dataScienceAI,
+                              'Web & Mobile Development': discoveryResult.scores.webMobile,
+                              'Cybersecurity': discoveryResult.scores.cybersecurity,
+                              'Cloud & DevOps': discoveryResult.scores.cloudDevOps,
+                              'Data Analytics': discoveryResult.scores.dataAnalytics
+                            }).map(([dName, dScore]) => (
+                              <div key={dName} style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#fff', fontWeight: 700, marginBottom: 4 }}>
+                                  <span>{dName}</span>
+                                  <span>{dScore || 70}%</span>
+                                </div>
+                                <div style={{ height: 6, background: 'rgba(255,255,255,0.2)', borderRadius: 3, overflow: 'hidden' }}>
+                                  <div style={{ width: `${dScore || 70}%`, height: '100%', background: '#34d399', borderRadius: 3, transition: 'width 0.5s ease' }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* EXPLORE MY DASHBOARD BUTTON */}
                       <button
                         type="button"
                         onClick={async () => {
                           await saveProgressToBackend(true)
+                          updateStudent({ onboardingCompleted: true, userType: 'college_student', collegeProfileSaved: true })
                           navigate('/college/dashboard')
                         }}
                         style={{

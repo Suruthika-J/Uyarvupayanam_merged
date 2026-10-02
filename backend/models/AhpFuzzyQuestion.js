@@ -39,6 +39,7 @@ const ahpFuzzyQuestionSchema = new mongoose.Schema(
     skillVariables: [{ type: String }], // alias for skillDimensions
     fuzzyMappings: { type: mongoose.Schema.Types.Mixed, default: {} },
     xp: { type: Number, default: 10 },
+    source: { type: String, default: "master-question-bank-pdf" },
     active: { type: Boolean, default: true, index: true },
     status: { type: String, enum: ["active", "inactive"], default: "active" }
   },
