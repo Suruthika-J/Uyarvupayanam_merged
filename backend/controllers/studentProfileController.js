@@ -88,6 +88,296 @@ exports.updateStudentProfile = async (req, res) => {
     }
 };
 
+// ── PATCH /api/student/current-study ─────────────────────────────────────────
+// Controls academic stage transitions (e.g. 12th school_student -> college_student)
+// and updates existing college student academic profile information.
+// Derives identity exclusively from req.student._id (verifyStudent).
+const CollegeStudentProfile = require("../models/CollegeStudentProfile");
+const College = require("../models/College");
+const Course = require("../models/Course");
+const CollegeCourseMapping = require("../models/CollegeCourseMapping");
+
+exports.updateCurrentStudy = async (req, res) => {
+    try {
+        const userId = req.student._id;
+        const {
+            targetStage, // 'college_student'
+            institution,
+            institutionDistrict,
+            degreeProgramme,
+            currentYear,
+            specialization,
+            field,
+            domain,
+            saveAsDraft
+        } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Prevent accidental invalid reverse transitions
+        if (user.userType === "college_student" && targetStage === "school_student") {
+            return res.status(400).json({
+                success: false,
+                message: "Reverse transition from College to School is not supported. Please contact support if your account stage is incorrect."
+            });
+        }
+
+        // If saving as incomplete draft (e.g. student leaves halfway)
+        if (saveAsDraft) {
+            user.transitionStatus = "in_progress";
+            await user.save();
+
+            // Store draft in college student profile if basic institution exists
+            if (institution || degreeProgramme) {
+                await CollegeStudentProfile.findOneAndUpdate(
+                    { userId },
+                    {
+                        $set: {
+                            institution: institution || "",
+                            institutionDistrict: institutionDistrict || "",
+                            degreeProgramme: degreeProgramme || "B.E. (Bachelor of Engineering)",
+                            field: field || "engineering",
+                            currentYear: currentYear || "1st Year",
+                            domain: domain || "General",
+                            specialization: specialization || "",
+                            isCompleted: false
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Transition setup draft saved successfully",
+                transitionStatus: "in_progress",
+                student: publicStudent(user)
+            });
+        }
+
+        // ── Full Transition / Update Validation ──
+        if (!targetStage || (targetStage !== "college_student" && targetStage !== "graduate")) {
+            return res.status(400).json({ success: false, message: "A valid target academic stage is required." });
+        }
+
+        if (!institution || !institution.trim()) {
+            return res.status(400).json({ success: false, message: "College/Institution is required." });
+        }
+
+        if (!institutionDistrict || !institutionDistrict.trim()) {
+            return res.status(400).json({ success: false, message: "District is required." });
+        }
+
+        if (!degreeProgramme || !degreeProgramme.trim()) {
+            return res.status(400).json({ success: false, message: "Course / Degree Programme is required." });
+        }
+
+        if (!currentYear || !currentYear.trim()) {
+            return res.status(400).json({ success: false, message: "Academic Year is required." });
+        }
+
+        // Validate College exists in database or verify consistency
+        const collegeDoc = await College.findOne({
+            collegeName: new RegExp(`^${institution.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")
+        }).populate("coursesOffered");
+
+        if (collegeDoc) {
+            // District consistency check if district was specified on college
+            if (collegeDoc.district && institutionDistrict) {
+                const dist1 = collegeDoc.district.toLowerCase().trim();
+                const dist2 = institutionDistrict.toLowerCase().trim();
+                if (!dist1.includes(dist2) && !dist2.includes(dist1) && dist1 !== "others" && dist2 !== "others") {
+                    console.warn(`District mismatch note: college says ${collegeDoc.district}, user selected ${institutionDistrict}`);
+                }
+            }
+
+            // Verify Course relationship if college has mapped courses
+            const mappedRecords = await CollegeCourseMapping.find({ collegeId: collegeDoc._id, isActive: true }).populate("courseId");
+            const allMappedCourseNames = [
+                ...(collegeDoc.coursesOffered || []).map(c => c.courseName?.toLowerCase()),
+                ...mappedRecords.map(m => m.courseId?.courseName?.toLowerCase()).filter(Boolean)
+            ];
+
+            if (allMappedCourseNames.length > 0) {
+                const requestedLower = degreeProgramme.toLowerCase().trim();
+                const isMatch = allMappedCourseNames.some(cn => 
+                    cn.includes(requestedLower) || requestedLower.includes(cn)
+                );
+                if (!isMatch) {
+                    // Check if it exists in the general Course database
+                    const generalCourse = await Course.findOne({
+                        courseName: new RegExp(degreeProgramme.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+                    });
+                    if (!generalCourse) {
+                        return res.status(400).json({
+                            success: false,
+                            message: `Course "${degreeProgramme}" is not offered by ${collegeDoc.collegeName}. Please select an offered course.`
+                        });
+                    }
+                }
+            }
+        }
+
+        // Infer Field & Domain
+        let computedField = field || "engineering";
+        let computedDomain = domain || specialization || "";
+
+        const progLower = degreeProgramme.toLowerCase();
+        if (progLower.includes("m.b.b.s") || progLower.includes("bds") || progLower.includes("medical") || progLower.includes("nursing") || progLower.includes("pharm")) {
+            computedField = "medicine";
+            if (!computedDomain) computedDomain = "Medical Sciences";
+        } else if (progLower.includes("b.com") || progLower.includes("bba") || progLower.includes("mba") || progLower.includes("commerce") || progLower.includes("finance")) {
+            computedField = "commerce";
+            if (!computedDomain) computedDomain = "Commerce & Finance";
+        } else if (progLower.includes("ll.b") || progLower.includes("law")) {
+            computedField = "law";
+            if (!computedDomain) computedDomain = "Legal Studies";
+        } else if (progLower.includes("b.sc") || progLower.includes("m.sc") || progLower.includes("arts") || progLower.includes("humanities")) {
+            computedField = "arts_science";
+            if (!computedDomain) computedDomain = "Arts & Sciences";
+        } else {
+            computedField = "engineering";
+            if (!computedDomain) {
+                if (progLower.includes("computer") || progLower.includes("cse") || progLower.includes("it") || progLower.includes("software") || progLower.includes("data") || progLower.includes("ai")) {
+                    computedDomain = "Computer Science";
+                } else if (progLower.includes("mech") || progLower.includes("auto")) {
+                    computedDomain = "Mechanical Engineering";
+                } else if (progLower.includes("electr") || progLower.includes("eee") || progLower.includes("ece")) {
+                    computedDomain = "Electrical & Electronics";
+                } else if (progLower.includes("civil")) {
+                    computedDomain = "Civil Engineering";
+                } else {
+                    computedDomain = "Engineering";
+                }
+            }
+        }
+
+        // Fetch School Profile for historical context preservation
+        const schoolProfile = await StudentProfile.findOne({ userId }).lean();
+
+        // If transitioning from School to College, append to Academic Journey
+        if (user.userType === "school_student" || !user.academicJourney || user.academicJourney.length === 0) {
+            if (!user.academicJourney) user.academicJourney = [];
+            const previousClass = user.classLevel || schoolProfile?.classLevel || "12th";
+            
+            // Check if school stage is already recorded
+            const alreadyRecorded = user.academicJourney.some(j => j.stage === "school_student");
+            if (!alreadyRecorded) {
+                user.academicJourney.push({
+                    stage: "school_student",
+                    classLevel: previousClass,
+                    institution: schoolProfile?.schoolName || "High School",
+                    completedAt: new Date(),
+                    transitionNote: `Successfully completed Class ${previousClass} and transitioned to College`
+                });
+            }
+        }
+
+        // Update User
+        user.userType = "college_student";
+        user.onboardingCompleted = true;
+        user.transitionStatus = "completed";
+        if (institutionDistrict) user.district = institutionDistrict;
+        await user.save();
+
+        // Upsert CollegeStudentProfile atomically (DO NOT duplicate)
+        let collegeProfile = await CollegeStudentProfile.findOne({ userId });
+        if (!collegeProfile) {
+            collegeProfile = new CollegeStudentProfile({
+                userId,
+                institution: institution.trim(),
+                institutionDistrict: institutionDistrict.trim(),
+                currentYear: currentYear.trim(),
+                degreeProgramme: degreeProgramme.trim(),
+                field: computedField,
+                domain: computedDomain,
+                specialization: specialization ? specialization.trim() : "",
+                currentStep: 6,
+                isCompleted: true,
+                careerInterests: user.selectedCareer ? [user.selectedCareer] : (schoolProfile?.careerInterest ? [schoolProfile.careerInterest] : []),
+                targetCareer: user.selectedCareer || schoolProfile?.careerInterest || ""
+            });
+        } else {
+            collegeProfile.institution = institution.trim();
+            collegeProfile.institutionDistrict = institutionDistrict.trim();
+            collegeProfile.currentYear = currentYear.trim();
+            collegeProfile.degreeProgramme = degreeProgramme.trim();
+            if (computedField) collegeProfile.field = computedField;
+            if (computedDomain) collegeProfile.domain = computedDomain;
+            if (specialization !== undefined) collegeProfile.specialization = specialization ? specialization.trim() : "";
+            collegeProfile.isCompleted = true;
+            if (!collegeProfile.targetCareer && (user.selectedCareer || schoolProfile?.careerInterest)) {
+                collegeProfile.targetCareer = user.selectedCareer || schoolProfile?.careerInterest;
+            }
+        }
+        await collegeProfile.save();
+
+        const freshUser = await User.findById(userId).select("-password").lean();
+
+        res.status(200).json({
+            success: true,
+            message: "Academic stage transitioned to College Student successfully! Welcome to your college portal.",
+            student: publicStudent(freshUser, schoolProfile),
+            profile: collegeProfile,
+            academicJourney: freshUser.academicJourney || []
+        });
+    } catch (error) {
+        console.error("Update current study transition error:", error);
+        res.status(500).json({ success: false, message: "Failed to update current study", error: error.message });
+    }
+};
+
+// ── POST /api/student/cancel-transition ──────────────────────────────────────
+exports.cancelTransition = async (req, res) => {
+    try {
+        const userId = req.student._id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        user.transitionStatus = "none";
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Academic stage transition cancelled",
+            transitionStatus: "none"
+        });
+    } catch (error) {
+        console.error("Cancel transition error:", error);
+        res.status(500).json({ success: false, message: "Failed to cancel transition" });
+    }
+};
+
+// ── GET /api/student/academic-journey ─────────────────────────────────────────
+exports.getAcademicJourney = async (req, res) => {
+    try {
+        const userId = req.student._id;
+        const [user, schoolProfile, collegeProfile] = await Promise.all([
+            User.findById(userId).lean(),
+            StudentProfile.findOne({ userId }).lean(),
+            CollegeStudentProfile.findOne({ userId }).lean()
+        ]);
+
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        res.status(200).json({
+            success: true,
+            userType: user.userType || "school_student",
+            classLevel: user.classLevel || (schoolProfile?.classLevel || "12th"),
+            academicJourney: user.academicJourney || [],
+            transitionStatus: user.transitionStatus || "none",
+            schoolProfile: schoolProfile || null,
+            collegeProfile: collegeProfile || null
+        });
+    } catch (error) {
+        console.error("Get academic journey error:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch academic journey" });
+    }
+};
+
 // Merge User fields with the display fields the existing ProfilePage expects
 // from a saved profile (phone, careerInterest live on StudentProfile).
 function publicStudent(user, profile) {
@@ -102,6 +392,8 @@ function publicStudent(user, profile) {
         district: user.district,
         onboardingCompleted: user.onboardingCompleted,
         isVerified: user.isVerified,
+        academicJourney: user.academicJourney || [],
+        transitionStatus: user.transitionStatus || "none",
     };
     if (profile) {
         if (profile.phone !== undefined) out.phone = profile.phone;

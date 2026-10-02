@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import class5CommunicationService from '../../../services/class5CommunicationService'
 import { authService } from '../../services'
+import axiosInstance from '../../../config/axios'
 import { SCard, SBtn, SInput, SSelect, SAlert, SBadge } from '../../components/ui'
-import { FiUser, FiMail, FiPhone, FiMapPin, FiBookOpen, FiEdit2, FiSave, FiX } from 'react-icons/fi'
+import { FiUser, FiMail, FiPhone, FiMapPin, FiBookOpen, FiEdit2, FiSave, FiX, FiCompass, FiArrowRight, FiShield, FiAlertTriangle } from 'react-icons/fi'
+import UpdateCurrentStudyModal from '../../components/profile/UpdateCurrentStudyModal'
 
 const LEVELS    = ['5th','6th','7th','8th','9th','10th','11th','12th','Undergraduate','Graduate']
 const DISTRICTS = ['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Erode','Tirunelveli','Vellore','Thanjavur','Dindigul','Kanchipuram','Namakkal','Others']
@@ -25,6 +27,38 @@ export default function ProfilePage() {
       }
     }).catch(err => console.error("Error fetching comm progress in profile:", err));
   }, [student?._id, isClass5]);
+
+  const [showTransitionModal, setShowTransitionModal] = useState(false)
+  const [journeyData, setJourneyData] = useState(null)
+  const [cancellingTransition, setCancellingTransition] = useState(false)
+
+  const fetchJourney = () => {
+    if (!student?._id) return
+    axiosInstance.get('/student/academic-journey')
+      .then(res => {
+        if (res.data?.success) {
+          setJourneyData(res.data)
+        }
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    fetchJourney()
+  }, [student?._id])
+
+  const handleCancelTransition = async () => {
+    setCancellingTransition(true)
+    try {
+      await axiosInstance.post('/student/cancel-transition')
+      updateStudent({ transitionStatus: 'none' })
+      fetchJourney()
+    } catch (err) {
+      console.warn('Failed to cancel transition', err)
+    } finally {
+      setCancellingTransition(false)
+    }
+  }
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -111,6 +145,115 @@ export default function ProfilePage() {
             <FiEdit2 size={14} /> Edit Profile
           </SBtn>
         )}
+      </SCard>
+
+      {/* ── ACADEMIC PROFILE & CURRENT STUDY SECTION ── */}
+      <SCard className="s-anim-up s-d1" style={{ marginBottom: 18, padding: '24px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: '#eff6ff', color: '#2563eb',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <FiBookOpen size={19} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 16, color: 'var(--s-text)' }}>
+                Academic Journey & Current Study
+              </h3>
+              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--s-text3)' }}>
+                Track your educational milestones and advance smoothly
+              </p>
+            </div>
+          </div>
+
+          <SBtn variant="primary" size="sm" onClick={() => setShowTransitionModal(true)}>
+            <FiCompass size={14} /> Update Current Study
+          </SBtn>
+        </div>
+
+        {/* Current Study Badge & Details */}
+        <div style={{
+          background: 'var(--s-bg2)',
+          borderRadius: 14,
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16,
+          marginBottom: 16
+        }}>
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--s-text3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Current Study Level
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--s-text)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {student?.classLevel ? `Class ${student.classLevel}` : '12th Standard'}
+              <SBadge color="blue">School Stage</SBadge>
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--s-text2)', marginTop: 4 }}>
+              Active on School Career Discovery & Exploration
+            </div>
+          </div>
+
+          {/* Academic Journey Milestones */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              padding: '8px 14px', borderRadius: 10,
+              background: '#ecfdf5', border: '1px solid #a7f3d0',
+              fontSize: 12, fontWeight: 700, color: '#047857',
+              display: 'flex', alignItems: 'center', gap: 6
+            }}>
+              ✓ School Active
+            </div>
+            <FiArrowRight size={14} color="var(--s-text3)" />
+            <div style={{
+              padding: '8px 14px', borderRadius: 10,
+              background: '#f8fafc', border: '1px dashed #cbd5e1',
+              fontSize: 12, fontWeight: 700, color: '#64748b'
+            }}>
+              ○ College Next
+            </div>
+          </div>
+        </div>
+
+        {/* Incomplete transition prompt if student left halfway */}
+        {(student?.transitionStatus === 'in_progress' || journeyData?.transitionStatus === 'in_progress') && (
+          <div style={{
+            background: '#fffbeb', border: '1px solid #fde68a',
+            borderRadius: 12, padding: '14px 18px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+            marginBottom: 14
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <FiAlertTriangle size={18} color="#d97706" style={{ flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#92400e' }}>
+                  You have an incomplete college setup
+                </div>
+                <div style={{ fontSize: 12, color: '#b45309' }}>
+                  Your college details were saved as draft. Complete the transition whenever you're ready.
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <SBtn size="sm" variant="primary" onClick={() => setShowTransitionModal(true)}>
+                Continue Setup
+              </SBtn>
+              <SBtn size="sm" variant="ghost" onClick={handleCancelTransition} disabled={cancellingTransition}>
+                Cancel
+              </SBtn>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--s-text3)' }}>
+          <FiShield size={14} color="#16a34a" />
+          <span>Completed 12th standard? Use <strong>Update Current Study</strong> to move to College without creating a second account. All past assessments remain preserved.</span>
+        </div>
       </SCard>
 
       {/* Info card */}
@@ -221,6 +364,14 @@ export default function ProfilePage() {
           )}
         </div>
       </SCard>
+
+      <UpdateCurrentStudyModal
+        isOpen={showTransitionModal}
+        onClose={() => {
+          setShowTransitionModal(false)
+          fetchJourney()
+        }}
+      />
     </div>
   )
 }
