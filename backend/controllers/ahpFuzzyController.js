@@ -4,6 +4,7 @@ const AhpCareerProfile = require("../models/AhpCareerProfile");
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const { evaluateAdaptiveFuzzy } = require("../utils/ahpFuzzyEngine");
 const { seedCseCareerDiscoveryQuestions } = require("../seeders/seedCseCareerDiscoveryQuestions");
+const { NORMALIZED_DOMAINS } = require("../config/domainMappingConfig");
 
 // Sanitize question document before sending to frontend (Section 21 Security Rule)
 const sanitizeQuestionForClient = (qDoc) => {
@@ -46,7 +47,17 @@ const DOMAIN_ALIAS_MAP = {
   'cloud_devops': 'cloud_devops',
   'Cloud Computing & DevOps': 'cloud_devops',
   'algorithms_systems': 'algorithms_systems',
-  'Algorithms & System Programming': 'algorithms_systems'
+  'Algorithms & System Programming': 'algorithms_systems',
+  'embedded_iot': 'embedded_iot',
+  'Embedded Systems & IoT': 'embedded_iot',
+  'vlsi_design': 'vlsi_design',
+  'VLSI & Chip Design': 'vlsi_design',
+  'robotics_automation': 'robotics_automation',
+  'Robotics & Automation Engineering': 'robotics_automation',
+  'ev_powertrain': 'ev_powertrain',
+  'Electric Vehicle & Power Systems': 'ev_powertrain',
+  'cad_structural': 'cad_structural',
+  'CAD Modeling & Structural Engineering': 'cad_structural'
 };
 
 // GET /api/onboarding/discovery/questions & POST /api/assessment/start
@@ -86,9 +97,10 @@ const getAhpFuzzyQuestions = async (req, res) => {
         if (!DOMAIN_ALIAS_MAP[rawD]) {
           console.warn(`[AHP-DISCOVERY] Domain alias mapping warning: "${rawD}" unmapped.`);
         }
+        const normMeta = NORMALIZED_DOMAINS[canonicalId] || { name: rawD.replace(/_/g, " ") };
         rankedDomains.push({
           domainId: canonicalId,
-          domainName: rawD.replace(/_/g, " "),
+          domainName: normMeta.name || rawD.replace(/_/g, " "),
           rank: idx + 1,
           ahpScore: Number((1.0 - (idx * 0.1)).toFixed(2))
         });
@@ -106,12 +118,10 @@ const getAhpFuzzyQuestions = async (req, res) => {
           sortedCandidates.slice(0, 3).forEach((cand, idx) => {
             const domainKey = cand.id || cand.domainId || cand.name || cand.domainName;
             const canonicalId = DOMAIN_ALIAS_MAP[domainKey] || domainKey;
-            if (!DOMAIN_ALIAS_MAP[domainKey]) {
-              console.warn(`[AHP-DISCOVERY] AHP Profile Domain warning: "${domainKey}" unmapped.`);
-            }
+            const normMeta = NORMALIZED_DOMAINS[canonicalId] || {};
             rankedDomains.push({
               domainId: canonicalId,
-              domainName: cand.name || cand.domainName || canonicalId,
+              domainName: cand.name || cand.domainName || normMeta.name || canonicalId,
               rank: idx + 1,
               ahpScore: Number((cand.weight || cand.score || 0.8 - (idx * 0.1)).toFixed(4))
             });
@@ -121,9 +131,10 @@ const getAhpFuzzyQuestions = async (req, res) => {
           topList.forEach((cand, idx) => {
             const domainKey = cand.id || cand.domainId || cand.name || cand.domainName;
             const canonicalId = DOMAIN_ALIAS_MAP[domainKey] || domainKey;
+            const normMeta = NORMALIZED_DOMAINS[canonicalId] || {};
             rankedDomains.push({
               domainId: canonicalId,
-              domainName: cand.name || cand.domainName || canonicalId,
+              domainName: cand.name || cand.domainName || normMeta.name || canonicalId,
               rank: idx + 1,
               ahpScore: Number((cand.weight || 0.8 - (idx * 0.1)).toFixed(4))
             });
@@ -135,9 +146,9 @@ const getAhpFuzzyQuestions = async (req, res) => {
     // Priority C: Fallback default Top 3 CSE domains in AHP order
     if (rankedDomains.length === 0) {
       rankedDomains = [
-        { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", rank: 1, ahpScore: 0.45 },
-        { domainId: "cyber_security", domainName: "Cyber Security & Ethical Hacking", rank: 2, ahpScore: 0.30 },
-        { domainId: "data_science", domainName: "Data Science & Big Data Analytics", rank: 3, ahpScore: 0.25 }
+        { domainId: "software_engineering", domainName: "Software Engineering & Architecture", rank: 1, ahpScore: 0.40 },
+        { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", rank: 2, ahpScore: 0.35 },
+        { domainId: "cloud_devops", domainName: "Cloud Computing & DevOps", rank: 3, ahpScore: 0.25 }
       ];
     }
 
@@ -149,7 +160,8 @@ const getAhpFuzzyQuestions = async (req, res) => {
     const QUESTIONS_PER_DOMAIN = parseInt(process.env.QUESTIONS_PER_DOMAIN || "5", 10);
     const selectedQuestions = [];
 
-    for (const dObj of top3Domains) {
+    for (let domainIdx = 0; domainIdx < top3Domains.length; domainIdx++) {
+      const dObj = top3Domains[domainIdx];
       const canonicalId = dObj.domainId;
 
       // Query SeedMaster for questions belonging to this domain
@@ -164,23 +176,35 @@ const getAhpFuzzyQuestions = async (req, res) => {
         active: true
       });
 
-      // Sort by difficulty progression (easy -> medium -> hard)
-      const diffOrder = { easy: 1, medium: 2, hard: 3 };
-      domainQuestions.sort((a, b) => (diffOrder[a.difficulty] || 2) - (diffOrder[b.difficulty] || 2));
+      const easyQs = domainQuestions.filter(q => (q.difficulty || "").toLowerCase() === "easy");
+      const medQs = domainQuestions.filter(q => (q.difficulty || "").toLowerCase() === "medium");
+      const hardQs = domainQuestions.filter(q => (q.difficulty || "").toLowerCase() === "hard");
 
-      let chosenForDomain = domainQuestions.slice(0, QUESTIONS_PER_DOMAIN);
+      let easyTarget = 2;
+      let medTarget = 2;
+      let hardTarget = 1;
+
+      if (domainIdx === 1) {
+        easyTarget = 2;
+        medTarget = 1;
+        hardTarget = 2;
+      } else if (domainIdx === 2) {
+        easyTarget = 1;
+        medTarget = 2;
+        hardTarget = 2;
+      }
+
+      const pickedEasy = easyQs.slice(0, easyTarget);
+      const pickedMed = medQs.slice(0, medTarget);
+      const pickedHard = hardQs.slice(0, hardTarget);
+
+      let chosenForDomain = [...pickedEasy, ...pickedMed, ...pickedHard];
 
       // Fallback search if domain has fewer than QUESTIONS_PER_DOMAIN
       if (chosenForDomain.length < QUESTIONS_PER_DOMAIN) {
-        const missingCount = QUESTIONS_PER_DOMAIN - chosenForDomain.length;
-        const existingIds = chosenForDomain.map(q => q._id);
-        const fallback = await AhpFuzzyQuestion.find({
-          branch: branchFilter,
-          source: "master-question-bank-pdf",
-          active: true,
-          _id: { $nin: existingIds }
-        }).limit(missingCount);
-        chosenForDomain = [...chosenForDomain, ...fallback];
+        const chosenIds = new Set(chosenForDomain.map(q => q._id.toString()));
+        const remaining = domainQuestions.filter(q => !chosenIds.has(q._id.toString()));
+        chosenForDomain = [...chosenForDomain, ...remaining.slice(0, QUESTIONS_PER_DOMAIN - chosenForDomain.length)];
       }
 
       // Sanitize questions (STEP 9: Hide correctOption from client payload)

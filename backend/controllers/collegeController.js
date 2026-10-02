@@ -59,6 +59,17 @@ exports.createCollege = async (req, res) => {
   }
 };
 
+function getDistrictPattern(districtName) {
+  if (!districtName) return null;
+  const d = districtName.trim();
+  if (/thoothukudi|tuticorin/i.test(d)) return "thoothukudi|tuticorin";
+  if (/kanyakumari|kanniyakumari|nagercoil/i.test(d)) return "kanyakumari|kanniyakumari|nagercoil";
+  if (/tiruchirappalli|trichy/i.test(d)) return "tiruchirappalli|trichy";
+  if (/kanchipuram|kancheepuram/i.test(d)) return "kanchipuram|kancheepuram";
+  if (/viluppuram|villupuram/i.test(d)) return "viluppuram|villupuram";
+  return `^${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`;
+}
+
 // @desc    Get all colleges (with optional stream & search filters)
 // @route   GET /api/colleges?stream=Engineering&search=IIT
 // @access  Public
@@ -79,9 +90,16 @@ exports.getAllColleges = async (req, res) => {
       andConditions.push({ $or: [{ stream }, { streamsOffered: stream }] });
     }
 
-    // Filter by district — strict case-insensitive match
+    // Filter by district — alias-aware match
     if (district && district !== "All") {
-      filter.district = { $regex: `^${district.trim()}$`, $options: "i" };
+      const districtPattern = getDistrictPattern(district);
+      const districtRegex = { $regex: districtPattern, $options: "i" };
+      andConditions.push({
+        $or: [
+          { district: districtRegex },
+          { location: districtRegex }
+        ]
+      });
     }
 
     // Search by college name or location (scoped to district if provided)
@@ -130,8 +148,14 @@ exports.getCollegesByDistrict = async (req, res) => {
       return res.status(400).json({ success: false, message: "District parameter is required." });
     }
 
+    const districtPattern = getDistrictPattern(district);
+    const districtRegex = { $regex: districtPattern, $options: "i" };
+
     const filter = {
-      district: { $regex: `^${district.trim()}$`, $options: "i" }
+      $or: [
+        { district: districtRegex },
+        { location: districtRegex }
+      ]
     };
 
     // If a search term is provided, add it as a name filter

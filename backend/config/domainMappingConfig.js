@@ -4,9 +4,16 @@
  */
 
 const NORMALIZED_DOMAINS = {
+  software_engineering: {
+    id: "software_engineering",
+    name: "Software Engineering & Architecture",
+    category: "Software Engineering",
+    icon: "FiBriefcase",
+    description: "Architect scalable software applications, enterprise design patterns, and microservices."
+  },
   ai_ml: {
     id: "ai_ml",
-    name: "AI & Machine Learning",
+    name: "Artificial Intelligence & Machine Learning",
     category: "AI & Data Science",
     icon: "FiCpu",
     description: "Build intelligent neural networks, autonomous agents, and predictive machine learning models."
@@ -22,7 +29,7 @@ const NORMALIZED_DOMAINS = {
     id: "full_stack",
     name: "Full Stack Web & Mobile Development",
     category: "Software Engineering",
-    icon: "FiBriefcase",
+    icon: "FiGlobe",
     description: "Architect scalable web applications, REST APIs, microservices, and mobile platforms."
   },
   data_science: {
@@ -38,6 +45,13 @@ const NORMALIZED_DOMAINS = {
     category: "Infrastructure",
     icon: "FiGlobe",
     description: "Automate CI/CD pipelines, container orchestration, and cloud infrastructure on AWS/GCP/Azure."
+  },
+  algorithms_systems: {
+    id: "algorithms_systems",
+    name: "Algorithms & System Programming",
+    category: "Core Computer Science",
+    icon: "FiRadio",
+    description: "Design high-performance algorithms, data structures, operating systems, and system drivers."
   },
   embedded_iot: {
     id: "embedded_iot",
@@ -78,7 +92,14 @@ const NORMALIZED_DOMAINS = {
 
 // Mapping from Step 4 specialization phrases to normalized domain IDs
 const SPECIALIZATION_MAP = {
+  // Software Engineering & Architecture
+  "software engineering & architecture": "software_engineering",
+  "software engineering": "software_engineering",
+  "enterprise software": "software_engineering",
+  "software architecture": "software_engineering",
+
   // AI / ML
+  "artificial intelligence & machine learning": "ai_ml",
   "artificial intelligence": "ai_ml",
   "machine learning": "ai_ml",
   "ai & machine learning": "ai_ml",
@@ -87,59 +108,56 @@ const SPECIALIZATION_MAP = {
   "nlp": "ai_ml",
   "computer vision": "ai_ml",
   "generative ai": "ai_ml",
-  "llm": "ai_ml",
 
   // Cyber Security
+  "cyber security & ethical hacking": "cyber_security",
   "cyber security": "cyber_security",
   "ethical hacking": "cyber_security",
-  "cyber security & ethical hacking": "cyber_security",
   "information security": "cyber_security",
   "network security": "cyber_security",
-  "devsecops": "cyber_security",
+
+  // Algorithms & Systems
+  "algorithms & system programming": "algorithms_systems",
+  "algorithms & systems": "algorithms_systems",
+  "algorithms": "algorithms_systems",
+  "system programming": "algorithms_systems",
 
   // Full Stack
-  "full stack": "full_stack",
   "full stack web & mobile development": "full_stack",
+  "full stack": "full_stack",
   "web development": "full_stack",
-  "software engineering": "full_stack",
   "mobile development": "full_stack",
-  "react": "full_stack",
-  "java": "full_stack",
 
   // Data Science
+  "data science & big data analytics": "data_science",
   "data science": "data_science",
   "big data": "data_science",
-  "data science & big data analytics": "data_science",
   "data analytics": "data_science",
   "data engineering": "data_science",
-  "business intelligence": "data_science",
 
   // Cloud & DevOps
+  "cloud computing & devops": "cloud_devops",
   "cloud computing": "cloud_devops",
   "devops": "cloud_devops",
-  "cloud computing & devops": "cloud_devops",
   "cloud architecture": "cloud_devops",
-  "aws": "cloud_devops",
-  "kubernetes": "cloud_devops",
 
-  // ECE / EEE / Core
-  "embedded": "embedded_iot",
+  // Core Electronics / Hardware / Mechanical / Civil
   "embedded systems & iot": "embedded_iot",
+  "embedded": "embedded_iot",
   "iot": "embedded_iot",
-  "vlsi": "vlsi_design",
   "vlsi & chip design": "vlsi_design",
-  "robotics": "robotics_automation",
+  "vlsi": "vlsi_design",
   "robotics & automation": "robotics_automation",
+  "robotics": "robotics_automation",
   "electric vehicle": "ev_powertrain",
   "power systems": "ev_powertrain",
   "cad": "cad_structural",
-  "3d modeling": "cad_structural",
   "structural": "cad_structural"
 };
 
-// Fallback domain maps grouped by core branch
+// Fallback domain maps grouped by core branch if no specializations were selected
 const BRANCH_DEFAULT_DOMAINS = {
-  cse: ["full_stack", "ai_ml", "cyber_security", "data_science", "cloud_devops"],
+  cse: ["software_engineering", "ai_ml", "cyber_security", "algorithms_systems", "data_science"],
   it: ["full_stack", "cloud_devops", "cyber_security", "data_science"],
   aids: ["ai_ml", "data_science", "full_stack", "cloud_devops"],
   ece: ["embedded_iot", "vlsi_design", "robotics_automation", "cyber_security"],
@@ -150,32 +168,51 @@ const BRANCH_DEFAULT_DOMAINS = {
   mechatronics: ["robotics_automation", "embedded_iot", "ai_ml"]
 };
 
+function resolveBranchId(branchId = "cse") {
+  if (!branchId) return "cse";
+  const str = branchId.toLowerCase().trim();
+  if (str.includes("cse") || str.includes("computer science")) return "cse";
+  if (str.includes("ai & ds") || str.includes("artificial intelligence") || str.includes("aids")) return "aids";
+  if (str.includes("it (") || str === "it" || str.includes("information technology")) return "it";
+  if (str.includes("ece") || str.includes("electronics")) return "ece";
+  if (str.includes("eee") || str.includes("electrical")) return "eee";
+  if (str.includes("mechanical")) return "mechanical";
+  if (str.includes("civil")) return "civil";
+  if (str.includes("chemical") || str.includes("biotech")) return "chemical";
+  if (str.includes("mechatronic") || str.includes("robotic")) return "mechatronics";
+  return "cse";
+}
+
 /**
- * Resolves candidate domain objects based on Step 4 specializations & branch
+ * Resolves candidate domain objects based strictly on Step 4 specializations & branch
  */
 function resolveCandidateDomains(branchId = "cse", specializations = []) {
-  const normBranch = (branchId || "cse").toLowerCase().trim();
+  const normBranch = resolveBranchId(branchId);
   const matchedDomainIds = new Set();
 
   if (Array.isArray(specializations) && specializations.length > 0) {
     specializations.forEach(spec => {
       const lower = spec.toLowerCase().trim();
-      Object.keys(SPECIALIZATION_MAP).forEach(key => {
-        if (lower.includes(key) || key.includes(lower)) {
-          matchedDomainIds.add(SPECIALIZATION_MAP[key]);
+      let matched = false;
+
+      // Check exact / substring matches in SPECIALIZATION_MAP
+      for (const [key, domainId] of Object.entries(SPECIALIZATION_MAP)) {
+        if (lower === key || lower.includes(key) || key.includes(lower)) {
+          matchedDomainIds.add(domainId);
+          matched = true;
+          break;
         }
-      });
+      }
     });
   }
 
-  // If specializations produced at least 2 candidate domains, return them
   let selectedIds = Array.from(matchedDomainIds);
 
-  // Fallback to branch defaults if matching resulted in fewer than 2 candidate domains
+  // If fewer than 2 candidate domains matched, supplement from branch defaults so AHP pairwise comparisons can be formed
   if (selectedIds.length < 2) {
     const branchDefaults = BRANCH_DEFAULT_DOMAINS[normBranch] || BRANCH_DEFAULT_DOMAINS["cse"];
     branchDefaults.forEach(id => {
-      if (!selectedIds.includes(id)) {
+      if (!selectedIds.includes(id) && selectedIds.length < 3) {
         selectedIds.push(id);
       }
     });
@@ -184,7 +221,13 @@ function resolveCandidateDomains(branchId = "cse", specializations = []) {
   // Limit candidate domains to top 5 maximum for pairwise comparison clarity
   selectedIds = selectedIds.slice(0, 5);
 
-  return selectedIds.map(id => NORMALIZED_DOMAINS[id] || NORMALIZED_DOMAINS["full_stack"]);
+  return selectedIds.map(id => NORMALIZED_DOMAINS[id] || {
+    id,
+    name: id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    category: "Specialized Domain",
+    icon: "FiBriefcase",
+    description: `Specialized pathway in ${id.replace(/_/g, " ")}.`
+  });
 }
 
 module.exports = {

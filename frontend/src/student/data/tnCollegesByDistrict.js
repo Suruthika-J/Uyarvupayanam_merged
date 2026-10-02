@@ -266,12 +266,22 @@ export const TN_COLLEGES_BY_DISTRICT = {
   ],
   Thoothukudi: [
     'National Engineering College, Kovilpatti',
-    'Sri Paramakalyani College',
+    'Dr. Sivanthi Aditanar College of Engineering, Tiruchendur',
+    'University College of Engineering, Thoothukudi',
+    'Grace College of Engineering, Thoothukudi',
+    'Chandy College of Engineering, Thoothukudi',
+    'Infant Jesus College of Engineering, Keelavallanadu',
+    'Jayaraj Annapackiam CSI College of Engineering, Nazareth',
+    'Holy Cross Engineering College, Vagaikulam',
+    'SCAD College of Engineering and Technology',
+    'Thoothukudi Government Medical College',
+    'A.P.C. Mahalaxmi College for Women',
+    'Aditanar College of Arts and Science',
     'Govindammal Aditanar College for Women',
     'V.O. Chidambaram College',
-    'The M.D.T. Hindu College',
-    'VPMM Engineering College',
-    'Sethu Institute of Technology'
+    'Pope\'s College, Sawyerpuram',
+    'Wavoo Wajeeha Women\'s College',
+    'Government Polytechnic College, Thoothukudi'
   ],
   Tiruppur: [
     'Park College of Engineering and Technology',

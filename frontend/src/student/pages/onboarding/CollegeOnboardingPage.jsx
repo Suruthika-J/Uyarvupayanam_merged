@@ -528,34 +528,36 @@ export default function CollegeOnboardingPage() {
   // Load candidate domains for Step 5 & Step 6
   useEffect(() => {
     if (step === 5 || step === 6) {
-      if (ahpCandidates.length === 0 && !ahpDiscoveryResult) {
+      if ((ahpCandidates.length < 2 || ahpPairs.length === 0) && !ahpDiscoveryResult) {
         loadAhpDiscoveryData()
       }
     }
   }, [step, profile.domain, profile.specialization])
 
-  const loadAhpDiscoveryData = async () => {
+  const loadAhpDiscoveryData = async (forceFresh = false) => {
     setLoadingAhpDiscovery(true)
     try {
       // Check if saved AHP result exists on backend first (404 expected for new students)
-      try {
-        const savedRes = await axiosInstance.get('/onboarding/ahp/result')
-        if (savedRes.data?.success && savedRes.data.ahpProfile) {
-          const saved = savedRes.data.ahpProfile
-          const savedBranch = saved.branchId || ''
-          const savedSpecs = Array.isArray(saved.selectedSpecializations) ? saved.selectedSpecializations.join(', ') : ''
-          const currentSpecs = profile.specialization || ''
+      if (!forceFresh) {
+        try {
+          const savedRes = await axiosInstance.get('/onboarding/ahp/result')
+          if (savedRes.data?.success && savedRes.data.ahpProfile) {
+            const saved = savedRes.data.ahpProfile
+            const savedBranch = saved.branchId || ''
+            const savedSpecs = Array.isArray(saved.selectedSpecializations) ? saved.selectedSpecializations.join(', ') : ''
+            const currentSpecs = profile.specialization || ''
 
-          // Only use saved result if branch & selected specializations match current profile
-          if (savedBranch === profile.domain && savedSpecs === currentSpecs) {
-            setAhpCandidates(saved.candidateDomains || [])
-            setAhpDiscoveryResult(saved)
-            setLoadingAhpDiscovery(false)
-            return
+            // Only use saved result if branch & selected specializations match current profile and candidates >= 2
+            if (savedBranch === profile.domain && savedSpecs === currentSpecs && (saved.candidateDomains || []).length >= 2) {
+              setAhpCandidates(saved.candidateDomains || [])
+              setAhpDiscoveryResult(saved)
+              setLoadingAhpDiscovery(false)
+              return
+            }
           }
+        } catch (err) {
+          // Ignored: 404 is normal if the student has not completed Step 5 yet
         }
-      } catch (err) {
-        // Ignored: 404 is normal if the student has not completed Step 5 yet
       }
 
       // Reset old result if selections changed
@@ -820,18 +822,29 @@ export default function CollegeOnboardingPage() {
         'cloud_devops': 'cloud_devops',
         'Cloud Computing & DevOps': 'cloud_devops',
         'algorithms_systems': 'algorithms_systems',
-        'Algorithms & System Programming': 'algorithms_systems'
+        'Algorithms & System Programming': 'algorithms_systems',
+        'embedded_iot': 'embedded_iot',
+        'Embedded Systems & IoT': 'embedded_iot',
+        'vlsi_design': 'vlsi_design',
+        'VLSI & Chip Design': 'vlsi_design',
+        'robotics_automation': 'robotics_automation',
+        'Robotics & Automation Engineering': 'robotics_automation',
+        'ev_powertrain': 'ev_powertrain',
+        'Electric Vehicle & Power Systems': 'ev_powertrain',
+        'cad_structural': 'cad_structural',
+        'CAD Modeling & Structural Engineering': 'cad_structural'
       };
 
       let candidateIds = extractedIds.map(id => DOMAIN_ALIAS_MAP[id] || id).filter(Boolean)
 
       if (candidateIds.length === 0) {
-        candidateIds = ['full_stack', 'ai_ml']
+        candidateIds = ['software_engineering', 'ai_ml', 'cloud_devops']
       }
 
       console.log("[STEP 6] CANDIDATE DOMAIN IDS:", candidateIds)
 
-      const requestUrl = `/onboarding/discovery/questions?branch=CSE&domains=${encodeURIComponent(candidateIds.join(','))}`
+      const branchParam = profile.domain || 'CSE'
+      const requestUrl = `/onboarding/discovery/questions?branch=${encodeURIComponent(branchParam)}&domains=${encodeURIComponent(candidateIds.join(','))}`
       console.log("[STEP 6] FINAL REQUEST URL:", requestUrl)
 
       const res = await axiosInstance.get(requestUrl)
@@ -841,6 +854,9 @@ export default function CollegeOnboardingPage() {
 
       const retrievedQuestions = res.data?.questions || res.data?.data?.questions || []
       setDiscoveryQuestions(retrievedQuestions)
+      if (Array.isArray(res.data?.domains) && res.data.domains.length > 0) {
+        setAhpCandidates(res.data.domains)
+      }
 
       console.log("[STEP 6] Questions loaded:", retrievedQuestions.length)
       console.log("[STEP 6] Question source: MongoDB")
@@ -927,7 +943,7 @@ export default function CollegeOnboardingPage() {
 
       const res = await axiosInstance.post('/onboarding/discovery/evaluate', {
         answers: formattedAnswers,
-        ahpPriorityWeights: ahpDiscoveryResult?.priorityVector || {},
+        ahpPriorityWeights: ahpDiscoveryResult?.priorityWeights || ahpDiscoveryResult?.priorityVector || {},
         requiredQuestionIds
       })
 
@@ -1455,7 +1471,7 @@ export default function CollegeOnboardingPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={loadAhpDiscoveryData}
+                    onClick={() => loadAhpDiscoveryData(true)}
                     style={{
                       background: 'var(--s-primary)', color: '#fff', border: 'none',
                       borderRadius: 12, padding: '10px 24px', fontSize: 13, fontWeight: 800,
@@ -1711,15 +1727,14 @@ export default function CollegeOnboardingPage() {
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
                     {(() => {
-                      const list = ahpDiscoveryResult?.candidateDomainsForStep6 || ahpDiscoveryResult?.candidateDomains || ahpCandidates || []
-                      const displayList = list.length > 0 ? list : [
-                        { id: 'ai_ml', name: 'AI & Machine Learning' },
-                        { id: 'data_science', name: 'Data Science & Big Data Analytics' },
-                        { id: 'software_engineering', name: 'Software Engineering & Architecture' }
+                      const displayList = ahpDiscoveryResult?.candidateDomainsForStep6 || ahpDiscoveryResult?.candidateDomains || (ahpCandidates.length > 0 ? ahpCandidates : null) || [
+                        { id: 'software_engineering', name: 'Software Engineering & Architecture' },
+                        { id: 'ai_ml', name: 'Artificial Intelligence & Machine Learning' },
+                        { id: 'cloud_devops', name: 'Cloud Computing & DevOps' }
                       ]
                       return displayList.map((cd, idx) => (
                         <span key={cd.id || idx} style={{ background: '#d1fae5', border: '1px solid #6ee7b7', color: '#065f46', fontSize: 13, fontWeight: 800, padding: '8px 16px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          🧠 {cd.name || cd.id}
+                          {cd.name || cd.id}
                         </span>
                       ))
                     })()}
@@ -1822,33 +1837,37 @@ export default function CollegeOnboardingPage() {
                       </div>
 
                       {/* CAREER DOMAIN SUITABILITY BREAKDOWN */}
-                      {discoveryResult.scores && (
-                        <div style={{ maxWidth: 600, margin: '0 auto 28px', background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: 20, textAlign: 'left', border: '1px solid rgba(255,255,255,0.15)' }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: '#a7f3d0', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            📊 Career Domain Fuzzy Suitability Breakdown
+                      {(() => {
+                        const breakdownItems = discoveryResult.rankings || discoveryResult.finalScores || discoveryResult.fuzzyScores || []
+                        if (breakdownItems.length === 0) return null
+
+                        return (
+                          <div style={{ maxWidth: 600, margin: '0 auto 28px', background: 'rgba(255,255,255,0.1)', borderRadius: 20, padding: 20, textAlign: 'left', border: '1px solid rgba(255,255,255,0.15)' }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#a7f3d0', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              📊 Evaluated Candidate Domains Fuzzy Breakdown
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                              {breakdownItems.map(item => {
+                                const dName = item.domainName || item.name || item.domainId
+                                const rawScore = item.score !== undefined ? item.score : (item.fuzzyScore || 0.5)
+                                const dScore = rawScore > 1 ? Math.round(rawScore) : Number((rawScore * 100).toFixed(1))
+
+                                return (
+                                  <div key={item.domainId || dName} style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#fff', fontWeight: 700, marginBottom: 4 }}>
+                                      <span>{dName}</span>
+                                      <span>{dScore}%</span>
+                                    </div>
+                                    <div style={{ height: 6, background: 'rgba(255,255,255,0.2)', borderRadius: 3, overflow: 'hidden' }}>
+                                      <div style={{ width: `${Math.min(100, Math.max(0, dScore))}%`, height: '100%', background: '#34d399', borderRadius: 3, transition: 'width 0.5s ease' }} />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                            {Object.entries({
-                              'Software Development': discoveryResult.scores.softwareDevelopment,
-                              'Data Science & AI': discoveryResult.scores.dataScienceAI,
-                              'Web & Mobile Development': discoveryResult.scores.webMobile,
-                              'Cybersecurity': discoveryResult.scores.cybersecurity,
-                              'Cloud & DevOps': discoveryResult.scores.cloudDevOps,
-                              'Data Analytics': discoveryResult.scores.dataAnalytics
-                            }).map(([dName, dScore]) => (
-                              <div key={dName} style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#fff', fontWeight: 700, marginBottom: 4 }}>
-                                  <span>{dName}</span>
-                                  <span>{dScore || 70}%</span>
-                                </div>
-                                <div style={{ height: 6, background: 'rgba(255,255,255,0.2)', borderRadius: 3, overflow: 'hidden' }}>
-                                  <div style={{ width: `${dScore || 70}%`, height: '100%', background: '#34d399', borderRadius: 3, transition: 'width 0.5s ease' }} />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                        )
+                      })()}
 
                       {/* EXPLORE MY DASHBOARD BUTTON */}
                       <button

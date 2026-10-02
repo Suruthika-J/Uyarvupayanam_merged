@@ -181,6 +181,87 @@ const DOMAIN_FUZZY_RULES = {
     }
   },
 
+  software_engineering: {
+    domainId: "software_engineering",
+    domainName: "Software Engineering & Architecture",
+    requiredSkills: ["programming_readiness", "system_thinking", "analytical_thinking"],
+    evaluateSuitability: (skills, behavior = {}, memberships = {}) => {
+      const prog = skills.programming_readiness || 0.5;
+      const system = skills.system_thinking || 0.5;
+      const analytical = skills.analytical_thinking || 0.5;
+      const curiosity = skills.technical_curiosity || 0.5;
+
+      const mProg = memberships.programming_readiness || { low: 0.3, medium: 0.6, high: 0.3 };
+      const mSys = memberships.system_thinking || { low: 0.3, medium: 0.6, high: 0.3 };
+
+      const ruleHigh = Math.min(mProg.high, mSys.high);
+      const ruleMed = Math.min(mProg.medium, mSys.medium);
+
+      const rulesTriggered = [
+        { rule: "IF Programming Readiness is HIGH AND System Thinking is HIGH THEN Software Engineering suitability is HIGH", activation: Number(ruleHigh.toFixed(4)) },
+        { rule: "IF Programming Readiness is MEDIUM AND System Thinking is MEDIUM THEN Software Engineering suitability is MEDIUM", activation: Number(ruleMed.toFixed(4)) }
+      ];
+
+      const weightedScore = (prog * 0.40) + (system * 0.30) + (analytical * 0.20) + (curiosity * 0.10) + (behavior.fast_response ? 0.05 : 0);
+      const suitability = Math.min(1.0, Math.max(0.1, weightedScore));
+      return { suitability, rulesTriggered };
+    }
+  },
+
+  algorithms_systems: {
+    domainId: "algorithms_systems",
+    domainName: "Algorithms & System Programming",
+    requiredSkills: ["analytical_thinking", "system_thinking", "mathematical_readiness"],
+    evaluateSuitability: (skills, behavior = {}, memberships = {}) => {
+      const analytical = skills.analytical_thinking || 0.5;
+      const system = skills.system_thinking || 0.5;
+      const math = skills.mathematical_readiness || 0.5;
+
+      const mAnal = memberships.analytical_thinking || { low: 0.3, medium: 0.6, high: 0.3 };
+      const mSys = memberships.system_thinking || { low: 0.3, medium: 0.6, high: 0.3 };
+
+      const ruleHigh = Math.min(mAnal.high, mSys.high);
+      const ruleMed = Math.min(mAnal.medium, mSys.medium);
+
+      const rulesTriggered = [
+        { rule: "IF Analytical Thinking is HIGH AND System Thinking is HIGH THEN Algorithms suitability is HIGH", activation: Number(ruleHigh.toFixed(4)) },
+        { rule: "IF Analytical Thinking is MEDIUM AND System Thinking is MEDIUM THEN Algorithms suitability is MEDIUM", activation: Number(ruleMed.toFixed(4)) }
+      ];
+
+      const weightedScore = (analytical * 0.40) + (system * 0.35) + (math * 0.25);
+      const suitability = Math.min(1.0, Math.max(0.1, weightedScore));
+      return { suitability, rulesTriggered };
+    }
+  },
+
+  ev_powertrain: {
+    domainId: "ev_powertrain",
+    domainName: "Electric Vehicle & Power Systems",
+    requiredSkills: ["system_thinking", "attention_to_detail", "persistence"],
+    evaluateSuitability: (skills, behavior = {}, memberships = {}) => {
+      const system = skills.system_thinking || 0.5;
+      const detail = skills.attention_to_detail || 0.5;
+      const persistence = skills.persistence || 0.5;
+
+      const weightedScore = (system * 0.40) + (detail * 0.35) + (persistence * 0.25);
+      return { suitability: Math.min(1.0, Math.max(0.1, weightedScore)), rulesTriggered: [] };
+    }
+  },
+
+  cad_structural: {
+    domainId: "cad_structural",
+    domainName: "CAD Modeling & Structural Engineering",
+    requiredSkills: ["attention_to_detail", "system_thinking", "analytical_thinking"],
+    evaluateSuitability: (skills, behavior = {}, memberships = {}) => {
+      const detail = skills.attention_to_detail || 0.5;
+      const system = skills.system_thinking || 0.5;
+      const analytical = skills.analytical_thinking || 0.5;
+
+      const weightedScore = (detail * 0.40) + (system * 0.35) + (analytical * 0.25);
+      return { suitability: Math.min(1.0, Math.max(0.1, weightedScore)), rulesTriggered: [] };
+    }
+  },
+
   robotics_automation: {
     domainId: "robotics_automation",
     domainName: "Robotics & Automation",

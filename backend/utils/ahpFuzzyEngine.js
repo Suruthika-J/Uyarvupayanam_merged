@@ -86,11 +86,26 @@ function evaluateAdaptiveFuzzy({
     skillCounts[v] = 0;
   });
 
-  // Candidate domains list from AHP priority weights
-  const candidateDomainKeys = Object.keys(ahpPriorityWeights);
-  const domainKeysToEvaluate = candidateDomainKeys.length > 0
-    ? candidateDomainKeys
-    : ["full_stack", "ai_ml"];
+  // Candidate domains list from AHP priority weights or questions
+  const candidateDomainKeys = Object.keys(ahpPriorityWeights).map(k => {
+    return NORMALIZED_DOMAINS[k]?.id || k;
+  }).filter(Boolean);
+
+  let domainKeysToEvaluate = candidateDomainKeys.length > 0
+    ? Array.from(new Set(candidateDomainKeys))
+    : [];
+
+  if (domainKeysToEvaluate.length === 0 && Array.isArray(questions) && questions.length > 0) {
+    const qDomains = questions
+      .map(q => q.domainId || q.domain)
+      .filter(Boolean)
+      .map(k => NORMALIZED_DOMAINS[k]?.id || k);
+    domainKeysToEvaluate = Array.from(new Set(qDomains));
+  }
+
+  if (domainKeysToEvaluate.length === 0) {
+    domainKeysToEvaluate = ["software_engineering", "ai_ml", "cloud_devops"];
+  }
 
   // Map user answers by questionId or questionNumber
   const answerMap = new Map();
@@ -118,7 +133,22 @@ function evaluateAdaptiveFuzzy({
     // PART 5: Get difficulty weight (Easy=1.0, Medium=1.5, Hard=2.0)
     const diffWeight = DIFFICULTY_WEIGHTS[q.difficulty] || 1.0;
 
-    // Process skill mappings for Mamdani fuzzification
+    // Determine correctness of student's answer
+    const targetCorrect = q.correctOption || q.correctAnswer || "A";
+    const isCorrect = (selectedOptId === targetCorrect) || (opt.isCorrect === true);
+
+    // Process skill dimensions associated with the question
+    const qSkills = q.skillDimensions || q.skillVariables || ["analytical_thinking"];
+    const skillScoreVal = isCorrect ? 0.95 : 0.25;
+
+    qSkills.forEach(varName => {
+      if (skillScores[varName] !== undefined) {
+        skillScores[varName] += skillScoreVal * diffWeight;
+        skillCounts[varName] += diffWeight;
+      }
+    });
+
+    // Process skill mappings on option if provided
     const mappings = opt.skillMappings || {};
     Object.entries(mappings).forEach(([varName, degree]) => {
       if (skillScores[varName] !== undefined) {
@@ -129,22 +159,20 @@ function evaluateAdaptiveFuzzy({
     });
 
     // Process domain-wise fuzzy impact / contribution
-    domainKeysToEvaluate.forEach(dKey => {
-      let impact = 0.5; // base contribution
+    const qDomain = q.domainId || q.domain;
+    const qCanonical = NORMALIZED_DOMAINS[qDomain]?.id || qDomain;
 
-      // 1. Direct fuzzyImpact on option
-      if (opt.fuzzyImpact) {
+    domainKeysToEvaluate.forEach(dKey => {
+      let impact = 0.3; // base contribution
+
+      if (dKey === qCanonical || qDomain === dKey) {
+        // Direct domain question: High score if correct (0.95), low score if incorrect (0.25)
+        impact = isCorrect ? 0.95 : 0.25;
+      } else if (opt.fuzzyImpact) {
         const impMap = opt.fuzzyImpact instanceof Map ? Object.fromEntries(opt.fuzzyImpact) : opt.fuzzyImpact;
         if (impMap[dKey] !== undefined) {
-          impact = Number(impMap[dKey]);
+          impact = isCorrect ? Number(impMap[dKey]) : Number(impMap[dKey]) * 0.3;
         }
-      }
-
-      // 2. Direct question domain matching fallback
-      const qDomain = q.domainId || q.domain;
-      if (qDomain === dKey || NORMALIZED_DOMAINS[qDomain]?.id === dKey) {
-        // If student chose an option for this domain's question, increase impact
-        impact = Math.max(impact, opt.fuzzyIntensity ? opt.fuzzyIntensity / 10 : 0.8);
       }
 
       // PART 5: weighted_response = fuzzy_response_strength * difficulty_weight
@@ -174,7 +202,14 @@ function evaluateAdaptiveFuzzy({
 
   domainKeysToEvaluate.forEach(dKey => {
     // 1. Rule-based Mamdani suitability
-    const ruleObj = DOMAIN_FUZZY_RULES[dKey] || DOMAIN_FUZZY_RULES["full_stack"];
+    const ruleObj = DOMAIN_FUZZY_RULES[dKey] || {
+      domainId: dKey,
+      domainName: NORMALIZED_DOMAINS[dKey]?.name || dKey,
+      evaluateSuitability: (skills) => ({
+        suitability: Object.values(skills).reduce((a, b) => a + b, 0) / (Object.keys(skills).length || 1),
+        rulesTriggered: []
+      })
+    };
     const ruleResult = ruleObj.evaluateSuitability(skillValues, behaviorFeatures, skillMemberships);
     const ruleSuitability = typeof ruleResult === "number" ? ruleResult : (ruleResult.suitability || 0.5);
 
