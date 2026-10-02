@@ -33,6 +33,7 @@ const ahpFuzzyResultSchema = new mongoose.Schema(
     ahpCandidates: [domainScoreSchema],
     fuzzyScores: [domainScoreSchema],
     finalScores: [domainScoreSchema],
+    rankings: [mongoose.Schema.Types.Mixed],
     recommendedDomain: {
       type: recommendedDomainSchema,
       required: true

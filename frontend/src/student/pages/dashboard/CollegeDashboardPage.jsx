@@ -103,35 +103,51 @@ export default function CollegeDashboardPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', color: '#fff', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, marginBottom: 12 }}>
-              <FiCompass size={13} /> {header.degreeProgramme || profile?.degreeProgramme || 'B.E. (Bachelor of Engineering)'} • {header.branch || profile?.domain || profile?.field || 'Computer Science & Engineering'}
+              <FiCompass size={13} /> {[header.degreeProgramme || profile?.degreeProgramme, header.branch || profile?.domain || profile?.field].filter(Boolean).join(' • ') || 'College Student Portal'}
             </div>
             <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 8px', fontFamily: 'var(--s-font-display)', color: '#fff' }}>
               {header.greeting || 'Good Afternoon'}, {firstName}! 👋
             </h1>
             <p style={{ fontSize: 14, color: '#a7f3d0', fontWeight: 700, margin: '0 0 20px' }}>
-              Personalized Student Dashboard for Year {data?.student?.year || profile?.currentYear || 4} (Semester {data?.student?.semester || profile?.currentSemester || 7}).
+              Personalized Student Dashboard.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowCustomizeModal(true)}
-            style={{
-              background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
-              padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6
-            }}
-          >
-            <FiSettings size={14} /> Customize Dashboard
-          </button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/college/profile')}
+              style={{
+                background: '#047857', color: '#fff', border: 'none',
+                padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }}
+            >
+              <FiUser size={14} /> Complete Profile →
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCustomizeModal(true)}
+              style={{
+                background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+                padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6
+              }}
+            >
+              <FiSettings size={14} /> Customize Dashboard
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Profile Completion</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiCheckCircle size={14} /> {header.profileCompletion !== undefined ? `${header.profileCompletion}%` : (profile?.profileCompletion !== undefined ? `${profile.profileCompletion}%` : '0%')}
-            </div>
+            <Link to="/college/profile" style={{ textDecoration: 'none' }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <FiCheckCircle size={14} /> {header.profileCompletion !== undefined ? `${header.profileCompletion}%` : (profile?.profileCompletion !== undefined ? `${profile.profileCompletion}%` : '0%')}
+                <span style={{ fontSize: 11, color: '#a7f3d0', textDecoration: 'underline', marginLeft: 4 }}>Complete →</span>
+              </div>
+            </Link>
           </div>
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>CGPA</div>
@@ -142,7 +158,7 @@ export default function CollegeDashboardPage() {
           <div>
             <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6ee7b7', fontWeight: 800 }}>Recommended Career</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#34d399', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <FiTarget size={14} /> {data?.recommendation?.career || discoveryResult?.recommendedDomain?.domainName || profile?.targetCareer || 'Not set'}
+              <FiTarget size={14} /> {discoveryResult?.recommendedDomain?.domainName || data?.recommendation?.career || profile?.targetCareer || 'Not set'}
             </div>
           </div>
           <div>
@@ -245,65 +261,89 @@ export default function CollegeDashboardPage() {
         {/* LEFT COLUMN: DYNAMIC ELIGIBLE & PRIORITY CARDS */}
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
 
-          {/* ── PERSONALIZED AHP DOMAINS & FUZZY CAREER RECOMMENDATION CARDS ── */}
-          {data?.ahp?.topDomains && data.ahp.topDomains.length > 0 && (
-            <SCard style={{ padding: 26, borderRadius: 20, borderLeft: '5px solid #0284c7' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FiCompass color="#0284c7" size={18} /> YOUR TOP AHP PREDICTED CSE DOMAINS
-                </div>
-                <SBadge color="blue">Strict AHP Rank Order</SBadge>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {data.ahp.topDomains.map((dom) => (
-                  <div key={dom.domainId || dom.rank} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--s-surface2)', borderRadius: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#0284c7', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        #{dom.rank}
-                      </span>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)' }}>{dom.domainName}</div>
-                        <div style={{ fontSize: 11, color: 'var(--s-text3)' }}>AHP Weight: {(dom.score ? (dom.score > 1 ? dom.score / 100 : dom.score) : 0.85).toFixed(2)}</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: '#0284c7', background: 'rgba(2, 132, 199, 0.1)', padding: '4px 12px', borderRadius: 8 }}>
-                      {dom.score ? (dom.score > 1 ? Math.round(dom.score) : Math.round(dom.score * 100)) : 87}% Match
-                    </span>
+          {/* ── PERSONALIZED EVALUATED CANDIDATE DOMAINS CARD ── */}
+          {(() => {
+            const rawList = discoveryResult?.rankings || discoveryResult?.finalScores || data?.ahp?.topDomains || []
+            const domainList = [...rawList].sort((a, b) => {
+              const scoreB = b.score !== undefined ? b.score : (b.fuzzyScore || 0)
+              const scoreA = a.score !== undefined ? a.score : (a.fuzzyScore || 0)
+              return scoreB - scoreA
+            })
+            if (domainList.length === 0) return null
+
+            return (
+              <SCard style={{ padding: 26, borderRadius: 20, borderLeft: '5px solid #0284c7' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FiCompass color="#0284c7" size={18} /> YOUR EVALUATED CAREER DOMAINS &amp; FUZZY BREAKDOWN
                   </div>
-                ))}
-              </div>
-            </SCard>
-          )}
+                  <SBadge color="blue">AHP + Fuzzy Engine Alignment</SBadge>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {domainList.map((dom, idx) => {
+                    const dName = dom.domainName || dom.name || dom.domainId
+                    const rawScore = dom.score !== undefined ? dom.score : (dom.fuzzyScore || 0.5)
+                    const scorePct = rawScore > 1 ? Math.round(rawScore) : Number((rawScore * 100).toFixed(1))
+
+                    return (
+                      <div key={dom.domainId || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--s-surface2)', borderRadius: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#0284c7', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--s-text)' }}>{dName}</div>
+                            <div style={{ fontSize: 11, color: 'var(--s-text3)' }}>Evaluated Suitability Score</div>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: '#0284c7', background: 'rgba(2, 132, 199, 0.1)', padding: '4px 12px', borderRadius: 8 }}>
+                          {scorePct}% Match
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </SCard>
+            )
+          })()}
 
           {/* FUZZY LOGIC RECOMMENDATION CARD */}
-          {data?.recommendation && (
-            <SCard style={{ padding: 26, borderRadius: 20, borderLeft: '5px solid #7c3aed', background: isGamified ? '#0f1f3d' : '#fcfaff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 900, color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FiAward color="#7c3aed" size={18} /> MAMDANI FUZZY CAREER RECOMMENDATION
-                </div>
-                <SBadge color="purple">{data.recommendation.confidenceLevel ? `${data.recommendation.confidenceLevel.toUpperCase()} CONFIDENCE` : 'HIGH CONFIDENCE'}</SBadge>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--s-text)' }}>
-                    🎯 {data.recommendation.career}
+          {(discoveryResult?.recommendedDomain || data?.recommendation) && (() => {
+            const rec = discoveryResult?.recommendedDomain || {}
+            const recCareer = rec.domainName || data?.recommendation?.career || 'AI & Machine Learning'
+            const rawSuit = rec.score !== undefined ? rec.score : (data?.recommendation?.suitability || 82)
+            const suitScore = rawSuit > 1 ? Math.round(rawSuit) : Number((rawSuit * 100).toFixed(1))
+            const confidence = discoveryResult?.confidenceLevel || data?.recommendation?.confidenceLevel || 'high'
+
+            return (
+              <SCard style={{ padding: 26, borderRadius: 20, borderLeft: '5px solid #7c3aed', background: isGamified ? '#0f1f3d' : '#fcfaff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FiAward color="#7c3aed" size={18} /> MAMDANI FUZZY CAREER RECOMMENDATION
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 4, margin: '4px 0 0' }}>
-                    Calculated via Mamdani Fuzzy Inference Engine using AHP Priorities $\rightarrow$ Assessment Results.
-                  </p>
+                  <SBadge color="purple">{confidence.toUpperCase()} CONFIDENCE</SBadge>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: '#7c3aed' }}>
-                    {data.recommendation.suitability}%
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--s-text)' }}>
+                      🎯 {recCareer}
+                    </div>
+                    <p style={{ fontSize: 12, color: 'var(--s-text3)', marginTop: 4, margin: '4px 0 0' }}>
+                      Calculated via Mamdani Fuzzy Inference Engine using AHP Priorities $\rightarrow$ Assessment Results.
+                    </p>
                   </div>
-                  <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8' }}>
-                    Career Suitability
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 28, fontWeight: 900, color: '#7c3aed' }}>
+                      {suitScore}%
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8' }}>
+                      Career Suitability
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SCard>
-          )}
+              </SCard>
+            )
+          })()}
 
           {/* SKILL GAP ANALYSIS CARD */}
           {data?.skillGaps && data.skillGaps.length > 0 && (
@@ -492,7 +532,7 @@ export default function CollegeDashboardPage() {
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-text3)' }}>Target Career Goal</div>
                   <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', marginTop: 2 }}>
-                    🎯 {profile?.targetCareer || profile?.specialization || profile?.domain || 'Academic & Professional Pathway'}
+                    🎯 {discoveryResult?.recommendedDomain?.domainName || data?.recommendation?.career || profile?.targetCareer || profile?.specialization || profile?.domain || 'Academic & Professional Pathway'}
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--s-text3)', marginTop: 4, lineHeight: 1.4 }}>
                     Tailored guidance based on your discipline ({profile?.field || profile?.domain || 'Academic Discipline'}) and degree programme ({profile?.degreeProgramme || 'Undergraduate'}).

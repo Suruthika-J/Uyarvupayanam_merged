@@ -138,10 +138,10 @@ exports.updateCurrentStudy = async (req, res) => {
                         $set: {
                             institution: institution || "",
                             institutionDistrict: institutionDistrict || "",
-                            degreeProgramme: degreeProgramme || "B.E. (Bachelor of Engineering)",
-                            field: field || "engineering",
-                            currentYear: currentYear || "1st Year",
-                            domain: domain || "General",
+                            degreeProgramme: degreeProgramme || "",
+                            field: field || "",
+                            currentYear: currentYear || "",
+                            domain: domain || "",
                             specialization: specialization || "",
                             isCompleted: false
                         }
@@ -222,7 +222,7 @@ exports.updateCurrentStudy = async (req, res) => {
         }
 
         // Infer Field & Domain
-        let computedField = field || "engineering";
+        let computedField = field || "";
         let computedDomain = domain || specialization || "";
 
         const progLower = degreeProgramme.toLowerCase();

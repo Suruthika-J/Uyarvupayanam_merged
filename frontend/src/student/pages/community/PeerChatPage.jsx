@@ -182,7 +182,10 @@ export default function PeerChatPage() {
     setLoadingConvos(false)
   }, [])
 
-  useEffect(() => { loadConversations() }, [])
+  useEffect(() => { 
+    loadConversations()
+    searchStudents('')
+  }, [])
 
   // ── Open a conversation ───────────────────────────────────────────────────
   const openConvo = async (convo) => {
@@ -204,13 +207,13 @@ export default function PeerChatPage() {
     setLoadingDiscover(true)
     try {
       const res = await axios.get(`${API}/peer-chat/students`, { headers, params: { q } })
-      if (res.data?.success) setDiscoverStudents(res.data.students)
+      if (res.data?.success) setDiscoverStudents(res.data.students || [])
     } catch {}
     setLoadingDiscover(false)
   }, [])
 
   useEffect(() => {
-    if (!showDiscover) return
+    if (!showDiscover && !discoverQuery) return
     const t = setTimeout(() => searchStudents(discoverQuery), 400)
     return () => clearTimeout(t)
   }, [discoverQuery, showDiscover])
@@ -378,13 +381,74 @@ export default function PeerChatPage() {
         </div>
       </div>
 
-      {/* ── RIGHT: Chat window ── */}
+      {/* ── RIGHT: Chat window / Recommended Domain Peers ── */}
       {!activeConvo ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', gap: 16 }}>
-          <FiUsers size={48} color="#cbd5e1" />
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Select a conversation</div>
-            <div style={{ fontSize: 13 }}>or find a peer to start chatting</div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '32px 36px', background: '#f8fafc' }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, marginBottom: 8 }}>
+              <FiTarget size={14} /> Domain Match Network
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>
+              Peers in Your Interested Domain
+            </h2>
+            <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>
+              Connect with fellow college students sharing your specialization to collaborate, study together, and exchange prep resources.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+            {discoverStudents.map(peer => (
+              <div key={peer.userId} style={{
+                background: '#fff', padding: 20, borderRadius: 16, border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>
+                      {peer.name?.[0] || 'S'}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{peer.name}</div>
+                      <div style={{ fontSize: 12, color: '#64748b' }}>{peer.currentYear || 'College Student'}</div>
+                    </div>
+                  </div>
+
+                  {peer.sameDomainMatch && (
+                    <div style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                      🎯 {peer.domain || 'Same Domain'}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 1.4 }}>
+                    📍 {peer.institution || 'National Engineering College'}
+                  </div>
+
+                  {peer.skills?.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                      {peer.skills.slice(0, 4).map(sk => (
+                        <span key={sk} style={{ background: '#f1f5f9', color: '#334155', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
+                          ⚡ {sk}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => startChat(peer.userId, peer.name)}
+                  style={{
+                    width: '100%', background: '#0284c7', color: '#fff', border: 'none',
+                    padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)'
+                  }}
+                >
+                  <FiMessageSquare size={15} /> Chat Now →
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       ) : (

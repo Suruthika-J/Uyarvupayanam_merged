@@ -41,7 +41,7 @@ export default function SkillGapAnalysisPage() {
     try {
       const res = await axiosInstance.get('/college-advisor/skill-gap')
       if (res.data?.success) {
-        setTargetRole(res.data.targetCareer || studentContext?.targetCareer || 'Software Engineer')
+        setTargetRole(res.data.targetCareer || profile?.domain || 'Artificial Intelligence & Machine Learning')
         setReadinessScore(res.data.readinessScore || 0)
         setSkills(res.data.skills || { strong: [], developing: [], missing: [] })
         setRecommendedCareers(res.data.recommendedCareers || [])

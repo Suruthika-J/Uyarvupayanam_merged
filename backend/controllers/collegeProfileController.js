@@ -36,8 +36,6 @@ const getMyProfile = async (req, res) => {
       // Create empty draft profile if not found
       profile = new CollegeStudentProfile({
         userId,
-        field: "engineering",
-        degreeProgramme: "B.E. (Bachelor of Engineering)",
         currentStep: 1,
         profileCompletion: 0,
         isCompleted: false
@@ -77,7 +75,7 @@ const saveProfile = async (req, res) => {
       careerInterests,
       skills,
       strengths,
-      // ── New fields (Task 02) ──
+      // ── New fields (Task 02 & Gradious Reference Profile) ──
       currentSemester,
       cgpa,
       subjects,
@@ -85,6 +83,37 @@ const saveProfile = async (req, res) => {
       completedCourses,
       projects,
       phone,
+      // Personal Info
+      firstName,
+      lastName,
+      dob,
+      address,
+      profilePhoto,
+      introVideo,
+      careerObjective,
+      // Parent Info
+      parentName,
+      parentPhone,
+      parentOccupation,
+      parentEmail,
+      // Class 10
+      school10,
+      cgpa10,
+      startDate10,
+      endDate10,
+      // Class 12 / Diploma
+      institution12,
+      cgpa12,
+      branch12,
+      startDate12,
+      endDate12,
+      isDiploma,
+      // UG Dates
+      startDateUg,
+      endDateUg,
+      // Achievements & Social
+      achievements,
+      socialProfiles,
       // ── Wizard tracking ──
       currentStep,
       isFinalStep
@@ -93,13 +122,13 @@ const saveProfile = async (req, res) => {
     let profile = await CollegeStudentProfile.findOne({ userId });
 
     if (!profile) {
-      profile = new CollegeStudentProfile({ userId, field: field || "engineering", degreeProgramme: degreeProgramme || "B.E. (Bachelor of Engineering)" });
+      profile = new CollegeStudentProfile({ userId });
     }
 
     // Update existing fields if provided
     if (institution !== undefined) profile.institution = institution;
     if (institutionDistrict !== undefined) profile.institutionDistrict = institutionDistrict;
-    if (currentYear !== undefined) profile.currentYear = currentYear;
+    if (currentYear !== undefined && currentYear.trim() !== '') profile.currentYear = currentYear;
     if (studyMode !== undefined) profile.studyMode = studyMode;
     if (field !== undefined) profile.field = field;
     if (degreeProgramme !== undefined) profile.degreeProgramme = degreeProgramme;
@@ -112,13 +141,52 @@ const saveProfile = async (req, res) => {
     if (strengths !== undefined) profile.strengths = strengths;
 
     // Update new fields (Task 02)
-    if (currentSemester !== undefined) profile.currentSemester = currentSemester;
+    if (currentSemester !== undefined && currentSemester.trim() !== '') profile.currentSemester = currentSemester;
     if (cgpa !== undefined) profile.cgpa = cgpa;
     if (subjects !== undefined) profile.subjects = subjects;
     if (targetCareer !== undefined) profile.targetCareer = targetCareer;
     if (completedCourses !== undefined) profile.completedCourses = completedCourses;
     if (projects !== undefined) profile.projects = projects;
     if (phone !== undefined) profile.phone = phone;
+
+    // Personal Info
+    if (firstName !== undefined) profile.firstName = firstName;
+    if (lastName !== undefined) profile.lastName = lastName;
+    if (dob !== undefined) profile.dob = dob;
+    if (address !== undefined) profile.address = address;
+    if (profilePhoto !== undefined) profile.profilePhoto = profilePhoto;
+    if (introVideo !== undefined) profile.introVideo = introVideo;
+    if (careerObjective !== undefined) profile.careerObjective = careerObjective;
+
+    // Parent Info
+    if (parentName !== undefined) profile.parentName = parentName;
+    if (parentPhone !== undefined) profile.parentPhone = parentPhone;
+    if (parentOccupation !== undefined) profile.parentOccupation = parentOccupation;
+    if (parentEmail !== undefined) profile.parentEmail = parentEmail;
+
+    // Class 10
+    if (school10 !== undefined) profile.school10 = school10;
+    if (cgpa10 !== undefined) profile.cgpa10 = cgpa10;
+    if (startDate10 !== undefined) profile.startDate10 = startDate10;
+    if (endDate10 !== undefined) profile.endDate10 = endDate10;
+
+    // Class 12 / Diploma
+    if (institution12 !== undefined) profile.institution12 = institution12;
+    if (cgpa12 !== undefined) profile.cgpa12 = cgpa12;
+    if (branch12 !== undefined) profile.branch12 = branch12;
+    if (startDate12 !== undefined) profile.startDate12 = startDate12;
+    if (endDate12 !== undefined) profile.endDate12 = endDate12;
+    if (isDiploma !== undefined) profile.isDiploma = isDiploma;
+
+    // UG Dates
+    if (startDateUg !== undefined) profile.startDateUg = startDateUg;
+    if (endDateUg !== undefined) profile.endDateUg = endDateUg;
+
+    // Achievements & Social
+    if (achievements !== undefined) profile.achievements = achievements;
+    if (socialProfiles !== undefined) {
+      profile.socialProfiles = { ...profile.socialProfiles, ...socialProfiles };
+    }
 
     if (currentStep !== undefined) {
       profile.currentStep = Math.max(profile.currentStep, currentStep);
@@ -207,7 +275,9 @@ function calculateProfileCompletion(profile) {
     targetCareer: 7,
     academicInterests: 5,
     careerInterests: 5,
-    completedCourses: 5
+    completedCourses: 5,
+    projects: 5,
+    certifications: 5
   };
 
   if (profile.institution) score += weights.institution;
@@ -224,6 +294,8 @@ function calculateProfileCompletion(profile) {
   if (profile.academicInterests && profile.academicInterests.length > 0) score += weights.academicInterests;
   if (profile.careerInterests && profile.careerInterests.length > 0) score += weights.careerInterests;
   if (profile.completedCourses && profile.completedCourses.length > 0) score += weights.completedCourses;
+  if (profile.projects && profile.projects.length > 0) score += weights.projects;
+  if (profile.certifications && profile.certifications.length > 0) score += weights.certifications;
 
   return Math.min(100, score);
 }
@@ -252,9 +324,9 @@ const getMyContext = async (req, res) => {
 
     const activeProfile = profile || {
       userId,
-      field: "engineering",
-      degreeProgramme: "B.E. (Bachelor of Engineering)",
-      domain: "Computer Science",
+      field: "",
+      degreeProgramme: "",
+      domain: "",
       skills: [],
       subjects: [],
       projects: [],

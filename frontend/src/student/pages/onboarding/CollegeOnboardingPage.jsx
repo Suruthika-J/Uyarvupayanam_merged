@@ -434,15 +434,42 @@ function Step1InstitutionBlock({ profile, setProfile }) {
 
         {/* 3. ACADEMIC YEAR */}
         <SSelect
-          label="Current Academic Year"
+          label="Current Academic Year *"
           value={profile.currentYear}
-          onChange={e => setProfile(prev => ({ ...prev, currentYear: e.target.value }))}
+          onChange={e => {
+            const yr = e.target.value
+            let defaultSem = 'Semester 1'
+            if (yr.includes('2nd')) defaultSem = 'Semester 3'
+            else if (yr.includes('3rd')) defaultSem = 'Semester 5'
+            else if (yr.includes('4th')) defaultSem = 'Semester 7'
+            else if (yr.includes('Postgraduate') || yr.includes('Master')) defaultSem = 'Semester 1 (PG)'
+            setProfile(prev => ({ ...prev, currentYear: yr, currentSemester: prev.currentSemester || defaultSem }))
+          }}
           options={[
+            { value: '', label: '— Select Academic Year —' },
             { value: '1st Year', label: '1st Year (Freshman)' },
             { value: '2nd Year', label: '2nd Year (Sophomore)' },
             { value: '3rd Year', label: '3rd Year (Junior)' },
-            { value: '4th Year', label: '4th Year (Senior)' },
+            { value: '4th Year', label: '4th Year (Senior / Final Year)' },
             { value: 'Postgraduate / Master', label: 'Postgraduate / Master Degree' }
+          ]}
+        />
+
+        {/* 4. CURRENT SEMESTER */}
+        <SSelect
+          label="Current Semester *"
+          value={profile.currentSemester || ''}
+          onChange={e => setProfile(prev => ({ ...prev, currentSemester: e.target.value }))}
+          options={[
+            { value: '', label: '— Select Semester —' },
+            { value: 'Semester 1', label: 'Semester 1' },
+            { value: 'Semester 2', label: 'Semester 2' },
+            { value: 'Semester 3', label: 'Semester 3' },
+            { value: 'Semester 4', label: 'Semester 4' },
+            { value: 'Semester 5', label: 'Semester 5' },
+            { value: 'Semester 6', label: 'Semester 6' },
+            { value: 'Semester 7', label: 'Semester 7 (Final Year)' },
+            { value: 'Semester 8', label: 'Semester 8 (Final Year)' }
           ]}
         />
       </div>
@@ -1027,6 +1054,7 @@ export default function CollegeOnboardingPage() {
             institution: profile.institution,
             institutionDistrict: profile.institutionDistrict,
             currentYear: profile.currentYear,
+            currentSemester: profile.currentSemester,
             studyMode: profile.studyMode,
             field: profile.fieldId,
             degreeProgramme: profile.degreeProgramme,

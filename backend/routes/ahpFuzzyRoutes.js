@@ -19,10 +19,10 @@ router.post("/import", importQuestionBankPdf);
 router.post("/import-pdf", importQuestionBankPdf);
 
 // Student answer & fuzzy evaluation
-router.post("/evaluate", evaluateStudentAssessment);
-router.post("/discovery/evaluate", evaluateStudentAssessment);
-router.post("/answer", evaluateStudentAssessment);
-router.post("/discovery/answer", evaluateStudentAssessment);
+router.post("/evaluate", verifyStudent, evaluateStudentAssessment);
+router.post("/discovery/evaluate", verifyStudent, evaluateStudentAssessment);
+router.post("/answer", verifyStudent, evaluateStudentAssessment);
+router.post("/discovery/answer", verifyStudent, evaluateStudentAssessment);
 
 // Result endpoints (PART 12)
 router.get("/result", verifyStudent, getDiscoveryResult);

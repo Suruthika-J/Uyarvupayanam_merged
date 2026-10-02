@@ -165,6 +165,88 @@ const evaluateCareerMatch = (profile, career) => {
 };
 
 const ROLE_SPECIALIZED_DATA = {
+  "artificial intelligence & machine learning": {
+    coreSkills: [
+      { name: "Python for AI & Data Science", suggestedProficiency: "Advanced" },
+      { name: "Machine Learning & Scikit-Learn", suggestedProficiency: "Advanced" },
+      { name: "Linear Algebra, Probability & Statistics", suggestedProficiency: "Advanced" },
+      { name: "Deep Learning (PyTorch / TensorFlow)", suggestedProficiency: "Advanced" },
+      { name: "SQL & Relational Databases", suggestedProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "Computer Vision & OpenCV", suggestedProficiency: "Intermediate" },
+      { name: "Natural Language Processing (NLP)", suggestedProficiency: "Intermediate" },
+      { name: "Neural Network Architecture & Tuning", suggestedProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "MLOps & Model Deployment (FastAPI/Docker)", suggestedProficiency: "Basic" },
+      { name: "Generative AI & LLM Prompting/Fine-tuning", suggestedProficiency: "Basic" }
+    ]
+  },
+  "ai & machine learning": {
+    coreSkills: [
+      { name: "Python for AI & Data Science", suggestedProficiency: "Advanced" },
+      { name: "Machine Learning & Scikit-Learn", suggestedProficiency: "Advanced" },
+      { name: "Linear Algebra, Probability & Statistics", suggestedProficiency: "Advanced" },
+      { name: "Deep Learning (PyTorch / TensorFlow)", suggestedProficiency: "Advanced" },
+      { name: "SQL & Relational Databases", suggestedProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "Computer Vision & OpenCV", suggestedProficiency: "Intermediate" },
+      { name: "Natural Language Processing (NLP)", suggestedProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "MLOps & Model Deployment", suggestedProficiency: "Basic" }
+    ]
+  },
+  "full stack web development": {
+    coreSkills: [
+      { name: "JavaScript / ES6 & Modern Web", suggestedProficiency: "Advanced" },
+      { name: "Frontend Development (React.js / HTML / CSS)", suggestedProficiency: "Advanced" },
+      { name: "Backend Architecture (Node.js & Express.js)", suggestedProficiency: "Advanced" },
+      { name: "Database Engineering (MongoDB & SQL)", suggestedProficiency: "Advanced" },
+      { name: "Object-Oriented Programming (Java / Python)", suggestedProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "REST API Design & Integration", suggestedProficiency: "Intermediate" },
+      { name: "State Management & Component Architecture", suggestedProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "Git, GitHub & CI/CD Deployment", suggestedProficiency: "Basic" }
+    ]
+  },
+  "software engineer": {
+    coreSkills: [
+      { name: "Data Structures & Algorithms", suggestedProficiency: "Advanced" },
+      { name: "Object-Oriented Programming (Java / Python / C++)", suggestedProficiency: "Advanced" },
+      { name: "Relational & NoSQL Databases (SQL / MongoDB)", suggestedProficiency: "Advanced" },
+      { name: "Web & API Engineering (Node.js / React)", suggestedProficiency: "Advanced" },
+      { name: "Operating Systems & Networking Fundamentals", suggestedProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "System Design & Microservices", suggestedProficiency: "Intermediate" },
+      { name: "Version Control (Git & GitHub)", suggestedProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "Cloud Services & Docker", suggestedProficiency: "Basic" }
+    ]
+  },
+  "cyber security & information assurance": {
+    coreSkills: [
+      { name: "Network Security & Protocols", suggestedProficiency: "Advanced" },
+      { name: "Ethical Hacking & Penetration Testing", suggestedProficiency: "Advanced" },
+      { name: "Linux Security & Scripting (Python/Bash)", suggestedProficiency: "Advanced" },
+      { name: "Cryptography & Data Encryption", suggestedProficiency: "Advanced" },
+      { name: "Security Audit Tools (Wireshark / Nmap)", suggestedProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "SIEM & Threat Intelligence", suggestedProficiency: "Intermediate" },
+      { name: "Web Application Security (OWASP Top 10)", suggestedProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "Cloud Security & Identity Management", suggestedProficiency: "Basic" }
+    ]
+  },
   "robotics engineer": {
     coreSkills: [
       { name: "Robot Operating System (ROS)", suggestedProficiency: "Advanced" },
@@ -1362,13 +1444,18 @@ const setTargetCareer = async (req, res) => {
 const getStudentSkillGap = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
-    const profile = await CollegeStudentProfile.findOne({ userId });
+    const AhpFuzzyResult = require("../models/AhpFuzzyResult");
+
+    const [profile, fuzzyResult] = await Promise.all([
+      CollegeStudentProfile.findOne({ userId }),
+      AhpFuzzyResult.findOne({ userId }).sort({ createdAt: -1 })
+    ]);
 
     if (!profile) {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const targetTitle = profile.targetCareer || profile.careerInterests?.[0] || "Software Engineer";
+    const targetTitle = profile.targetCareer || fuzzyResult?.recommendedDomain?.domainName || profile.domain || profile.specialization || profile.careerInterests?.[0] || "Artificial Intelligence & Machine Learning";
     let [career, allCareers] = await Promise.all([
       CollegeCareerCatalog.findOne({
         $or: [
@@ -1379,10 +1466,6 @@ const getStudentSkillGap = async (req, res) => {
       }),
       CollegeCareerCatalog.find().select("title category requiredDomains requiredFields growthOutlook").lean()
     ]);
-
-    if (!career) {
-      career = allCareers[0] || (await CollegeCareerCatalog.findOne());
-    }
 
     const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
     const userSkills = (profile.skills || []).map(s => s.toLowerCase());
@@ -1402,14 +1485,26 @@ const getStudentSkillGap = async (req, res) => {
       const sName = skillObj.name;
       const sLower = sName.toLowerCase();
 
-      // Flexible matching for acronyms and keywords (e.g. C++, ROS, Python, MATLAB, PLC)
+      // Flexible matching for acronyms, keywords & tokens (e.g. Python, AI/ML, React, Java, SQL)
+      const sClean = sLower.replace(/[^a-z0-9]+/g, " ");
+      const sTokens = sClean.split(/\s+/).filter(t => t.length >= 2);
+
       const hasExactSkill = userSkills.some(us => {
         const u = us.toLowerCase().trim();
-        return u === sLower || sLower.includes(u) || u.includes(sLower);
+        if (!u) return false;
+        if (u === sLower || sLower.includes(u) || u.includes(sLower)) return true;
+        const uClean = u.replace(/[^a-z0-9]+/g, " ");
+        const uTokens = uClean.split(/\s+/).filter(t => t.length >= 2);
+        return uTokens.some(ut => sTokens.includes(ut));
       });
+
       const hasSubject = userSubjects.some(sub => {
         const sb = sub.toLowerCase().trim();
-        return sb === sLower || sLower.includes(sb) || sb.includes(sLower);
+        if (!sb) return false;
+        if (sb === sLower || sLower.includes(sb) || sb.includes(sLower)) return true;
+        const sbClean = sb.replace(/[^a-z0-9]+/g, " ");
+        const sbTokens = sbClean.split(/\s+/).filter(t => t.length >= 2);
+        return sbTokens.some(sbt => sTokens.includes(sbt));
       });
 
       const resource = getLearningResourceForSkill(sName, fullCareer.title);
@@ -1419,7 +1514,13 @@ const getStudentSkillGap = async (req, res) => {
       } else if (hasSubject) {
         developing.push({ ...skillObj, status: "Developing", currentProficiency: "Intermediate", learningResource: resource });
       } else {
-        missing.push({ ...skillObj, status: "Missing", currentProficiency: "Needs Learning", learningResource: resource });
+        missing.push({
+          ...skillObj,
+          status: "Missing",
+          currentProficiency: "Needs Learning",
+          suggestionToBecomeStrong: `Master ${sName} through structured learning & practice to achieve target domain competency in ${fullCareer.title || targetTitle}.`,
+          learningResource: resource
+        });
       }
     });
 

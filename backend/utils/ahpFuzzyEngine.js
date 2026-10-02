@@ -76,7 +76,8 @@ function evaluateAdaptiveFuzzy({
   userAnswers = [],
   questions = [],
   ahpPriorityWeights = {},
-  behavioralSignals = {}
+  behavioralSignals = {},
+  candidateDomains = []
 }) {
   // Initialize accumulators for skill variables
   const skillScores = {};
@@ -86,26 +87,47 @@ function evaluateAdaptiveFuzzy({
     skillCounts[v] = 0;
   });
 
-  // Candidate domains list from AHP priority weights or questions
-  const candidateDomainKeys = Object.keys(ahpPriorityWeights).map(k => {
-    return NORMALIZED_DOMAINS[k]?.id || k;
-  }).filter(Boolean);
+  // Candidate domains list from candidateDomains arg, or questions, or AHP priority weights
+  let domainKeysToEvaluate = [];
 
-  let domainKeysToEvaluate = candidateDomainKeys.length > 0
-    ? Array.from(new Set(candidateDomainKeys))
-    : [];
+  // Priority 1: Explicit candidateDomains array passed into function
+  if (Array.isArray(candidateDomains) && candidateDomains.length > 0) {
+    domainKeysToEvaluate = candidateDomains.map(k => NORMALIZED_DOMAINS[k]?.id || k).filter(Boolean);
+  }
 
-  if (domainKeysToEvaluate.length === 0 && Array.isArray(questions) && questions.length > 0) {
-    const qDomains = questions
+  // Priority 2: If questions array is provided, restrict candidate domains ONLY to domains present in questions
+  if (Array.isArray(questions) && questions.length > 0) {
+    const questionDomains = questions
       .map(q => q.domainId || q.domain)
       .filter(Boolean)
       .map(k => NORMALIZED_DOMAINS[k]?.id || k);
-    domainKeysToEvaluate = Array.from(new Set(qDomains));
+    const uniqueQDomains = Array.from(new Set(questionDomains));
+
+    if (uniqueQDomains.length > 0) {
+      if (domainKeysToEvaluate.length > 0) {
+        domainKeysToEvaluate = domainKeysToEvaluate.filter(d => uniqueQDomains.includes(d));
+      } else {
+        domainKeysToEvaluate = uniqueQDomains;
+      }
+    }
   }
 
+  // Priority 3: Fallback to Top 3 of AHP priority weights (sorted by weight)
+  if (domainKeysToEvaluate.length === 0 && ahpPriorityWeights && Object.keys(ahpPriorityWeights).length > 0) {
+    const sortedAhpKeys = Object.keys(ahpPriorityWeights)
+      .map(k => NORMALIZED_DOMAINS[k]?.id || k)
+      .filter(Boolean);
+    const uniqueAhpKeys = Array.from(new Set(sortedAhpKeys));
+    uniqueAhpKeys.sort((a, b) => (ahpPriorityWeights[b] || 0) - (ahpPriorityWeights[a] || 0));
+    domainKeysToEvaluate = uniqueAhpKeys.slice(0, 3);
+  }
+
+  // Priority 4: Default fallback
   if (domainKeysToEvaluate.length === 0) {
     domainKeysToEvaluate = ["software_engineering", "ai_ml", "cloud_devops"];
   }
+
+  domainKeysToEvaluate = Array.from(new Set(domainKeysToEvaluate));
 
   // Map user answers by questionId or questionNumber
   const answerMap = new Map();

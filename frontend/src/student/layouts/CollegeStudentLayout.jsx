@@ -22,7 +22,6 @@ const SIDEBAR_SECTIONS = [
       { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
       { id: 'roadmap',   icon: FiTarget,        label: 'Learning Roadmap',   to: '/college/academic/roadmap' },
       { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
-      { id: 'resume',    icon: FiFileText,       label: 'Resume Builder',     to: '/college/career/resume' },
       { id: 'interview', icon: FiBriefcase,      label: 'Interview Prep',     to: '/college/career/interview-prep' },
       { id: 'notes',     icon: FiBookOpen,       label: 'Notes Summarizer',   to: '/college/study-tools/notes-summarizer' },
       { id: 'practice',  icon: FiHelpCircle,     label: 'Practice Questions', to: '/college/study-tools/practice' },

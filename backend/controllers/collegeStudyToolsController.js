@@ -1188,16 +1188,12 @@ exports.generateResumeSuggestions = async (req, res) => {
     if (certs.length > 0) strengthScore += 5;
     else missingSections.push("Industry Certifications");
 
-    // Dynamic career-aligned professional summary based on REAL data
-    let professionalSummary = "";
-    if (degree && college) {
-      professionalSummary = `Motivated ${degree} student at ${college}${domain ? ` (${domain})` : ""}${cgpa ? ` with CGPA ${cgpa}` : ""}, targeting placement as a ${targetCareer}.${skills.length > 0 ? ` Proficient in ${skills.slice(0, 4).join(", ")}.` : ""}`;
-    } else {
-      professionalSummary = `Student pursuing ${degree || "higher education"} in ${domain || "technology"}, dedicated to building career-ready competencies for ${targetCareer}.${skills.length > 0 ? ` Core skills include ${skills.slice(0, 4).join(", ")}.` : ""}`;
-    }
+    const careerObjective = profile?.careerObjective || professionalSummary;
 
     const resumeData = {
       name: studentName,
+      firstName: profile?.firstName || studentName.split(" ")[0],
+      lastName: profile?.lastName || studentName.split(" ").slice(1).join(" "),
       email,
       phone,
       college,
@@ -1209,6 +1205,24 @@ exports.generateResumeSuggestions = async (req, res) => {
       cgpa,
       targetCareer,
       professionalSummary,
+      careerObjective,
+      // 10th & 12th Education
+      school10: profile?.school10 || "",
+      cgpa10: profile?.cgpa10 || "",
+      startDate10: profile?.startDate10 || "",
+      endDate10: profile?.endDate10 || "",
+      institution12: profile?.institution12 || "",
+      cgpa12: profile?.cgpa12 || "",
+      branch12: profile?.branch12 || "",
+      startDate12: profile?.startDate12 || "",
+      endDate12: profile?.endDate12 || "",
+      isDiploma: Boolean(profile?.isDiploma),
+      startDateUg: profile?.startDateUg || "",
+      endDateUg: profile?.endDateUg || "",
+      profilePhoto: profile?.profilePhoto || "",
+      introVideo: profile?.introVideo || "",
+      socialProfiles: profile?.socialProfiles || {},
+      achievements: profile?.achievements || [],
       highlightSkills: skills,
       certifications: certs,
       suggestedProjects: projects,
@@ -1410,9 +1424,9 @@ exports.getCollegeDashboardSummary = async (req, res) => {
 
     const [userDoc, profile, ahpProfile, fuzzyResult, skillProgress, testResults, mentorRequests, scholarships, savedItems, careers] = await Promise.all([
       User.findById(studentId).lean(),
-      CollegeStudentProfile.findOne({ userId: studentId }).lean(),
-      AhpCareerProfile.findOne({ userId: studentId }).sort({ completedAt: -1, createdAt: -1 }).lean(),
-      AhpFuzzyResult.findOne({ userId: studentId }).sort({ completedAt: -1, createdAt: -1 }).lean(),
+      CollegeStudentProfile.findOne({ $or: [{ userId: studentId }, { userId: String(studentId) }] }).lean(),
+      AhpCareerProfile.findOne({ $or: [{ userId: studentId }, { userId: String(studentId) }] }).sort({ completedAt: -1, createdAt: -1, _id: -1 }).lean(),
+      AhpFuzzyResult.findOne({ $or: [{ userId: studentId }, { userId: String(studentId) }] }).sort({ completedAt: -1, createdAt: -1, _id: -1 }).lean(),
       StudentSkillProgress.findOne({ $or: [{ userId: studentId }, { studentId: String(studentId) }] }).lean(),
       StudentTestResult.find({ $or: [{ userId: studentId }, { studentId: String(studentId) }] }).sort({ createdAt: -1 }).lean(),
       MentorRequest.find({ $or: [{ userId: studentId }, { studentId: String(studentId) }] }).sort({ createdAt: -1 }).lean(),
@@ -1452,12 +1466,23 @@ exports.getCollegeDashboardSummary = async (req, res) => {
     const currentStreak = skillProgress?.streak !== undefined ? skillProgress.streak : (skillProgress?.currentStreak !== undefined ? skillProgress.currentStreak : 0);
 
     // Degree & Branch Metadata
-    const degreeProgramme = profile?.degreeProgramme || profile?.degree || "B.E. (Bachelor of Engineering)";
-    const branch = profile?.branch || profile?.department || profile?.field || profile?.domain || "Computer Science & Engineering";
+    const degreeProgramme = profile?.degreeProgramme || profile?.degree || "";
+    const branch = profile?.branch || profile?.department || profile?.field || profile?.domain || "";
 
     // 2. AHP Domain Predictions (Top 3 Domains)
     let topAhpDomains = [];
-    if (ahpProfile) {
+    if (fuzzyResult && (fuzzyResult.rankings || fuzzyResult.finalScores || fuzzyResult.ahpCandidates)) {
+      const rawList = fuzzyResult.rankings || fuzzyResult.finalScores || fuzzyResult.ahpCandidates || [];
+      const list = [...rawList].sort((a, b) => (b.score || 0) - (a.score || 0));
+      if (list.length > 0) {
+        topAhpDomains = list.slice(0, 3).map((d, i) => ({
+          rank: i + 1,
+          domainId: d.domainId,
+          domainName: d.domainName,
+          score: d.score !== undefined ? d.score : (d.fuzzyScore || 0.5)
+        }));
+      }
+    } else if (ahpProfile) {
       if (ahpProfile.topDomain || ahpProfile.secondDomain || ahpProfile.thirdDomain) {
         topAhpDomains = [
           ahpProfile.topDomain && {
@@ -1487,20 +1512,13 @@ exports.getCollegeDashboardSummary = async (req, res) => {
           score: d.weight || d.scorePercent || (0.9 - i * 0.08)
         }));
       }
-    } else if (fuzzyResult && Array.isArray(fuzzyResult.ahpCandidates) && fuzzyResult.ahpCandidates.length > 0) {
-      topAhpDomains = fuzzyResult.ahpCandidates.slice(0, 3).map((d, i) => ({
-        rank: i + 1,
-        domainId: d.domainId,
-        domainName: d.domainName,
-        score: d.score
-      }));
     }
 
     if (topAhpDomains.length === 0) {
       topAhpDomains = [
-        { rank: 1, domainId: "ai_ml", domainName: "AI & Machine Learning", score: 0.87 },
-        { rank: 2, domainId: "cyber_security", domainName: "Cybersecurity", score: 0.79 },
-        { rank: 3, domainId: "data_science", domainName: "Data Science", score: 0.73 }
+        { rank: 1, domainId: "software_engineering", domainName: "Software Engineering & Architecture", score: 0.85 },
+        { rank: 2, domainId: "ai_ml", domainName: "AI & Machine Learning", score: 0.78 },
+        { rank: 3, domainId: "cloud_devops", domainName: "Cloud Computing & DevOps", score: 0.72 }
       ];
     }
 
@@ -1604,8 +1622,8 @@ exports.getCollegeDashboardSummary = async (req, res) => {
         name: studentName,
         degree: degreeProgramme,
         branch,
-        year: profile?.currentYear || 4,
-        semester: profile?.currentSemester || 7,
+        year: profile?.currentYear || null,
+        semester: profile?.currentSemester || null,
         cgpa: cgpaDisplay
       },
       ahp: {

@@ -19,10 +19,10 @@ const collegeStudentProfileSchema = new mongoose.Schema(
     },
 
     // Step 2: Major Field
-    field: { type: String, required: true },
+    field: { type: String, trim: true },
 
     // Step 3: Degree Programme
-    degreeProgramme: { type: String, required: true },
+    degreeProgramme: { type: String, trim: true },
 
     // Step 4: Domain & Specialization
     domain: { type: String, trim: true },
@@ -46,11 +46,65 @@ const collegeStudentProfileSchema = new mongoose.Schema(
     projects: [{
       title: { type: String },
       description: { type: String },
-      techStack: { type: String }
+      techStack: { type: String },
+      year: { type: String },
+      link: { type: String }
     }],
     phone: { type: String, trim: true },
     grokAssessmentScore: { type: Number },
     grokAssessmentResults: [{ type: mongoose.Schema.Types.Mixed }],
+
+    // ── New Reference Profile Sections (Personal Info, Parent Info, Education 10/12/UG, Social Profiles) ──
+    firstName: { type: String, trim: true },
+    lastName: { type: String, trim: true },
+    dob: { type: String, trim: true },
+    address: { type: String, trim: true },
+    profilePhoto: { type: String, trim: true },
+    introVideo: { type: String, trim: true },
+    careerObjective: { type: String, trim: true },
+
+    parentName: { type: String, trim: true },
+    parentPhone: { type: String, trim: true },
+    parentOccupation: { type: String, trim: true },
+    parentEmail: { type: String, trim: true },
+
+    // Class 10
+    school10: { type: String, trim: true },
+    cgpa10: { type: String, trim: true },
+    startDate10: { type: String, trim: true },
+    endDate10: { type: String, trim: true },
+
+    // Class 12 / Diploma
+    institution12: { type: String, trim: true },
+    cgpa12: { type: String, trim: true },
+    branch12: { type: String, trim: true },
+    startDate12: { type: String, trim: true },
+    endDate12: { type: String, trim: true },
+    isDiploma: { type: Boolean, default: false },
+
+    // UG Dates
+    startDateUg: { type: String, trim: true },
+    endDateUg: { type: String, trim: true },
+
+    // Achievements & Certificates
+    achievements: [{
+      title: { type: String },
+      description: { type: String },
+      date: { type: String }
+    }],
+
+    // Social Profiles
+    socialProfiles: {
+      linkedIn: { type: String, trim: true },
+      github: { type: String, trim: true },
+      hackerEarth: { type: String, trim: true },
+      leetcode: { type: String, trim: true },
+      codechef: { type: String, trim: true },
+      geeksforgeeks: { type: String, trim: true },
+      twitter: { type: String, trim: true },
+      instagram: { type: String, trim: true },
+      facebook: { type: String, trim: true }
+    },
 
     // Wizard completion tracking
     currentStep: { type: Number, default: 1 },

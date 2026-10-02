@@ -117,9 +117,13 @@ const registerStudent = async (req, res) => {
 const loginStudent = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    // Find student
-    const student = await User.findOne({ email, role: "student" });
+    // Find student (case-insensitive email lookup)
+    const student = await User.findOne({ 
+      email: new RegExp("^" + normalizedEmail.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&") + "$", "i"), 
+      role: "student" 
+    });
     if (!student) {
       return res.status(400).json({ message: "Invalid credentials" });
     }

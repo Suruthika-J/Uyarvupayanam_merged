@@ -16,8 +16,13 @@ exports.discoverStudents = async (req, res) => {
     if (year)      profileFilter.currentYear   = new RegExp(year, "i");
     if (department) profileFilter.field        = new RegExp(department, "i");
 
+    // Get current student profile to determine domain for peer matching
+    const myProfile = await CollegeStudentProfile.findOne({ userId }).lean();
+    const myDomain = myProfile?.domain || myProfile?.specialization || myProfile?.targetCareer || "Artificial Intelligence & Machine Learning";
+    const myDomainTokens = myDomain.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
     const profiles = await CollegeStudentProfile.find(profileFilter)
-      .limit(30)
+      .limit(50)
       .lean();
 
     const userIds = profiles.map(p => p.userId);
@@ -26,19 +31,28 @@ exports.discoverStudents = async (req, res) => {
     const userMap = {};
     users.forEach(u => { userMap[u._id.toString()] = u.name; });
 
-    // Name search filter applied in-memory (simpler than a $lookup join)
-    let combined = profiles.map(p => ({
-      userId:       p.userId,
-      name:         userMap[p.userId?.toString()] || "Student",
-      institution:  p.institution,
-      field:        p.field,
-      degreeProgramme: p.degreeProgramme,
-      currentYear:  p.currentYear,
-      domain:       p.domain,
-      skills:       p.skills || [],
-      academicInterests: p.academicInterests || [],
-      careerInterests:   p.careerInterests   || []
-    }));
+    // Combine profile data & calculate domain match relevance
+    let combined = profiles.map(p => {
+      const pDomain = (p.domain || p.specialization || p.targetCareer || p.field || "").toLowerCase();
+      const isExactMatch = pDomain === myDomain.toLowerCase();
+      const isPartialMatch = myDomainTokens.some(tok => pDomain.includes(tok));
+      const sameDomainMatch = isExactMatch || isPartialMatch;
+
+      return {
+        userId:          p.userId,
+        name:            userMap[p.userId?.toString()] || "Student Peer",
+        institution:     p.institution,
+        field:           p.field,
+        degreeProgramme: p.degreeProgramme,
+        currentYear:     p.currentYear,
+        domain:          p.domain || p.specialization || "Engineering",
+        skills:          p.skills || [],
+        academicInterests: p.academicInterests || [],
+        careerInterests:   p.careerInterests   || [],
+        sameDomainMatch,
+        matchScore: isExactMatch ? 100 : isPartialMatch ? 85 : 40
+      };
+    });
 
     if (q) {
       const rx = new RegExp(q, "i");
@@ -48,7 +62,10 @@ exports.discoverStudents = async (req, res) => {
       );
     }
 
-    res.json({ success: true, students: combined });
+    // Sort peers so students with same domain match appear first
+    combined.sort((a, b) => b.matchScore - a.matchScore);
+
+    res.json({ success: true, myDomain, students: combined });
   } catch (err) {
     console.error("discoverStudents error:", err);
     res.status(500).json({ success: false, message: "Failed to discover students." });

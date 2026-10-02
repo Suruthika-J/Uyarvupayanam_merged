@@ -299,12 +299,18 @@ const evaluateStudentAssessment = async (req, res) => {
 
     const questions = await AhpFuzzyQuestion.find({ $or: orConditions });
 
-    // Check if user has an existing AHP Profile to get authentic AHP priority weights
+    // Check if user has an existing AHP Profile to get authentic AHP priority weights & candidate domains for Step 6
     let effectiveAhpWeights = ahpPriorityWeights || {};
-    if (userId && Object.keys(effectiveAhpWeights).length === 0) {
+    let step6CandidateDomains = [];
+    if (userId) {
       const ahpProfile = await AhpCareerProfile.findOne({ userId });
-      if (ahpProfile && ahpProfile.priorityWeights) {
-        effectiveAhpWeights = ahpProfile.priorityWeights;
+      if (ahpProfile) {
+        if (Object.keys(effectiveAhpWeights).length === 0 && ahpProfile.priorityWeights) {
+          effectiveAhpWeights = ahpProfile.priorityWeights;
+        }
+        if (Array.isArray(ahpProfile.candidateDomainsForStep6) && ahpProfile.candidateDomainsForStep6.length > 0) {
+          step6CandidateDomains = ahpProfile.candidateDomainsForStep6.map(d => d.id || d.domainId || d.name).filter(Boolean);
+        }
       }
     }
 
@@ -312,15 +318,16 @@ const evaluateStudentAssessment = async (req, res) => {
       userAnswers,
       questions,
       ahpPriorityWeights: effectiveAhpWeights,
-      behavioralSignals: behavioralSignals || {}
+      behavioralSignals: behavioralSignals || {},
+      candidateDomains: step6CandidateDomains.length > 0 ? step6CandidateDomains : undefined
     });
 
-    const isAssessmentCompleted = userAnswers.length >= 15;
+    const isAssessmentCompleted = userAnswers.length >= 15 || (Array.isArray(requiredQuestionIds) && userAnswers.length >= requiredQuestionIds.length);
 
     let savedResult = null;
 
-    // PART 11 & PART 13: If 15/15 questions are answered, persist the recommendation
-    if (isAssessmentCompleted && userId) {
+    // PART 11 & PART 13: If assessment is evaluated and user logged in, persist the recommendation
+    if (userId && evaluation.recommendedDomain) {
       const resultData = {
         userId,
         studentId: userId.toString(),
@@ -328,6 +335,7 @@ const evaluateStudentAssessment = async (req, res) => {
         ahpCandidates: evaluation.ahpCandidates,
         fuzzyScores: evaluation.fuzzyScores,
         finalScores: evaluation.finalScores,
+        rankings: evaluation.rankings,
         recommendedDomain: evaluation.recommendedDomain,
         confidenceLevel: evaluation.confidenceLevel,
         scoreDiff: evaluation.scoreDiff,
@@ -356,8 +364,20 @@ const evaluateStudentAssessment = async (req, res) => {
             currentStep: 7
           }
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
+
+      try {
+        const User = require("../models/User");
+        await User.findByIdAndUpdate(userId, {
+          $set: {
+            domain: evaluation.recommendedDomain.domainName,
+            targetCareer: evaluation.recommendedDomain.domainName
+          }
+        });
+      } catch (e) {
+        console.warn("User domain update notice:", e.message);
+      }
     }
 
     res.status(200).json({
@@ -428,13 +448,23 @@ const getDiscoveryResult = async (req, res) => {
       }
     }
 
+    const rankings = result.rankings || result.finalScores || [];
+    const sortedRankings = [...rankings].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // Ensure strictly the top 3 candidate domains evaluated for Step 6 are returned
+    const topRankings = sortedRankings.slice(0, 3);
+    const topAhpCandidates = (result.ahpCandidates || []).slice(0, 3);
+    const topFuzzyScores = (result.fuzzyScores || []).slice(0, 3);
+    const topFinalScores = (result.finalScores || []).slice(0, 3);
+
     res.status(200).json({
       success: true,
       assessmentCompleted: result.assessmentCompleted !== false,
       recommendedDomain: result.recommendedDomain,
-      ahpCandidates: result.ahpCandidates,
-      fuzzyScores: result.fuzzyScores,
-      finalScores: result.finalScores,
+      rankings: topRankings,
+      ahpCandidates: topAhpCandidates,
+      fuzzyScores: topFuzzyScores,
+      finalScores: topFinalScores,
       confidenceLevel: result.confidenceLevel || "high",
       scoreDiff: result.scoreDiff || 0,
       strongDimensions: result.strongDimensions || [],
