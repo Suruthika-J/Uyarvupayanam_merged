@@ -2,6 +2,7 @@ const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const Recommendation = require("../models/Recommendation");
 const StudentSkillProgress = require("../models/StudentSkillProgress");
+const AhpFuzzyResult = require("../models/AhpFuzzyResult");
 
 // Helper: Calculate Multi-Dimensional Match & Explanations
 const evaluateCareerMatch = (profile, career) => {
@@ -1441,177 +1442,53 @@ const setTargetCareer = async (req, res) => {
 };
 
 // ── 4. GET Student Skill Gap Analysis ─────────────────────────────────────────
+// ── 4. GET Student Skill Gap Analysis (Powered by Custom AI Inference Engine) ──
 const getStudentSkillGap = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
     const AhpFuzzyResult = require("../models/AhpFuzzyResult");
+    const { evaluateCustomAiSkillGap } = require("../utils/customSkillGapAiEngine");
 
-    const [profile, fuzzyResult] = await Promise.all([
+    const [profile, fuzzyResult, allCareers] = await Promise.all([
       CollegeStudentProfile.findOne({ userId }),
-      AhpFuzzyResult.findOne({ userId }).sort({ createdAt: -1 })
+      AhpFuzzyResult.findOne({ userId }).sort({ createdAt: -1 }),
+      CollegeCareerCatalog.find().select("title category requiredDomains requiredFields growthOutlook").lean()
     ]);
 
     if (!profile) {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const targetTitle = profile.targetCareer || fuzzyResult?.recommendedDomain?.domainName || profile.domain || profile.specialization || profile.careerInterests?.[0] || "Artificial Intelligence & Machine Learning";
-    let [career, allCareers] = await Promise.all([
-      CollegeCareerCatalog.findOne({
-        $or: [
-          { title: new RegExp(`^${targetTitle}$`, "i") },
-          { slug: targetTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
-          { title: new RegExp(targetTitle, "i") }
-        ]
-      }),
-      CollegeCareerCatalog.find().select("title category requiredDomains requiredFields growthOutlook").lean()
-    ]);
-
-    const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
-    const userSkills = (profile.skills || []).map(s => s.toLowerCase());
-    const userSubjects = (profile.subjects || []).map(s => s.toLowerCase());
-
-    const strong = [];
-    const developing = [];
-    const missing = [];
-
-    const allCareerSkills = [
-      ...fullCareer.coreSkills.map(s => ({ name: s.name, type: "Core", reqProf: s.suggestedProficiency })),
-      ...fullCareer.advancedSkills.map(s => ({ name: s.name, type: "Advanced", reqProf: s.suggestedProficiency })),
-      ...fullCareer.optionalSkills.map(s => ({ name: s.name, type: "Optional", reqProf: s.suggestedProficiency }))
-    ];
-
-    allCareerSkills.forEach(skillObj => {
-      const sName = skillObj.name;
-      const sLower = sName.toLowerCase();
-
-      // Flexible matching for acronyms, keywords & tokens (e.g. Python, AI/ML, React, Java, SQL)
-      const sClean = sLower.replace(/[^a-z0-9]+/g, " ");
-      const sTokens = sClean.split(/\s+/).filter(t => t.length >= 2);
-
-      const hasExactSkill = userSkills.some(us => {
-        const u = us.toLowerCase().trim();
-        if (!u) return false;
-        if (u === sLower || sLower.includes(u) || u.includes(sLower)) return true;
-        const uClean = u.replace(/[^a-z0-9]+/g, " ");
-        const uTokens = uClean.split(/\s+/).filter(t => t.length >= 2);
-        return uTokens.some(ut => sTokens.includes(ut));
-      });
-
-      const hasSubject = userSubjects.some(sub => {
-        const sb = sub.toLowerCase().trim();
-        if (!sb) return false;
-        if (sb === sLower || sLower.includes(sb) || sb.includes(sLower)) return true;
-        const sbClean = sb.replace(/[^a-z0-9]+/g, " ");
-        const sbTokens = sbClean.split(/\s+/).filter(t => t.length >= 2);
-        return sbTokens.some(sbt => sTokens.includes(sbt));
-      });
-
-      const resource = getLearningResourceForSkill(sName, fullCareer.title);
-
-      if (hasExactSkill) {
-        strong.push({ ...skillObj, status: "Strong", currentProficiency: "Advanced", learningResource: resource });
-      } else if (hasSubject) {
-        developing.push({ ...skillObj, status: "Developing", currentProficiency: "Intermediate", learningResource: resource });
-      } else {
-        missing.push({
-          ...skillObj,
-          status: "Missing",
-          currentProficiency: "Needs Learning",
-          suggestionToBecomeStrong: `Master ${sName} through structured learning & practice to achieve target domain competency in ${fullCareer.title || targetTitle}.`,
-          learningResource: resource
-        });
-      }
-    });
-
-    const total = allCareerSkills.length || 1;
-    const readinessScore = Math.min(100, Math.round(((strong.length * 1.0 + developing.length * 0.5) / total) * 100));
-
-    // Dynamic career recommendations filtered by student's exact domain & department
-    const profileText = `${profile.domain || ''} ${profile.specialization || ''} ${profile.degreeProgramme || ''} ${profile.field || ''}`.toLowerCase();
+    const requestedTargetRole = req.query?.careerTitle || profile.targetCareer;
     
-    let domainCareers = [];
-    if (/eee|electrical|power|voltage|energy/.test(profileText)) {
-      domainCareers = [
-        "Electrical Engineer",
+    // Evaluate via Custom AI Skill Gap Engine (100% local, no external LLMs)
+    const aiResult = evaluateCustomAiSkillGap(profile, fuzzyResult, requestedTargetRole);
+
+    const allCareerTitles = (allCareers || []).map(c => c.title);
+    if (allCareerTitles.length === 0) {
+      allCareerTitles.push(
+        "Artificial Intelligence & Machine Learning",
+        "Full Stack Web Development",
+        "Cyber Security & Information Assurance",
+        "Cloud Computing & DevOps",
         "Robotics Engineer",
-        "Embedded Systems Engineer",
-        "Control Systems Engineer",
-        "Power Systems Engineer",
-        "Computer Hardware Engineer"
-      ];
-    } else if (/ece|electronics|telecom|communication|vlsi/.test(profileText)) {
-      domainCareers = [
-        "Embedded Systems Engineer",
-        "Robotics Engineer",
-        "Computer Hardware Engineer",
-        "Electronics Engineer",
-        "Software Developer"
-      ];
-    } else if (/mechanical|mech|thermal|automobile|aerospace|mechatronics/.test(profileText)) {
-      domainCareers = [
-        "Mechanical Engineer",
-        "Robotics Engineer",
-        "Aerospace Engineer",
-        "Nuclear Engineer",
-        "Automotive Systems Engineer"
-      ];
-    } else if (/civil|structural|construction|geotechnical/.test(profileText)) {
-      domainCareers = [
-        "Civil Engineer",
-        "Structural Engineer",
-        "Environmental Engineer"
-      ];
-    } else if (/cs|computer|it|software|data|ai|machine learning/.test(profileText)) {
-      domainCareers = [
-        "Software Engineer",
-        "Full Stack Developer",
-        "Data Scientist",
-        "Machine Learning Engineer",
-        "Artificial Intelligence Engineer",
-        "Data Analyst"
-      ];
+        "Software Engineer"
+      );
     }
-
-    const allCareerTitles = allCareers.map(c => c.title);
-    
-    // Careers from catalog that match the domain rule
-    const validDomainCareers = domainCareers.filter(dc => 
-      allCareerTitles.some(act => act.toLowerCase() === dc.toLowerCase())
-    );
-
-    // Also include any catalog careers whose requiredDomains match the profile text
-    const catalogDomainMatches = allCareers
-      .filter(c => {
-        const domMatch = (c.requiredDomains || []).some(d => profileText.includes(d.toLowerCase()));
-        return domMatch;
-      })
-      .map(c => c.title);
-
-    const mergedRecommended = [...new Set([...validDomainCareers, ...catalogDomainMatches])];
-    const finalRecommended = mergedRecommended.length > 0 ? mergedRecommended : allCareerTitles.slice(0, 6);
 
     res.status(200).json({
       success: true,
-      targetCareer: fullCareer.title,
-      readinessScore,
-      skills: {
-        strong,
-        developing,
-        missing
-      },
-      summary: {
-        acquiredCount: strong.length,
-        developingCount: developing.length,
-        missingCount: missing.length,
-        totalRequired: total
-      },
-      recommendedCareers: finalRecommended,
+      engine: "Custom-AI-Inference-Engine-v1",
+      targetCareer: aiResult.targetCareer,
+      readinessScore: aiResult.readinessScore,
+      skills: aiResult.skills,
+      summary: aiResult.summary,
+      recommendedCareers: allCareerTitles.slice(0, 6),
       allCareers: allCareerTitles
     });
   } catch (error) {
     console.error("Get student skill gap error:", error);
-    res.status(500).json({ success: false, message: "Failed to compute skill gap analysis" });
+    res.status(500).json({ success: false, message: "Failed to evaluate skill gap analysis" });
   }
 };
 
@@ -1791,16 +1668,24 @@ const verifySkillAssessment = async (req, res) => {
 const getStudentRoadmap = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
-    const [profile, skillProgress] = await Promise.all([
+    const [profile, skillProgress, ahpFuzzyDoc] = await Promise.all([
       CollegeStudentProfile.findOne({ userId }),
-      StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] }).lean()
+      StudentSkillProgress.findOne({ $or: [{ studentId: userId }, { userId }] }).lean(),
+      AhpFuzzyResult.findOne({ $or: [{ userId }, { studentId: userId?.toString() }] }).sort({ createdAt: -1 }).lean()
     ]);
 
     if (!profile) {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const targetTitle = profile.targetCareer || "Software Engineer";
+    const onboardingDomain = ahpFuzzyDoc?.recommendedDomain?.domainName || profile.recommendedDomain;
+    let targetTitle = profile.targetCareer;
+
+    // Priority: onboarding recommended domain > profile domain > default Mamdani AI domain
+    if (!targetTitle || targetTitle === "Software Engineer" || targetTitle === "General Engineering") {
+      targetTitle = onboardingDomain || profile.domain || "Artificial Intelligence & Machine Learning";
+    }
+
     let career = await CollegeCareerCatalog.findOne({
       $or: [
         { title: new RegExp(`^${targetTitle}$`, "i") },
@@ -1808,8 +1693,14 @@ const getStudentRoadmap = async (req, res) => {
         { title: new RegExp(targetTitle, "i") }
       ]
     });
-    if (!career) {
-      career = await CollegeCareerCatalog.findOne();
+
+    if (!career || (career.title === "Software Engineer" && targetTitle !== "Software Engineer")) {
+      career = {
+        title: targetTitle,
+        category: profile.field || "Engineering & Technology",
+        shortDescription: `Learning trajectory tailored for ${targetTitle}`,
+        requiredSkills: profile.skills || []
+      };
     }
 
     const fullCareer = getComprehensiveCareerDetails(career || { title: targetTitle });
@@ -1839,7 +1730,7 @@ const getStudentRoadmap = async (req, res) => {
       milestones,
       progressPercent,
       completedCount,
-      profileTarget: profile.targetCareer
+      profileTarget: targetTitle
     });
   } catch (error) {
     console.error("Get student roadmap error:", error);

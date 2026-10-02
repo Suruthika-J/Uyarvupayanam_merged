@@ -25,7 +25,7 @@ export default function LearningRoadmapPage() {
       const res = await axiosInstance.get('/college-advisor/roadmap')
 
       if (res.data?.success) {
-        setTargetCareer(res.data.targetCareer || studentContext?.targetCareer || 'Software Engineer')
+        setTargetCareer(res.data.targetCareer || studentContext?.targetCareer || profile?.domain || 'Artificial Intelligence & Machine Learning')
         setMilestones(res.data.milestones || [])
       } else {
         setError('The AI couldn’t build a roadmap for your target career yet.')
