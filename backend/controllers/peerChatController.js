@@ -434,13 +434,24 @@ exports.respondToStudyInvite = async (req, res) => {
       });
     }
 
+    // Extract clean string IDs for room targeting
+    const senderIdStr = (typeof msg.senderId === "object" ? (msg.senderId._id || msg.senderId.id) : msg.senderId).toString();
+    const receiverIdStr = userId.toString();
+
+    console.log(`[STUDY INVITE] Accept processed for inviteId: ${msg._id}`);
+    console.log(`[STUDY INVITE] Sender: ${senderIdStr} | Receiver: ${receiverIdStr}`);
+    console.log(`[STUDY INVITE] Status after: QUIZ_CREATED | SessionId: ${quizSession.sessionId}`);
+
     // Notify both users via socket
     const io = req.app.get("io");
     const payload = {
       inviteId: msg._id,
       conversationId: msg.conversationId,
       messageId: msg._id,
+      senderId: senderIdStr,
+      receiverId: receiverIdStr,
       responderId: userId,
+      status: "QUIZ_CREATED",
       sessionId: quizSession.sessionId,
       topic: quizSession.topic,
       subtopic: quizSession.subtopic,
@@ -449,13 +460,13 @@ exports.respondToStudyInvite = async (req, res) => {
     };
 
     if (io) {
-      console.log(`[SOCKET] Emitting study:quiz-created and study:invite-accepted to users ${msg.senderId} and ${userId}`);
-      io.to(`user_${msg.senderId}`).emit("study:accepted", payload);
-      io.to(`user_${userId}`).emit("study:accepted", payload);
-      io.to(`user_${msg.senderId}`).emit("study:quiz-created", payload);
-      io.to(`user_${userId}`).emit("study:quiz-created", payload);
-      io.to(`user_${msg.senderId}`).emit("quiz:session-created", payload);
-      io.to(`user_${userId}`).emit("quiz:session-created", payload);
+      console.log(`[SOCKET] Emitting study:quiz-created to rooms: user_${senderIdStr} and user_${receiverIdStr}`);
+      io.to(`user_${senderIdStr}`).emit("study:accepted", payload);
+      io.to(`user_${receiverIdStr}`).emit("study:accepted", payload);
+      io.to(`user_${senderIdStr}`).emit("study:quiz-created", payload);
+      io.to(`user_${receiverIdStr}`).emit("study:quiz-created", payload);
+      io.to(`user_${senderIdStr}`).emit("quiz:session-created", payload);
+      io.to(`user_${receiverIdStr}`).emit("quiz:session-created", payload);
     }
 
     return res.json({

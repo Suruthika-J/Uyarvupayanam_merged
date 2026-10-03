@@ -205,26 +205,40 @@ export default function PeerChatPage() {
       }
     })
 
-    // Study invite response
-    socket.on('study:accepted', ({ conversationId, messageId, sessionId }) => {
-      setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'QUIZ_CREATED', sessionId } } : m
-      ))
-      if (sessionId) {
-        navigate(`/college/multiplayer-quiz/${sessionId}`)
-      }
-    })
-    socket.on('study:quiz-created', ({ conversationId, inviteId, sessionId }) => {
-      setMessages(prev => prev.map(m =>
-        m._id === inviteId ? { ...m, studyInvite: { ...m.studyInvite, status: 'QUIZ_CREATED', sessionId } } : m
-      ))
-      if (sessionId) {
-        navigate(`/college/multiplayer-quiz/${sessionId}`)
-      }
-    })
+    // Study invite real-time socket handler
+    const handleQuizCreated = (payload) => {
+      console.log('[PEER CHAT] Received socket event study:quiz-created / study:accepted:', payload)
+      const targetId = getRawId(payload.inviteId || payload.messageId)
+      console.log(`[PEER CHAT] Target Invite ID: ${targetId} | SessionId: ${payload.sessionId}`)
+
+      setMessages(prev => prev.map(m => {
+        const isMatch = getRawId(m._id) === targetId ||
+          (m.type === 'study_invite' && getRawId(m.conversationId) === getRawId(payload.conversationId) && (m.studyInvite?.status === 'pending' || m.studyInvite?.status === 'PENDING'))
+
+        if (isMatch) {
+          console.log('[PEER CHAT] Updating matching study invite message to status: QUIZ_CREATED')
+          return {
+            ...m,
+            studyInvite: {
+              ...m.studyInvite,
+              status: 'QUIZ_CREATED',
+              sessionId: payload.sessionId
+            }
+          }
+        }
+        return m
+      }))
+    }
+
+    socket.on('study:accepted', handleQuizCreated)
+    socket.on('study:quiz-created', handleQuizCreated)
+    socket.on('quiz:session-created', handleQuizCreated)
+
     socket.on('study:declined', ({ conversationId, messageId }) => {
+      console.log('[PEER CHAT] Received study:declined for messageId:', messageId)
+      const targetId = getRawId(messageId)
       setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'DECLINED' } } : m
+        getRawId(m._id) === targetId ? { ...m, studyInvite: { ...m.studyInvite, status: 'DECLINED' } } : m
       ))
     })
 
