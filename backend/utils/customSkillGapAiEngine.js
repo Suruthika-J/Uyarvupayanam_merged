@@ -9,66 +9,69 @@
  */
 
 const ROLE_DOMAIN_BENCHMARKS = {
+  "full stack web development": {
+    category: "Software Engineering",
+    coreSkills: [
+      { name: "Frontend Development (React.js / HTML / CSS / MERN)", keywords: ["react", "react.js", "frontend", "html", "css", "mern", "javascript", "js"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Backend Architecture (Node.js, Express.js & Spring Boot)", keywords: ["node.js", "express", "express.js", "spring boot", "backend", "node", "java"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Databases & Storage (MongoDB & MySQL)", keywords: ["mongodb", "mysql", "sql", "databases", "database", "firestore", "nosql"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Programming Languages (Java & Python)", keywords: ["java", "python", "javascript", "dart", "c++"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Software & API Engineering (REST APIs, WebSockets, JWT)", keywords: ["rest api", "api", "websocket", "socket.io", "jwt", "authentication"], weight: 0.9, requiredProficiency: "Advanced" }
+    ],
+    advancedSkills: [
+      { name: "Mobile & Cloud Engineering (Flutter & Firebase)", keywords: ["flutter", "firebase", "mobile", "cloud storage", "cloud"], weight: 0.8, requiredProficiency: "Intermediate" },
+      { name: "Version Control & Collaboration (Git & GitHub)", keywords: ["git", "github", "git/github", "version control"], weight: 0.8, requiredProficiency: "Intermediate" },
+      { name: "Core CS Fundamentals (OOP & DBMS)", keywords: ["oop", "object-oriented programming", "dbms", "database management systems"], weight: 0.8, requiredProficiency: "Intermediate" }
+    ],
+    optionalSkills: [
+      { name: "AI/ML Integration (Machine Learning & Computer Vision)", keywords: ["machine learning", "computer vision", "opencv", "ai/ml", "ai"], weight: 0.6, requiredProficiency: "Basic" },
+      { name: "Docker & Containerized Microservices", keywords: ["docker", "microservices", "containers", "kubernetes"], weight: 0.5, requiredProficiency: "Basic" },
+      { name: "CI/CD & Cloud Deployment Pipelines (AWS / GCP)", keywords: ["ci/cd", "aws", "gcp", "devops", "cloud deployment"], weight: 0.5, requiredProficiency: "Basic" }
+    ]
+  },
   "artificial intelligence & machine learning": {
     category: "AI & Data Science",
     coreSkills: [
       { name: "Python for AI & Data Science", keywords: ["python", "py", "python3"], weight: 1.0, requiredProficiency: "Advanced" },
       { name: "Machine Learning & Scikit-Learn", keywords: ["machine learning", "ml", "scikit-learn", "sklearn"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Linear Algebra, Probability & Statistics", keywords: ["statistics", "math", "linear algebra", "probability", "calculus"], weight: 0.9, requiredProficiency: "Advanced" },
-      { name: "Deep Learning (PyTorch / TensorFlow)", keywords: ["deep learning", "pytorch", "tensorflow", "keras", "neural networks", "ai/ml"], weight: 0.9, requiredProficiency: "Advanced" },
-      { name: "SQL & Relational Databases", keywords: ["sql", "mysql", "postgresql", "databases"], weight: 0.8, requiredProficiency: "Advanced" }
+      { name: "Computer Vision & OpenCV", keywords: ["computer vision", "opencv", "image processing", "yolo"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "SQL & Relational Databases (MySQL / MongoDB)", keywords: ["sql", "mysql", "postgresql", "mongodb", "databases"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Linear Algebra, Probability & Statistics", keywords: ["statistics", "math", "linear algebra", "probability", "calculus"], weight: 0.8, requiredProficiency: "Advanced" }
     ],
     advancedSkills: [
-      { name: "Computer Vision & OpenCV", keywords: ["computer vision", "opencv", "image processing", "yolo"], weight: 0.8, requiredProficiency: "Intermediate" },
+      { name: "Deep Learning Frameworks (PyTorch / TensorFlow)", keywords: ["deep learning", "pytorch", "tensorflow", "keras", "neural networks"], weight: 0.8, requiredProficiency: "Intermediate" },
       { name: "Natural Language Processing (NLP)", keywords: ["nlp", "natural language processing", "bert", "llm", "text analytics"], weight: 0.8, requiredProficiency: "Intermediate" },
-      { name: "Neural Network Architecture & Tuning", keywords: ["neural network", "model tuning", "hyperparameter", "architecture"], weight: 0.7, requiredProficiency: "Intermediate" }
+      { name: "Web & API Deployment (Node.js / Express / REST APIs)", keywords: ["rest api", "node.js", "express", "fastapi", "flask", "api"], weight: 0.7, requiredProficiency: "Intermediate" }
     ],
     optionalSkills: [
-      { name: "MLOps & Model Deployment (FastAPI/Docker)", keywords: ["mlops", "fastapi", "docker", "deployment", "express", "node.js"], weight: 0.6, requiredProficiency: "Basic" },
+      { name: "MLOps & Model Deployment (Docker / FastAPI)", keywords: ["mlops", "fastapi", "docker", "deployment"], weight: 0.6, requiredProficiency: "Basic" },
       { name: "Generative AI & LLM Prompting/Fine-tuning", keywords: ["generative ai", "genai", "prompt engineering", "langchain"], weight: 0.5, requiredProficiency: "Basic" }
-    ]
-  },
-  "full stack web development": {
-    category: "Software Engineering",
-    coreSkills: [
-      { name: "JavaScript / ES6 & Modern Web", keywords: ["javascript", "js", "typescript", "es6"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Frontend Development (React.js / HTML / CSS)", keywords: ["react", "react.js", "html", "css", "frontend", "tailwind"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Backend Architecture (Node.js & Express.js)", keywords: ["node.js", "express", "express.js", "backend", "rest api"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Database Engineering (MongoDB & SQL)", keywords: ["mongodb", "sql", "mysql", "postgresql", "nosql"], weight: 0.9, requiredProficiency: "Advanced" },
-      { name: "Object-Oriented Programming (Java / Python)", keywords: ["java", "python", "oop", "c++"], weight: 0.8, requiredProficiency: "Advanced" }
-    ],
-    advancedSkills: [
-      { name: "REST API Design & Integration", keywords: ["rest api", "api", "json", "http"], weight: 0.8, requiredProficiency: "Intermediate" },
-      { name: "State Management & Component Architecture", keywords: ["redux", "state management", "components", "context api"], weight: 0.7, requiredProficiency: "Intermediate" }
-    ],
-    optionalSkills: [
-      { name: "Git, GitHub & CI/CD Deployment", keywords: ["git", "github", "ci/cd", "devops", "docker"], weight: 0.6, requiredProficiency: "Basic" }
     ]
   },
   "software engineer": {
     category: "Software Engineering",
     coreSkills: [
-      { name: "Data Structures & Algorithms", keywords: ["dsa", "data structures", "algorithms", "problem solving"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Object-Oriented Programming (Java / Python / C++)", keywords: ["java", "python", "c++", "oop"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Relational & NoSQL Databases (SQL / MongoDB)", keywords: ["sql", "mysql", "mongodb", "database"], weight: 0.9, requiredProficiency: "Advanced" },
-      { name: "Web & API Engineering (Node.js / React)", keywords: ["node.js", "react", "api", "web"], weight: 0.8, requiredProficiency: "Advanced" },
-      { name: "Operating Systems & Networking Fundamentals", keywords: ["os", "networking", "operating systems", "tcp/ip"], weight: 0.8, requiredProficiency: "Advanced" }
+      { name: "Programming Languages (Java, Python & JavaScript)", keywords: ["java", "python", "javascript", "c++", "oop"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Web & API Engineering (React, Node.js & REST APIs)", keywords: ["react", "node.js", "express", "rest api", "api", "web"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Databases & Data Management (MongoDB & SQL)", keywords: ["sql", "mysql", "mongodb", "database", "dbms"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Core CS Fundamentals (DSA & OOP)", keywords: ["dsa", "data structures", "algorithms", "oop", "problem solving"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Version Control & Collaboration (Git & GitHub)", keywords: ["git", "github"], weight: 0.8, requiredProficiency: "Advanced" }
     ],
     advancedSkills: [
-      { name: "System Design & Microservices", keywords: ["system design", "microservices", "scalability"], weight: 0.8, requiredProficiency: "Intermediate" },
-      { name: "Version Control (Git & GitHub)", keywords: ["git", "github"], weight: 0.7, requiredProficiency: "Intermediate" }
+      { name: "System Design & Microservices", keywords: ["system design", "microservices", "scalability", "architecture"], weight: 0.8, requiredProficiency: "Intermediate" },
+      { name: "Mobile & Cross-Platform Development (Flutter)", keywords: ["flutter", "mobile", "react native"], weight: 0.7, requiredProficiency: "Intermediate" }
     ],
     optionalSkills: [
-      { name: "Cloud Services & Docker", keywords: ["docker", "aws", "cloud"], weight: 0.6, requiredProficiency: "Basic" }
+      { name: "Cloud Services & Docker Containers", keywords: ["docker", "aws", "cloud", "firebase"], weight: 0.6, requiredProficiency: "Basic" }
     ]
   },
   "cyber security & information assurance": {
     category: "Cybersecurity",
     coreSkills: [
-      { name: "Network Security & Protocols", keywords: ["networking", "network security", "protocols", "tcp/ip"], weight: 1.0, requiredProficiency: "Advanced" },
+      { name: "Network Security & Protocols (TCP/IP, HTTP/HTTPS)", keywords: ["networking", "network security", "protocols", "tcp/ip", "http"], weight: 1.0, requiredProficiency: "Advanced" },
       { name: "Ethical Hacking & Penetration Testing", keywords: ["ethical hacking", "pen testing", "metasploit", "nmap"], weight: 1.0, requiredProficiency: "Advanced" },
-      { name: "Linux Security & Scripting (Python/Bash)", keywords: ["linux", "bash", "python", "scripting"], weight: 0.9, requiredProficiency: "Advanced" },
-      { name: "Cryptography & Data Encryption", keywords: ["cryptography", "encryption", "rsa", "aes"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Scripting & Backend Security (Python / Node.js)", keywords: ["python", "node.js", "bash", "scripting"], weight: 0.9, requiredProficiency: "Advanced" },
+      { name: "Cryptography & Authentication (JWT, RSA, AES)", keywords: ["cryptography", "encryption", "jwt", "authentication"], weight: 0.9, requiredProficiency: "Advanced" },
       { name: "Security Audit Tools (Wireshark / Nmap)", keywords: ["wireshark", "nmap", "security tools"], weight: 0.8, requiredProficiency: "Advanced" }
     ],
     advancedSkills: [
@@ -76,7 +79,7 @@ const ROLE_DOMAIN_BENCHMARKS = {
       { name: "Web Application Security (OWASP Top 10)", keywords: ["owasp", "web security", "vulnerability"], weight: 0.8, requiredProficiency: "Intermediate" }
     ],
     optionalSkills: [
-      { name: "Cloud Security & Identity Management", keywords: ["cloud security", "iam", "aws security"], weight: 0.6, requiredProficiency: "Basic" }
+      { name: "Cloud Security & Identity Management", keywords: ["cloud security", "iam", "aws security", "firebase"], weight: 0.6, requiredProficiency: "Basic" }
     ]
   }
 };
@@ -92,17 +95,17 @@ function computeSkillMatchScore(userSkills, userSubjects, benchmarkSkill) {
     const u = userSkill.toLowerCase().trim();
     if (!u) continue;
 
-    // Exact string match
+    // Exact string or substring match
     if (keywords.some(kw => u === kw || u.includes(kw) || kw.includes(u))) {
       matchScore = Math.max(matchScore, 0.95);
     } else {
       // Token intersection matching
-      const uTokens = u.split(/[\s&/(),-]+/).filter(t => t.length > 2);
-      const kwTokens = keywords.flatMap(kw => kw.split(/[\s&/(),-]+/)).filter(t => t.length > 2);
+      const uTokens = u.split(/[\s&/(),.:-]+/).filter(t => t.length > 1);
+      const kwTokens = keywords.flatMap(kw => kw.split(/[\s&/(),.:-]+/)).filter(t => t.length > 1);
       
       const overlap = uTokens.filter(t => kwTokens.includes(t));
       if (overlap.length > 0) {
-        matchScore = Math.max(matchScore, 0.75);
+        matchScore = Math.max(matchScore, 0.80);
       }
     }
   }
@@ -113,7 +116,7 @@ function computeSkillMatchScore(userSkills, userSubjects, benchmarkSkill) {
       const s = sub.toLowerCase().trim();
       if (!s) continue;
       if (keywords.some(kw => s === kw || s.includes(kw) || kw.includes(s))) {
-        matchScore = Math.max(matchScore, 0.60);
+        matchScore = Math.max(matchScore, 0.65);
       }
     }
   }
@@ -131,15 +134,22 @@ function evaluateCustomAiSkillGap(profile, fuzzyResult, requestedTargetRole) {
     || fuzzyResult?.recommendedDomain?.domainName 
     || profile?.domain 
     || profile?.specialization 
-    || "Artificial Intelligence & Machine Learning";
+    || "Full Stack Web & Mobile Development";
 
-  const tKey = targetRole.toLowerCase().trim();
-  
-  // Find matching benchmark definition
-  const benchmarkKey = Object.keys(ROLE_DOMAIN_BENCHMARKS).find(k => tKey.includes(k) || k.includes(tKey)) 
-    || "artificial intelligence & machine learning";
+  const findBenchmark = (targetStr) => {
+    const s = (targetStr || "").toLowerCase().trim();
+    if (!s) return null;
+    if (s.includes("full stack") || s.includes("web") || s.includes("mern") || s.includes("mobile")) return ROLE_DOMAIN_BENCHMARKS["full stack web development"];
+    if (s.includes("ai") || s.includes("machine learning") || s.includes("artificial intelligence")) return ROLE_DOMAIN_BENCHMARKS["artificial intelligence & machine learning"];
+    if (s.includes("cyber") || s.includes("security")) return ROLE_DOMAIN_BENCHMARKS["cyber security & information assurance"];
+    if (s.includes("software") || s.includes("architecture")) return ROLE_DOMAIN_BENCHMARKS["software engineer"];
+    return null;
+  };
 
-  const benchmark = ROLE_DOMAIN_BENCHMARKS[benchmarkKey];
+  const benchmark = findBenchmark(targetRole) 
+    || findBenchmark(profile?.domain) 
+    || findBenchmark(profile?.specialization)
+    || ROLE_DOMAIN_BENCHMARKS["full stack web development"];
 
   const userSkills = profile?.skills || [];
   const userSubjects = profile?.subjects || [];
@@ -172,7 +182,7 @@ function evaluateCustomAiSkillGap(profile, fuzzyResult, requestedTargetRole) {
       overview: `Custom AI-curated learning module to build ${skillObj.name} competency for ${targetRole}.`
     };
 
-    if (matchScore >= 0.75) {
+    if (matchScore >= 0.70) {
       weightedAcquiredSum += 1.0 * weight;
       strong.push({
         name: skillObj.name,
@@ -183,7 +193,7 @@ function evaluateCustomAiSkillGap(profile, fuzzyResult, requestedTargetRole) {
         currentProficiency: "Advanced",
         learningResource
       });
-    } else if (matchScore >= 0.50) {
+    } else if (matchScore >= 0.45) {
       weightedAcquiredSum += 0.55 * weight;
       developing.push({
         name: skillObj.name,
