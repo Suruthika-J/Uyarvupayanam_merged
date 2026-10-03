@@ -328,7 +328,7 @@ exports.respondToStudyInvite = async (req, res) => {
 
     if (response === "accepted") {
       const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
-      const { selectQuizQuestions } = require("../services/multiplayerQuizService");
+      const { createQuiz } = require("../services/quizAI/QuizAIEngine");
 
       // Check if session already created
       quizSession = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
@@ -338,9 +338,15 @@ exports.respondToStudyInvite = async (req, res) => {
         const subtopic = msg.studyInvite?.goal || "Queries";
         const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-        // Fetch questions from SeedMaster question bank
-        const questions = await selectQuizQuestions({ topic, subtopic, count: 10 });
-        const questionIds = questions.map(q => q._id);
+        // Invoke QuizAIEngine pipeline
+        const quizData = await createQuiz({
+          topic,
+          subtopic,
+          questionCount: 10,
+          duration: durationMins
+        });
+
+        const questionIds = quizData.questionIds;
 
         const [senderUser, responderUser] = await Promise.all([
           User.findById(msg.senderId).select("name").lean(),
@@ -353,8 +359,8 @@ exports.respondToStudyInvite = async (req, res) => {
           sessionId,
           inviteId: msg._id,
           conversationId: msg.conversationId,
-          topic,
-          subtopic,
+          topic: quizData.normalizedTopic || topic,
+          subtopic: quizData.normalizedSubtopic || subtopic,
           questionIds,
           participants: [
             {

@@ -3,11 +3,12 @@ const MultiplayerQuizAnswer = require("../models/MultiplayerQuizAnswer");
 const { PeerMessage, PeerConversation } = require("../models/PeerChat");
 const AhpFuzzyQuestion = require("../models/AhpFuzzyQuestion");
 const User = require("../models/User");
-const { selectQuizQuestions, sanitizeQuestionForClient, evaluateAnswer } = require("../services/multiplayerQuizService");
+const { sanitizeQuestionForClient } = require("../services/multiplayerQuizService");
+const { createQuiz, analyzePerformance, calculateQuestionScore } = require("../services/quizAI/QuizAIEngine");
 
 /**
  * 1. POST /api/peer-chat/study-invites/:inviteId/accept
- *    Accepts a study invite & creates shared MultiplayerQuizSession from SeedMaster bank.
+ *    Accepts a study invite & creates shared MultiplayerQuizSession via QuizAIEngine.
  */
 exports.acceptInviteAndCreateSession = async (req, res) => {
   try {
@@ -27,18 +28,19 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
     let session = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
     if (!session) {
-      // Fetch questions from SeedMaster question bank
       const topic = msg.studyInvite?.subject || "DBMS";
       const subtopic = msg.studyInvite?.goal || "Queries";
       const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-      const questions = await selectQuizQuestions({
+      // Invoke QuizAIEngine pipeline (QuestionRetriever -> QuestionGenerator -> QuestionValidator -> DifficultyEngine -> QuizBuilder)
+      const quizData = await createQuiz({
         topic,
         subtopic,
-        count: 10
+        questionCount: 10,
+        duration: durationMins
       });
 
-      const questionIds = questions.map(q => q._id);
+      const questionIds = quizData.questionIds;
 
       // Fetch user details for both participants
       const [senderUser, receiverUser] = await Promise.all([
@@ -52,8 +54,8 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
         sessionId,
         inviteId: msg._id,
         conversationId: msg.conversationId,
-        topic,
-        subtopic,
+        topic: quizData.normalizedTopic || topic,
+        subtopic: quizData.normalizedSubtopic || subtopic,
         questionIds,
         participants: [
           {

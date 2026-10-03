@@ -15,7 +15,7 @@ const peerMessageSchema = new mongoose.Schema({
     subject:         { type: String },
     goal:            { type: String },
     durationMinutes: { type: Number },
-    status:          { type: String, enum: ["pending", "accepted", "declined"], default: "pending" },
+    status:          { type: String, enum: ["pending", "accepted", "declined", "PENDING", "ACCEPTED", "DECLINED", "EXPIRED", "QUIZ_CREATED", "IN_PROGRESS", "COMPLETED"], default: "pending" },
     sessionId:       { type: String }
   },
   readBy:     [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

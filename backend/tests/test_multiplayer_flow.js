@@ -9,7 +9,8 @@ require('dotenv').config()
 const MultiplayerQuizSession = require('../models/MultiplayerQuizSession')
 const MultiplayerQuizAnswer = require('../models/MultiplayerQuizAnswer')
 const AhpFuzzyQuestion = require('../models/AhpFuzzyQuestion')
-const { selectQuizQuestions, sanitizeQuestionForClient, evaluateAnswer } = require('../services/multiplayerQuizService')
+const { sanitizeQuestionForClient } = require('../services/multiplayerQuizService')
+const { createQuiz, analyzePerformance, calculateQuestionScore } = require('../services/quizAI/QuizAIEngine')
 
 async function runTests() {
   console.log('=== MULTIPLAYER QUIZ SYSTEM INTEGRATION TEST ===')
@@ -26,18 +27,19 @@ async function runTests() {
     const studentBId = new mongoose.Types.ObjectId()
     const inviteId = new mongoose.Types.ObjectId()
 
-    // 1. Select Quiz Questions from SeedMaster
-    console.log('\n--- Test 1: Retrieve Questions from SeedMaster Question Bank ---')
-    const questions = await selectQuizQuestions({
+    // 1. Invoke QuizAIEngine Pipeline
+    console.log('\n--- Test 1: Invoke QuizAIEngine Pipeline ---')
+    const quizData = await createQuiz({
       topic: 'DBMS',
       subtopic: 'Queries',
-      count: 5
+      questionCount: 5
     })
-    console.log(`✔ Questions Retrieved: ${questions.length}`)
-    if (questions.length === 0) {
-      throw new Error('SeedMaster question bank returned 0 questions!')
+    console.log(`✔ QuizAIEngine Output Topic: ${quizData.normalizedTopic}, Questions Count: ${quizData.totalQuestions}`)
+    if (!quizData.questions || quizData.questions.length === 0) {
+      throw new Error('QuizAIEngine pipeline returned 0 questions!')
     }
-    const questionIds = questions.map(q => q._id)
+    const questions = quizData.questions
+    const questionIds = quizData.questionIds
 
     // 2. Create MultiplayerQuizSession
     console.log('\n--- Test 2: Create MultiplayerQuizSession ---')
@@ -90,7 +92,7 @@ async function runTests() {
     // 5. Server-Side Answer Evaluation & Unique Constraint Check
     console.log('\n--- Test 5: Server-Side Answer Submission & Duplicate Protection ---')
     await MultiplayerQuizAnswer.init()
-    const evalA = evaluateAnswer(qDoc, 'A', 0.8)
+    const evalA = calculateQuestionScore(qDoc, 'A', 0.8)
     console.log(`✔ Evaluation result for Student A: isCorrect=${evalA.isCorrect}, Score=${evalA.score}`)
 
     const ansRecordA = await MultiplayerQuizAnswer.create({
