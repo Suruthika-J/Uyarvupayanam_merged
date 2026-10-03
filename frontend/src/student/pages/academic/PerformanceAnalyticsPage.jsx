@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { SCard, SBadge, SLoader } from '../../components/ui'
-import { FiBarChart2, FiTrendingUp, FiCheckCircle, FiAward, FiZap, FiUser, FiCalendar } from 'react-icons/fi'
+import { FiBarChart2, FiTrendingUp, FiCheckCircle, FiAward, FiZap, FiUser, FiCalendar, FiBookOpen } from 'react-icons/fi'
 import { useCollegeProfile } from '../../context/CollegeProfileContext'
+import { Link } from 'react-router-dom'
 import axiosInstance from '../../../config/axios'
 
 export default function PerformanceAnalyticsPage() {
@@ -26,19 +27,29 @@ export default function PerformanceAnalyticsPage() {
     fetchAnalytics()
   }, [])
 
-  const cgpa = profile?.cgpa || analytics?.cgpa || '8.4'
-  const skills = profile?.skills || []
-  const subjects = profile?.subjects || []
-  const assessmentScore = analytics?.assessmentScore || profile?.grokAssessmentScore || 82
-  const degree = profile?.degreeProgramme || 'Your Degree'
-  const domain = profile?.domain || profile?.field || 'Your Domain'
+  const cgpa = profile?.cgpa || analytics?.cgpa
+  const assessmentScore = analytics?.assessmentScore ?? profile?.grokAssessmentScore
+  const completionRate = analytics?.studyCompletionRate ?? 0
+  const readiness = analytics?.careerReadiness ?? 0
+
+  // Filter skills to exclude placeholder course names if any
+  const rawSkills = analytics?.skills || profile?.skills || []
+  const skills = rawSkills.filter(s => s && typeof s === 'string' && !s.toLowerCase().includes('full stack web') && !s.toLowerCase().startsWith('b.e.') && !s.toLowerCase().startsWith('b.tech'))
+
+  // Weak focus areas
+  const weakAreas = analytics?.weakFocusAreas || profile?.subjects || []
+  const cleanWeakAreas = weakAreas.filter(s => s && typeof s === 'string' && !s.toLowerCase().includes('full stack web') && !s.toLowerCase().startsWith('b.e.') && !s.toLowerCase().startsWith('b.tech'))
+
+  const degree = profile?.degreeProgramme || 'Degree Programme'
+  const domain = profile?.domain || profile?.field || 'Academic Specialization'
+  const semester = profile?.currentSemester || 'Current Semester'
 
   if (loading) {
     return (
       <div style={{ height: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
         <SLoader />
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--s-text3)' }}>
-          Computing historical performance telemetry & skill growth curves...
+          Computing performance telemetry & skill growth analytics...
         </div>
       </div>
     )
@@ -61,33 +72,35 @@ export default function PerformanceAnalyticsPage() {
       {/* Profile Context Banner */}
       <div style={{ padding: '14px 18px', borderRadius: 14, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#1e40af', fontWeight: 600 }}>
         <FiUser size={16} />
-        <span>Performance telemetry for <strong>{degree}</strong> — {domain} ({profile?.currentSemester || 'Current Semester'})</span>
+        <span>Performance telemetry for <strong>{degree}</strong> — {domain} ({semester})</span>
       </div>
 
       {/* METRIC CARDS GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 28 }}>
         <SCard style={{ padding: 20, borderRadius: 16, borderLeft: '4px solid #047857' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Academic CGPA</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#047857', marginTop: 4 }}>{cgpa}</div>
-          <div style={{ fontSize: 12, color: '#047857', fontWeight: 700, marginTop: 4 }}>
-            ✓ Consistent Academic Standing
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#047857', marginTop: 4 }}>
+            {cgpa ? cgpa : 'N/A'}
+          </div>
+          <div style={{ fontSize: 12, color: cgpa ? '#047857' : '#64748b', fontWeight: 700, marginTop: 4 }}>
+            {cgpa ? '✓ Profile CGPA Standing' : 'Set CGPA in Profile'}
           </div>
         </SCard>
 
         <SCard style={{ padding: 20, borderRadius: 16, borderLeft: '4px solid var(--s-primary)' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Diagnostic Score</div>
           <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--s-primary)', marginTop: 4 }}>
-            {assessmentScore}%
+            {assessmentScore !== null && assessmentScore !== undefined ? `${assessmentScore}%` : 'N/A'}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--s-primary)', fontWeight: 700, marginTop: 4 }}>
-            ⚡ AI Diagnostic Benchmark
+          <div style={{ fontSize: 12, color: assessmentScore !== null ? 'var(--s-primary)' : '#64748b', fontWeight: 700, marginTop: 4 }}>
+            {assessmentScore !== null ? '⚡ Diagnostic Score' : 'Take Practice Test'}
           </div>
         </SCard>
 
         <SCard style={{ padding: 20, borderRadius: 16, borderLeft: '4px solid #7c3aed' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Study Task Completion</div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#7c3aed', marginTop: 4 }}>
-            {analytics?.studyCompletionRate || 85}%
+            {completionRate}%
           </div>
           <div style={{ fontSize: 12, color: '#7c3aed', fontWeight: 700, marginTop: 4 }}>
             📅 Planner Consistency
@@ -97,10 +110,10 @@ export default function PerformanceAnalyticsPage() {
         <SCard style={{ padding: 20, borderRadius: 16, borderLeft: '4px solid #b45309' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Target Career Readiness</div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#b45309', marginTop: 4 }}>
-            {analytics?.careerReadiness || 88}%
+            {readiness}%
           </div>
           <div style={{ fontSize: 12, color: '#b45309', fontWeight: 700, marginTop: 4 }}>
-            🎯 Career Placement Match
+            🎯 Placement Match Score
           </div>
         </SCard>
       </div>
@@ -127,7 +140,7 @@ export default function PerformanceAnalyticsPage() {
                     <td style={{ padding: 12, fontSize: 13, fontWeight: 700, color: 'var(--s-text)' }}>{h.date}</td>
                     <td style={{ padding: 12, fontSize: 14, fontWeight: 900, color: 'var(--s-primary)' }}>{h.percentage}%</td>
                     <td style={{ padding: 12 }}>
-                      <SBadge color={h.percentage >= 80 ? 'green' : 'blue'}>{h.level}</SBadge>
+                      <SBadge color={h.percentage >= 80 ? 'green' : h.percentage >= 60 ? 'blue' : 'amber'}>{h.level}</SBadge>
                     </td>
                   </tr>
                 ))}
@@ -135,8 +148,8 @@ export default function PerformanceAnalyticsPage() {
             </table>
           </div>
         ) : (
-          <div style={{ fontSize: 13, color: 'var(--s-text3)', textAlign: 'center', padding: 20 }}>
-            Take practice assessments to track your score progress history over time.
+          <div style={{ fontSize: 13, color: 'var(--s-text3)', textAlign: 'center', padding: '24px 16px', background: '#f8fafc', borderRadius: 14, border: '1px dashed #cbd5e1' }}>
+            No practice assessments taken yet. Take an assessment under <strong>Practice Questions</strong> to track your historical score progress.
           </div>
         )}
       </SCard>
@@ -148,11 +161,20 @@ export default function PerformanceAnalyticsPage() {
             Acquired Skill Growth
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(skills.length > 0 ? skills : ['Python', 'Data Structures & Algorithms', 'SQL', 'React']).map((s, i) => (
-              <div key={i} style={{ padding: 12, background: '#d1fae5', borderRadius: 12, color: '#047857', fontWeight: 700, fontSize: 13 }}>
-                ✓ {s}
+            {skills.length > 0 ? (
+              skills.map((s, i) => (
+                <div key={i} style={{ padding: 12, background: '#d1fae5', borderRadius: 12, color: '#047857', fontWeight: 700, fontSize: 13 }}>
+                  ✓ {s}
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: 16, background: '#f8fafc', borderRadius: 12, color: 'var(--s-text3)', fontSize: 13, fontWeight: 600, textAlign: 'center', border: '1px dashed #cbd5e1' }}>
+                No skills added yet.{' '}
+                <Link to="/college/profile" style={{ color: 'var(--s-primary)', fontWeight: 800, textDecoration: 'none' }}>
+                  Add skills in My Academic Profile →
+                </Link>
               </div>
-            ))}
+            )}
           </div>
         </SCard>
 
@@ -161,11 +183,17 @@ export default function PerformanceAnalyticsPage() {
             Flagged Focus Areas (Study Planner Sync)
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(subjects.length > 0 ? subjects : ['Database Management Systems', 'System Architecture']).map((s, i) => (
-              <div key={i} style={{ padding: 12, background: '#fef3c7', borderRadius: 12, color: '#b45309', fontWeight: 700, fontSize: 13 }}>
-                ⚡ {s}
+            {cleanWeakAreas.length > 0 ? (
+              cleanWeakAreas.map((s, i) => (
+                <div key={i} style={{ padding: 12, background: '#fef3c7', borderRadius: 12, color: '#b45309', fontWeight: 700, fontSize: 13 }}>
+                  ⚡ {s}
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: 16, background: '#f8fafc', borderRadius: 12, color: 'var(--s-text3)', fontSize: 13, fontWeight: 600, textAlign: 'center', border: '1px dashed #cbd5e1' }}>
+                No weak focus areas flagged. Perform diagnostic tests to identify focus areas.
               </div>
-            ))}
+            )}
           </div>
         </SCard>
       </div>
@@ -173,3 +201,4 @@ export default function PerformanceAnalyticsPage() {
     </div>
   )
 }
+

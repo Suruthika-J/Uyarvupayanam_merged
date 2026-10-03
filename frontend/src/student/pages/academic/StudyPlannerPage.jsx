@@ -218,6 +218,105 @@ export default function StudyPlannerPage() {
       setPlannerType('academic')
       setSelectedGoalType(card.type)
       setGoalTitle(card.title)
+
+      // Dynamically load tailored subjects, topics, priorities & duration for each specific goal card
+      let newSubjects = []
+      let newDays = '14'
+      let defaultGoalPrompt = ''
+
+      if (card.type === 'new_skill') {
+        newDays = '21'
+        defaultGoalPrompt = 'Master React, Node, Python, and Cloud deployment from scratch in 21 days.'
+        newSubjects = [
+          { name: 'React.js & Frontend Architecture', priority: 'High', difficulty: 'Moderate', topics: ['Components & JSX', 'React Hooks & State', 'Tailwind & UI Styling'] },
+          { name: 'Node.js & Express REST APIs', priority: 'High', difficulty: 'Moderate', topics: ['Express Routing', 'MongoDB & Mongoose Schema', 'JWT Authentication'] },
+          { name: 'Python & Machine Learning Foundations', priority: 'Medium', difficulty: 'Difficult', topics: ['Pandas & Data Cleaning', 'Scikit-Learn Classifiers', 'Neural Nets Overview'] },
+          { name: 'Cloud Deployment & DevOps Pipeline', priority: 'Medium', difficulty: 'Moderate', topics: ['Git & GitHub Workflows', 'Docker Containers', 'Vercel / Render Hosting'] }
+        ]
+      } else if (card.type === 'project') {
+        newDays = '14'
+        defaultGoalPrompt = 'Build and deploy a full-stack web application capstone project in 14 days.'
+        newSubjects = [
+          { name: 'System Architecture & Database Schema', priority: 'High', difficulty: 'Moderate', topics: ['Requirements & API Design', 'ER Diagram & Mongoose Schemas', 'Database Indexing'] },
+          { name: 'Backend Services & Auth Middleware', priority: 'High', difficulty: 'Difficult', topics: ['REST Controller Routes', 'JWT Authentication', 'Input Validation'] },
+          { name: 'Interactive Frontend & Component Wiring', priority: 'High', difficulty: 'Moderate', topics: ['Dashboard Pages', 'Form State & Axios', 'Responsive Layout'] },
+          { name: 'Testing, Deployment & Documentation', priority: 'Medium', difficulty: 'Easy', topics: ['Unit & API Integration Tests', 'Vercel / Render Deployment', 'Project README & Demo Video'] }
+        ]
+      } else if (card.type === 'internal_exam') {
+        newDays = '7'
+        defaultGoalPrompt = 'Sprint prep for upcoming mid-term exams and lab evaluations in 7 days.'
+        newSubjects = [
+          { name: 'Unit 1 & 2 Core Fundamentals', priority: 'High', difficulty: 'Moderate', topics: ['Key Definitions & Concepts', 'Short Answer Q&A', 'Core Principles'] },
+          { name: 'Unit 3 & 4 Problem Solving', priority: 'High', difficulty: 'Difficult', topics: ['Numerical Problems', 'Derivations & Proofs', 'Solved Exam Questions'] },
+          { name: 'Lab Assessment & Code Viva Prep', priority: 'Medium', difficulty: 'Moderate', topics: ['Practical Programs', 'Code Tracing', 'Viva Voice Questions'] }
+        ]
+      } else if (card.type === 'competitive_exam') {
+        newDays = '30'
+        defaultGoalPrompt = 'Intensive GATE / GRE / CAT competitive exam prep pathway in 30 days.'
+        newSubjects = [
+          { name: 'Quantitative Aptitude & Logical Reasoning', priority: 'High', difficulty: 'Difficult', topics: ['Speed Math & Data Interpretation', 'Puzzles & Syllogisms', 'Permutations & Probability'] },
+          { name: 'Computer Science Core Theory (GATE)', priority: 'High', difficulty: 'Very Difficult', topics: ['Discrete Mathematics', 'Theory of Computation', 'Compiler Design'] },
+          { name: 'Advanced Algorithms & Data Structures', priority: 'High', difficulty: 'Difficult', topics: ['Asymptotic Analysis', 'Dynamic Programming', 'Graph Algorithms (Dijkstra/BFS)'] },
+          { name: 'Computer Architecture & Operating Systems', priority: 'Medium', difficulty: 'Moderate', topics: ['Instruction Pipeline', 'Paging & Memory Virtualization', 'Process Concurrency'] }
+        ]
+      } else if (card.type === 'weak_subjects') {
+        newDays = '10'
+        defaultGoalPrompt = 'Targeted revision for weak diagnostic topics and low quiz scores.'
+        const weakList = studentContext?.quizPerformance?.weakTopics || []
+        newSubjects = [
+          { name: 'Database Management Systems (Remedial Focus)', priority: 'High', difficulty: 'Difficult', topics: ['SQL Joins & Complex Subqueries', 'Normalization (3NF/BCNF)', 'Transactions & ACID'] },
+          { name: 'Data Structures & Algorithms (Remedial Focus)', priority: 'High', difficulty: 'Difficult', topics: ['Recursion & Backtracking', 'Binary Search Trees', 'Graph Algorithms'] },
+          { name: 'Operating Systems (Remedial Focus)', priority: 'Medium', difficulty: 'Moderate', topics: ['Deadlock Resolution', 'Paging & Virtual Memory', 'CPU Scheduling'] }
+        ]
+      } else if (card.type === 'custom') {
+        newDays = '14'
+        defaultGoalPrompt = 'Personalized self-paced learning plan.'
+        newSubjects = [
+          { name: 'Custom Module 1', priority: 'High', difficulty: 'Moderate', topics: ['Core Topic 1', 'Core Topic 2'] },
+          { name: 'Custom Module 2', priority: 'Medium', difficulty: 'Moderate', topics: ['Core Topic 3', 'Core Topic 4'] }
+        ]
+      } else {
+        // semester_exam default
+        newDays = '14'
+        defaultGoalPrompt = 'Comprehensive coverage of semester course syllabus and past exam questions.'
+        const rawActive = (studentContext?.subjects || profile?.subjects || []).concat(studentContext?.skills || profile?.skills || [])
+        const cleanList = rawActive.filter(s => s && typeof s === 'string' && !s.toLowerCase().includes('full stack web') && !s.toLowerCase().startsWith('b.e.') && !s.toLowerCase().startsWith('b.tech'))
+        const defaultSubs = cleanList.length > 0 ? cleanList.slice(0, 4) : [
+          'Data Structures & Algorithms',
+          'Database Management Systems',
+          'Operating Systems',
+          'Computer Networks'
+        ]
+        newSubjects = defaultSubs.map(name => ({
+          name,
+          priority: 'High',
+          difficulty: 'Moderate',
+          topics: name.includes('Data Structures') ? ['Arrays & Lists', 'Trees & BST', 'Graphs']
+            : name.includes('Database') ? ['SQL Joins', 'Normalization', 'Transactions']
+            : ['Core Principles', 'Lab Practice']
+        }))
+      }
+
+      setSelectedSubjects(newSubjects)
+
+      const prioMap = {}
+      const diffMap = {}
+      newSubjects.forEach(s => {
+        prioMap[s.name] = s.priority
+        diffMap[s.name] = s.difficulty
+      })
+      setSubjectPriorities(prioMap)
+      setSubjectDifficulties(diffMap)
+
+      setDurationPreset(newDays)
+      const start = new Date(startDateStr)
+      const end = new Date(start)
+      end.setDate(end.getDate() + parseInt(newDays))
+      setDeadlineStr(end.toISOString().split('T')[0])
+
+      if (!userGoalText.trim()) {
+        setUserGoalText(defaultGoalPrompt)
+      }
     }
   }
 
@@ -1530,11 +1629,19 @@ export default function StudyPlannerPage() {
         {/* STEP 2: WHAT TO STUDY */}
         {wizardStep === 2 && (
           <div>
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px 18px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#1d4ed8' }}>🎯 Selected Goal:</span>
+                <span style={{ fontSize: 14, fontWeight: 900, color: '#1e40af', background: '#dbeafe', padding: '4px 12px', borderRadius: 10 }}>{goalTitle}</span>
+              </div>
+              <span style={{ fontSize: 12, color: '#2563eb', fontWeight: 700 }}>✨ Tailored subjects & topics loaded ({selectedSubjects.length})</span>
+            </div>
+
             <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 8px' }}>
               What would you like to study?
             </h3>
             <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '0 0 20px' }}>
-              Select academic subjects from your profile or add custom topics.
+              Review subjects tailored to your goal, customize them, or add custom topics.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>

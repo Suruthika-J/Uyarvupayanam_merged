@@ -505,32 +505,100 @@ exports.submitAssessmentResult = async (req, res) => {
 exports.getAnalyticsData = async (req, res) => {
   try {
     const userId = req.student?.id || req.student?._id || req.user?._id;
-    const profile = await CollegeStudentProfile.findOne({ userId });
-    const attempts = await StudentTestResult.find({ userId }).sort({ createdAt: -1 }).limit(10);
-    const progress = await StudentSkillProgress.findOne({ studentId: userId });
+    const profile = await CollegeStudentProfile.findOne({ userId }).lean();
+    const attempts = await StudentTestResult.find({ userId }).sort({ createdAt: -1 }).limit(10).lean();
+    const progress = await StudentSkillProgress.findOne({ studentId: userId }).lean();
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true }).lean();
 
-    const cgpa = profile?.cgpa || "8.4";
-    const assessmentScore = profile?.grokAssessmentScore || 82;
-    const skillsCount = profile?.skills?.length || 4;
-    const streak = progress?.streak || 3;
-    const xp = progress?.xp || 250;
+    // 1. Academic CGPA
+    const cgpa = profile?.cgpa && profile.cgpa !== "0" ? String(profile.cgpa) : null;
 
+    // 2. Diagnostic Assessment Score
+    let assessmentScore = null;
+    if (profile?.grokAssessmentScore && profile.grokAssessmentScore > 0) {
+      assessmentScore = profile.grokAssessmentScore;
+    } else if (attempts.length > 0) {
+      const latest = attempts[0];
+      assessmentScore = latest.totalScore?.percentage ?? null;
+    }
+
+    // 3. Study Completion Rate
+    let studyCompletionRate = 0;
+    if (activePlan?.schedule?.length > 0) {
+      let totalTasks = 0;
+      let completedTasks = 0;
+      activePlan.schedule.forEach(day => {
+        day.tasks?.forEach(t => {
+          totalTasks += 1;
+          if (t.status === "completed") completedTasks += 1;
+        });
+      });
+      if (totalTasks > 0) {
+        studyCompletionRate = Math.round((completedTasks / totalTasks) * 100);
+      }
+    }
+
+    // 4. Target Career Readiness calculation
+    let careerReadiness = 0;
+    let factorsCount = 0;
+    if (cgpa) {
+      const cgpaNum = parseFloat(cgpa) || 0;
+      careerReadiness += Math.min(30, Math.round((cgpaNum / 10) * 30));
+      factorsCount += 1;
+    }
+    if (assessmentScore !== null) {
+      careerReadiness += Math.round((assessmentScore / 100) * 35);
+      factorsCount += 1;
+    }
+    const cleanSkills = (profile?.skills || []).filter(s => s && typeof s === "string" && !s.toLowerCase().includes("full stack web") && !s.toLowerCase().startsWith("b.e.") && !s.toLowerCase().startsWith("b.tech"));
+    if (cleanSkills.length > 0) {
+      careerReadiness += Math.min(25, cleanSkills.length * 5);
+      factorsCount += 1;
+    }
+    if (studyCompletionRate > 0) {
+      careerReadiness += Math.round((studyCompletionRate / 100) * 10);
+    }
+    if (factorsCount === 0) {
+      careerReadiness = 0;
+    } else {
+      careerReadiness = Math.min(100, Math.max(0, careerReadiness));
+    }
+
+    // 5. Historical Assessment Scores
     const historicalScores = attempts.map(a => ({
       date: new Date(a.createdAt).toLocaleDateString(),
-      percentage: a.totalScore?.percentage || 75,
-      level: a.performanceLevel || "Good"
+      percentage: a.totalScore?.percentage || 0,
+      level: a.performanceLevel || "Completed"
     }));
+
+    // 6. Weak Focus Areas
+    const weakFocusAreas = [];
+    attempts.forEach(a => {
+      a.weaknesses?.forEach(w => {
+        if (w && !weakFocusAreas.includes(w) && !w.toLowerCase().includes("full stack web") && !w.toLowerCase().startsWith("b.e.")) {
+          weakFocusAreas.push(w);
+        }
+      });
+    });
+    if (profile?.subjects) {
+      profile.subjects.forEach(s => {
+        if (s && !weakFocusAreas.includes(s) && !s.toLowerCase().includes("full stack web") && !s.toLowerCase().startsWith("b.e.") && !s.toLowerCase().startsWith("b.tech")) {
+          weakFocusAreas.push(s);
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,
       analytics: {
         cgpa,
         assessmentScore,
-        skillsCount,
-        streak,
-        xp,
-        studyCompletionRate: 85,
-        careerReadiness: 88,
+        skills: cleanSkills,
+        weakFocusAreas,
+        streak: progress?.streak || 0,
+        xp: progress?.xp || 0,
+        studyCompletionRate,
+        careerReadiness,
         historicalScores
       }
     });

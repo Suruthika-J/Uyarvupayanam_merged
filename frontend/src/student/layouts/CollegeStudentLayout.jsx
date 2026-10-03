@@ -19,9 +19,7 @@ const SIDEBAR_SECTIONS = [
     items: [
       { id: 'chat',      icon: FiMessageSquare, label: 'Ask AI',             to: '/college/advisor/chat' },
       { id: 'advisor',   icon: FiCompass,       label: 'Academic Advisor',   to: '/college/advisor' },
-      { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
       { id: 'roadmap',   icon: FiTarget,        label: 'Learning Roadmap',   to: '/college/academic/roadmap' },
-      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
       { id: 'interview', icon: FiBriefcase,      label: 'Interview Prep',     to: '/college/career/interview-prep' },
       { id: 'notes',     icon: FiBookOpen,       label: 'Notes Summarizer',   to: '/college/study-tools/notes-summarizer' },
       { id: 'practice',  icon: FiHelpCircle,     label: 'Practice Questions', to: '/college/study-tools/practice' },
@@ -39,6 +37,8 @@ const SIDEBAR_SECTIONS = [
     items: [
       { id: 'dashboard',   icon: FiGrid,      label: 'Dashboard',           to: '/college/dashboard' },
       { id: 'profile',     icon: FiUser,      label: 'My Academic Profile', to: '/college/profile' },
+      { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
+      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
       { id: 'performance', icon: FiBarChart2, label: 'Performance',         to: '/college/academic/performance' },
     ],
   },
