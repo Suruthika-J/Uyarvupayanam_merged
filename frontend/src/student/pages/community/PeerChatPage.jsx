@@ -59,46 +59,75 @@ function getRawId(val) {
 // ── Study Invite Banner ───────────────────────────────────────────────────────
 function StudyInviteBanner({ msg, myId, onRespond }) {
   const isMe = getRawId(msg.senderId) === getRawId(myId)
-  const status = msg.studyInvite?.status
+  const rawStatus = String(msg.studyInvite?.status || 'PENDING').toUpperCase()
   const sessionId = msg.studyInvite?.sessionId
+  const [accepting, setAccepting] = useState(false)
+
+  const isPending = rawStatus === 'PENDING'
+  const isAccepted = rawStatus === 'ACCEPTED' || rawStatus === 'QUIZ_CREATED' || rawStatus === 'IN_PROGRESS'
+  const isDeclined = rawStatus === 'DECLINED'
+  const isFailed = rawStatus === 'QUIZ_CREATION_FAILED'
+
+  const senderName = typeof msg.senderId === 'object' ? (msg.senderId?.name || 'Peer') : 'Peer'
 
   return (
     <div style={{ background: 'linear-gradient(135deg,#7c3aed11,#6366f111)', border: '1px solid #a5b4fc', borderRadius: 14, padding: '14px 18px', margin: '4px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <FiTarget size={16} color="#7c3aed" />
         <strong style={{ fontSize: 13, color: '#4f46e5' }}>Multiplayer Study Invite</strong>
-        {status !== 'pending' && (
-          <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: status === 'accepted' ? '#059669' : '#dc2626', padding: '2px 10px', borderRadius: 10, background: status === 'accepted' ? '#ecfdf5' : '#fef2f2' }}>
-            {status === 'accepted' ? '✓ Accepted' : '✕ Declined'}
-          </span>
-        )}
+
+        {/* Status Badge */}
+        <span style={{
+          marginLeft: 'auto', fontSize: 11, fontWeight: 800, padding: '2px 10px', borderRadius: 10,
+          color: isAccepted ? '#059669' : isDeclined ? '#dc2626' : isFailed ? '#d97706' : '#6366f1',
+          background: isAccepted ? '#ecfdf5' : isDeclined ? '#fef2f2' : isFailed ? '#fffbeb' : '#eef2ff'
+        }}>
+          {isAccepted ? '✓ Quiz Created' : isDeclined ? '✕ Declined' : isFailed ? '⚠ Creation Failed' : '⏳ Pending'}
+        </span>
       </div>
+
       <div style={{ fontSize: 13, color: '#374151' }}>
+        {!isMe && isPending && <div style={{ color: '#4f46e5', fontWeight: 700, marginBottom: 4 }}>{senderName} invited you to study:</div>}
         📚 <strong>{msg.studyInvite?.subject || 'Study Session'}</strong>
         {msg.studyInvite?.goal && <span style={{ color: '#6b7280' }}> — {msg.studyInvite.goal}</span>}
         <span style={{ color: '#9ca3af' }}> ({msg.studyInvite?.durationMinutes || 25} min)</span>
       </div>
 
-      {isMe && status === 'pending' && (
+      {/* SENDER VIEW */}
+      {isMe && isPending && (
         <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span>⏳</span> Invite sent — Waiting for study partner to accept…
+          <span>⏳</span> Waiting for study partner to accept…
         </div>
       )}
 
-      {!isMe && status === 'pending' && (
+      {/* RECEIVER VIEW */}
+      {!isMe && isPending && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-          <button onClick={() => onRespond(msg._id, 'accepted')}
-            style={{ padding: '8px 18px', borderRadius: 10, background: '#059669', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}>
-            ✓ Accept & Launch Quiz
+          <button
+            disabled={accepting}
+            onClick={async () => {
+              setAccepting(true)
+              await onRespond(msg._id, 'accepted')
+            }}
+            style={{
+              padding: '8px 18px', borderRadius: 10, background: accepting ? '#94a3b8' : '#059669',
+              color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: accepting ? 'wait' : 'pointer'
+            }}
+          >
+            {accepting ? 'Creating your study game...' : '✓ Accept & Launch Quiz'}
           </button>
-          <button onClick={() => onRespond(msg._id, 'declined')}
-            style={{ padding: '8px 18px', borderRadius: 10, background: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: 13, border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+          <button
+            disabled={accepting}
+            onClick={() => onRespond(msg._id, 'declined')}
+            style={{ padding: '8px 18px', borderRadius: 10, background: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: 13, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+          >
             Decline
           </button>
         </div>
       )}
 
-      {status === 'accepted' && (
+      {/* ACTION FOR ACCEPTED / QUIZ_CREATED SESSION */}
+      {isAccepted && (
         <div style={{ marginTop: 12 }}>
           <button onClick={() => onRespond(msg._id, 'join', sessionId)}
             style={{ padding: '8px 18px', borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -179,7 +208,15 @@ export default function PeerChatPage() {
     // Study invite response
     socket.on('study:accepted', ({ conversationId, messageId, sessionId }) => {
       setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'accepted', sessionId } } : m
+        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'QUIZ_CREATED', sessionId } } : m
+      ))
+      if (sessionId) {
+        navigate(`/college/multiplayer-quiz/${sessionId}`)
+      }
+    })
+    socket.on('study:quiz-created', ({ conversationId, inviteId, sessionId }) => {
+      setMessages(prev => prev.map(m =>
+        m._id === inviteId ? { ...m, studyInvite: { ...m.studyInvite, status: 'QUIZ_CREATED', sessionId } } : m
       ))
       if (sessionId) {
         navigate(`/college/multiplayer-quiz/${sessionId}`)
@@ -187,7 +224,7 @@ export default function PeerChatPage() {
     })
     socket.on('study:declined', ({ conversationId, messageId }) => {
       setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'declined' } } : m
+        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'DECLINED' } } : m
       ))
     })
 

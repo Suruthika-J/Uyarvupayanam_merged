@@ -314,23 +314,46 @@ exports.respondToStudyInvite = async (req, res) => {
     const msgId   = req.params.msgId;
     const { response } = req.body; // "accepted" | "declined"
 
+    console.log(`[INVITE] Accept/Decline requested for messageId: ${msgId} by userId: ${userId} (response: ${response})`);
+
     const msg = await PeerMessage.findById(msgId);
-    if (!msg || msg.type !== "study_invite")
+    if (!msg || msg.type !== "study_invite") {
       return res.status(404).json({ success: false, message: "Invite not found." });
+    }
 
-    // Only the peer (non-sender) can respond
-    if (msg.senderId.toString() === userId.toString())
-      return res.status(403).json({ success: false, message: "Cannot respond to own invite." });
+    // Only the receiver (non-sender) can accept or decline
+    if (msg.senderId.toString() === userId.toString()) {
+      console.warn(`[INVITE] Sender ${userId} attempted to accept own invite ${msgId}`);
+      return res.status(403).json({ success: false, message: "Only the invited student can accept or decline this invitation." });
+    }
 
-    msg.studyInvite.status = response === "accepted" ? "accepted" : "declined";
+    const currentStatus = String(msg.studyInvite?.status || "PENDING").toUpperCase();
+    if (response === "declined") {
+      console.log(`[INVITE] Receiver explicitly declined invite ${msgId}`);
+      msg.studyInvite.status = "DECLINED";
+      await msg.save();
+
+      const io = req.app.get("io");
+      if (io) {
+        const payload = { conversationId: msg.conversationId, messageId: msg._id, responderId: userId };
+        io.to(`user_${msg.senderId}`).emit("study:declined", payload);
+        io.to(`user_${userId}`).emit("study:declined", payload);
+      }
+
+      return res.json({ success: true, status: "DECLINED" });
+    }
+
+    // Response is ACCEPTED
+    console.log(`[INVITE] Status transition: PENDING → ACCEPTED for inviteId: ${msgId}`);
+    msg.studyInvite.status = "ACCEPTED";
 
     let quizSession = null;
 
-    if (response === "accepted") {
+    try {
       const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
       const { createQuiz } = require("../services/quizAI/QuizAIEngine");
 
-      // Check if session already created
+      // Check if session already created for this invite
       quizSession = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
       if (!quizSession) {
@@ -338,7 +361,7 @@ exports.respondToStudyInvite = async (req, res) => {
         const subtopic = msg.studyInvite?.goal || "Queries";
         const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-        // Invoke QuizAIEngine pipeline
+        console.log(`[QUIZ-AI] Creating quiz for topic: "${topic}", subtopic: "${subtopic}"...`);
         const quizData = await createQuiz({
           topic,
           subtopic,
@@ -347,6 +370,7 @@ exports.respondToStudyInvite = async (req, res) => {
         });
 
         const questionIds = quizData.questionIds;
+        console.log(`[QUIZ-AI] Quiz created with ${questionIds.length} questions. Assembling session...`);
 
         const [senderUser, responderUser] = await Promise.all([
           User.findById(msg.senderId).select("name").lean(),
@@ -388,41 +412,72 @@ exports.respondToStudyInvite = async (req, res) => {
           questionTimeoutSeconds: 45,
           currentQuestionIndex: 0
         });
+
+        console.log(`[SESSION] Created multiplayer quiz session: ${sessionId}`);
       }
 
+      msg.studyInvite.status = "QUIZ_CREATED";
       msg.studyInvite.sessionId = quizSession.sessionId;
-    }
+      await msg.save();
 
-    await msg.save();
+      console.log(`[INVITE] Status transition: ACCEPTED → QUIZ_CREATED for inviteId: ${msgId}`);
+
+    } catch (errQuiz) {
+      console.error("[INVITE] Quiz creation error:", errQuiz);
+      msg.studyInvite.status = "QUIZ_CREATION_FAILED";
+      await msg.save();
+
+      return res.status(500).json({
+        success: false,
+        errorCode: "QUIZ_CREATION_FAILED",
+        message: "Unable to create the study game."
+      });
+    }
 
     // Notify both users via socket
     const io = req.app.get("io");
-    const eventName = response === "accepted" ? "study:accepted" : "study:declined";
     const payload = {
+      inviteId: msg._id,
       conversationId: msg.conversationId,
       messageId: msg._id,
       responderId: userId,
-      sessionId: quizSession?.sessionId,
-      topic: quizSession?.topic,
-      subtopic: quizSession?.subtopic
+      sessionId: quizSession.sessionId,
+      topic: quizSession.topic,
+      subtopic: quizSession.subtopic,
+      questionCount: quizSession.totalQuestions,
+      duration: Math.round(quizSession.durationSeconds / 60)
     };
 
     if (io) {
-      io.to(`user_${msg.senderId}`).emit(eventName, payload);
-      io.to(`user_${userId}`).emit(eventName, payload);
-      if (quizSession) {
-        io.to(`user_${msg.senderId}`).emit("quiz:session-created", payload);
-        io.to(`user_${userId}`).emit("quiz:session-created", payload);
-      }
+      console.log(`[SOCKET] Emitting study:quiz-created and study:invite-accepted to users ${msg.senderId} and ${userId}`);
+      io.to(`user_${msg.senderId}`).emit("study:accepted", payload);
+      io.to(`user_${userId}`).emit("study:accepted", payload);
+      io.to(`user_${msg.senderId}`).emit("study:quiz-created", payload);
+      io.to(`user_${userId}`).emit("study:quiz-created", payload);
+      io.to(`user_${msg.senderId}`).emit("quiz:session-created", payload);
+      io.to(`user_${userId}`).emit("quiz:session-created", payload);
     }
 
-    res.json({
+    return res.json({
       success: true,
-      status: msg.studyInvite.status,
-      sessionId: quizSession?.sessionId
+      inviteId: msg._id,
+      sessionId: quizSession.sessionId,
+      status: "QUIZ_CREATED",
+      redirectTo: `/college/multiplayer-quiz/${quizSession.sessionId}`
     });
   } catch (err) {
     console.error("respondToStudyInvite error:", err);
     res.status(500).json({ success: false, message: "Failed to respond." });
+  }
+};
+
+// Dev utility to clean old test study invites
+exports.cleanTestInvites = async (req, res) => {
+  try {
+    await PeerMessage.deleteMany({ type: "study_invite" });
+    console.log("[INVITE] Dev cleanup: Deleted test study invite messages.");
+    res.json({ success: true, message: "All test study invites cleaned successfully." });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

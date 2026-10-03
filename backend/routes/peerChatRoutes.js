@@ -8,7 +8,8 @@ const {
   getMessages,
   sendMessage,
   sendStudyInvite,
-  respondToStudyInvite
+  respondToStudyInvite,
+  cleanTestInvites
 } = require("../controllers/peerChatController");
 
 // All routes require authentication
@@ -19,5 +20,6 @@ router.get("/conversations/:id/messages",                verifyStudent, getMessa
 router.post("/conversations/:id/messages",               verifyStudent, sendMessage);
 router.post("/conversations/:id/study-invite",           verifyStudent, sendStudyInvite);
 router.patch("/messages/:msgId/invite-response",         verifyStudent, respondToStudyInvite);
+router.delete("/test-invites/clean",                     verifyStudent, cleanTestInvites);
 
 module.exports = router;
