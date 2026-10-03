@@ -15,6 +15,7 @@
  * - Unread message counts
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import axios from 'axios'
@@ -51,11 +52,13 @@ function timeAgo(dateStr) {
 function StudyInviteBanner({ msg, myId, onRespond }) {
   const isMe = msg.senderId?.toString() === myId?.toString()
   const status = msg.studyInvite?.status
+  const sessionId = msg.studyInvite?.sessionId
+
   return (
     <div style={{ background: 'linear-gradient(135deg,#7c3aed11,#6366f111)', border: '1px solid #a5b4fc', borderRadius: 14, padding: '14px 18px', margin: '4px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <FiTarget size={16} color="#7c3aed" />
-        <strong style={{ fontSize: 13, color: '#4f46e5' }}>Study Invite</strong>
+        <strong style={{ fontSize: 13, color: '#4f46e5' }}>Multiplayer Study Invite</strong>
         {status !== 'pending' && (
           <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: status === 'accepted' ? '#059669' : '#dc2626', padding: '2px 10px', borderRadius: 10, background: status === 'accepted' ? '#ecfdf5' : '#fef2f2' }}>
             {status === 'accepted' ? '✓ Accepted' : '✕ Declined'}
@@ -67,15 +70,25 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
         {msg.studyInvite?.goal && <span style={{ color: '#6b7280' }}> — {msg.studyInvite.goal}</span>}
         <span style={{ color: '#9ca3af' }}> ({msg.studyInvite?.durationMinutes || 25} min)</span>
       </div>
+
       {!isMe && status === 'pending' && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           <button onClick={() => onRespond(msg._id, 'accepted')}
             style={{ padding: '8px 18px', borderRadius: 10, background: '#059669', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer' }}>
-            ✓ Accept
+            ✓ Accept & Launch Quiz
           </button>
           <button onClick={() => onRespond(msg._id, 'declined')}
             style={{ padding: '8px 18px', borderRadius: 10, background: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: 13, border: '1px solid #e2e8f0', cursor: 'pointer' }}>
             Decline
+          </button>
+        </div>
+      )}
+
+      {status === 'accepted' && (
+        <div style={{ marginTop: 12 }}>
+          <button onClick={() => onRespond(msg._id, 'join', sessionId)}
+            style={{ padding: '8px 18px', borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            🎯 Join Multiplayer Quiz Room →
           </button>
         </div>
       )}
@@ -84,6 +97,7 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
 }
 
 export default function PeerChatPage() {
+  const navigate = useNavigate()
   const { student } = useStudentAuth()
   const { theme }   = useCollegeTheme()
   const myId = student?._id || student?.id
@@ -149,10 +163,13 @@ export default function PeerChatPage() {
     })
 
     // Study invite response
-    socket.on('study:accepted', ({ conversationId, messageId }) => {
+    socket.on('study:accepted', ({ conversationId, messageId, sessionId }) => {
       setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'accepted' } } : m
+        m._id === messageId ? { ...m, studyInvite: { ...m.studyInvite, status: 'accepted', sessionId } } : m
       ))
+      if (sessionId) {
+        navigate(`/college/multiplayer-quiz/${sessionId}`)
+      }
     })
     socket.on('study:declined', ({ conversationId, messageId }) => {
       setMessages(prev => prev.map(m =>
@@ -161,7 +178,7 @@ export default function PeerChatPage() {
     })
 
     return () => { socket.disconnect() }
-  }, [myId])
+  }, [myId, navigate])
 
   // Ref to current active conversation (needed inside socket handler closures)
   const activeConvoRef = useRef(null)
@@ -278,14 +295,25 @@ export default function PeerChatPage() {
   }
 
   // ── Respond to study invite ───────────────────────────────────────────────
-  const respondToInvite = async (msgId, response) => {
+  const respondToInvite = async (msgId, response, existingSessionId) => {
+    if (response === 'join' && existingSessionId) {
+      navigate(`/college/multiplayer-quiz/${existingSessionId}`)
+      return
+    }
     try {
-      await axios.patch(`${API}/peer-chat/messages/${msgId}/invite-response`,
+      const res = await axios.patch(`${API}/peer-chat/messages/${msgId}/invite-response`,
         { response }, { headers })
+      const sessionId = res.data?.message?.studyInvite?.sessionId
+      if (response === 'accepted' && sessionId) {
+        navigate(`/college/multiplayer-quiz/${sessionId}`)
+        return
+      }
       setMessages(prev => prev.map(m =>
-        m._id === msgId ? { ...m, studyInvite: { ...m.studyInvite, status: response } } : m
+        m._id === msgId ? { ...m, studyInvite: { ...m.studyInvite, status: response, sessionId: sessionId || m.studyInvite?.sessionId } } : m
       ))
-    } catch {}
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const totalUnread = conversations.reduce((s, c) => s + (c.unreadCount || 0), 0)

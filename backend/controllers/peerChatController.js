@@ -307,7 +307,7 @@ exports.sendStudyInvite = async (req, res) => {
 };
 
 // ─── PATCH /api/peer-chat/messages/:msgId/invite-response ────────────────────
-// Accept or decline a study invite.
+// Accept or decline a study invite & launch Multiplayer Quiz Session
 exports.respondToStudyInvite = async (req, res) => {
   try {
     const userId  = req.student?._id || req.student?.id;
@@ -323,18 +323,98 @@ exports.respondToStudyInvite = async (req, res) => {
       return res.status(403).json({ success: false, message: "Cannot respond to own invite." });
 
     msg.studyInvite.status = response === "accepted" ? "accepted" : "declined";
+
+    let quizSession = null;
+
+    if (response === "accepted") {
+      const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
+      const { selectQuizQuestions } = require("../services/multiplayerQuizService");
+
+      // Check if session already created
+      quizSession = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
+
+      if (!quizSession) {
+        const topic = msg.studyInvite?.subject || "DBMS";
+        const subtopic = msg.studyInvite?.goal || "Queries";
+        const durationMins = msg.studyInvite?.durationMinutes || 25;
+
+        // Fetch questions from SeedMaster question bank
+        const questions = await selectQuizQuestions({ topic, subtopic, count: 10 });
+        const questionIds = questions.map(q => q._id);
+
+        const [senderUser, responderUser] = await Promise.all([
+          User.findById(msg.senderId).select("name").lean(),
+          User.findById(userId).select("name").lean()
+        ]);
+
+        const sessionId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+        quizSession = await MultiplayerQuizSession.create({
+          sessionId,
+          inviteId: msg._id,
+          conversationId: msg.conversationId,
+          topic,
+          subtopic,
+          questionIds,
+          participants: [
+            {
+              userId: msg.senderId,
+              name: senderUser?.name || "Student A",
+              status: "WAITING",
+              score: 0,
+              answeredCount: 0,
+              correctCount: 0,
+              currentQuestionIndex: 0
+            },
+            {
+              userId,
+              name: responderUser?.name || "Student B",
+              status: "WAITING",
+              score: 0,
+              answeredCount: 0,
+              correctCount: 0,
+              currentQuestionIndex: 0
+            }
+          ],
+          status: "WAITING",
+          totalQuestions: questionIds.length,
+          durationSeconds: durationMins * 60,
+          questionTimeoutSeconds: 45,
+          currentQuestionIndex: 0
+        });
+      }
+
+      msg.studyInvite.sessionId = quizSession.sessionId;
+    }
+
     await msg.save();
 
-    // Notify sender
+    // Notify both users via socket
     const io = req.app.get("io");
     const eventName = response === "accepted" ? "study:accepted" : "study:declined";
-    io?.to(`user_${msg.senderId}`).emit(eventName, {
+    const payload = {
       conversationId: msg.conversationId,
       messageId: msg._id,
-      responderId: userId
-    });
+      responderId: userId,
+      sessionId: quizSession?.sessionId,
+      topic: quizSession?.topic,
+      subtopic: quizSession?.subtopic
+    };
 
-    res.json({ success: true, status: msg.studyInvite.status });
+    if (io) {
+      io.to(`user_${msg.senderId}`).emit(eventName, payload);
+      io.to(`user_${userId}`).emit(eventName, payload);
+      if (quizSession) {
+        io.to(`user_${msg.senderId}`).emit("quiz:session-created", payload);
+        io.to(`user_${userId}`).emit("quiz:session-created", payload);
+      }
+    }
+
+    res.json({
+      success: true,
+      status: msg.studyInvite.status,
+      sessionId: quizSession?.sessionId
+    });
   } catch (err) {
     console.error("respondToStudyInvite error:", err);
     res.status(500).json({ success: false, message: "Failed to respond." });

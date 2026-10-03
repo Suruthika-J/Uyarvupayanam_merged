@@ -205,6 +205,33 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ── Multiplayer Quiz Socket Events ──────────────────────────────────────
+  socket.on("quiz:join", ({ sessionId, userId }) => {
+    if (sessionId) {
+      socket.join(`quiz:${sessionId}`);
+      console.log(`🎯 Socket ${socket.id} (user ${userId}) joined quiz room [quiz:${sessionId}]`);
+      socket.to(`quiz:${sessionId}`).emit("quiz:player-joined", { sessionId, userId });
+    }
+  });
+
+  socket.on("quiz:leave", ({ sessionId, userId }) => {
+    if (sessionId) {
+      socket.leave(`quiz:${sessionId}`);
+      socket.to(`quiz:${sessionId}`).emit("quiz:player-disconnected", { sessionId, userId });
+    }
+  });
+
+  socket.on("quiz:chat", ({ sessionId, userId, senderName, message }) => {
+    if (sessionId && message) {
+      io.to(`quiz:${sessionId}`).emit("quiz:chat-message", {
+        userId,
+        senderName: senderName || "Study Partner",
+        message: String(message).substring(0, 500),
+        timestamp: new Date()
+      });
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log(`🔌 Socket disconnected: ${socket.id}`);
   });
@@ -300,6 +327,9 @@ app.use("/api/focus", require("./routes/focusRoutes"));
 
 // ── Peer Chat & Study Partner System (College Students) ─────────────────────
 app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
+
+// ── Real-time Multiplayer Quiz Engine ───────────────────────────────────────
+app.use("/api/multiplayer-quiz", require("./routes/multiplayerQuizRoutes"));
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;

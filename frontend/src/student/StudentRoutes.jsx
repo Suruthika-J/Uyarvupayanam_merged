@@ -107,8 +107,8 @@ import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 import CollegeSettingsPage from './pages/settings/CollegeSettingsPage'
 import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
-import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
 import PeerChatPage from './pages/community/PeerChatPage'
+import MultiplayerQuizPage from './pages/community/MultiplayerQuizPage'
 
 import './student.css'
 
@@ -321,6 +321,7 @@ export default function StudentRoutes() {
             <Route path="community/mentors" element={<PeerMentorshipPage />} />
             <Route path="community/doubts" element={<DoubtResolutionPage />} />
             <Route path="peer-chat" element={<PeerChatPage />} />
+            <Route path="multiplayer-quiz/:sessionId" element={<MultiplayerQuizPage />} />
             <Route path="academic/focus" element={<IntelligentFocusPage />} />
             <Route path="focus/analytics" element={<FocusAnalyticsPage />} />
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
