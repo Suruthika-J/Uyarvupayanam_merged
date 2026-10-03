@@ -1551,17 +1551,21 @@ exports.getCollegeDashboardSummary = async (req, res) => {
     }
 
     // 4. Personalized Skill Gap Analysis
-    const userSkillsLower = (profile?.skills || []).map(s => s.toLowerCase());
-    const domainReqSkills = ["Python", "Machine Learning", "Statistics", "SQL", "System Architecture", "Cloud Services"];
-    const skillGaps = domainReqSkills.map((skill, idx) => {
-      const isStrong = userSkillsLower.some(u => u.includes(skill.toLowerCase()) || skill.toLowerCase().includes(u));
-      const score = isStrong ? 72 + ((idx * 4) % 18) : 41 + ((idx * 5) % 15);
-      return {
-        skill,
-        score,
-        status: score >= 65 ? "Strong" : "Needs Improvement"
-      };
-    });
+    const userSkills = profile?.skills || [];
+    let skillGaps = [];
+    if (userSkills.length > 0) {
+      const userSkillsLower = userSkills.map(s => s.toLowerCase());
+      const domainReqSkills = ["Python", "Machine Learning", "Statistics", "SQL", "System Architecture", "Cloud Services"];
+      skillGaps = domainReqSkills.map((skill, idx) => {
+        const isStrong = userSkillsLower.some(u => u.includes(skill.toLowerCase()) || skill.toLowerCase().includes(u));
+        const score = isStrong ? 72 + ((idx * 4) % 18) : 41 + ((idx * 5) % 15);
+        return {
+          skill,
+          score,
+          status: score >= 65 ? "Strong" : "Needs Improvement"
+        };
+      });
+    }
 
     // 5. Dynamic Roadmap Progress & Milestones
     const defaultRoadmap = [

@@ -345,34 +345,7 @@ export default function CollegeDashboardPage() {
             )
           })()}
 
-          {/* SKILL GAP ANALYSIS CARD */}
-          {data?.skillGaps && data.skillGaps.length > 0 && (
-            <SCard style={{ padding: 26, borderRadius: 20, borderLeft: '5px solid #b45309' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FiZap color="#b45309" size={18} /> PERSONALIZED SKILL GAP ANALYSIS
-                </div>
-                <SBadge color="orange">{data.skillGaps.filter(s => s.status === 'Needs Improvement').length} Skill Gaps</SBadge>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-                {data.skillGaps.map((sg) => (
-                  <div key={sg.skill} style={{ padding: '12px 14px', background: sg.status === 'Strong' ? '#f0fdf4' : '#fffbeb', borderRadius: 12, border: `1px solid ${sg.status === 'Strong' ? '#bbf7d0' : '#fef08a'}` }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: sg.status === 'Strong' ? '#166534' : '#92400e' }}>
-                      {sg.skill}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: sg.status === 'Strong' ? '#15803d' : '#b45309' }}>
-                        {sg.score}%
-                      </span>
-                      <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6, background: sg.status === 'Strong' ? '#dcfce7' : '#fef3c7', color: sg.status === 'Strong' ? '#15803d' : '#b45309' }}>
-                        {sg.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </SCard>
-          )}
+
 
           {/* FOCUS LEARNING BANNER CARD */}
           {!hiddenWidgetIds.includes('focus-learning') && (
@@ -544,11 +517,15 @@ export default function CollegeDashboardPage() {
                     Top Skill Gaps
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {['System Architecture', 'Cloud Services', 'Advanced Algorithms'].map((sg, idx) => (
-                      <span key={idx} style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: 8, fontWeight: 700 }}>
-                        △ {sg}
-                      </span>
-                    ))}
+                    {(data?.careerSection?.topSkillGaps && data.careerSection.topSkillGaps.length > 0) ? (
+                      data.careerSection.topSkillGaps.slice(0, 3).map((sg, idx) => (
+                        <span key={idx} style={{ fontSize: 11, background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: 8, fontWeight: 700 }}>
+                          △ {sg}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: 11, color: 'var(--s-text3)' }}>Add skills in your profile to analyze skill gaps</span>
+                    )}
                   </div>
                   <div style={{ marginTop: 16 }}>
                     <SBtn variant="primary" onClick={() => navigate('/college/career/skill-gap')} style={{ width: '100%', justifyContent: 'center', borderRadius: 12, fontSize: 13 }}>
