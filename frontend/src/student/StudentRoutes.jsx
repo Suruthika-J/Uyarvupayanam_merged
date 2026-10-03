@@ -107,6 +107,7 @@ import PeerMentorshipPage from './pages/community/PeerMentorshipPage'
 import DoubtResolutionPage from './pages/community/DoubtResolutionPage'
 import CollegeSettingsPage from './pages/settings/CollegeSettingsPage'
 import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
+import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
 import PeerChatPage from './pages/community/PeerChatPage'
 import MultiplayerQuizPage from './pages/community/MultiplayerQuizPage'
 
