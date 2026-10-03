@@ -850,12 +850,60 @@ export default function CollegeOnboardingPage() {
         'Cloud Computing & DevOps': 'cloud_devops',
         'algorithms_systems': 'algorithms_systems',
         'Algorithms & System Programming': 'algorithms_systems',
-        'embedded_iot': 'embedded_iot',
-        'Embedded Systems & IoT': 'embedded_iot',
-        'vlsi_design': 'vlsi_design',
-        'VLSI & Chip Design': 'vlsi_design',
-        'robotics_automation': 'robotics_automation',
-        'Robotics & Automation Engineering': 'robotics_automation',
+
+        // 17 B.E. ECE Domains
+        'vlsi_chip_design': 'vlsi_chip_design',
+        'VLSI & Chip Design': 'vlsi_chip_design',
+        'vlsi_design': 'vlsi_chip_design',
+        'VLSI & Semiconductor Chip Design': 'vlsi_chip_design',
+        'embedded_systems': 'embedded_systems',
+        'Embedded Systems': 'embedded_systems',
+        'Embedded Systems & Microcontrollers': 'embedded_systems',
+        'embedded_iot': 'embedded_systems',
+        'Embedded Systems & IoT': 'embedded_systems',
+        'iot': 'iot',
+        'IoT': 'iot',
+        'IoT & Smart Sensor Systems': 'iot',
+        'communication_telecom': 'communication_telecom',
+        'Communication / Telecom': 'communication_telecom',
+        'Communication/Telecom': 'communication_telecom',
+        'Wireless Communication & 5G/6G Networks': 'communication_telecom',
+        'rf_microwave': 'rf_microwave',
+        'RF & Microwave': 'rf_microwave',
+        'RF & Microwave Engineering': 'rf_microwave',
+        'signal_processing': 'signal_processing',
+        'Signal Processing': 'signal_processing',
+        'Signal Processing & Image Analysis': 'signal_processing',
+        'image_processing_cv': 'image_processing_cv',
+        'Image Processing / Computer Vision': 'image_processing_cv',
+        'Image Processing/Computer Vision': 'image_processing_cv',
+        'automation_control': 'automation_control',
+        'Automation & Control': 'automation_control',
+        'robotics': 'robotics',
+        'Robotics': 'robotics',
+        'robotics_automation': 'robotics',
+        'Robotics & Automation Engineering': 'robotics',
+        'hardware_pcb_design': 'hardware_pcb_design',
+        'Hardware / PCB Design': 'hardware_pcb_design',
+        'Hardware/PCB Design': 'hardware_pcb_design',
+        'automotive_electronics': 'automotive_electronics',
+        'Automotive Electronics': 'automotive_electronics',
+        'power_electronics': 'power_electronics',
+        'Power Electronics': 'power_electronics',
+        'medical_electronics': 'medical_electronics',
+        'Medical Electronics': 'medical_electronics',
+        'satellite_aerospace_avionics': 'satellite_aerospace_avionics',
+        'Satellite / Aerospace / Avionics': 'satellite_aerospace_avionics',
+        'Satellite/Aerospace/Avionics': 'satellite_aerospace_avionics',
+        'semiconductor_testing': 'semiconductor_testing',
+        'Semiconductor Testing': 'semiconductor_testing',
+        'aiml_ece': 'aiml_ece',
+        'AI / ML for ECE': 'aiml_ece',
+        'AI/ML for ECE': 'aiml_ece',
+        'software_it': 'software_it',
+        'Software / IT': 'software_it',
+        'Software/IT': 'software_it',
+
         'ev_powertrain': 'ev_powertrain',
         'Electric Vehicle & Power Systems': 'ev_powertrain',
         'cad_structural': 'cad_structural',
@@ -865,7 +913,10 @@ export default function CollegeOnboardingPage() {
       let candidateIds = extractedIds.map(id => DOMAIN_ALIAS_MAP[id] || id).filter(Boolean)
 
       if (candidateIds.length === 0) {
-        candidateIds = ['software_engineering', 'ai_ml', 'cloud_devops']
+        const isEceBranch = profile.domain && /ece|electronics|communication/i.test(profile.domain);
+        candidateIds = isEceBranch 
+          ? ['vlsi_chip_design', 'embedded_systems', 'iot'] 
+          : ['software_engineering', 'ai_ml', 'cloud_devops'];
       }
 
       console.log("[STEP 6] CANDIDATE DOMAIN IDS:", candidateIds)

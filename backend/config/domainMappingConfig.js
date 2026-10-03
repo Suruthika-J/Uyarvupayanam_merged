@@ -87,6 +87,127 @@ const NORMALIZED_DOMAINS = {
     category: "Core Engineering",
     icon: "FiHome",
     description: "Design 3D mechanical assemblies, thermal dynamics, and structural civil infrastructure."
+  },
+
+  // ── 17 B.E. ECE Domains ──
+  vlsi_chip_design: {
+    id: "vlsi_chip_design",
+    name: "VLSI & Chip Design",
+    category: "Semiconductors & Chip Design",
+    icon: "FiCpu",
+    description: "Design integrated circuits, gate-level netlists, CMOS logic, and ASIC/FPGA semiconductor chips."
+  },
+  embedded_systems: {
+    id: "embedded_systems",
+    name: "Embedded Systems",
+    category: "Hardware & Firmware",
+    icon: "FiRadio",
+    description: "Program microcontrollers, bare-metal C, RTOS task schedulers, and embedded hardware interfaces."
+  },
+  iot: {
+    id: "iot",
+    name: "IoT",
+    category: "Internet of Things",
+    icon: "FiGlobe",
+    description: "Architect interconnected smart edge sensor nodes, MQTT telemetry brokers, and low-power IoT networks."
+  },
+  communication_telecom: {
+    id: "communication_telecom",
+    name: "Communication / Telecom",
+    category: "Telecommunications & Networks",
+    icon: "FiRadio",
+    description: "Engineer 5G/6G cellular links, OFDM modulation, base stations, and digital telecommunication systems."
+  },
+  rf_microwave: {
+    id: "rf_microwave",
+    name: "RF & Microwave",
+    category: "Electromagnetics & RF",
+    icon: "FiRadio",
+    description: "Design RF transmission lines, waveguides, impedance matching networks, Smith charts, and radar front-ends."
+  },
+  signal_processing: {
+    id: "signal_processing",
+    name: "Signal Processing",
+    category: "Signals & Systems",
+    icon: "FiActivity",
+    description: "Formulate DSP filters (FIR/IIR), Fourier transforms, Nyquist sampling, and digital audio/sensor analysis."
+  },
+  image_processing_cv: {
+    id: "image_processing_cv",
+    name: "Image Processing / Computer Vision",
+    category: "Computer Vision & AI",
+    icon: "FiCpu",
+    description: "Build spatial convolution kernels, OpenCV image analysis, object detection, and CNN vision models."
+  },
+  automation_control: {
+    id: "automation_control",
+    name: "Automation & Control",
+    category: "Control Systems & Instrumentation",
+    icon: "FiZap",
+    description: "Program industrial PLCs, closed-loop PID controllers, state-space models, and automation feedback loops."
+  },
+  robotics: {
+    id: "robotics",
+    name: "Robotics",
+    category: "Robotics & Automation",
+    icon: "FiZap",
+    description: "Engineer robotic kinematics, Jacobian dynamics, ROS middleware, SLAM, and autonomous path planning."
+  },
+  hardware_pcb_design: {
+    id: "hardware_pcb_design",
+    name: "Hardware / PCB Design",
+    category: "Hardware & Circuit Design",
+    icon: "FiCpu",
+    description: "Layout multi-layer PCBs, controlled impedance traces, DRC validation, decoupling, and high-speed signal integrity."
+  },
+  automotive_electronics: {
+    id: "automotive_electronics",
+    name: "Automotive Electronics",
+    category: "Automotive Systems",
+    icon: "FiBriefcase",
+    description: "Develop vehicle ECUs, CAN/LIN automotive buses, ADAS active safety, and ISO 26262 functional safety."
+  },
+  power_electronics: {
+    id: "power_electronics",
+    name: "Power Electronics",
+    category: "Power Systems & Energy",
+    icon: "FiSun",
+    description: "Engineer DC-DC converters (buck/boost/flyback), inverters, soft switching, and battery power systems."
+  },
+  medical_electronics: {
+    id: "medical_electronics",
+    name: "Medical Electronics",
+    category: "Biomedical & Healthcare",
+    icon: "FiActivity",
+    description: "Design ECG acquisition circuits, high CMRR instrumentation amplifiers, medical safety isolation, and bio-sensors."
+  },
+  satellite_aerospace_avionics: {
+    id: "satellite_aerospace_avionics",
+    name: "Satellite / Aerospace / Avionics",
+    category: "Aerospace & Avionics",
+    icon: "FiGlobe",
+    description: "Engineer satellite transponders, link margins, attitude control wheels, inertial navigation, and avionics."
+  },
+  semiconductor_testing: {
+    id: "semiconductor_testing",
+    name: "Semiconductor Testing",
+    category: "Testing & Quality Assurance",
+    icon: "FiCheckCircle",
+    description: "Formulate ATE test programs, scan chains, stuck-at fault models, ATPG, BIST, and silicon wafer yield testing."
+  },
+  aiml_ece: {
+    id: "aiml_ece",
+    name: "AI / ML for ECE",
+    category: "Edge AI & Embedded Intelligence",
+    icon: "FiCpu",
+    description: "Deploy quantized neural networks, Edge AI inference, confusion matrix analysis, and embedded machine learning."
+  },
+  software_it: {
+    id: "software_it",
+    name: "Software / IT",
+    category: "Software Engineering & IT",
+    icon: "FiBriefcase",
+    description: "Build robust REST APIs, SQL database indexing, Docker containers, asynchronous event systems, and web apps."
   }
 };
 
@@ -106,7 +227,6 @@ const SPECIALIZATION_MAP = {
   "ai & ml": "ai_ml",
   "deep learning": "ai_ml",
   "nlp": "ai_ml",
-  "computer vision": "ai_ml",
   "generative ai": "ai_ml",
 
   // Cyber Security
@@ -141,14 +261,85 @@ const SPECIALIZATION_MAP = {
   "devops": "cloud_devops",
   "cloud architecture": "cloud_devops",
 
-  // Core Electronics / Hardware / Mechanical / Civil
-  "embedded systems & iot": "embedded_iot",
-  "embedded": "embedded_iot",
-  "iot": "embedded_iot",
-  "vlsi & chip design": "vlsi_design",
-  "vlsi": "vlsi_design",
-  "robotics & automation": "robotics_automation",
-  "robotics": "robotics_automation",
+  // ── 17 B.E. ECE Specialization & Domain Mappings ──
+  "vlsi & chip design": "vlsi_chip_design",
+  "vlsi & semiconductor chip design": "vlsi_chip_design",
+  "vlsi design": "vlsi_chip_design",
+  "vlsi": "vlsi_chip_design",
+  "chip design": "vlsi_chip_design",
+  "semiconductor chip design": "vlsi_chip_design",
+
+  "embedded systems": "embedded_systems",
+  "embedded systems & microcontrollers": "embedded_systems",
+  "embedded systems & iot": "embedded_systems",
+  "embedded": "embedded_systems",
+  "microcontrollers": "embedded_systems",
+
+  "iot": "iot",
+  "iot & smart sensor systems": "iot",
+  "smart sensor systems": "iot",
+  "internet of things": "iot",
+
+  "communication / telecom": "communication_telecom",
+  "communication telecom": "communication_telecom",
+  "telecom": "communication_telecom",
+  "telecommunication": "communication_telecom",
+  "wireless communication & 5g/6g networks": "communication_telecom",
+  "wireless communication": "communication_telecom",
+
+  "rf & microwave": "rf_microwave",
+  "rf & microwave engineering": "rf_microwave",
+  "rf microwave": "rf_microwave",
+  "microwave": "rf_microwave",
+
+  "signal processing": "signal_processing",
+  "signal processing & image analysis": "signal_processing",
+  "digital signal processing": "signal_processing",
+
+  "image processing / computer vision": "image_processing_cv",
+  "image processing": "image_processing_cv",
+  "computer vision": "image_processing_cv",
+
+  "automation & control": "automation_control",
+  "automation control": "automation_control",
+  "automation": "automation_control",
+  "control systems": "automation_control",
+
+  "robotics": "robotics",
+  "robotics & automation": "robotics",
+  "robotics engineering": "robotics",
+
+  "hardware / pcb design": "hardware_pcb_design",
+  "hardware pcb design": "hardware_pcb_design",
+  "pcb design": "hardware_pcb_design",
+  "hardware design": "hardware_pcb_design",
+
+  "automotive electronics": "automotive_electronics",
+  "automotive systems": "automotive_electronics",
+
+  "power electronics": "power_electronics",
+  "power electronics & drives": "power_electronics",
+
+  "medical electronics": "medical_electronics",
+  "biomedical electronics": "medical_electronics",
+
+  "satellite / aerospace / avionics": "satellite_aerospace_avionics",
+  "satellite aerospace avionics": "satellite_aerospace_avionics",
+  "satellite": "satellite_aerospace_avionics",
+  "aerospace": "satellite_aerospace_avionics",
+  "avionics": "satellite_aerospace_avionics",
+
+  "semiconductor testing": "semiconductor_testing",
+  "chip testing": "semiconductor_testing",
+
+  "ai / ml for ece": "aiml_ece",
+  "ai ml for ece": "aiml_ece",
+  "edge ai": "aiml_ece",
+
+  "software / it": "software_it",
+  "software it": "software_it",
+
+  // Core Mechanical / Civil / Power
   "electric vehicle": "ev_powertrain",
   "power systems": "ev_powertrain",
   "cad": "cad_structural",
@@ -160,12 +351,30 @@ const BRANCH_DEFAULT_DOMAINS = {
   cse: ["software_engineering", "ai_ml", "cyber_security", "algorithms_systems", "data_science"],
   it: ["full_stack", "cloud_devops", "cyber_security", "data_science"],
   aids: ["ai_ml", "data_science", "full_stack", "cloud_devops"],
-  ece: ["embedded_iot", "vlsi_design", "robotics_automation", "cyber_security"],
-  eee: ["ev_powertrain", "embedded_iot", "robotics_automation", "cloud_devops"],
-  mechanical: ["cad_structural", "robotics_automation", "ev_powertrain"],
+  ece: [
+    "vlsi_chip_design",
+    "embedded_systems",
+    "iot",
+    "communication_telecom",
+    "rf_microwave",
+    "signal_processing",
+    "image_processing_cv",
+    "automation_control",
+    "robotics",
+    "hardware_pcb_design",
+    "automotive_electronics",
+    "power_electronics",
+    "medical_electronics",
+    "satellite_aerospace_avionics",
+    "semiconductor_testing",
+    "aiml_ece",
+    "software_it"
+  ],
+  eee: ["ev_powertrain", "power_electronics", "automation_control", "cloud_devops"],
+  mechanical: ["cad_structural", "robotics", "ev_powertrain"],
   civil: ["cad_structural", "data_science", "cloud_devops"],
   chemical: ["data_science", "ai_ml", "cloud_devops"],
-  mechatronics: ["robotics_automation", "embedded_iot", "ai_ml"]
+  mechatronics: ["robotics", "embedded_systems", "aiml_ece"]
 };
 
 function resolveBranchId(branchId = "cse") {

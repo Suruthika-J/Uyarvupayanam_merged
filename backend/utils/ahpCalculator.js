@@ -44,11 +44,23 @@ const CAREER_TAXONOMY = {
     { id: "mlops_engineer", name: "MLOps & AI Systems Engineer", category: "AI Operations", icon: "FiGlobe", description: "Deploy, monitor, and scale machine learning models in production environments." }
   ],
   ece: [
-    { id: "embedded_iot", name: "Embedded Systems & IoT Specialist", category: "Hardware & Firmware", icon: "FiCpu", description: "Program microcontrollers, real-time operating systems (RTOS), and IoT devices." },
-    { id: "vlsi_design", name: "VLSI & Chip Design Engineer", category: "Semiconductors", icon: "FiRadio", description: "Design integrated circuits, microprocessors, and FPGA digital systems." },
-    { id: "signal_processing", name: "Signal Processing & Telecommunication", category: "Networks & Signals", icon: "FiActivity", description: "Develop algorithms for digital signal processing, audio/video, and 5G networks." },
-    { id: "robotics_automation", name: "Robotics & Automation Engineer", category: "Robotics", icon: "FiZap", description: "Integrate sensors, actuators, and control systems for industrial robotics." },
-    { id: "firmware_dev", name: "Embedded Software & Firmware Developer", category: "Software & Hardware", icon: "FiBriefcase", description: "Write low-level firmware in C/C++ for automotive and consumer electronics." }
+    { id: "vlsi_chip_design", name: "VLSI & Chip Design", category: "Semiconductors & Chip Design", icon: "FiCpu", description: "Design integrated circuits, gate-level netlists, CMOS logic, and ASIC/FPGA semiconductor chips." },
+    { id: "embedded_systems", name: "Embedded Systems", category: "Hardware & Firmware", icon: "FiRadio", description: "Program microcontrollers, bare-metal C, RTOS task schedulers, and embedded hardware interfaces." },
+    { id: "iot", name: "IoT", category: "Internet of Things", icon: "FiGlobe", description: "Architect interconnected smart edge sensor nodes, MQTT telemetry brokers, and low-power IoT networks." },
+    { id: "communication_telecom", name: "Communication / Telecom", category: "Telecommunications & Networks", icon: "FiRadio", description: "Engineer 5G/6G cellular links, OFDM modulation, base stations, and digital telecommunication systems." },
+    { id: "rf_microwave", name: "RF & Microwave", category: "Electromagnetics & RF", icon: "FiRadio", description: "Design RF transmission lines, waveguides, impedance matching networks, Smith charts, and radar front-ends." },
+    { id: "signal_processing", name: "Signal Processing", category: "Signals & Systems", icon: "FiActivity", description: "Formulate DSP filters (FIR/IIR), Fourier transforms, Nyquist sampling, and digital audio/sensor analysis." },
+    { id: "image_processing_cv", name: "Image Processing / Computer Vision", category: "Computer Vision & AI", icon: "FiCpu", description: "Build spatial convolution kernels, OpenCV image analysis, object detection, and CNN vision models." },
+    { id: "automation_control", name: "Automation & Control", category: "Control Systems & Instrumentation", icon: "FiZap", description: "Program industrial PLCs, closed-loop PID controllers, state-space models, and automation feedback loops." },
+    { id: "robotics", name: "Robotics", category: "Robotics & Automation", icon: "FiZap", description: "Engineer robotic kinematics, Jacobian dynamics, ROS middleware, SLAM, and autonomous path planning." },
+    { id: "hardware_pcb_design", name: "Hardware / PCB Design", category: "Hardware & Circuit Design", icon: "FiCpu", description: "Layout multi-layer PCBs, controlled impedance traces, DRC validation, decoupling, and high-speed signal integrity." },
+    { id: "automotive_electronics", name: "Automotive Electronics", category: "Automotive Systems", icon: "FiBriefcase", description: "Develop vehicle ECUs, CAN/LIN automotive buses, ADAS active safety, and ISO 26262 functional safety." },
+    { id: "power_electronics", name: "Power Electronics", category: "Power Systems & Energy", icon: "FiSun", description: "Engineer DC-DC converters (buck/boost/flyback), inverters, soft switching, and battery power systems." },
+    { id: "medical_electronics", name: "Medical Electronics", category: "Biomedical & Healthcare", icon: "FiActivity", description: "Design ECG acquisition circuits, high CMRR instrumentation amplifiers, medical safety isolation, and bio-sensors." },
+    { id: "satellite_aerospace_avionics", name: "Satellite / Aerospace / Avionics", category: "Aerospace & Avionics", icon: "FiGlobe", description: "Engineer satellite transponders, link margins, attitude control wheels, inertial navigation, and avionics." },
+    { id: "semiconductor_testing", name: "Semiconductor Testing", category: "Testing & Quality Assurance", icon: "FiCheckCircle", description: "Formulate ATE test programs, scan chains, stuck-at fault models, ATPG, BIST, and silicon wafer yield testing." },
+    { id: "aiml_ece", name: "AI / ML for ECE", category: "Edge AI & Embedded Intelligence", icon: "FiCpu", description: "Deploy quantized neural networks, Edge AI inference, confusion matrix analysis, and embedded machine learning." },
+    { id: "software_it", name: "Software / IT", category: "Software Engineering & IT", icon: "FiBriefcase", description: "Build robust REST APIs, SQL database indexing, Docker containers, asynchronous event systems, and web apps." }
   ],
   eee: [
     { id: "power_systems", name: "Power Systems & Smart Grid Engineer", category: "Electrical Power", icon: "FiSun", description: "Design, monitor, and optimize high-voltage power transmission and smart grids." },

@@ -32,6 +32,7 @@ const sanitizeQuestionForClient = (qDoc) => {
 };
 
 const DOMAIN_ALIAS_MAP = {
+  // CSE Domains & Aliases
   'full_stack': 'full_stack',
   'Full Stack & Software Engineering': 'full_stack',
   'Full Stack Web & Mobile Development': 'full_stack',
@@ -48,12 +49,61 @@ const DOMAIN_ALIAS_MAP = {
   'Cloud Computing & DevOps': 'cloud_devops',
   'algorithms_systems': 'algorithms_systems',
   'Algorithms & System Programming': 'algorithms_systems',
-  'embedded_iot': 'embedded_iot',
-  'Embedded Systems & IoT': 'embedded_iot',
-  'vlsi_design': 'vlsi_design',
-  'VLSI & Chip Design': 'vlsi_design',
-  'robotics_automation': 'robotics_automation',
-  'Robotics & Automation Engineering': 'robotics_automation',
+
+  // 17 B.E. ECE Domains & Aliases
+  'vlsi_chip_design': 'vlsi_chip_design',
+  'VLSI & Chip Design': 'vlsi_chip_design',
+  'vlsi_design': 'vlsi_chip_design',
+  'VLSI & Semiconductor Chip Design': 'vlsi_chip_design',
+  'embedded_systems': 'embedded_systems',
+  'Embedded Systems': 'embedded_systems',
+  'Embedded Systems & Microcontrollers': 'embedded_systems',
+  'embedded_iot': 'embedded_systems',
+  'Embedded Systems & IoT': 'embedded_systems',
+  'iot': 'iot',
+  'IoT': 'iot',
+  'IoT & Smart Sensor Systems': 'iot',
+  'communication_telecom': 'communication_telecom',
+  'Communication / Telecom': 'communication_telecom',
+  'Communication/Telecom': 'communication_telecom',
+  'Wireless Communication & 5G/6G Networks': 'communication_telecom',
+  'rf_microwave': 'rf_microwave',
+  'RF & Microwave': 'rf_microwave',
+  'RF & Microwave Engineering': 'rf_microwave',
+  'signal_processing': 'signal_processing',
+  'Signal Processing': 'signal_processing',
+  'Signal Processing & Image Analysis': 'signal_processing',
+  'image_processing_cv': 'image_processing_cv',
+  'Image Processing / Computer Vision': 'image_processing_cv',
+  'Image Processing/Computer Vision': 'image_processing_cv',
+  'automation_control': 'automation_control',
+  'Automation & Control': 'automation_control',
+  'robotics': 'robotics',
+  'Robotics': 'robotics',
+  'robotics_automation': 'robotics',
+  'Robotics & Automation Engineering': 'robotics',
+  'hardware_pcb_design': 'hardware_pcb_design',
+  'Hardware / PCB Design': 'hardware_pcb_design',
+  'Hardware/PCB Design': 'hardware_pcb_design',
+  'automotive_electronics': 'automotive_electronics',
+  'Automotive Electronics': 'automotive_electronics',
+  'power_electronics': 'power_electronics',
+  'Power Electronics': 'power_electronics',
+  'medical_electronics': 'medical_electronics',
+  'Medical Electronics': 'medical_electronics',
+  'satellite_aerospace_avionics': 'satellite_aerospace_avionics',
+  'Satellite / Aerospace / Avionics': 'satellite_aerospace_avionics',
+  'Satellite/Aerospace/Avionics': 'satellite_aerospace_avionics',
+  'semiconductor_testing': 'semiconductor_testing',
+  'Semiconductor Testing': 'semiconductor_testing',
+  'aiml_ece': 'aiml_ece',
+  'AI / ML for ECE': 'aiml_ece',
+  'AI/ML for ECE': 'aiml_ece',
+  'software_it': 'software_it',
+  'Software / IT': 'software_it',
+  'Software/IT': 'software_it',
+
+  // Other Core Engineering Mappings
   'ev_powertrain': 'ev_powertrain',
   'Electric Vehicle & Power Systems': 'ev_powertrain',
   'cad_structural': 'cad_structural',
@@ -64,23 +114,38 @@ const DOMAIN_ALIAS_MAP = {
 const getAhpFuzzyQuestions = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?.id || req.user?._id;
-    const { branch = "CSE", domains, domainId, difficulty, limit } = req.query;
+    const { branch, domains, domainId, difficulty, limit } = req.query;
     const bodyDomains = req.body?.domains || req.body?.domainIds;
 
-    console.log("[DISCOVERY API] branch:", branch);
-    console.log("[DISCOVERY API] userId:", userId || "guest");
-
-    // 1. Ensure seedPdfMasterQuestionBank is populated in MongoDB
+    // 1. Ensure seedPdfMasterQuestionBank is populated in MongoDB (105 CSE + 255 ECE = 360 total)
     const { seedPdfMasterQuestionBank } = require("../seeders/seedPdfMasterQuestionBank");
     const countTotal = await AhpFuzzyQuestion.countDocuments({ source: "master-question-bank-pdf", active: true });
-    if (countTotal < 105) {
+    if (countTotal < 360) {
       await seedPdfMasterQuestionBank();
     }
 
-    const normalizedBranch = (!branch || branch === "CSE" || branch.toLowerCase().includes("computer science") || branch.toLowerCase().includes("cse"))
-      ? "CSE"
-      : branch;
-    const branchFilter = { $in: ["CSE", "cse", normalizedBranch] };
+    // Resolve branch strictly based on parameter, body, or logged-in student profile
+    let rawBranch = branch || req.body?.branch;
+    if (!rawBranch && userId) {
+      const studentProfile = await CollegeStudentProfile.findOne({ userId });
+      if (studentProfile && studentProfile.domain) {
+        rawBranch = studentProfile.domain;
+      } else {
+        const ahpProfile = await AhpCareerProfile.findOne({ userId });
+        if (ahpProfile && ahpProfile.branchId) {
+          rawBranch = ahpProfile.branchId;
+        }
+      }
+    }
+
+    const branchStr = (rawBranch || "CSE").toString().toLowerCase();
+    const isECE = branchStr.includes("ece") || branchStr.includes("electronics") || branchStr.includes("communication");
+    const normalizedBranch = isECE ? "ECE" : "CSE";
+    // Strict branch isolation: ECE students get ONLY ECE questions; CSE students get ONLY CSE questions
+    const branchFilter = isECE ? { $in: ["ECE", "ece"] } : { $in: ["CSE", "cse"] };
+
+    console.log("[DISCOVERY API] rawBranch:", rawBranch, "normalizedBranch:", normalizedBranch);
+    console.log("[DISCOVERY API] userId:", userId || "guest");
 
     // 2. STEP 1 & STEP 2: Determine Top 3 Ranked Domains from AHP prediction or query parameters
     let rankedDomains = [];
@@ -143,13 +208,21 @@ const getAhpFuzzyQuestions = async (req, res) => {
       }
     }
 
-    // Priority C: Fallback default Top 3 CSE domains in AHP order
+    // Priority C: Fallback default Top 3 domains in AHP order tailored specifically to selected branch
     if (rankedDomains.length === 0) {
-      rankedDomains = [
-        { domainId: "software_engineering", domainName: "Software Engineering & Architecture", rank: 1, ahpScore: 0.40 },
-        { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", rank: 2, ahpScore: 0.35 },
-        { domainId: "cloud_devops", domainName: "Cloud Computing & DevOps", rank: 3, ahpScore: 0.25 }
-      ];
+      if (isECE) {
+        rankedDomains = [
+          { domainId: "vlsi_chip_design", domainName: "VLSI & Chip Design", rank: 1, ahpScore: 0.40 },
+          { domainId: "embedded_systems", domainName: "Embedded Systems", rank: 2, ahpScore: 0.35 },
+          { domainId: "iot", domainName: "IoT", rank: 3, ahpScore: 0.25 }
+        ];
+      } else {
+        rankedDomains = [
+          { domainId: "software_engineering", domainName: "Software Engineering & Architecture", rank: 1, ahpScore: 0.40 },
+          { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", rank: 2, ahpScore: 0.35 },
+          { domainId: "cloud_devops", domainName: "Cloud Computing & DevOps", rank: 3, ahpScore: 0.25 }
+        ];
+      }
     }
 
     // Take strictly the TOP 3 domains according to AHP ranking
@@ -328,10 +401,11 @@ const evaluateStudentAssessment = async (req, res) => {
 
     // PART 11 & PART 13: If assessment is evaluated and user logged in, persist the recommendation
     if (userId && evaluation.recommendedDomain) {
+      const detectedBranch = (questions.some(q => q.branch === "ECE")) ? "ECE" : "CSE";
       const resultData = {
         userId,
         studentId: userId.toString(),
-        branch: "CSE",
+        branch: detectedBranch,
         ahpCandidates: evaluation.ahpCandidates,
         fuzzyScores: evaluation.fuzzyScores,
         finalScores: evaluation.finalScores,
@@ -420,10 +494,14 @@ const getDiscoveryResult = async (req, res) => {
           score: Number((d.weight || d.scorePercent / 100 || 0.5).toFixed(4))
         }));
 
+        const isEceStudent = (studentProfile?.domain && /ece|electronics|communication/i.test(studentProfile.domain)) ||
+                             (ahpProfile?.branchId && /ece|electronics|communication/i.test(ahpProfile.branchId));
+        const detectedBranch = isEceStudent ? "ECE" : "CSE";
+
         result = {
           userId,
           studentId: userId.toString(),
-          branch: "CSE",
+          branch: detectedBranch,
           ahpCandidates,
           fuzzyScores: ahpCandidates.map(c => ({ ...c, score: Number((c.score * 0.9).toFixed(4)) })),
           finalScores: ahpCandidates.map(c => ({ ...c, score: Number((c.score).toFixed(4)) })),

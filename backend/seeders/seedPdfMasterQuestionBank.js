@@ -2236,6 +2236,12 @@ const PDF_MASTER_QUESTION_BANK = [
   }
 ];
 
+// Append B.E. ECE Master Question Bank (17 domains, 255 questions)
+const { ECE_MASTER_QUESTION_BANK } = require("./seedEceMasterQuestionBank");
+if (Array.isArray(ECE_MASTER_QUESTION_BANK) && ECE_MASTER_QUESTION_BANK.length > 0) {
+  PDF_MASTER_QUESTION_BANK.push(...ECE_MASTER_QUESTION_BANK);
+}
+
 async function seedPdfMasterQuestionBank() {
   let inserted = 0;
   let updated = 0;
@@ -2268,3 +2274,4 @@ module.exports = {
   PDF_MASTER_QUESTION_BANK,
   seedPdfMasterQuestionBank
 };
+
