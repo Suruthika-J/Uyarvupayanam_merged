@@ -48,9 +48,17 @@ function timeAgo(dateStr) {
   return d.toLocaleDateString()
 }
 
+function getRawId(val) {
+  if (!val) return ''
+  if (typeof val === 'object') {
+    return (val._id || val.id || '').toString()
+  }
+  return String(val)
+}
+
 // ── Study Invite Banner ───────────────────────────────────────────────────────
 function StudyInviteBanner({ msg, myId, onRespond }) {
-  const isMe = msg.senderId?.toString() === myId?.toString()
+  const isMe = getRawId(msg.senderId) === getRawId(myId)
   const status = msg.studyInvite?.status
   const sessionId = msg.studyInvite?.sessionId
 
@@ -70,6 +78,12 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
         {msg.studyInvite?.goal && <span style={{ color: '#6b7280' }}> — {msg.studyInvite.goal}</span>}
         <span style={{ color: '#9ca3af' }}> ({msg.studyInvite?.durationMinutes || 25} min)</span>
       </div>
+
+      {isMe && status === 'pending' && (
+        <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>⏳</span> Invite sent — Waiting for study partner to accept…
+        </div>
+      )}
 
       {!isMe && status === 'pending' && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -495,7 +509,14 @@ export default function PeerChatPage() {
               {peerTyping && <div style={{ fontSize: 11, color: '#0284c7', fontStyle: 'italic' }}>typing…</div>}
             </div>
             {/* Study invite button */}
-            <button onClick={() => setShowInviteModal(true)}
+            <button onClick={() => {
+              const acceptedInvite = [...messages].reverse().find(m => m.type === 'study_invite' && m.studyInvite?.status === 'accepted' && m.studyInvite?.sessionId)
+              if (acceptedInvite?.studyInvite?.sessionId) {
+                navigate(`/college/multiplayer-quiz/${acceptedInvite.studyInvite.sessionId}`)
+              } else {
+                setShowInviteModal(true)
+              }
+            }}
               style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#7c3aed,#6366f1)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
               <FiTarget size={14} /> Study Together
             </button>
@@ -514,7 +535,7 @@ export default function PeerChatPage() {
                   </div>
                 )
                 : messages.map((msg, i) => {
-                  const isMe = msg.senderId?.toString() === myId?.toString()
+                  const isMe = getRawId(msg.senderId) === getRawId(myId)
                   if (msg.type === 'study_invite') {
                     return <StudyInviteBanner key={msg._id || i} msg={msg} myId={myId} onRespond={respondToInvite} />
                   }
