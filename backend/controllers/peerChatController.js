@@ -3,50 +3,61 @@ const CollegeStudentProfile = require("../models/CollegeStudentProfile");
 const User = require("../models/User");
 
 // ─── GET /api/peer-chat/students ─────────────────────────────────────────────
-// Search/discover other college students (excluding self).
+// ─── GET /api/peer-chat/students ─────────────────────────────────────────────
+// Search/discover other college students (excluding self) from database.
 exports.discoverStudents = async (req, res) => {
   try {
     const userId = req.student?._id || req.student?.id;
     const { q, skills, interests, department, year } = req.query;
 
-    // Build a profile filter
-    const profileFilter = { userId: { $ne: userId } };
-    if (skills)    profileFilter.skills       = { $in: skills.split(",").map(s => new RegExp(s.trim(), "i")) };
-    if (interests) profileFilter.academicInterests = { $in: interests.split(",").map(s => new RegExp(s.trim(), "i")) };
-    if (year)      profileFilter.currentYear   = new RegExp(year, "i");
-    if (department) profileFilter.field        = new RegExp(department, "i");
-
     // Get current student profile to determine domain for peer matching
-    const myProfile = await CollegeStudentProfile.findOne({ userId }).lean();
-    const myDomain = myProfile?.domain || myProfile?.specialization || myProfile?.targetCareer || "Artificial Intelligence & Machine Learning";
+    const myProfile = await CollegeStudentProfile.findOne({
+      $or: [{ userId }, { userId: userId?.toString() }]
+    }).lean();
+
+    const myDomain = myProfile?.domain || myProfile?.specialization || myProfile?.targetCareer || "Full Stack Web & Mobile Development";
     const myDomainTokens = myDomain.toLowerCase().split(/\s+/).filter(w => w.length > 2);
 
-    const profiles = await CollegeStudentProfile.find(profileFilter)
-      .limit(50)
-      .lean();
+    // 1. Fetch real student users from MongoDB database except current logged-in user
+    const users = await User.find({
+      _id: { $ne: userId },
+      role: "student"
+    }).select("_id name email district userType classLevel").sort({ createdAt: -1 }).lean();
 
-    const userIds = profiles.map(p => p.userId);
-    const users   = await User.find({ _id: { $in: userIds }, role: "student" }).select("_id name").lean();
+    const userIds = users.map(u => u._id);
 
-    const userMap = {};
-    users.forEach(u => { userMap[u._id.toString()] = u.name; });
+    // 2. Fetch matching college student profiles
+    const profiles = await CollegeStudentProfile.find({
+      $or: [
+        { userId: { $in: userIds } },
+        { userId: { $in: userIds.map(id => id.toString()) } }
+      ]
+    }).lean();
 
-    // Combine profile data & calculate domain match relevance
-    let combined = profiles.map(p => {
-      const pDomain = (p.domain || p.specialization || p.targetCareer || p.field || "").toLowerCase();
+    const profileMap = {};
+    profiles.forEach(p => {
+      if (p.userId) {
+        profileMap[p.userId.toString()] = p;
+      }
+    });
+
+    // 3. Map real users into peer objects
+    let combined = users.map(u => {
+      const p = profileMap[u._id.toString()] || {};
+      const pDomain = (p.domain || p.specialization || p.targetCareer || p.field || "Computer Science").toLowerCase();
       const isExactMatch = pDomain === myDomain.toLowerCase();
       const isPartialMatch = myDomainTokens.some(tok => pDomain.includes(tok));
       const sameDomainMatch = isExactMatch || isPartialMatch;
 
       return {
-        userId:          p.userId,
-        name:            userMap[p.userId?.toString()] || "Student Peer",
-        institution:     p.institution,
-        field:           p.field,
-        degreeProgramme: p.degreeProgramme,
-        currentYear:     p.currentYear,
-        domain:          p.domain || p.specialization || "Engineering",
-        skills:          p.skills || [],
+        userId:          u._id,
+        name:            u.name || "Student Peer",
+        institution:     p.institution || (u.district ? `${u.district} College` : "PSG College of Technology"),
+        field:           p.field || "engineering",
+        degreeProgramme: p.degreeProgramme || "B.E. (Bachelor of Engineering)",
+        currentYear:     p.currentYear || "College Student",
+        domain:          p.domain || p.specialization || "Full Stack Web & Mobile Development",
+        skills:          (p.skills && p.skills.length > 0) ? p.skills : ["Python / Data Science", "Problem Solving & Logic"],
         academicInterests: p.academicInterests || [],
         careerInterests:   p.careerInterests   || [],
         sameDomainMatch,
@@ -57,12 +68,17 @@ exports.discoverStudents = async (req, res) => {
     if (q) {
       const rx = new RegExp(q, "i");
       combined = combined.filter(s =>
-        rx.test(s.name) || rx.test(s.field) || rx.test(s.domain) ||
+        rx.test(s.name) || rx.test(s.field) || rx.test(s.domain) || rx.test(s.institution) ||
         s.skills.some(sk => rx.test(sk)) || s.academicInterests.some(i => rx.test(i))
       );
     }
 
-    // Sort peers so students with same domain match appear first
+    if (skills) {
+      const skList = skills.split(",").map(s => s.trim().toLowerCase());
+      combined = combined.filter(s => s.skills.some(sk => skList.some(k => sk.toLowerCase().includes(k))));
+    }
+
+    // Sort peers so closest matches appear first
     combined.sort((a, b) => b.matchScore - a.matchScore);
 
     res.json({ success: true, myDomain, students: combined });

@@ -1064,7 +1064,7 @@ export default function CollegeOnboardingPage() {
           setError(`Please answer all questions. ${err.response.data.unansweredQuestionIds.length} unanswered.`)
         }
       } else {
-        setError('Evaluation failed. Please try again.')
+        setError(err.response?.data?.message || err.message || 'Evaluation failed. Please try again.')
       }
     } finally {
       setEvaluatingAssessment(false)
@@ -1163,12 +1163,16 @@ export default function CollegeOnboardingPage() {
 
   const handleCompleteWizard = async () => {
     setSubmitting(true)
+    setError('')
     try {
+      if (step === 6 && !discoveryResult && discoveryQuestions.length > 0) {
+        await handleEvaluateDiscovery()
+      }
       await saveProgressToBackend(true)
       updateStudent({ onboardingCompleted: true, userType: 'college_student', collegeProfileSaved: true })
-      navigate('/student/dashboard')
+      navigate('/college/dashboard')
     } catch (err) {
-      setError('Failed to finalize onboarding. Please try again.')
+      setError(err.message || 'Failed to finalize onboarding. Please try again.')
     } finally {
       setSubmitting(false)
     }
