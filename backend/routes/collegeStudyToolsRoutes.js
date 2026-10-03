@@ -2,8 +2,20 @@ const express = require("express");
 const router = express.Router();
 const verifyStudent = require("../middleware/verifyStudent");
 const {
+  getActiveStudyPlan,
+  createPersonalizedStudyPlan,
+  parseNaturalLanguageGoal,
   generateStudyPlan,
   completeStudyTask,
+  rescheduleStudyTask,
+  skipStudyTask,
+  editStudyTaskTopic,
+  deleteActiveStudyPlan,
+  researchPlacementCompany,
+  createPlacementPlan,
+  getActivePlacementPlan,
+  completePlacementTask,
+  deleteActivePlacementPlan,
   runPlannerAcceptanceTest,
   submitAssessmentResult,
   getAnalyticsData,
@@ -21,8 +33,24 @@ const {
 } = require("../controllers/collegeStudyToolsController");
 
 router.get("/dashboard-summary", verifyStudent, getCollegeDashboardSummary);
+
+// Study Planner Engine Routes
+router.get("/planner/active", verifyStudent, getActiveStudyPlan);
+router.post("/planner/create", verifyStudent, createPersonalizedStudyPlan);
+router.post("/planner/parse-goal", verifyStudent, parseNaturalLanguageGoal);
 router.post("/planner", verifyStudent, generateStudyPlan);
 router.post("/planner/complete-task", verifyStudent, completeStudyTask);
+router.post("/planner/reschedule-task", verifyStudent, rescheduleStudyTask);
+router.post("/planner/skip-task", verifyStudent, skipStudyTask);
+router.post("/planner/edit-task", verifyStudent, editStudyTaskTopic);
+router.delete("/planner/active", verifyStudent, deleteActiveStudyPlan);
+
+// Placement Preparation Routes
+router.post("/placement/research", verifyStudent, researchPlacementCompany);
+router.post("/placement/create-plan", verifyStudent, createPlacementPlan);
+router.get("/placement/active", verifyStudent, getActivePlacementPlan);
+router.post("/placement/complete-task", verifyStudent, completePlacementTask);
+router.delete("/placement/active", verifyStudent, deleteActivePlacementPlan);
 router.get("/planner/test", runPlannerAcceptanceTest);
 router.post("/assessment/submit", verifyStudent, submitAssessmentResult);
 router.get("/analytics", verifyStudent, getAnalyticsData);

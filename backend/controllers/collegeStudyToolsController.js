@@ -8,6 +8,14 @@ const User = require("../models/User");
 const AhpCareerProfile = require("../models/AhpCareerProfile");
 const AhpFuzzyResult = require("../models/AhpFuzzyResult");
 
+const StudyPlan = require("../models/StudyPlan");
+const studyPlanEngine = require("../services/studyPlanEngine");
+
+const PlacementCompanyResearch = require("../models/PlacementCompanyResearch");
+const PlacementPlan = require("../models/PlacementPlan");
+const placementResearchService = require("../services/placementResearchService");
+const placementStudyPlanEngine = require("../services/placementStudyPlanEngine");
+
 const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
 
 // Helper function to query xAI Grok API with graceful JSON parsing
@@ -41,181 +49,327 @@ async function queryGrokJson(prompt, systemMsg, fallbackData) {
   }
 }
 
-// ── 1. AI Study Planner Generator (Personalized & Profile-Aware) ───────────────
-exports.generateStudyPlan = async (req, res) => {
+// ── 1. GET Active Study Plan ──────────────────────────────────────────────────
+exports.getActiveStudyPlan = async (req, res) => {
   try {
-    const studentId = req.student?.id || req.student?._id;
-    const { availableHoursPerWeek, timePerDay, upcomingExams, weakSubjects, focusAreas } = req.body;
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true }).sort({ createdAt: -1 }).lean();
 
-    const [profile, testResults, skillProgress] = await Promise.all([
-      CollegeStudentProfile.findOne({ userId: studentId }).lean(),
-      StudentTestResult.find({ $or: [{ studentId }, { userId: studentId }] }).sort({ createdAt: -1 }).limit(5).lean(),
-      StudentSkillProgress.findOne({ $or: [{ studentId }, { userId: studentId }] }).lean()
-    ]);
-
-    const degree = profile?.degreeProgramme || "Higher Education Coursework";
-    const domain = profile?.domain || "Academic Studies";
-    const semester = profile?.currentSemester || "Current Semester";
-    const targetCareer = profile?.targetCareer || profile?.careerInterests?.[0] || "Target Career";
-
-    // Detect actual subjects from student profile
-    let activeSubjects = (profile?.subjects && profile.subjects.length > 0) ? profile.subjects : [];
-    if (activeSubjects.length === 0) {
-      if (domain.toLowerCase().includes("data") || targetCareer.toLowerCase().includes("data") || targetCareer.toLowerCase().includes("machine learning")) {
-        activeSubjects = ["Python for Data Science", "Applied Statistics & Probability", "Machine Learning Fundamentals", "Database Systems"];
-      } else if (domain.toLowerCase().includes("mech") || targetCareer.toLowerCase().includes("mech")) {
-        activeSubjects = ["Thermodynamics & Heat Transfer", "Fluid Mechanics", "CAD & Machine Design", "Material Science"];
-      } else if (domain.toLowerCase().includes("electr") || targetCareer.toLowerCase().includes("hardware")) {
-        activeSubjects = ["Digital Circuit Design", "Microcontrollers & Embedded Systems", "Signal Processing", "Control Systems"];
-      } else if (domain.toLowerCase().includes("civil") || targetCareer.toLowerCase().includes("civil")) {
-        activeSubjects = ["Structural Analysis", "Geotechnical Engineering", "Concrete Technology", "Surveying"];
-      } else {
-        activeSubjects = ["Data Structures & Algorithms", "Database Management Systems", "Operating Systems", "Computer Networks"];
-      }
+    if (!activePlan) {
+      return res.status(200).json({ success: true, plan: null, message: "No active study plan found." });
     }
 
-    // Detect actual weak areas from diagnostic test results
-    const detectedWeakTopics = [];
-    testResults.forEach(tr => {
-      if (Array.isArray(tr.weaknesses)) {
-        tr.weaknesses.forEach(w => { if (!detectedWeakTopics.includes(w)) detectedWeakTopics.push(w); });
-      }
+    // Calculate progress telemetry
+    let totalTasks = 0;
+    let completedTasks = 0;
+    let completedMins = 0;
+    let totalMins = 0;
+
+    activePlan.schedule?.forEach((day) => {
+      day.tasks?.forEach((task) => {
+        totalTasks += 1;
+        const dur = task.plannedDurationMinutes || 60;
+        totalMins += dur;
+        if (task.status === "completed") {
+          completedTasks += 1;
+          completedMins += dur;
+        }
+      });
     });
 
-    const studentWeakSubjects = weakSubjects && weakSubjects.length > 0
-      ? (Array.isArray(weakSubjects) ? weakSubjects : [weakSubjects])
-      : (detectedWeakTopics.length > 0 ? detectedWeakTopics.slice(0, 2) : [activeSubjects[1] || activeSubjects[0]]);
-
-    const studentUpcomingExams = upcomingExams && upcomingExams.length > 0
-      ? (Array.isArray(upcomingExams) ? upcomingExams : [upcomingExams])
-      : [`${activeSubjects[0]} Semester Exam (Upcoming)`];
-
-    const hours = parseInt(availableHoursPerWeek) || (timePerDay ? parseInt(timePerDay) * 5 : 10);
-    const dailyHours = (hours / 6).toFixed(1);
-
-    const sub1 = activeSubjects[0] || "Core Coursework 1";
-    const sub2 = activeSubjects[1] || activeSubjects[0] || "Core Coursework 2";
-    const sub3 = activeSubjects[2] || activeSubjects[0] || "Core Coursework 3";
-    const weakSub = studentWeakSubjects[0] || sub2;
-
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const schedule = days.map((day, dIdx) => {
-      const tasks = [];
-      if (dIdx === 0) {
-        tasks.push({
-          id: `m-1`, timeSlot: "6:00 PM – 7:00 PM", subject: sub1,
-          topic: `Core Principles & Key Lecture Review in ${sub1}`, duration: "60 mins", plannedDurationMinutes: 60, priority: "HIGH", category: "Exam Prep", status: "pending"
-        });
-        tasks.push({
-          id: `m-2`, timeSlot: "7:15 PM – 8:00 PM", subject: weakSub,
-          topic: `Dedicated Weak-Area Revision (${detectedWeakTopics[0] || 'Target Practice'})`, duration: "45 mins", plannedDurationMinutes: 45, priority: "HIGH", category: "Weak Subject", status: "pending"
-        });
-        tasks.push({
-          id: `m-3`, timeSlot: "8:15 PM – 8:45 PM", subject: targetCareer,
-          topic: `Skill Practice Aligned to ${targetCareer}`, duration: "30 mins", plannedDurationMinutes: 30, priority: "MED", category: "Roadmap Skill", status: "pending"
-        });
-      } else if (dIdx === 1) {
-        tasks.push({
-          id: `t-1`, timeSlot: "6:00 PM – 7:00 PM", subject: weakSub,
-          topic: `Problem-Solving & Remedial Exercises in ${weakSub}`, duration: "60 mins", plannedDurationMinutes: 60, priority: "HIGH", category: "Weak Subject", status: "pending"
-        });
-        tasks.push({
-          id: `t-2`, timeSlot: "7:15 PM – 8:00 PM", subject: sub2,
-          topic: `Analytical Concepts & Laboratory Practice in ${sub2}`, duration: "45 mins", plannedDurationMinutes: 45, priority: "MED", category: "Core Subject", status: "pending"
-        });
-      } else if (dIdx === 2) {
-        tasks.push({
-          id: `w-1`, timeSlot: "6:00 PM – 7:00 PM", subject: sub1,
-          topic: `High-Yield Numerical & Theory Problem Sets in ${sub1}`, duration: "60 mins", plannedDurationMinutes: 60, priority: "HIGH", category: "Exam Prep", status: "pending"
-        });
-        tasks.push({
-          id: `w-2`, timeSlot: "7:15 PM – 8:00 PM", subject: sub3,
-          topic: `Domain Foundation & Module Summary in ${sub3}`, duration: "45 mins", plannedDurationMinutes: 45, priority: "MED", category: "Core Subject", status: "pending"
-        });
-      } else if (dIdx === 3) {
-        tasks.push({
-          id: `th-1`, timeSlot: "6:00 PM – 7:15 PM", subject: sub1,
-          topic: `Timed Mock Test & Speed Benchmarking for ${studentUpcomingExams[0]}`, duration: "75 mins", plannedDurationMinutes: 75, priority: "HIGH", category: "Exam Prep", status: "pending"
-        });
-        tasks.push({
-          id: `th-2`, timeSlot: "7:30 PM – 8:15 PM", subject: weakSub,
-          topic: `Error Log Review & Remediation for ${weakSub}`, duration: "45 mins", plannedDurationMinutes: 45, priority: "HIGH", category: "Weak Subject", status: "pending"
-        });
-      } else if (dIdx === 4) {
-        tasks.push({
-          id: `f-1`, timeSlot: "6:00 PM – 7:00 PM", subject: studentUpcomingExams[0]?.split(' ')[0] || sub1,
-          topic: `Formula Sheet & Previous Year Question Revision`, duration: "60 mins", plannedDurationMinutes: 60, priority: "HIGH", category: "Exam Prep", status: "pending"
-        });
-        tasks.push({
-          id: `f-2`, timeSlot: "7:15 PM – 8:00 PM", subject: targetCareer,
-          topic: `Target Career Skill Gap Remediation Practice`, duration: "45 mins", plannedDurationMinutes: 45, priority: "MED", category: "Roadmap Skill", status: "pending"
-        });
-      } else {
-        tasks.push({
-          id: `s-1`, timeSlot: "10:00 AM – 11:30 AM", subject: targetCareer,
-          topic: `Portfolio Building & Industry Capstone Milestone (${targetCareer})`, duration: "90 mins", plannedDurationMinutes: 90, priority: "MED", category: "Roadmap Skill", status: "pending"
-        });
-      }
-      return { day, date: `Day ${dIdx + 1}`, dailyTargetHours: `${dailyHours} Hours`, tasks };
-    });
-
-    const structuredPlan = {
-      title: `Personalized Study Schedule for ${degree} (${semester})`,
-      overview: `Tailored plan balancing ${studentUpcomingExams[0] || 'Upcoming Exam'}, targeted revision in ${weakSub}, and portfolio practice for ${targetCareer}.`,
-      totalPlannedHours: hours,
-      degree,
-      semester,
-      targetCareer,
-      activeSubjects,
-      weakSubjects: studentWeakSubjects,
-      upcomingExams: studentUpcomingExams,
-      schedule
-    };
-
-    return res.json({ success: true, plan: structuredPlan });
-  } catch (err) {
-    console.error("Generate Study Plan Error:", err);
-    res.status(500).json({ success: false, message: "Failed to generate study plan" });
-  }
-};
-
-// ── 2. Complete Study Task ───────────────────────────────────────────────────
-exports.completeStudyTask = async (req, res) => {
-  try {
-    const studentId = req.student?.id || req.student?._id;
-    const { taskId } = req.body;
-
-    let skillProgress = await StudentSkillProgress.findOne({ studentId });
-    if (!skillProgress) skillProgress = new StudentSkillProgress({ studentId });
-
-    const xpGained = 25;
-    skillProgress.xp = (skillProgress.xp || 0) + xpGained;
-    skillProgress.level = Math.floor(skillProgress.xp / 100) + 1;
-    
-    const now = new Date();
-    const lastDate = skillProgress.lastActivityDate ? new Date(skillProgress.lastActivityDate) : null;
-    if (!lastDate || (now - lastDate) > 86400000) {
-      skillProgress.streak = (skillProgress.streak || 0) + 1;
-    }
-    skillProgress.lastActivityDate = now;
-
-    if (taskId && !skillProgress.completedSteps.includes(taskId)) {
-      skillProgress.completedSteps.push(taskId);
-    }
-    await skillProgress.save();
+    const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const completedHours = Number((completedMins / 60).toFixed(1));
+    const totalHours = Number((totalMins / 60).toFixed(1));
 
     res.status(200).json({
       success: true,
-      message: `Task completed! +${xpGained} XP awarded.`,
-      xp: skillProgress.xp,
-      level: skillProgress.level,
-      streak: skillProgress.streak
+      plan: {
+        ...activePlan,
+        completionPercent,
+        totalTasks,
+        completedTasks,
+        completedHours,
+        totalHours
+      }
+    });
+  } catch (err) {
+    console.error("Get Active Study Plan Error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch active study plan" });
+  }
+};
+
+// ── 2. Create Personalized Study Plan (Phase 12 - StudyPlanEngine) ──────────────
+exports.createPersonalizedStudyPlan = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const {
+      goal,
+      goalType,
+      goalDescription,
+      subjects,
+      startDate,
+      deadline,
+      durationDays,
+      dailyAvailability,
+      timeSlots,
+      learningPreferences,
+      constraints
+    } = req.body;
+
+    const profile = await CollegeStudentProfile.findOne({ userId }).lean();
+
+    // Invoke StudyPlanEngine to build schedule
+    const planData = studyPlanEngine.generatePersonalizedPlan({
+      studentProfile: profile || {},
+      goal,
+      goalType,
+      goalDescription,
+      subjects,
+      startDate,
+      deadline,
+      durationDays,
+      dailyAvailability,
+      timeSlots,
+      learningPreferences,
+      constraints,
+      recommendedDomain: profile?.domain || profile?.targetCareer
+    });
+
+    // Mark existing active plans as inactive
+    await StudyPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
+
+    // Save new StudyPlan document
+    const newPlan = await StudyPlan.create({
+      userId,
+      ...planData,
+      isActive: true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Personalized study plan created successfully!",
+      plan: newPlan
+    });
+  } catch (err) {
+    console.error("Create Personalized Study Plan Error:", err);
+    res.status(500).json({ success: false, message: "Failed to create study plan" });
+  }
+};
+
+// ── 3. Parse Natural Language Study Goal (Phase 2 - AI NLP Extraction) ─────────
+exports.parseNaturalLanguageGoal = async (req, res) => {
+  try {
+    const { userText } = req.body;
+    if (!userText || userText.trim().length === 0) {
+      return res.status(400).json({ success: false, message: "Please provide a study goal description." });
+    }
+
+    const textLower = userText.toLowerCase();
+
+    // Goal type classification
+    let goalType = "semester_exam";
+    let goal = "Semester Examination";
+
+    if (/\b(placement|interview|job|off campus|on campus|campus drive|stipend)\b/.test(textLower)) {
+      goalType = "placement";
+      goal = "Placement Preparation";
+    } else if (/\b(project|capstone|mini project|build|portfolio)\b/.test(textLower)) {
+      goalType = "project";
+      goal = "Complete a Project";
+    } else if (/\b(learn|skill|upskill|master|framework|technology)\b/.test(textLower)) {
+      goalType = "new_skill";
+      goal = "Learn a New Skill";
+    } else if (/\b(assignment|internal|mid term|unit test)\b/.test(textLower)) {
+      goalType = "internal_exam";
+      goal = "Assignment / Internal Exam";
+    } else if (/\b(gate|gre|cat|tancet|competitive)\b/.test(textLower)) {
+      goalType = "competitive_exam";
+      goal = "Competitive Exam";
+    } else if (/\b(weak|improve|remedial|struggle)\b/.test(textLower)) {
+      goalType = "weak_subjects";
+      goal = "Improve Weak Subjects";
+    }
+
+    // Extract subjects mentioned in text
+    const extractedSubjects = [];
+    if (/\b(dbms|database|sql)\b/.test(textLower)) extractedSubjects.push({ name: "Database Management Systems", priority: "High", difficulty: "Difficult" });
+    if (/\b(dsa|data structure|algorithm)\b/.test(textLower)) extractedSubjects.push({ name: "Data Structures & Algorithms", priority: "High", difficulty: "Difficult" });
+    if (/\b(os|operating system)\b/.test(textLower)) extractedSubjects.push({ name: "Operating Systems", priority: "Medium", difficulty: "Moderate" });
+    if (/\b(cn|network|networking)\b/.test(textLower)) extractedSubjects.push({ name: "Computer Networks", priority: "Medium", difficulty: "Easy" });
+    if (/\b(react|frontend|node|web|javascript)\b/.test(textLower)) extractedSubjects.push({ name: "Web Development (React & Node)", priority: "High", difficulty: "Moderate" });
+    if (/\b(python|machine learning|ai)\b/.test(textLower)) extractedSubjects.push({ name: "Machine Learning & Python", priority: "High", difficulty: "Difficult" });
+
+    // Extract duration if mentioned (e.g. "in 14 days", "for 7 days")
+    let suggestedDays = 14;
+    const daysMatch = textLower.match(/(\d+)\s*(days|day|weeks|week)/);
+    if (daysMatch) {
+      const num = parseInt(daysMatch[1]);
+      if (daysMatch[2].startsWith("week")) suggestedDays = num * 7;
+      else suggestedDays = num;
+    }
+
+    return res.status(200).json({
+      success: true,
+      extracted: {
+        goalType,
+        goal,
+        userText,
+        suggestedSubjects: extractedSubjects.length > 0 ? extractedSubjects : null,
+        suggestedDays
+      }
+    });
+  } catch (err) {
+    console.error("Parse Goal Error:", err);
+    res.status(500).json({ success: false, message: "Failed to parse study goal" });
+  }
+};
+
+// ── 4. Complete Study Task ───────────────────────────────────────────────────
+exports.completeStudyTask = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const { taskId, minutesSpent } = req.body;
+
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true });
+    let newStatus = "completed";
+
+    if (activePlan) {
+      activePlan.schedule.forEach((dayObj) => {
+        dayObj.tasks.forEach((t) => {
+          if (t.id === taskId) {
+            t.status = t.status === "completed" ? "pending" : "completed";
+            t.completedAt = t.status === "completed" ? new Date() : undefined;
+            newStatus = t.status;
+          }
+        });
+      });
+      await activePlan.save();
+    }
+
+    // Award XP in StudentSkillProgress if completed
+    let xpGained = 0;
+    if (newStatus === "completed") {
+      xpGained = 25;
+      let skillProgress = await StudentSkillProgress.findOne({ studentId: userId });
+      if (!skillProgress) skillProgress = new StudentSkillProgress({ studentId: userId });
+
+      skillProgress.xp = (skillProgress.xp || 0) + xpGained;
+      skillProgress.level = Math.floor(skillProgress.xp / 100) + 1;
+      
+      const now = new Date();
+      const lastDate = skillProgress.lastActivityDate ? new Date(skillProgress.lastActivityDate) : null;
+      if (!lastDate || (now - lastDate) > 86400000) {
+        skillProgress.streak = (skillProgress.streak || 0) + 1;
+      }
+      skillProgress.lastActivityDate = now;
+
+      if (taskId && !skillProgress.completedSteps.includes(taskId)) {
+        skillProgress.completedSteps.push(taskId);
+      }
+      await skillProgress.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: newStatus === "completed" ? `Task completed! +${xpGained} XP awarded.` : "Task marked pending.",
+      status: newStatus,
+      xpGained
     });
   } catch (error) {
     console.error("Complete task error:", error);
-    res.status(500).json({ success: false, message: "Failed to complete study task" });
+    res.status(500).json({ success: false, message: "Failed to update study task" });
   }
 };
+
+// ── 5. Reschedule Study Task ─────────────────────────────────────────────────
+exports.rescheduleStudyTask = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const { taskId, newTimeSlot } = req.body;
+
+    if (!taskId || !newTimeSlot) {
+      return res.status(400).json({ success: false, message: "Missing taskId or newTimeSlot" });
+    }
+
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true });
+    if (activePlan) {
+      activePlan.schedule.forEach((dayObj) => {
+        dayObj.tasks.forEach((t) => {
+          if (t.id === taskId) {
+            t.timeSlot = newTimeSlot;
+          }
+        });
+      });
+      await activePlan.save();
+    }
+
+    res.status(200).json({ success: true, message: "Task rescheduled successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to reschedule task" });
+  }
+};
+
+// ── 6. Skip Study Task ───────────────────────────────────────────────────────
+exports.skipStudyTask = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const { taskId } = req.body;
+
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true });
+    if (activePlan) {
+      activePlan.schedule.forEach((dayObj) => {
+        dayObj.tasks.forEach((t) => {
+          if (t.id === taskId) {
+            t.status = t.status === "skipped" ? "pending" : "skipped";
+          }
+        });
+      });
+      await activePlan.save();
+    }
+
+    res.status(200).json({ success: true, message: "Task status updated" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to skip task" });
+  }
+};
+
+// ── 7. Edit Study Task Topic ─────────────────────────────────────────────────
+exports.editStudyTaskTopic = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const { taskId, newTopic } = req.body;
+
+    const activePlan = await StudyPlan.findOne({ userId, isActive: true });
+    if (activePlan) {
+      activePlan.schedule.forEach((dayObj) => {
+        dayObj.tasks.forEach((t) => {
+          if (t.id === taskId) {
+            t.topic = newTopic;
+          }
+        });
+      });
+      await activePlan.save();
+    }
+
+    res.status(200).json({ success: true, message: "Task topic updated successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to edit task topic" });
+  }
+};
+
+// ── 8. Delete / Deactivate Active Study Plan ──────────────────────────────────
+exports.deleteActiveStudyPlan = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    await StudyPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
+    res.status(200).json({ success: true, message: "Active study plan cleared successfully." });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to reset study plan" });
+  }
+};
+
+// Alias legacy generateStudyPlan to createPersonalizedStudyPlan for backward compatibility
+exports.generateStudyPlan = exports.createPersonalizedStudyPlan;
 
 // ── 2b. Planner Acceptance Test (diagnostic) ─────────────────────────────────
 exports.runPlannerAcceptanceTest = async (req, res) => {
@@ -1670,6 +1824,176 @@ exports.getCollegeDashboardSummary = async (req, res) => {
   } catch (err) {
     console.error("Get College Dashboard Summary Error:", err);
     res.status(500).json({ success: false, message: "Failed to load dashboard summary" });
+  }
+};
+
+// ── 9. Placement Preparation — Company Research (Phase 2 - PlacementResearchService) ──
+exports.researchPlacementCompany = async (req, res) => {
+  try {
+    const { companyName, targetRole, hiringType, forceRefresh } = req.body;
+    if (!companyName || companyName.trim().length === 0) {
+      return res.status(400).json({ success: false, message: "Please enter a target company name." });
+    }
+
+    const researchDoc = await placementResearchService.researchCompany(
+      companyName,
+      targetRole || "Software Engineer",
+      hiringType || "Campus Placement",
+      forceRefresh === true
+    );
+
+    res.status(200).json({
+      success: true,
+      research: researchDoc
+    });
+  } catch (err) {
+    console.error("Research Placement Company Error:", err);
+    res.status(500).json({ success: false, message: "Failed to research company selection process." });
+  }
+};
+
+// ── 10. Placement Preparation — Create Plan (Phase 12 - PlacementStudyPlanEngine) ──
+exports.createPlacementPlan = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const {
+      companyId,
+      companyName,
+      targetRole,
+      hiringType,
+      reportedRounds,
+      skillProfile,
+      startDate,
+      deadline,
+      durationDays,
+      dailyAvailability,
+      timeSlots,
+      learningPreferences
+    } = req.body;
+
+    const planData = placementStudyPlanEngine.generateCompanyPlacementPlan({
+      companyName,
+      targetRole,
+      hiringType,
+      reportedRounds,
+      skillProfile,
+      startDate,
+      deadline,
+      dailyAvailability,
+      timeSlots,
+      learningPreferences
+    });
+
+    // Mark previous placement plans for user as inactive
+    await PlacementPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
+
+    // Save new PlacementPlan document in MongoDB Atlas
+    const newPlan = await PlacementPlan.create({
+      userId,
+      companyId,
+      ...planData,
+      isActive: true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Placement preparation schedule generated successfully!",
+      plan: newPlan
+    });
+  } catch (err) {
+    console.error("Create Placement Plan Error:", err);
+    res.status(500).json({ success: false, message: "Failed to create placement plan" });
+  }
+};
+
+// ── 11. GET Active Placement Plan ─────────────────────────────────────────────
+exports.getActivePlacementPlan = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const activePlan = await PlacementPlan.findOne({ userId, isActive: true }).sort({ createdAt: -1 }).lean();
+
+    if (!activePlan) {
+      return res.status(200).json({ success: true, plan: null, message: "No active placement plan found." });
+    }
+
+    let totalTasks = 0;
+    let completedTasks = 0;
+    activePlan.schedule?.forEach((day) => {
+      day.tasks?.forEach((task) => {
+        totalTasks += 1;
+        if (task.status === "completed") completedTasks += 1;
+      });
+    });
+
+    const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    res.status(200).json({
+      success: true,
+      plan: {
+        ...activePlan,
+        completionPercent,
+        totalTasks,
+        completedTasks
+      }
+    });
+  } catch (err) {
+    console.error("Get Active Placement Plan Error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch active placement plan" });
+  }
+};
+
+// ── 12. Complete Placement Task ───────────────────────────────────────────────
+exports.completePlacementTask = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    const { taskId } = req.body;
+
+    const activePlan = await PlacementPlan.findOne({ userId, isActive: true });
+    let newStatus = "completed";
+
+    if (activePlan) {
+      activePlan.schedule.forEach((dayObj) => {
+        dayObj.tasks.forEach((t) => {
+          if (t.id === taskId) {
+            t.status = t.status === "completed" ? "pending" : "completed";
+            t.completedAt = t.status === "completed" ? new Date() : undefined;
+            newStatus = t.status;
+          }
+        });
+      });
+      await activePlan.save();
+    }
+
+    let xpGained = 0;
+    if (newStatus === "completed") {
+      xpGained = 25;
+      let skillProgress = await StudentSkillProgress.findOne({ studentId: userId });
+      if (!skillProgress) skillProgress = new StudentSkillProgress({ studentId: userId });
+      skillProgress.xp = (skillProgress.xp || 0) + xpGained;
+      skillProgress.level = Math.floor(skillProgress.xp / 100) + 1;
+      await skillProgress.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: newStatus === "completed" ? `Task completed! +${xpGained} XP awarded.` : "Task marked pending.",
+      status: newStatus,
+      xpGained
+    });
+  } catch (err) {
+    console.error("Complete placement task error:", err);
+    res.status(500).json({ success: false, message: "Failed to complete placement task" });
+  }
+};
+
+// ── 13. Delete Active Placement Plan ──────────────────────────────────────────
+exports.deleteActivePlacementPlan = async (req, res) => {
+  try {
+    const userId = req.student?.id || req.student?._id || req.user?._id;
+    await PlacementPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
+    res.status(200).json({ success: true, message: "Active placement plan cleared successfully." });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to reset placement plan" });
   }
 };
 
