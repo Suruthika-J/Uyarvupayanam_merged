@@ -9,6 +9,9 @@ const path = require("path");
 dotenv.config();
 connectDB().then(() => {
   try {
+    // Recover memory jobs interrupted by a previous process restart (in-process
+    // background processing has no durable queue) — surfaces them as retryable.
+    require("./services/memoryProcessingService").recoverInterrupted();
     const { importDiplomaCSV } = require("./utils/diplomaImporter");
     importDiplomaCSV(false).catch(err => console.error("Error in auto diploma import:", err));
   } catch (err) {
@@ -105,6 +108,16 @@ connectDB().then(() => {
       .catch(err => console.error("Error in Maths Missions seeding:", err));
   } catch (err) {
     console.error("Failed to require/run Maths Missions seeding:", err);
+  }
+  try {
+    const { seedEnglishMissions } = require("./seeders/seedEnglishMissions");
+    seedEnglishMissions()
+      .then(results => {
+        console.log("English Missions seed (curriculum in code):", results);
+      })
+      .catch(err => console.error("Error in English Missions seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run English Missions seeding:", err);
   }
   try {
     const { seedScience } = require("./seeders/seedScience");
@@ -303,6 +316,9 @@ app.use("/api/science", require("./routes/scienceRoutes"));
 // English Adventure (Class 5)
 app.use("/api/english", require("./routes/englishRoutes"));
 
+// Class 8 English Space Explorer (server-driven lesson + AI assessment module)
+app.use("/api/english-missions", require("./routes/englishMissionsRoutes"));
+
 // Streams After 10th (Class 10 HSC groups & vocational courses)
 app.use("/api/streams", require("./routes/streamRoutes"));
 
@@ -325,11 +341,20 @@ app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
 // ── Intelligent Focus Mode (College Students) ───────────────────────────────
 app.use("/api/focus", require("./routes/focusRoutes"));
 
-// ── Peer Chat & Study Partner System (College Students) ─────────────────────
+// Peer Chat & Study Partner System (College Students)
 app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
 
+<<<<<<< Updated upstream
 // ── Real-time Multiplayer Quiz Engine ───────────────────────────────────────
 app.use("/api/multiplayer-quiz", require("./routes/multiplayerQuizRoutes"));
+=======
+// ── Personal Memory Vault (all authenticated students — voice, journal,
+//    email/letter, document, story/note) with AI processing + retrieval ─────
+app.use("/api/memories", require("./routes/memoryRoutes"));
+
+// ── Class 8 Skill Adventure (games + evidence → LD-NBSE) ────────────────────
+app.use("/api/class8-skills", require("./routes/class8SkillsRoutes"));
+>>>>>>> Stashed changes
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;

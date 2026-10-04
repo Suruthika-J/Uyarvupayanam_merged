@@ -8,7 +8,7 @@ import {
   FiFileText, FiAward, FiBookmark, FiTarget, FiBarChart2,
   FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiBell,
   FiBookOpen, FiCpu, FiUsers, FiHelpCircle, FiSettings,
-  FiSearch,
+  FiSearch, FiArchive,
 } from 'react-icons/fi'
 
 // ── SIDEBAR NAVIGATION CONFIG ──────────────────────────────────────────────────
@@ -30,6 +30,12 @@ const SIDEBAR_SECTIONS = [
     items: [
       { id: 'focus',     icon: FiCpu,     label: 'Intelligent Focus',   to: '/college/academic/focus' },
       { id: 'analytics', icon: FiBarChart2, label: 'Focus Analytics',   to: '/college/focus/analytics' },
+    ],
+  },
+  {
+    title: 'Personal',
+    items: [
+      { id: 'memories', icon: FiArchive, label: 'My Memories', to: '/college/memories' },
     ],
   },
   {

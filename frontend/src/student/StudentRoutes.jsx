@@ -55,6 +55,15 @@ import MathsMissionsPage from './pages/class8/maths/MathsMissionsPage'
 import MathsTopicPage from './pages/class8/maths/MathsTopicPage'
 import MathsMissionPage from './pages/class8/maths/MathsMissionPage'
 
+// Class 8 English Space Explorer (dark galaxy theme)
+import EnglishMissionsPage from './pages/class8/english/EnglishMissionsPage'
+import EnglishAreaPage from './pages/class8/english/EnglishAreaPage'
+import EnglishTopicPage from './pages/class8/english/EnglishTopicPage'
+import SkillsDashboardPage from './pages/class8/skills/SkillsDashboardPage'
+import SkillCategoryPage from './pages/class8/skills/SkillCategoryPage'
+import SkillGamePage from './pages/class8/skills/SkillGamePage'
+import SkillDiagnosticPage from './pages/class8/skills/SkillDiagnosticPage'
+
 // Class 5 career-discovery redesign (Uyarvu Payanam)
 import Class5Dashboard from './pages/class5/Class5Dashboard'
 import ScholarshipsSection from './pages/class5/ScholarshipsSection'
@@ -96,6 +105,7 @@ import StudyPlannerPage from './pages/academic/StudyPlannerPage'
 import LearningRoadmapPage from './pages/academic/LearningRoadmapPage'
 import PerformanceAnalyticsPage from './pages/academic/PerformanceAnalyticsPage'
 import ProfileAwareAskAIChatbotPage from './pages/advisor/ProfileAwareAskAIChatbotPage'
+import MyMemoriesPage from './pages/memories/MyMemoriesPage'
 import SkillGapAnalysisPage from './pages/career/SkillGapAnalysisPage'
 import CareerComparisonPage from './pages/career/CareerComparisonPage'
 import ResumeBuilderPage from './pages/career/ResumeBuilderPage'
@@ -228,6 +238,22 @@ export default function StudentRoutes() {
             <Route path="class8/maths/topic/:topicId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId" />} />
             <Route path="student/class8/maths/topic/:topicId/mission/:missionId" element={<StudentProtectedRoute><MathsMissionPage /></StudentProtectedRoute>} />
             <Route path="class8/maths/topic/:topicId/mission/:missionId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId/mission/:missionId" />} />
+            {/* Class 8 English Space Explorer — six learning areas, AI assessments */}
+            <Route path="student/class8/english" element={<StudentProtectedRoute><EnglishMissionsPage /></StudentProtectedRoute>} />
+            <Route path="class8/english" element={<Navigate to="/student/class8/english" replace />} />
+            <Route path="student/class8/english/area/:areaId" element={<StudentProtectedRoute><EnglishAreaPage /></StudentProtectedRoute>} />
+            <Route path="class8/english/area/:areaId" element={<PreserveParamRedirect to="/student/class8/english/area/:areaId" />} />
+            <Route path="student/class8/english/topic/:topicId" element={<StudentProtectedRoute><EnglishTopicPage /></StudentProtectedRoute>} />
+            <Route path="class8/english/topic/:topicId" element={<PreserveParamRedirect to="/student/class8/english/topic/:topicId" />} />
+            {/* Class 8 Skill Adventure — play-based skill development + LD-NBSE */}
+            <Route path="student/class8/skills" element={<StudentProtectedRoute><SkillsDashboardPage /></StudentProtectedRoute>} />
+            <Route path="class8/skills" element={<Navigate to="/student/class8/skills" replace />} />
+            <Route path="student/class8/skills/diagnostic" element={<StudentProtectedRoute><SkillDiagnosticPage /></StudentProtectedRoute>} />
+            <Route path="class8/skills/diagnostic" element={<Navigate to="/student/class8/skills/diagnostic" replace />} />
+            <Route path="student/class8/skills/:skillId" element={<StudentProtectedRoute><SkillCategoryPage /></StudentProtectedRoute>} />
+            <Route path="class8/skills/:skillId" element={<PreserveParamRedirect to="/student/class8/skills/:skillId" />} />
+            <Route path="student/class8/skills/:skillId/game/:activityId" element={<StudentProtectedRoute><SkillGamePage /></StudentProtectedRoute>} />
+            <Route path="class8/skills/:skillId/game/:activityId" element={<PreserveParamRedirect to="/student/class8/skills/:skillId/game/:activityId" />} />
             <Route path="student/class10" element={<ClassLevelPage level="10" />} />
             <Route path="class10" element={<Navigate to="/student/class10" replace />} />
             <Route path="student/class10/content/:slug" element={<ContentDetailPage />} />
@@ -310,6 +336,7 @@ export default function StudentRoutes() {
             <Route path="profile" element={<CollegeProfilePage />} />
             <Route path="advisor" element={<CollegeAdvisorDashboardPage />} />
             <Route path="advisor/chat" element={<ProfileAwareAskAIChatbotPage />} />
+            <Route path="memories" element={<MyMemoriesPage />} />
             <Route path="academic/planner" element={<StudyPlannerPage />} />
             <Route path="academic/roadmap" element={<LearningRoadmapPage />} />
             <Route path="academic/performance" element={<PerformanceAnalyticsPage />} />
@@ -336,6 +363,7 @@ export default function StudentRoutes() {
           <Route path="student/college-profile" element={<Navigate to="/college/profile" replace />} />
           <Route path="student/advisor" element={<Navigate to="/college/advisor" replace />} />
           <Route path="student/advisor/chat" element={<Navigate to="/college/advisor/chat" replace />} />
+          <Route path="student/memories" element={<Navigate to="/college/memories" replace />} />
           <Route path="student/academic/planner" element={<Navigate to="/college/academic/planner" replace />} />
           <Route path="student/academic/roadmap" element={<Navigate to="/college/academic/roadmap" replace />} />
           <Route path="student/academic/performance" element={<Navigate to="/college/academic/performance" replace />} />
