@@ -31,7 +31,7 @@ exports.toggleHabit = async (req, res) => {
 
 exports.getHabits = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.student?._id;
     const habits = await Habit.find({ userId });
     res.status(200).json({ success: true, data: habits });
   } catch (error) {

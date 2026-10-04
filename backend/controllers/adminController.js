@@ -6,6 +6,7 @@ const Scholarship = require("../models/Scholarship");
 const Activity = require("../models/Activity");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const getJwtSecret = require("../utils/jwtSecret");
 
 exports.loginAdmin = async (req, res) => {
   const { email, password } = req.body;
@@ -17,7 +18,7 @@ exports.loginAdmin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: admin._id }, getJwtSecret(), {
       expiresIn: "1d",
     });
 

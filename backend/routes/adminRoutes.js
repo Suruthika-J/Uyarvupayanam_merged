@@ -56,8 +56,13 @@ router.get("/career-paths/:id", verifyAdmin, getCareerPathById);
 router.put("/career-paths/:id", verifyAdmin, updateCareerPath);
 router.delete("/career-paths/:id", verifyAdmin, deleteCareerPath);
 
-// TEMPORARY ROUTE TO CREATE ADMIN
+// TEMPORARY ROUTE TO CREATE ADMIN — disabled unless explicitly enabled in a
+// fresh deployment via ALLOW_ADMIN_BOOTSTRAP=true. Never enabled by default;
+// the existing admin account is already seeded, so nothing depends on this.
 router.get("/create-admin", async (req, res) => {
+  if (process.env.ALLOW_ADMIN_BOOTSTRAP !== "true") {
+    return res.status(404).json({ message: "Not found" });
+  }
   try {
     const existingAdmin = await Admin.findOne({ email: "uyarvupayanam@gmail.com" });
 

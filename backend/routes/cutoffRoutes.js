@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { syncOrphanedRecords } = require('../controllers/cutoffController');
+const verifyAdmin = require("../middleware/verifyAdmin");
 
-router.post('/sync-orphans', syncOrphanedRecords);
+router.post('/sync-orphans', verifyAdmin, syncOrphanedRecords);
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
@@ -221,7 +222,7 @@ const { year, q = "", department = "", page = 1, limit = 20, largeLimit } = req.
 // Reads the first CSV file from backend/uploads, converts to JSON using csv-parser,
 // adds: category="Engineering", year=2024
 // removes duplicate rows (full-row match), then inserts using insertMany().
-router.get("/import-file", async (req, res) => {
+router.get("/import-file", verifyAdmin, async (req, res) => {
     try {
         const uploads = listUploadFiles().filter((p) => path.extname(p).toLowerCase() === ".csv");
         if (!uploads.length) {
@@ -301,7 +302,7 @@ async function parseCsvAsObjects(filePath) {
 // GET /api/cutoff/import-csv
 // Reads backend/uploads/TNEA 2025 _ engineering.csv and inserts normalized records:
 // { collegeCode, collegeName, branch, category, cutoff, year:2024, type:"Engineering" }
-router.get("/import-csv", async (req, res) => {
+router.get("/import-csv", verifyAdmin, async (req, res) => {
     try {
         const filePath = path.join(__dirname, "..", "uploads", "TNEA 2025 _ engineering.csv");
         if (!fs.existsSync(filePath)) {
@@ -395,7 +396,7 @@ router.get("/import-csv", async (req, res) => {
 });
 
 // GET /api/import-tnea?year=2024
-router.get("/import-tnea", async (req, res) => {
+router.get("/import-tnea", verifyAdmin, async (req, res) => {
     try {
         const year = Number(req.query.year || 2024);
 
@@ -434,7 +435,7 @@ router.get("/import-tnea", async (req, res) => {
 
 // POST /api/cutoff/import
 // body: { year: 2024 }
-router.post("/import", async (req, res) => {
+router.post("/import", verifyAdmin, async (req, res) => {
     try {
         const year = Number(req.body.year || req.query.year || 2024);
 
@@ -471,7 +472,7 @@ router.post("/import", async (req, res) => {
 });
 
 // Create a new cutoff
-router.post("/", async (req, res) => {
+router.post("/", verifyAdmin, async (req, res) => {
     try {
         const newCutoff = new Cutoff(req.body);
         const savedCutoff = await newCutoff.save();
@@ -482,7 +483,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update an existing cutoff
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyAdmin, async (req, res) => {
     try {
         const updatedCutoff = await Cutoff.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(updatedCutoff);
@@ -492,7 +493,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a cutoff
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyAdmin, async (req, res) => {
     try {
         await Cutoff.findByIdAndDelete(req.params.id);
         res.json({ message: "Cutoff deleted successfully" });

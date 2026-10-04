@@ -3,6 +3,7 @@ const AdminNotification = require("../models/AdminNotification");
 const Settings = require("../models/Settings");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const getJwtSecret = require("../utils/jwtSecret");
 const {
   generateOtp,
   storeOtp,
@@ -148,7 +149,7 @@ const loginStudent = async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ id: student._id }, process.env.JWT_SECRET || "fallback_secret", {
+    const token = jwt.sign({ id: student._id }, getJwtSecret(), {
       expiresIn: "7d",
     });
 
@@ -202,7 +203,7 @@ const verifySignupOtp = async (req, res) => {
       await student.save();
     }
 
-    const token = jwt.sign({ id: student._id }, process.env.JWT_SECRET || "fallback_secret", {
+    const token = jwt.sign({ id: student._id }, getJwtSecret(), {
       expiresIn: "7d",
     });
 

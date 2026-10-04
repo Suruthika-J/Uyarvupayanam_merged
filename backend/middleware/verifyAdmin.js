@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
+const getJwtSecret = require("../utils/jwtSecret");
 
 const verifyAdmin = async (req, res, next) => {
   try {
@@ -9,7 +10,7 @@ const verifyAdmin = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
 
     const admin = await Admin.findById(decoded.id);
     if (!admin || admin.isActive === false) {

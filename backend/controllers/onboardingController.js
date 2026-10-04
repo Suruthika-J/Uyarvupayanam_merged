@@ -54,7 +54,7 @@ exports.submitOnboarding = async (req, res) => {
             goalAfter10th, goalAfter12th 
         } = req.body;
 
-        const resolvedUserId = userId || studentId;
+        const resolvedUserId = req.student ? String(req.student._id) : (userId || studentId);
         if (!resolvedUserId) {
             return res.status(400).json({ success: false, message: "userId or studentId is required" });
         }

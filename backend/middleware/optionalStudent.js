@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const getJwtSecret = require("../utils/jwtSecret");
 
 // Identifies the student from the Bearer token when one is present, but never
 // blocks the request. Sets `req.student` (school student identity) so public
@@ -19,8 +20,7 @@ const optionalStudent = async (req, res, next) => {
   if (!token) return next();
 
   try {
-    const secret = process.env.JWT_SECRET || "fallback_secret";
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.student = await User.findById(decoded.id).select("-password");
   } catch (error) {
     // Invalid / expired / admin token -> treat as unauthenticated, do not block.

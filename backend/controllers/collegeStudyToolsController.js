@@ -1458,6 +1458,14 @@ exports.generateResumeSuggestions = async (req, res) => {
     if (certs.length > 0) strengthScore += 5;
     else missingSections.push("Industry Certifications");
 
+    // Professional summary — composed strictly from real profile fields
+    // (the profile model has no free-text "professional summary", so this is
+    // derived from the student's own verified data, never placeholders).
+    const professionalSummary =
+      (profile?.careerObjective && String(profile.careerObjective).trim()
+        ? String(profile.careerObjective).trim()
+        : [studentName, domain && `pursuing ${domain}`, college && `at ${college}`].filter(Boolean).join(" ") || "");
+
     const careerObjective = profile?.careerObjective || professionalSummary;
 
     const resumeData = {

@@ -17,10 +17,12 @@ exports.getPublicClassContent = async (req, res) => {
 };
 
 // Get single content details (optional for deeper drill down)
+// Public slug reads only expose PUBLISHED content — drafts stay admin-only,
+// mirroring the published-only filter on the level list endpoint.
 exports.getContentBySlug = async (req, res) => {
     try {
       const { slug } = req.params;
-      const content = await ClassContent.findOne({ slug });
+      const content = await ClassContent.findOne({ slug, status: "published" });
       if (!content) return res.status(404).json({ success: false, message: "Content not found" });
       res.status(200).json({ success: true, data: content });
     } catch (error) {
@@ -46,6 +48,19 @@ exports.getAdminClassContent = async (req, res) => {
     }
 
     res.status(200).json({ success: true, stats, data: contents });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error", error: error.message });
+  }
+};
+
+// Get single content by id (admin single-item view — previously wired to the
+// update handler, which would MUTATE content on a plain GET)
+exports.getClassContentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const content = await ClassContent.findById(id);
+    if (!content) return res.status(404).json({ success: false, message: "Content not found" });
+    res.status(200).json({ success: true, data: content });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error", error: error.message });
   }

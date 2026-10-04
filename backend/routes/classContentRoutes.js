@@ -4,6 +4,7 @@ const {
   getAdminClassContent, 
   getAdminLevelSummaries,
   getContentBySlug,
+  getClassContentById,
   createContent, 
   updateContent, 
   deleteContent, 
@@ -21,7 +22,7 @@ router.get("/slug/:slug", getContentBySlug);
 // --- ADMIN ---
 router.get("/admin/summaries", verifyAdmin, getAdminLevelSummaries);
 router.get("/admin/level/:level", verifyAdmin, getAdminClassContent);
-router.get("/:id", verifyAdmin, updateContent); // Placeholder for single item admin view if needed
+router.get("/:id", verifyAdmin, getClassContentById);
 router.post("/", verifyAdmin, createContent);
 router.put("/:id", verifyAdmin, updateContent);
 router.delete("/:id", verifyAdmin, deleteContent);

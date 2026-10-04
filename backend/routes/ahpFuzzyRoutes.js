@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyStudent = require("../middleware/verifyStudent");
+const verifyAdmin = require("../middleware/verifyAdmin");
 const {
   getAhpFuzzyQuestions,
   evaluateStudentAssessment,
@@ -14,9 +15,9 @@ router.get("/discovery/questions", getAhpFuzzyQuestions);
 router.post("/start", getAhpFuzzyQuestions);
 router.post("/assessment/start", getAhpFuzzyQuestions);
 
-// PDF Master Question Bank Import
-router.post("/import", importQuestionBankPdf);
-router.post("/import-pdf", importQuestionBankPdf);
+// PDF Master Question Bank Import (admin-only — it mutates the shared bank)
+router.post("/import", verifyAdmin, importQuestionBankPdf);
+router.post("/import-pdf", verifyAdmin, importQuestionBankPdf);
 
 // Student answer & fuzzy evaluation
 router.post("/evaluate", verifyStudent, evaluateStudentAssessment);

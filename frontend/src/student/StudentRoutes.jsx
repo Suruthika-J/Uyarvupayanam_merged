@@ -120,6 +120,19 @@ import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
 import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
 import PeerChatPage from './pages/community/PeerChatPage'
 import MultiplayerQuizPage from './pages/community/MultiplayerQuizPage'
+// ── Graduate portal pages (userType "graduate") ─────────────────────────────
+import GraduateDashboardPage from './pages/graduate/GraduateDashboardPage'
+import GraduateProfilePage from './pages/graduate/GraduateProfilePage'
+import GraduateAIAdvisorPage from './pages/graduate/GraduateAIAdvisorPage'
+import GraduateCareersPage from './pages/graduate/GraduateCareersPage'
+import GraduateSkillGapPage from './pages/graduate/GraduateSkillGapPage'
+import GraduateExamsPage from './pages/graduate/GraduateExamsPage'
+import GraduateHigherStudiesPage from './pages/graduate/GraduateHigherStudiesPage'
+import GraduateRoadmapPage from './pages/graduate/GraduateRoadmapPage'
+import GraduatePlacementPage from './pages/graduate/GraduatePlacementPage'
+import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
+import GraduateResumePage from './pages/graduate/GraduateResumePage'
+import GraduateUpskillingPage from './pages/graduate/GraduateUpskillingPage'
 
 import './student.css'
 
@@ -128,6 +141,9 @@ function CollegeDashboardRedirector() {
   const { student } = useStudentAuth()
   if (student?.userType === 'college_student') {
     return <Navigate to="/college/dashboard" replace />
+  }
+  if (student?.userType === 'graduate') {
+    return <Navigate to="/student/graduate/dashboard" replace />
   }
   // Fallback: render the school dashboard
   return <DashboardPage />
@@ -320,6 +336,35 @@ export default function StudentRoutes() {
             <Route path="notifications" element={<Navigate to="/student/notifications" replace />} />
             <Route path="student/profile" element={<StudentProtectedRoute><ProfilePage /></StudentProtectedRoute>} />
             <Route path="profile" element={<Navigate to="/student/profile" replace />} />
+
+            {/* Graduate portal — done via the /student/graduate/* canonical paths
+                (rendered inside the shared student layout). userType "graduate"
+                accounts land here after completing graduate onboarding. */}
+            <Route path="student/graduate" element={<Navigate to="/student/graduate/dashboard" replace />} />
+            <Route path="student/graduate/dashboard" element={<StudentProtectedRoute><GraduateDashboardPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/profile" element={<StudentProtectedRoute><GraduateProfilePage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/advisor" element={<StudentProtectedRoute><GraduateAIAdvisorPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/careers" element={<StudentProtectedRoute><GraduateCareersPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/skill-gap" element={<StudentProtectedRoute><GraduateSkillGapPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/exams" element={<StudentProtectedRoute><GraduateExamsPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/higher-studies" element={<StudentProtectedRoute><GraduateHigherStudiesPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/roadmap" element={<StudentProtectedRoute><GraduateRoadmapPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/placement" element={<StudentProtectedRoute><GraduatePlacementPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/interview" element={<StudentProtectedRoute><GraduateInterviewPage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/resume" element={<StudentProtectedRoute><GraduateResumePage /></StudentProtectedRoute>} />
+            <Route path="student/graduate/upskilling" element={<StudentProtectedRoute><GraduateUpskillingPage /></StudentProtectedRoute>} />
+            <Route path="graduate/dashboard" element={<Navigate to="/student/graduate/dashboard" replace />} />
+            <Route path="graduate/profile" element={<Navigate to="/student/graduate/profile" replace />} />
+            <Route path="graduate/advisor" element={<Navigate to="/student/graduate/advisor" replace />} />
+            <Route path="graduate/careers" element={<Navigate to="/student/graduate/careers" replace />} />
+            <Route path="graduate/skill-gap" element={<Navigate to="/student/graduate/skill-gap" replace />} />
+            <Route path="graduate/exams" element={<Navigate to="/student/graduate/exams" replace />} />
+            <Route path="graduate/higher-studies" element={<Navigate to="/student/graduate/higher-studies" replace />} />
+            <Route path="graduate/roadmap" element={<Navigate to="/student/graduate/roadmap" replace />} />
+            <Route path="graduate/placement" element={<Navigate to="/student/graduate/placement" replace />} />
+            <Route path="graduate/interview" element={<Navigate to="/student/graduate/interview" replace />} />
+            <Route path="graduate/resume" element={<Navigate to="/student/graduate/resume" replace />} />
+            <Route path="graduate/upskilling" element={<Navigate to="/student/graduate/upskilling" replace />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

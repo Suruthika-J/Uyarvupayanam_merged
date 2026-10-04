@@ -7,6 +7,16 @@ const connectDB = require("./config/db");
 const path = require("path");
 
 dotenv.config();
+
+// JWT signing secret boot guard. In production the server refuses to start
+// without a real JWT_SECRET so the development-only fallback secret can never
+// be used against deployed traffic (see utils/jwtSecret.js).
+try {
+  require("./utils/jwtSecret")();
+} catch (err) {
+  console.error(`[FATAL] ${err.message}. Refusing to start.`);
+  process.exit(1);
+}
 connectDB().then(() => {
   try {
     // Recover memory jobs interrupted by a previous process restart (in-process
@@ -277,6 +287,7 @@ app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/user-actions", require("./routes/userActionRoutes"));
+app.use("/api/recommendations", require("./routes/recommendationRoutes"));
 app.use("/api/assessment", require("./routes/grokAssessmentRoutes"));
 app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
@@ -293,6 +304,10 @@ app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));
 app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 app.use("/api/class5-communication", require("./routes/class5CommunicationRoutes"));
 app.use("/api/communication-content", require("./routes/communicationContentRoutes"));
+
+// Graduate career portal (profile, onboarding, dashboard, careers, exams,
+// higher-studies, roadmap, AI advisor) — userType "graduate" portal.
+app.use("/api/graduate", require("./routes/graduateRoutes"));
 
 // Class 5 career-discovery feature (Discover Me, Skill Quests, Squad, Real World, Trophy Room)
 // Note: endpoints live under /api/class5/* so the existing /api/scholarships service stays untouched.
@@ -344,17 +359,15 @@ app.use("/api/focus", require("./routes/focusRoutes"));
 // Peer Chat & Study Partner System (College Students)
 app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
 
-<<<<<<< Updated upstream
 // ── Real-time Multiplayer Quiz Engine ───────────────────────────────────────
 app.use("/api/multiplayer-quiz", require("./routes/multiplayerQuizRoutes"));
-=======
+
 // ── Personal Memory Vault (all authenticated students — voice, journal,
 //    email/letter, document, story/note) with AI processing + retrieval ─────
 app.use("/api/memories", require("./routes/memoryRoutes"));
 
 // ── Class 8 Skill Adventure (games + evidence → LD-NBSE) ────────────────────
 app.use("/api/class8-skills", require("./routes/class8SkillsRoutes"));
->>>>>>> Stashed changes
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;

@@ -76,9 +76,7 @@ export default function CodingArenaPage() {
   const [executionResult, setExecutionResult] = useState(null)
 
   // Matchmaking State (for 1v1)
-  const [matchingState, setMatchingState] = useState('idle') // 'idle' | 'searching' | 'matched' | 'in_game'
-  const [opponent, setOpponent] = useState(null)
-  const [matchTimer, setMatchTimer] = useState(600) // 10 mins
+  const [matchingState, setMatchingState] = useState('idle') // 'idle' | 'searching' | 'unavailable'
 
   // If student's profile is non-coding (e.g. MBBS, Law), show polite message with option to opt-in
   if (!flags.codingArena) {
@@ -131,14 +129,15 @@ export default function CodingArenaPage() {
 
     setTimeout(() => {
       setExecuting(false)
-      // Sandboxed execution simulator
+      // Local sandbox preview only — no judge service is connected, so the code
+      // is NOT executed or graded. We state that explicitly instead of faking a pass.
       setExecutionResult({
-        success: true,
-        passedCases: activeProblem.testCases.length,
+        success: false,
+        passedCases: 0,
         totalCases: activeProblem.testCases.length,
-        runtime: '42 ms',
-        memory: '38.4 MB',
-        output: 'All test cases passed successfully!'
+        runtime: '—',
+        memory: '—',
+        output: 'Local sandbox preview only — no judge service is connected, so this run is not graded. Connect the code-runner service to get real test-case results.'
       })
     }, 1200)
   }
@@ -146,14 +145,9 @@ export default function CodingArenaPage() {
   const start1v1Matchmaking = () => {
     setMatchingState('searching')
     setTimeout(() => {
-      setOpponent({
-        name: 'Karthik V.',
-        degree: profile?.degreeProgramme || 'B.Tech CSE',
-        year: profile?.currentYear || '3rd Year',
-        rating: 1420
-      })
-      setMatchingState('matched')
-    }, 2500)
+      // No live matchmaking server is wired up — never fabricate a real opponent.
+      setMatchingState('unavailable')
+    }, 1500)
   }
 
   return (
@@ -271,7 +265,7 @@ export default function CodingArenaPage() {
               <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid #1e293b' }}>
                 <div style={{ background: '#0f172a', color: '#94a3b8', padding: '8px 16px', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>SANDBOX EDITOR • {selectedLanguage.toUpperCase()}</span>
-                  <span style={{ color: '#34d399' }}>✓ Timeout & Memory Enforced</span>
+                  <span style={{ color: '#f59e0b' }}>Local sandbox — not graded by a server judge</span>
                 </div>
                 <textarea
                   rows={14}
@@ -365,28 +359,22 @@ export default function CodingArenaPage() {
             </div>
           )}
 
-          {matchingState === 'matched' && opponent && (
-            <div style={{ maxWidth: 540, margin: '0 auto', background: '#f8fafc', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#059669', marginBottom: 16 }}>
-                ⚡ Match Found!
+          {matchingState === 'unavailable' && (
+            <div style={{ maxWidth: 540, margin: '0 auto', background: '#fffbeb', padding: 24, borderRadius: 16, border: '1px solid #fde68a' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#b45309', marginBottom: 10 }}>
+                Live 1v1 matchmaking is not connected yet
               </h3>
-              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: 24 }}>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{profile?.institution ? 'You' : 'Player A'}</div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>{profile?.degreeProgramme}</div>
-                </div>
-                <div style={{ fontWeight: 900, fontSize: 20, color: '#ef4444' }}>VS</div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{opponent.name}</div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>{opponent.degree} • Rating {opponent.rating}</div>
-                </div>
-              </div>
+              <p style={{ fontSize: 13, color: '#78350f', lineHeight: 1.6, marginBottom: 18 }}>
+                The realtime matchmaker is not wired up in this build, so we will not
+                fabricate an opponent. Practice the same timed problem in Solo mode, or
+                race a peer who is physically next to you and compare results manually.
+              </p>
               <button
                 type="button"
-                onClick={() => { setActiveTab('practice'); setMatchingState('idle') }}
+                onClick={() => setActiveTab('practice')}
                 style={{ padding: '12px 24px', borderRadius: 12, background: '#047857', color: '#fff', fontWeight: 800, border: 'none', cursor: 'pointer' }}
               >
-                Enter Challenge Arena Room
+                Practice Solo Instead
               </button>
             </div>
           )}

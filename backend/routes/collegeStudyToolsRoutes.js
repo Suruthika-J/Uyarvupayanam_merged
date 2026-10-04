@@ -31,6 +31,7 @@ const {
   getPeerMentors,
   getCollegeDashboardSummary
 } = require("../controllers/collegeStudyToolsController");
+const requireTestFlag = require("../middleware/requireTestFlag");
 
 router.get("/dashboard-summary", verifyStudent, getCollegeDashboardSummary);
 
@@ -51,7 +52,7 @@ router.post("/placement/create-plan", verifyStudent, createPlacementPlan);
 router.get("/placement/active", verifyStudent, getActivePlacementPlan);
 router.post("/placement/complete-task", verifyStudent, completePlacementTask);
 router.delete("/placement/active", verifyStudent, deleteActivePlacementPlan);
-router.get("/planner/test", runPlannerAcceptanceTest);
+router.get("/planner/test", requireTestFlag, runPlannerAcceptanceTest);
 router.post("/assessment/submit", verifyStudent, submitAssessmentResult);
 router.get("/analytics", verifyStudent, getAnalyticsData);
 router.post("/mentors/doubt-request", verifyStudent, submitMentorDoubtRequest);
