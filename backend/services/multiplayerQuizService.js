@@ -105,7 +105,7 @@ function evaluateAnswer(qDoc, selectedOption, remainingTimeRatio = 0.5) {
   } else if (qDoc.options) {
     const correctOptObj = qDoc.options.find(opt => opt.id === correctOption || opt.isCorrect);
     const userOptObj = qDoc.options.find(opt => opt.id === userOption || opt.text === selectedOption);
-    if (correctOptObj && userOptObj && (correctOptObj.id === userOptObj.id || correctOptObj.text === userOptOptObj?.text)) {
+    if (correctOptObj && userOptObj && (correctOptObj.id === userOptObj.id || correctOptObj.text === userOptObj?.text)) {
       isCorrect = true;
     }
   }

@@ -3,8 +3,220 @@ const MultiplayerQuizAnswer = require("../models/MultiplayerQuizAnswer");
 const { PeerMessage, PeerConversation } = require("../models/PeerChat");
 const AhpFuzzyQuestion = require("../models/AhpFuzzyQuestion");
 const User = require("../models/User");
-const { sanitizeQuestionForClient } = require("../services/multiplayerQuizService");
-const { createQuiz, analyzePerformance, calculateQuestionScore } = require("../services/quizAI/QuizAIEngine");
+const { sanitizeQuestionForClient, evaluateAnswer } = require("../services/multiplayerQuizService");
+const { createQuiz } = require("../services/quizAI/QuizAIEngine");
+
+// In-memory transition lock per session to prevent race conditions
+const transitionLocks = new Set();
+
+/**
+ * Single server-side question advancement function
+ */
+async function advanceToNextQuestion(sessionId, io) {
+  if (transitionLocks.has(sessionId)) {
+    console.log(`[QUIZ LOCK] Session ${sessionId} transition already in progress, skipping duplicate call.`);
+    return;
+  }
+  transitionLocks.add(sessionId);
+
+  try {
+    const session = await MultiplayerQuizSession.findOne({ sessionId });
+    if (!session || session.status === "COMPLETED") return;
+
+    const currentIndex = session.currentQuestionIndex;
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex >= session.totalQuestions || nextIndex >= session.questionIds.length) {
+      console.log(`[QUIZ] Session ${sessionId} completed after Q${currentIndex + 1}`);
+      session.status = "COMPLETED";
+      session.completedAt = new Date();
+      session.participants.forEach(p => { p.status = "FINISHED"; });
+      await session.save();
+
+      // Compute final results
+      const answers = await MultiplayerQuizAnswer.find({ sessionId }).lean();
+      const results = session.participants.map(p => {
+        const pAnswers = answers.filter(a => a.userId.toString() === p.userId.toString());
+        const correctCount = pAnswers.filter(a => a.isCorrect).length;
+        const total = session.totalQuestions;
+        const accuracyPercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        return {
+          userId: p.userId,
+          name: p.name,
+          score: p.score,
+          correctCount,
+          totalQuestions: total,
+          accuracyPercent
+        };
+      });
+      results.sort((a, b) => b.score - a.score);
+
+      const finalPayload = {
+        sessionId,
+        status: "COMPLETED",
+        topic: session.topic,
+        subtopic: session.subtopic,
+        completedAt: session.completedAt,
+        results,
+        totalQuestions: session.totalQuestions
+      };
+
+      if (io) {
+        console.log(`[QUIZ] Broadcasting quiz:completed for session ${sessionId}`);
+        io.to(`quiz:${sessionId}`).emit("quiz:completed", finalPayload);
+      }
+      return;
+    }
+
+    // Advance to next question
+    session.currentQuestionIndex = nextIndex;
+    session.currentQuestionStartedAt = new Date();
+    session.participants.forEach(p => {
+      if (p.status !== "LEFT" && p.status !== "DISCONNECTED") {
+        p.status = "ANSWERING";
+      }
+    });
+    await session.save();
+
+    const nextQDoc = await AhpFuzzyQuestion.findById(session.questionIds[nextIndex]).lean();
+    const nextQData = sanitizeQuestionForClient(nextQDoc, nextIndex + 1, session.totalQuestions);
+    const questionStartedAt = session.currentQuestionStartedAt;
+    const questionDeadline = new Date(questionStartedAt.getTime() + (session.questionTimeoutSeconds || 45) * 1000);
+
+    console.log(`[QUIZ] Advancing: Q${currentIndex + 1} → Q${nextIndex + 1}`);
+    console.log(`[QUIZ] Broadcasting next question: Q${nextIndex + 1}`);
+
+    if (io) {
+      io.to(`quiz:${sessionId}`).emit("quiz:next-question", {
+        sessionId,
+        questionNumber: nextIndex + 1,
+        totalQuestions: session.totalQuestions,
+        question: nextQData,
+        questionStartedAt,
+        questionDeadline,
+        participants: session.participants
+      });
+    }
+  } catch (err) {
+    console.error(`advanceToNextQuestion error for session ${sessionId}:`, err);
+  } finally {
+    transitionLocks.delete(sessionId);
+  }
+}
+
+/**
+ * Shared backend handler for answer processing (used by HTTP POST and Socket.IO)
+ */
+async function processUserAnswer({ sessionId, userId, questionId, selectedOption, responseTime, io }) {
+  console.log(`[QUIZ ANSWER]\nsessionId: ${sessionId}\nquestionId: ${questionId}\nuserId: ${userId}`);
+
+  const session = await MultiplayerQuizSession.findOne({ sessionId });
+  if (!session) throw new Error("Session not found");
+
+  if (session.status !== "LIVE" && session.status !== "COUNTDOWN") {
+    throw new Error("Quiz session is not active");
+  }
+
+  const participant = session.participants.find(p => p.userId.toString() === userId.toString());
+  if (!participant) throw new Error("Not a participant");
+
+  const currentQId = session.questionIds[session.currentQuestionIndex];
+  if (questionId && currentQId.toString() !== questionId.toString()) {
+    throw new Error("Answer is for an inactive question");
+  }
+
+  // Check duplicate submission
+  const existingAns = await MultiplayerQuizAnswer.findOne({ sessionId, userId, questionId: currentQId });
+  if (existingAns) {
+    throw new Error("Question already answered");
+  }
+
+  const qDoc = await AhpFuzzyQuestion.findById(currentQId).lean();
+  if (!qDoc) throw new Error("Question definition not found");
+
+  const remainingRatio = Math.max(0, 1 - (responseTime || 0) / ((session.questionTimeoutSeconds || 45) * 1000));
+  const evalResult = evaluateAnswer(qDoc, selectedOption, remainingRatio);
+
+  await MultiplayerQuizAnswer.create({
+    sessionId,
+    userId,
+    questionId: currentQId,
+    questionIndex: session.currentQuestionIndex,
+    selectedOption,
+    isCorrect: evalResult.isCorrect,
+    score: evalResult.score,
+    responseTime: responseTime || 0
+  });
+
+  console.log(`[QUIZ ANSWER]\nSaved successfully`);
+
+  participant.answeredCount += 1;
+  participant.score += evalResult.score;
+  if (evalResult.isCorrect) participant.correctCount += 1;
+  participant.status = "ANSWERED";
+  participant.lastActiveAt = new Date();
+
+  await session.save();
+
+  if (io) {
+    io.to(`quiz:${sessionId}`).emit("quiz:player-progress", {
+      sessionId,
+      userId,
+      questionIndex: session.currentQuestionIndex,
+      answeredCount: participant.answeredCount,
+      score: participant.score,
+      status: "ANSWERED"
+    });
+  }
+
+  // Active connected participants expected
+  const activeParticipants = session.participants.filter(p => p.status !== "LEFT" && p.status !== "DISCONNECTED");
+  const expectedPlayers = Math.max(1, activeParticipants.length);
+
+  const answersForCurrent = await MultiplayerQuizAnswer.find({
+    sessionId,
+    questionId: currentQId
+  });
+
+  console.log(`[QUIZ STATE]\nExpected players: ${expectedPlayers}\nAnswered players: ${answersForCurrent.length}`);
+
+  if (answersForCurrent.length >= expectedPlayers) {
+    console.log(`[QUIZ STATE]\nALL PLAYERS ANSWERED`);
+
+    const results = session.participants.map(p => {
+      const pAns = answersForCurrent.find(a => a.userId.toString() === p.userId.toString());
+      return {
+        userId: p.userId,
+        isCorrect: Boolean(pAns?.isCorrect),
+        score: p.score
+      };
+    });
+
+    console.log(`[QUIZ]\nBroadcasting question result`);
+    if (io) {
+      io.to(`quiz:${sessionId}`).emit("quiz:question-result", {
+        sessionId,
+        questionNumber: session.currentQuestionIndex + 1,
+        totalQuestions: session.totalQuestions,
+        results,
+        correctOption: evalResult.correctOption,
+        explanation: evalResult.explanation,
+        participants: session.participants
+      });
+    }
+
+    // Schedule single question transition after 1800ms delay
+    setTimeout(() => {
+      advanceToNextQuestion(sessionId, io);
+    }, 1800);
+  }
+
+  return {
+    isCorrect: evalResult.isCorrect,
+    scoreGained: evalResult.score,
+    totalScore: participant.score
+  };
+}
 
 /**
  * 1. POST /api/peer-chat/study-invites/:inviteId/accept
@@ -32,7 +244,6 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
       const subtopic = msg.studyInvite?.goal || "Queries";
       const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-      // Invoke QuizAIEngine pipeline (QuestionRetriever -> QuestionGenerator -> QuestionValidator -> DifficultyEngine -> QuizBuilder)
       const quizData = await createQuiz({
         topic,
         subtopic,
@@ -42,7 +253,6 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
 
       const questionIds = quizData.questionIds;
 
-      // Fetch user details for both participants
       const [senderUser, receiverUser] = await Promise.all([
         User.findById(msg.senderId).select("name").lean(),
         User.findById(userId).select("name").lean()
@@ -93,7 +303,6 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
       await msg.save();
     }
 
-    // Emit real-time Socket.IO notifications
     const io = req.app.get("io");
     if (io) {
       const payload = {
@@ -142,7 +351,6 @@ exports.getSession = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized to access this quiz session." });
     }
 
-    // Fetch current question
     let currentQuestionData = null;
     if (session.questionIds && session.questionIds.length > session.currentQuestionIndex) {
       const qDoc = await AhpFuzzyQuestion.findById(session.questionIds[session.currentQuestionIndex]).lean();
@@ -151,7 +359,6 @@ exports.getSession = async (req, res) => {
       }
     }
 
-    // Check if user has already answered current question
     let hasAnsweredCurrent = false;
     if (currentQuestionData) {
       const myAnswer = await MultiplayerQuizAnswer.findOne({
@@ -209,7 +416,7 @@ exports.setPlayerReady = async (req, res) => {
 
     if (allReady) {
       session.status = "COUNTDOWN";
-      const startAt = new Date(Date.now() + 3000); // 3-second countdown
+      const startAt = new Date(Date.now() + 3000);
       session.startAt = startAt;
       session.endAt = new Date(startAt.getTime() + session.durationSeconds * 1000);
       session.currentQuestionStartedAt = startAt;
@@ -232,23 +439,28 @@ exports.setPlayerReady = async (req, res) => {
           seconds: 3
         });
 
-        // Trigger start after countdown
         setTimeout(async () => {
           try {
             const liveSession = await MultiplayerQuizSession.findOne({ sessionId });
             if (liveSession && liveSession.status === "COUNTDOWN") {
               liveSession.status = "LIVE";
+              liveSession.currentQuestionStartedAt = new Date();
+              liveSession.participants.forEach(p => p.status = "ANSWERING");
               await liveSession.save();
 
               const qDoc = await AhpFuzzyQuestion.findById(liveSession.questionIds[0]).lean();
               const qData = qDoc ? sanitizeQuestionForClient(qDoc, 1, liveSession.totalQuestions) : null;
+              const questionDeadline = new Date(liveSession.currentQuestionStartedAt.getTime() + (liveSession.questionTimeoutSeconds || 45) * 1000);
 
               io.to(`quiz:${sessionId}`).emit("quiz:started", {
                 sessionId,
                 status: "LIVE",
-                currentQuestionIndex: 0,
+                questionNumber: 1,
+                totalQuestions: liveSession.totalQuestions,
                 question: qData,
-                startAt: liveSession.startAt
+                questionStartedAt: liveSession.currentQuestionStartedAt,
+                questionDeadline,
+                participants: liveSession.participants
               });
             }
           } catch (e) {
@@ -274,151 +486,27 @@ exports.submitAnswer = async (req, res) => {
     const userId = req.student?._id || req.student?.id;
     const { sessionId } = req.params;
     const { questionId, questionIndex, selectedOption, responseTime } = req.body;
+    const io = req.app.get("io");
 
-    const session = await MultiplayerQuizSession.findOne({ sessionId });
-    if (!session) return res.status(404).json({ success: false, message: "Session not found." });
-
-    if (session.status !== "LIVE" && session.status !== "COUNTDOWN") {
-      return res.status(400).json({ success: false, message: "Quiz session is not active." });
-    }
-
-    const participant = session.participants.find(p => p.userId.toString() === userId.toString());
-    if (!participant) return res.status(403).json({ success: false, message: "Not a participant." });
-
-    // Verify question matches session
-    const currentQId = session.questionIds[session.currentQuestionIndex];
-    if (questionId && currentQId.toString() !== questionId.toString()) {
-      return res.status(400).json({ success: false, message: "Answer is for an inactive question." });
-    }
-
-    // Check duplicate submission
-    const existingAns = await MultiplayerQuizAnswer.findOne({ sessionId, userId, questionId: currentQId });
-    if (existingAns) {
-      return res.status(400).json({ success: false, message: "Question already answered." });
-    }
-
-    // Fetch full question with correctOption for server evaluation
-    const qDoc = await AhpFuzzyQuestion.findById(currentQId).lean();
-    if (!qDoc) return res.status(404).json({ success: false, message: "Question definition not found." });
-
-    // Server-side answer evaluation
-    const remainingRatio = 0.5; // default speed ratio
-    const evalResult = evaluateAnswer(qDoc, selectedOption, remainingRatio);
-
-    // Record answer in database
-    const answerDoc = await MultiplayerQuizAnswer.create({
+    const result = await processUserAnswer({
       sessionId,
       userId,
-      questionId: currentQId,
-      questionIndex: session.currentQuestionIndex,
+      questionId,
       selectedOption,
-      isCorrect: evalResult.isCorrect,
-      score: evalResult.score,
-      responseTime: responseTime || 0
+      responseTime,
+      io
     });
-
-    // Update participant stats
-    participant.answeredCount += 1;
-    participant.score += evalResult.score;
-    if (evalResult.isCorrect) participant.correctCount += 1;
-    participant.status = "ANSWERED";
-    participant.lastActiveAt = new Date();
-
-    await session.save();
-
-    const io = req.app.get("io");
-    if (io) {
-      io.to(`quiz:${sessionId}`).emit("quiz:player-progress", {
-        sessionId,
-        userId,
-        questionIndex: session.currentQuestionIndex,
-        answeredCount: participant.answeredCount,
-        score: participant.score,
-        status: "ANSWERED"
-      });
-    }
-
-    // Check if all participants answered the current question
-    const answersForCurrent = await MultiplayerQuizAnswer.find({
-      sessionId,
-      questionId: currentQId
-    });
-
-    const allAnswered = session.participants.every(p =>
-      answersForCurrent.some(a => a.userId.toString() === p.userId.toString())
-    );
-
-    if (allAnswered) {
-      // Broadcast question result with correct option & explanation
-      if (io) {
-        io.to(`quiz:${sessionId}`).emit("quiz:question-result", {
-          sessionId,
-          questionIndex: session.currentQuestionIndex,
-          correctOption: evalResult.correctOption,
-          explanation: evalResult.explanation,
-          participants: session.participants
-        });
-      }
-
-      // Transition to next question after 2.5 seconds
-      setTimeout(async () => {
-        try {
-          const sLive = await MultiplayerQuizSession.findOne({ sessionId });
-          if (!sLive) return;
-
-          const nextIdx = sLive.currentQuestionIndex + 1;
-
-          if (nextIdx >= sLive.totalQuestions) {
-            // Quiz completed!
-            sLive.status = "COMPLETED";
-            sLive.completedAt = new Date();
-            sLive.participants.forEach(p => p.status = "FINISHED");
-            await sLive.save();
-
-            if (io) {
-              io.to(`quiz:${sessionId}`).emit("quiz:completed", {
-                sessionId,
-                status: "COMPLETED",
-                participants: sLive.participants,
-                totalQuestions: sLive.totalQuestions
-              });
-            }
-          } else {
-            // Advance to next question
-            sLive.currentQuestionIndex = nextIdx;
-            sLive.currentQuestionStartedAt = new Date();
-            sLive.participants.forEach(p => p.status = "ANSWERING");
-            await sLive.save();
-
-            const nextQDoc = await AhpFuzzyQuestion.findById(sLive.questionIds[nextIdx]).lean();
-            const nextQData = sanitizeQuestionForClient(nextQDoc, nextIdx + 1, sLive.totalQuestions);
-
-            if (io) {
-              io.to(`quiz:${sessionId}`).emit("quiz:next-question", {
-                sessionId,
-                currentQuestionIndex: nextIdx,
-                question: nextQData,
-                participants: sLive.participants
-              });
-            }
-          }
-        } catch (errNext) {
-          console.error("Next question transition error:", errNext);
-        }
-      }, 2500);
-    }
 
     res.status(200).json({
       success: true,
-      evaluated: {
-        isCorrect: evalResult.isCorrect,
-        scoreGained: evalResult.score,
-        totalScore: participant.score
-      }
+      evaluated: result
     });
   } catch (err) {
-    console.error("submitAnswer error:", err);
-    res.status(500).json({ success: false, message: "Failed to submit answer." });
+    console.error("submitAnswer error:", err.message);
+    if (err.message === "Question already answered" || err.message === "Answer is for an inactive question") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: err.message || "Failed to submit answer." });
   }
 };
 
@@ -436,7 +524,6 @@ exports.getSessionResults = async (req, res) => {
 
     const answers = await MultiplayerQuizAnswer.find({ sessionId }).lean();
 
-    // Determine top score / completion metrics
     const results = session.participants.map(p => {
       const pAnswers = answers.filter(a => a.userId.toString() === p.userId.toString());
       const correct = pAnswers.filter(a => a.isCorrect).length;
@@ -530,3 +617,7 @@ exports.getReviewData = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch review data." });
   }
 };
+
+module.exports.advanceToNextQuestion = advanceToNextQuestion;
+module.exports.processUserAnswer = processUserAnswer;
+

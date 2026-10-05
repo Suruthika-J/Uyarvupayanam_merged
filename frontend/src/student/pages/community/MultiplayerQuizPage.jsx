@@ -105,10 +105,16 @@ export default function MultiplayerQuizPage() {
     const socket = socketIo(SOCKET_URL, { transports: ['websocket'] })
     socketRef.current = socket
 
-    socket.on('connect', () => {
+    const joinQuizRoom = () => {
+      console.log(`[QUIZ CLIENT] Joining quiz room for user ${myId} in session ${sessionId}`)
       socket.emit('join_student', myId)
       socket.emit('quiz:join', { sessionId, userId: myId })
-    })
+    }
+
+    if (socket.connected) {
+      joinQuizRoom()
+    }
+    socket.on('connect', joinQuizRoom)
 
     // Socket Event Handlers
     socket.on('quiz:player-joined', () => {
@@ -135,7 +141,9 @@ export default function MultiplayerQuizPage() {
       }, 1000)
     })
 
-    socket.on('quiz:started', ({ question }) => {
+    socket.on('quiz:started', ({ question, questionNumber }) => {
+      console.log('[QUIZ CLIENT] Received quiz:started', question)
+      console.log(`[QUIZ CLIENT] Rendering Question ${questionNumber || 1}`)
       setSession(prev => prev ? { ...prev, status: 'LIVE', currentQuestionIndex: 0 } : prev)
       setCurrentQuestion(question)
       setHasAnswered(false)
@@ -156,23 +164,32 @@ export default function MultiplayerQuizPage() {
       })
     })
 
-    socket.on('quiz:question-result', ({ correctOption, explanation, participants }) => {
-      setEvalResult({ correctOption, explanation })
-      if (participants) {
-        setSession(prev => prev ? { ...prev, participants } : prev)
+    socket.on('quiz:question-result', (resData) => {
+      console.log('[QUIZ CLIENT] Received quiz:question-result', resData)
+      setEvalResult({ correctOption: resData.correctOption, explanation: resData.explanation, results: resData.results })
+      if (resData.participants) {
+        setSession(prev => prev ? { ...prev, participants: resData.participants } : prev)
       }
     })
 
-    socket.on('quiz:next-question', ({ currentQuestionIndex, question, participants }) => {
-      setSession(prev => prev ? { ...prev, currentQuestionIndex, participants } : prev)
-      setCurrentQuestion(question)
+    socket.on('quiz:next-question', (payload) => {
+      console.log('[QUIZ CLIENT] Received quiz:next-question', payload)
+      const qNum = payload.questionNumber || ((payload.currentQuestionIndex ?? 0) + 1)
+      console.log(`[QUIZ CLIENT] Rendering Question ${qNum}`)
+      setSession(prev => prev ? {
+        ...prev,
+        currentQuestionIndex: qNum - 1,
+        participants: payload.participants || prev.participants
+      } : prev)
+      setCurrentQuestion(payload.question)
       setHasAnswered(false)
       setSelectedOption(null)
       setEvalResult(null)
       setQuestionTimeLeft(45)
     })
 
-    socket.on('quiz:completed', () => {
+    socket.on('quiz:completed', (resData) => {
+      console.log('[QUIZ CLIENT] Received quiz:completed', resData)
       setSession(prev => prev ? { ...prev, status: 'COMPLETED' } : prev)
       fetchResults()
     })

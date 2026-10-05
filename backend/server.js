@@ -244,6 +244,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("quiz:answer", async ({ sessionId, userId, questionId, selectedOption, responseTime }) => {
+    try {
+      if (!sessionId || !userId) return;
+      const { processUserAnswer } = require("./controllers/multiplayerQuizController");
+      await processUserAnswer({ sessionId, userId, questionId, selectedOption, responseTime, io });
+    } catch (err) {
+      console.error(`Socket quiz:answer error for user ${userId}:`, err.message);
+    }
+  });
+
   socket.on("quiz:chat", ({ sessionId, userId, senderName, message }) => {
     if (sessionId && message) {
       io.to(`quiz:${sessionId}`).emit("quiz:chat-message", {
