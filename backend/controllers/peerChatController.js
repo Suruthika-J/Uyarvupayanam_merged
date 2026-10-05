@@ -275,8 +275,7 @@ exports.sendStudyInvite = async (req, res) => {
     }
 
     const norm = normalizeTopic(rawTopic, goal);
-    console.log(`[STUDY INVITE] topic = ${norm.normalizedTopic}`);
-    console.log(`[INVITE CREATED] topicId: ${norm.domainId}, topicLabel: ${norm.normalizedTopic}`);
+    console.log(`[PEER-QUIZ]\nInvite topic:\n${rawTopic}\n[PEER-QUIZ]\nNormalized topic:\n${norm.domainId} (${norm.normalizedTopic})`);
 
     const inviteText = `📚 Study Invite: ${norm.normalizedTopic} — ${goal || "Let's study together!"} (${durationMinutes || 25} mins)`;
     const message = await PeerMessage.create({
@@ -400,24 +399,24 @@ exports.respondToStudyInvite = async (req, res) => {
       quizSession = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
       if (!quizSession) {
-        const topic = msg.studyInvite?.subject || msg.studyInvite?.topicLabel;
-        if (!topic) {
+        const topicToUse = msg.studyInvite?.topicId || msg.studyInvite?.subject || msg.studyInvite?.topicLabel;
+        if (!topicToUse) {
           throw new Error("Multiplayer quiz topic is missing from study invite");
         }
-        const subtopic = msg.studyInvite?.goal || topic;
+        const subtopic = msg.studyInvite?.goal || topicToUse;
         const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-        console.log(`[INVITE ACCEPTED] topicId: ${msg.studyInvite?.topicId || topic}`);
-        console.log(`[QUIZ-AI] Creating quiz for topic: "${topic}", subtopic: "${subtopic}"...`);
+        console.log(`[PEER-QUIZ]\nCreating session with topic:\n${topicToUse}`);
         const quizData = await createQuiz({
-          topic,
+          topic: topicToUse,
           subtopic,
           questionCount: 10,
           duration: durationMins
         });
 
+        console.log(`[PEER-QUIZ]\nSession topic:\n${quizData.topicId} (${quizData.topicLabel})`);
+
         const questionIds = quizData.questionIds;
-        console.log(`[QUIZ-AI] Quiz created with ${questionIds.length} questions. Assembling session...`);
 
         const [senderUser, responderUser] = await Promise.all([
           User.findById(msg.senderId).select("name").lean(),
@@ -430,9 +429,9 @@ exports.respondToStudyInvite = async (req, res) => {
           sessionId,
           inviteId: msg._id,
           conversationId: msg.conversationId,
-          topic: quizData.normalizedTopic || topic,
-          topicId: quizData.domainId || quizData.topicId || topic.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-          topicLabel: quizData.normalizedTopic || topic,
+          topic: quizData.normalizedTopic || topicToUse,
+          topicId: quizData.domainId || quizData.topicId,
+          topicLabel: quizData.normalizedTopic || topicToUse,
           subtopic: quizData.normalizedSubtopic || subtopic,
           questionIds,
           participants: [

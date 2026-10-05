@@ -751,8 +751,25 @@ export default function PeerChatPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Subject</label>
-                <input type="text" placeholder="e.g. DBMS, OS, Java" value={inviteSubject}
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Select Topic</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  {['C++', 'SQL', 'DBMS', 'Java', 'Python', 'OOPS', 'OS', 'Computer Networks', 'Data Structures'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setInviteSubject(t)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                        background: inviteSubject.toUpperCase() === t.toUpperCase() ? '#7c3aed' : '#f1f5f9',
+                        color: inviteSubject.toUpperCase() === t.toUpperCase() ? '#fff' : '#475569',
+                        border: '1px solid #e2e8f0'
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <input type="text" placeholder="Or type custom topic (e.g. C++, SQL, Java)..." value={inviteSubject}
                   onChange={e => setInviteSubject(e.target.value)}
                   style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box' }} />
               </div>

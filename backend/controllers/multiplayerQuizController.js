@@ -519,22 +519,22 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
     let session = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
     if (!session) {
-      const topic = msg.studyInvite?.subject || msg.studyInvite?.topicLabel;
-      if (!topic) {
+      const topicToUse = msg.studyInvite?.topicId || msg.studyInvite?.subject || msg.studyInvite?.topicLabel;
+      if (!topicToUse) {
         throw new Error("Multiplayer quiz topic is missing from study invite");
       }
-      const subtopic = msg.studyInvite?.goal || topic;
+      const subtopic = msg.studyInvite?.goal || topicToUse;
       const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-      console.log(`[INVITE ACCEPTED] topicId: ${msg.studyInvite?.topicId || topic}`);
+      console.log(`[PEER-QUIZ]\nCreating session with topic:\n${topicToUse}`);
       const quizData = await createQuiz({
-        topic,
+        topic: topicToUse,
         subtopic,
         questionCount: 10,
         duration: durationMins
       });
 
-      console.log(`[QUIZ SESSION CREATED] invite.topic = ${topic}, session.topic = ${quizData.normalizedTopic || topic}`);
+      console.log(`[PEER-QUIZ]\nSession created with topic:\n${quizData.topicId} (${quizData.topicLabel})`);
 
       const questionIds = quizData.questionIds;
 
@@ -549,9 +549,9 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
         sessionId,
         inviteId: msg._id,
         conversationId: msg.conversationId,
-        topic: quizData.normalizedTopic || topic,
-        topicId: quizData.domainId || quizData.topicId || topic.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-        topicLabel: quizData.normalizedTopic || topic,
+        topic: quizData.normalizedTopic || topicToUse,
+        topicId: quizData.domainId || quizData.topicId,
+        topicLabel: quizData.normalizedTopic || topicToUse,
         subtopic: quizData.normalizedSubtopic || subtopic,
         questionIds,
         participants: [
@@ -636,7 +636,7 @@ exports.getSession = async (req, res) => {
       return res.status(404).json({ success: false, message: "Quiz session not found." });
     }
 
-    console.log(`[QUIZ LOAD] quizId = ${sessionId}, topic = ${session.topic}`);
+    console.log(`[PEER-QUIZ]\nLoaded session topic:\n${session.topicId || session.topic} (${session.topicLabel || session.topic})`);
 
     const isParticipant = session.participants.some(p => p.userId.toString() === userId.toString());
     if (!isParticipant) {

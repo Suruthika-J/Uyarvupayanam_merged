@@ -12,11 +12,17 @@
 const AhpFuzzyQuestion = require("../../models/AhpFuzzyQuestion");
 const CseSkillQuestion = require("../../models/CseSkillQuestion");
 
+function escapeRegExp(string = "") {
+  return String(string).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 async function retrieveQuestions({ normalizedTopic, normalizedSubtopic, domainId, branch = "CSE", targetCount = 10 }) {
   console.log(`[QuizAI] Retrieving questions strictly for topic: "${normalizedTopic}" (domainId: ${domainId})`);
 
   const resultsMap = new Map();
-  const topicRegex = new RegExp(`^${normalizedTopic}$|\\b${domainId}\\b`, "i");
+  const safeTopic = escapeRegExp(normalizedTopic);
+  const safeDomain = escapeRegExp(domainId);
+  const topicRegex = new RegExp(`^${safeTopic}$|\\b${safeDomain}\\b`, "i");
 
   // Helper to add questions preventing duplicates and cross-topic leakage
   const addQuestions = (qList, priorityLevel) => {
