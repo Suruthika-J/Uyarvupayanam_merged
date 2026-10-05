@@ -18,10 +18,13 @@ const PlacementPlan = require("../models/PlacementPlan");
 const placementResearchService = require("../services/placementResearchService");
 const placementStudyPlanEngine = require("../services/placementStudyPlanEngine");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 
 // Helper function to query xAI Grok API with graceful JSON parsing
 async function queryGrokJson(prompt, systemMsg, fallbackData) {
+  if (!GROK_API_KEY) {
+    return fallbackData;
+  }
   try {
     const response = await axios.post(
       "https://api.x.ai/v1/chat/completions",
@@ -1331,33 +1334,35 @@ How can I assist you with your coursework, interview preparation, or career goal
 
     let reply = fallbackReply;
 
-    try {
-      const response = await axios.post(
-        "https://api.x.ai/v1/chat/completions",
-        {
-          model: "grok-2-latest",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...(chatHistory || []).map(c => ({ role: c.sender === "user" ? "user" : "assistant", content: c.text })),
-            { role: "user", content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: 650
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${GROK_API_KEY}`
+    if (GROK_API_KEY) {
+      try {
+        const response = await axios.post(
+          "https://api.x.ai/v1/chat/completions",
+          {
+            model: "grok-2-latest",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...(chatHistory || []).map(c => ({ role: c.sender === "user" ? "user" : "assistant", content: c.text })),
+              { role: "user", content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 650
           },
-          timeout: 10000
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${GROK_API_KEY}`
+            },
+            timeout: 10000
+          }
+        );
+        const grokText = response.data?.choices?.[0]?.message?.content;
+        if (grokText && grokText.trim().length > 30) {
+          reply = grokText.trim();
         }
-      );
-      const grokText = response.data?.choices?.[0]?.message?.content;
-      if (grokText && grokText.trim().length > 30) {
-        reply = grokText.trim();
+      } catch (apiErr) {
+        console.warn("Grok API call fallback triggered in askAdvisorChat:", apiErr.message);
       }
-    } catch (apiErr) {
-      console.warn("Grok API call fallback triggered in askAdvisorChat:", apiErr.message);
     }
 
     return res.json({ success: true, reply, intent, targetCareer });

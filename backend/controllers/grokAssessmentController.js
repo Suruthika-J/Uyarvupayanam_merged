@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 
 // Fallback question generator in case of network timeouts or API key rate limits
 const generateFallbackQuestions = (degree, domain) => {
@@ -71,48 +71,50 @@ Each object MUST have:
 - "explanation": string (brief 1-sentence explanation of why the correct answer is right)
 `;
 
-    try {
-      const grokResponse = await axios.post(
-        "https://api.x.ai/v1/chat/completions",
-        {
-          model: "grok-2-latest",
-          messages: [
-            {
-              role: "system",
-              content: "You are a specialized academic question generator. Respond strictly in raw valid JSON arrays."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1000
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${GROK_API_KEY}`
+    if (GROK_API_KEY) {
+      try {
+        const grokResponse = await axios.post(
+          "https://api.x.ai/v1/chat/completions",
+          {
+            model: "grok-2-latest",
+            messages: [
+              {
+                role: "system",
+                content: "You are a specialized academic question generator. Respond strictly in raw valid JSON arrays."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1000
           },
-          timeout: 10000
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${GROK_API_KEY}`
+            },
+            timeout: 10000
+          }
+        );
+
+        const rawText = grokResponse.data?.choices?.[0]?.message?.content || "";
+        const cleanedJson = rawText.replace(/```json/gi, "").replace(/```/gi, "").trim();
+        const questions = JSON.parse(cleanedJson);
+
+        if (Array.isArray(questions) && questions.length > 0) {
+          return res.json({
+            success: true,
+            source: "xAI Grok API",
+            degreeProgramme: degree,
+            domain: dom,
+            questions
+          });
         }
-      );
-
-      const rawText = grokResponse.data?.choices?.[0]?.message?.content || "";
-      const cleanedJson = rawText.replace(/```json/gi, "").replace(/```/gi, "").trim();
-      const questions = JSON.parse(cleanedJson);
-
-      if (Array.isArray(questions) && questions.length > 0) {
-        return res.json({
-          success: true,
-          source: "xAI Grok API",
-          degreeProgramme: degree,
-          domain: dom,
-          questions
-        });
+      } catch (apiErr) {
+        console.warn("xAI Grok API call failed or timed out, serving fallback questions:", apiErr.message);
       }
-    } catch (apiErr) {
-      console.warn("xAI Grok API call failed or timed out, serving fallback questions:", apiErr.message);
     }
 
     // Serving robust dynamic fallback questions if Grok API call is delayed or unfulfilled

@@ -4,7 +4,7 @@ const CollegeOnboardingResponse = require("../models/CollegeOnboardingResponse")
 const Recommendation = require("../models/Recommendation");
 const axios = require("axios");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 
 // ── Server-Side AI Question Validation Helper ──────────────────────────────────
 const validateQuestion = (q, expectedDomain, expectedDifficulty) => {
@@ -74,6 +74,10 @@ STRICT RULES:
    - "topic": string (sub-topic or concept area matching domain/skill)
    - "explanation": string (1-sentence explanation)
 `;
+
+  if (!GROK_API_KEY) {
+    return [];
+  }
 
   try {
     const response = await axios.post(

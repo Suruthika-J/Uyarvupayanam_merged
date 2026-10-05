@@ -14,7 +14,7 @@
 const axios = require("axios");
 const AssessmentQuestion = require("../models/AssessmentQuestion");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 const GROK_TIMEOUT = 5000;
 
 const SUPPORTED_CLASSES = ["5", "8", "10", "12"];
@@ -206,6 +206,10 @@ Each object MUST have:
 - "options": array of exactly 4 distinct string choices
 - "correctIndex": integer (0 to 3) pointing to the correct option
 - "explanation": string (brief one-sentence explanation)`;
+
+  if (!GROK_API_KEY) {
+    return [];
+  }
 
   try {
     const grokResponse = await axios.post(

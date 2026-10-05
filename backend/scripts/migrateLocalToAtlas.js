@@ -1,7 +1,18 @@
 const mongoose = require("mongoose");
+const path = require("path");
+const dotenv = require("dotenv");
 
-const LOCAL_URI = "mongodb://localhost:27017/uyarvu-payanam";
-const ATLAS_URI = "mongodb+srv://uyarvupayanam_db_user:UyarvuPayanam1234@cluster0.i0sep1t.mongodb.net/uyarvuPayanam?retryWrites=true&w=majority";
+// Load .env from backend directory
+dotenv.config({ path: path.join(__dirname, "../.env") });
+dotenv.config();
+
+const LOCAL_URI = process.env.LOCAL_MONGO_URI || "mongodb://localhost:27017/uyarvu-payanam";
+const ATLAS_URI = process.env.ATLAS_URI || process.env.MONGO_URI;
+
+if (!ATLAS_URI) {
+  console.error("❌ Error: Missing ATLAS_URI or MONGO_URI in environment configuration. Please set ATLAS_URI or MONGO_URI in backend/.env before running migration.");
+  process.exit(1);
+}
 
 async function migrate() {
   console.log("Connecting to Local MongoDB...");
