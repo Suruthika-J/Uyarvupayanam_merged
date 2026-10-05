@@ -444,6 +444,70 @@ export default function CollegeDashboardPage() {
             </SCard>
           )}
 
+          {/* DYNAMIC DOMAIN CARD: ENGINEERING HACKATHON & PROJECT TEAMMATE MATCHMAKER */}
+          {flags.hackathonTeammates && !hiddenWidgetIds.includes('hackathon-teammates') && (
+            <SCard style={{
+              padding: 28,
+              borderRadius: 20,
+              borderLeft: '5px solid #6366f1',
+              background: isGamified
+                ? 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(15,31,61,0.8) 100%)'
+                : 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)',
+              border: isGamified ? '1px solid rgba(99,102,241,0.3)' : '1px solid #e0e7ff',
+              boxShadow: '0 4px 20px rgba(99,102,241,0.08)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 22 }}>🚀</span> Hackathon &amp; Project "Teammate Matchmaker"
+                </div>
+                <SBadge color="purple">Engineering Exclusive Hub</SBadge>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--s-text3)', margin: '0 0 16px', lineHeight: 1.6 }}>
+                Form your dream team for <strong>Smart India Hackathon (SIH 2026)</strong>, Tamil Nadu State Innovation Challenges, College Symposiums, and Mini/Final-Year Engineering Projects. Find peers with complementary skills (React, AI/ML, IoT Hardware, ROS2, VLSI) and start collaborating immediately.
+              </p>
+
+              {/* Real Verified Hackathon & Competition Badges */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: '#e0e7ff', color: '#4338ca' }}>
+                  🏆 Smart India Hackathon (SIH 2026)
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: '#fef3c7', color: '#92400e' }}>
+                  🏛️ TNSI (EDII-TN State Challenge)
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: '#ecfdf5', color: '#065f46' }}>
+                  ⚡ Naan Mudhalvan AI Challenge
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 8, background: '#f5f3ff', color: '#6d28d9' }}>
+                  🚀 Anna Univ Kurukshetra
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/teammate-matchmaker')}
+                  style={{
+                    padding: '10px 22px', borderRadius: 12, background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                    color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(79,70,229,0.3)'
+                  }}
+                >
+                  <FiUsers size={16} /> Explore Open Teams →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/college/teammate-matchmaker?action=post')}
+                  style={{
+                    padding: '10px 18px', borderRadius: 12, background: isGamified ? 'rgba(255,255,255,0.1)' : '#fff',
+                    color: '#4f46e5', fontWeight: 800, fontSize: 13, border: '1px solid #c7d2fe', cursor: 'pointer'
+                  }}
+                >
+                  + Post Team Idea
+                </button>
+              </div>
+            </SCard>
+          )}
+
           {/* SECTION 1 — TODAY'S OVERVIEW */}
           {!hiddenWidgetIds.includes('study-planner') && (
             <SCard style={{ padding: 28, borderRadius: 20 }}>

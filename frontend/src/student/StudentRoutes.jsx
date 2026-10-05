@@ -111,6 +111,7 @@ import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
 import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
 import PeerChatPage from './pages/community/PeerChatPage'
 import MultiplayerQuizPage from './pages/community/MultiplayerQuizPage'
+import TeammateMatchmakerPage from './pages/career/TeammateMatchmakerPage'
 
 import './student.css'
 
@@ -321,6 +322,7 @@ export default function StudentRoutes() {
             <Route path="career/interview-prep" element={<InterviewPreparationPage />} />
             <Route path="study-tools/notes-summarizer" element={<NotesSummarizerPage />} />
             <Route path="study-tools/practice" element={<PracticeQuestionsPage />} />
+            <Route path="teammate-matchmaker" element={<TeammateMatchmakerPage />} />
             <Route path="community/mentors" element={<PeerMentorshipPage />} />
             <Route path="community/doubts" element={<DoubtResolutionPage />} />
             <Route path="peer-chat" element={<PeerChatPage />} />

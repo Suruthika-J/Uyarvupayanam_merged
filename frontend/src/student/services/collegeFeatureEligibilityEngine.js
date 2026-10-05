@@ -73,8 +73,13 @@ export function getCollegeFeatureEligibility(profile = {}) {
   // 5. Core Engineering R&D / Design Labs (AutoCAD, MATLAB, VLSI, Embedded)
   const isCoreEngineering = [
     'mechanical', 'civil', 'electrical', 'eee', 'ece', 'electronics', 'aerospace',
-    'mechatronics', 'automobile', 'chemical'
-  ].some(term => domain.includes(term) || spec.includes(term) || degree.includes(term))
+    'mechatronics', 'automobile', 'chemical', 'biomedical', 'production', 'instrumentation'
+  ].some(term => domain.includes(term) || spec.includes(term) || degree.includes(term) || field.includes(term))
+
+  // 6. Engineering Domain Student Check (Tech or Core Engineering degrees / fields / domains)
+  const isEngineering = isTechDomain || isCoreEngineering || [
+    'engineering', 'b.e', 'b.tech', 'btech', 'be', 'm.e', 'm.tech', 'mtech', 'technology', 'polytechnic'
+  ].some(term => field.includes(term) || degree.includes(term) || domain.includes(term))
 
   return {
     focusLearning: true, // Universal
@@ -84,6 +89,8 @@ export function getCollegeFeatureEligibility(profile = {}) {
     performanceAnalytics: true, // Universal
 
     // Domain specific
+    isEngineering,
+    hackathonTeammates: isEngineering,
     codingArena: codingArenaEligible,
     codingChallenges: codingArenaEligible,
     technicalSkillGap: isTechDomain || isCoreEngineering || codingArenaEligible,
@@ -141,6 +148,18 @@ export function getDashboardWidgetPriority(profile = {}) {
   ]
 
   // Add Domain-Specific High Priority Cards
+  if (flags.hackathonTeammates) {
+    widgets.push({
+      id: 'hackathon-teammates',
+      title: 'Hackathon & Project Matchmaker',
+      subtitle: 'Find complementary peers for SIH, Mini Projects & Tech Fests',
+      category: 'engineering',
+      priority: 97,
+      badge: 'Engineering Hub',
+      to: '/college/teammate-matchmaker'
+    })
+  }
+
   if (flags.codingArena) {
     widgets.push({
       id: 'coding-arena',

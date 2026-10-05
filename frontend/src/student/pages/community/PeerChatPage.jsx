@@ -15,7 +15,7 @@
  * - Unread message counts
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { useCollegeTheme } from '../../context/CollegeThemeContext'
 import axios from 'axios'
@@ -141,6 +141,7 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
 
 export default function PeerChatPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { student } = useStudentAuth()
   const { theme }   = useCollegeTheme()
   const myId = student?._id || student?.id
@@ -267,7 +268,10 @@ export default function PeerChatPage() {
   useEffect(() => { 
     loadConversations()
     searchStudents('')
-  }, [])
+    if (location.state?.peerId) {
+      startChat(location.state.peerId, location.state.peerName || 'Peer')
+    }
+  }, [location.state?.peerId])
 
   // ── Open a conversation ───────────────────────────────────────────────────
   const openConvo = async (convo) => {

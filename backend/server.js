@@ -331,6 +331,9 @@ app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
 // ── Real-time Multiplayer Quiz Engine ───────────────────────────────────────
 app.use("/api/multiplayer-quiz", require("./routes/multiplayerQuizRoutes"));
 
+// ── Engineering Hackathon & Project Teammate Matchmaker ─────────────────────
+app.use("/api/teammate-matchmaker", require("./routes/teammateMatchmakerRoutes"));
+
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
