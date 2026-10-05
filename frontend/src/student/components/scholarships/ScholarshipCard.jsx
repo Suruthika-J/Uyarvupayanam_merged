@@ -33,6 +33,11 @@ const LABEL = {
 // One labelled detail row. `value` is either the real data or an explicit
 // "Information not available", styled muted so a genuine gap in the data reads
 // as a gap rather than looking like a real value.
+//
+// Multi-line values (PM-YASASVI's bullet-point eligibility) render as a bulleted
+// list. The list reuses the exact same computed style as a single-line value, so
+// a bulleted row is typographically identical to Vidyadhan's plain one — the
+// bullets are a content difference, never a styling difference.
 function DetailRow({ label, value, variant, marginBottom }) {
   const style =
     variant === 'benefit'
@@ -41,12 +46,31 @@ function DetailRow({ label, value, variant, marginBottom }) {
         ? { fontSize: 13, fontWeight: 700, color: '#ef4444' }
         : { fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.5 }
 
+  if (!value) {
+    return (
+      <div style={{ marginBottom }}>
+        <div style={LABEL}>{label}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', fontStyle: 'italic' }}>
+          {NOT_AVAILABLE}
+        </div>
+      </div>
+    )
+  }
+
+  const lines = value.split('\n').map((l) => l.trim()).filter(Boolean)
+
   return (
     <div style={{ marginBottom }}>
       <div style={LABEL}>{label}</div>
-      <div style={value ? style : { fontSize: 13, fontWeight: 600, color: '#94a3b8', fontStyle: 'italic' }}>
-        {value || NOT_AVAILABLE}
-      </div>
+      {lines.length > 1 ? (
+        <ul style={{ ...style, margin: 0, paddingLeft: 18 }}>
+          {lines.map((line, i) => (
+            <li key={i} style={{ marginBottom: 4 }}>{line.replace(/^[-•]\s*/, '')}</li>
+          ))}
+        </ul>
+      ) : (
+        <div style={style}>{value}</div>
+      )}
     </div>
   )
 }
@@ -153,6 +177,18 @@ export default function ScholarshipCard({
           >
             <DetailRow label="Benefit" value={benefit} variant="benefit" marginBottom={12} />
             <DetailRow label="Eligibility" value={eligibility} variant="eligibility" marginBottom={12} />
+            {/* Optional extra guidance. Rendered with the same label + body
+                typography as the rows above and given no separate coloured
+                treatment, so a card carrying a note still matches the cards
+                that don't. */}
+            {item.importantNote ? (
+              <div style={{ marginBottom: 12 }}>
+                <div style={LABEL}>Note</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.5 }}>
+                  {item.importantNote}
+                </div>
+              </div>
+            ) : null}
             <DetailRow label="Last Date" value={deadline} variant="deadline" marginBottom={0} />
           </div>
         ) : null}

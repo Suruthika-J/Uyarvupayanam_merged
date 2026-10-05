@@ -53,6 +53,7 @@ function normaliseScholarshipContent(item) {
       [item.eligibilityClass, item.eligibilityMarks].filter(Boolean).join(' · ') ||
       '',
     deadline: item.deadline || '',
+    importantNote: item.importantNote || '',
     // Apply always leaves the site: prefer the Scholarship document's
     // applicationLink, fall back to the curated entry's externalLink.
     applicationLink: item.applicationLink || item.externalLink || '',
