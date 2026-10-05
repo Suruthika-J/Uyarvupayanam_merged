@@ -11,6 +11,10 @@ import { userActionService } from '../../../services/userActionService'
 import { adminService } from '../../../services/adminService'
 import { cutoffService } from '../../../services/cutoffService'
 
+// jspdf is a heavy dependency and is only needed when the student actually
+// clicks "Download Guide", so it is code-split and loaded on demand.
+// (imported dynamically inside handleDownloadGuide below)
+
 // Map course category → college stream field in DB
 const CATEGORY_STREAM_MAP = {
   'Engineering': 'Engineering',
@@ -111,6 +115,7 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState('Overview')
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setIsSaving] = useState(false)
+  const [generatingGuide, setGeneratingGuide] = useState(false)
 
   // ── College directory state (Offering Colleges section) ──
   const [clgPage, setClgPage] = useState(1)
@@ -211,6 +216,24 @@ export default function CourseDetailPage() {
     }
   }
 
+  // Download the course guide as a real PDF built from the data already
+  // loaded on this page (course / colleges / cutoffs). No refetch, and no
+  // browser print dialog. jsPDF is dynamically imported to keep it out of the
+  // main bundle.
+  const handleDownloadGuide = async () => {
+    if (!course || generatingGuide) return
+    setGeneratingGuide(true)
+    try {
+      const { downloadCourseGuidePdf } = await import('../../services/courseGuidePdf')
+      downloadCourseGuidePdf(course, colleges, cutoffs)
+    } catch (err) {
+      console.error('Failed to generate course guide PDF:', err)
+      alert('Could not generate the guide PDF. Please try again.')
+    } finally {
+      setGeneratingGuide(false)
+    }
+  }
+
   // Tabs depend on whether this is engineering (cutoffs + colleges) or not (colleges only)
   const getTabs = (cat) => {
     const isEng = cat?.toLowerCase().includes('engineering') ||
@@ -266,8 +289,14 @@ export default function CourseDetailPage() {
               >
                 {isSaved ? '🔖 Saved' : '🔖 Bookmark Course'}
               </SBtn>
-              <SBtn variant="white" style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }} onClick={() => window.print()}>
-                <FiDownload style={{ marginRight: 8 }} /> Download Guide
+              <SBtn
+                variant="white"
+                style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }}
+                onClick={handleDownloadGuide}
+                disabled={generatingGuide}
+              >
+                <FiDownload style={{ marginRight: 8 }} />
+                {generatingGuide ? 'Preparing…' : 'Download Guide'}
               </SBtn>
             </div>
           </div>

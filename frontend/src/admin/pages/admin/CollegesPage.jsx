@@ -56,7 +56,8 @@ export default function CollegesPage() {
   // ── Fetch dependencies ──
   const fetchCourses = async () => {
     try {
-      const res = await courseService.getAllCourses()
+      // status:'all' — admin must still see archived/draft courses here.
+      const res = await courseService.getAllCourses({ status: 'all' })
       setCourses(res.data || [])
     } catch (err) {
       console.error('Failed to fetch courses:', err)

@@ -141,7 +141,11 @@ export default function DashboardPage() {
     // auth interceptor (Bearer token) — no userId/studentId is sent.
     // Sections are read directly from the summary shape, NOT through the old
     // normalize() helper (which cannot see sections.notifications.items).
-    studentApi.get('/dashboard-summary')
+    // studentApi baseURL already ends in /api (see services/studentApi.js), so
+    // this path must be written relative to it — it resolves to
+    // /api/student/dashboard-summary, the mount used in backend/server.js.
+    // (sibling student calls such as /student/profile follow the same shape.)
+    studentApi.get('/student/dashboard-summary')
       .then((res) => {
         const summary = res.data
         try {

@@ -35,7 +35,7 @@ export default function CutoffPage() {
   const fetchDependencies = async () => {
     try {
       const [cRes, clRes] = await Promise.all([
-        courseService.getAllCourses(),
+        courseService.getAllCourses({ status: 'all' }),
         adminService.getColleges()
       ])
       setCourses(cRes.data || [])

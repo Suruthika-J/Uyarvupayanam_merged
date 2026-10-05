@@ -41,10 +41,20 @@ const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // @access  Public
 exports.getAllCourses = async (req, res) => {
   try {
-    const { level, targetLevel, category, search } = req.query;
+    const { level, targetLevel, category, search, status } = req.query;
 
     const isAll = (v) => !v || String(v).trim().toLowerCase() === 'all';
     const and = [];
+
+    // Archived courses must stay out of the default listing. The student
+    // detail route (getStudentCourseDetails) only serves status:"active", so
+    // advertising archived courses here produced list entries whose Course
+    // Detail page always 404'd. Pass ?status=all (admin screens) to opt back
+    // in to archived/draft records so they remain manageable there.
+    const statusFilter = String(status || 'active').trim().toLowerCase();
+    if (statusFilter !== 'all') {
+      and.push({ status: new RegExp(`^${escapeRegex(statusFilter)}$`, 'i') });
+    }
 
     if (!isAll(level) || !isAll(targetLevel)) {
       const levelValue = !isAll(level) ? level : targetLevel;
