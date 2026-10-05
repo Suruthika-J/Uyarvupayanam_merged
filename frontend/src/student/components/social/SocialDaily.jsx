@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getSocialDaily, answerSocialQuestion } from '../../services/socialService'
 import { QUESTION_RENDERERS } from '../../data/socialQuestionTypes'
 import { findWorld } from '../../data/socialWorldThemes'
 import SocialFeedback from './SocialFeedback'
 import { SOCIAL_SCENES, SOCIAL_EXPLORER } from '../../data/socialEnvironments'
+import useDailyChallenge from '../class5/daily/useDailyChallenge'
 import './social.css'
 
 const DEFAULT_PALETTE = {
@@ -16,86 +16,62 @@ const DEFAULT_PALETTE = {
   cardAccent: '#a778ff',
 }
 
-// Today's Explorer Challenge: a single, rotating, API-driven discovery.
-// Attempts and the completion status are saved to the logged-in student's
-// account, so the app remembers who already finished today's challenge - per
-// student.
+// Today's Explorer Challenge: one rotating discovery per day, drawn from the
+// World Explorer bank and answered with the normal Social question renderers.
+// State handling is the shared Class 5 daily hook; this file is only the World
+// Explorer skin around it.
 export default function SocialDaily() {
   const navigate = useNavigate()
-
-  const [question, setQuestion] = useState(null)
-  const [status, setStatus] = useState('asking') // asking | retry | reveal | correct | done
+  const [status, setStatus] = useState('asking') // asking | retry | correct | reveal
   const [explanation, setExplanation] = useState('')
-  const [retryToken, setRetryToken] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [reporting, setReporting] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [hardError, setHardError] = useState('')
+  const [seenKey, setSeenKey] = useState('')
 
   const handleAuthError = useCallback(
     () => navigate('/student/signin', { state: { from: { pathname: '/student/class5/social/daily' } }, replace: true }),
     [navigate]
   )
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      try {
-        const res = await getSocialDaily()
-        if (cancelled) return
-        if (!res || !res.question) {
-          setHardError("Today's challenge is not ready yet. Come back soon!")
-          setLoading(false)
-          return
-        }
-        setQuestion(res.question)
-        setExplanation(res.question.explanation || '')
-        setStatus(res.solved ? 'done' : 'asking')
-        setWrongCount(0)
-        setLoading(false)
-      } catch (err) {
-        if (cancelled) return
-        if (err && err.auth) {
-          handleAuthError()
-          return
-        }
-        setHardError('The Explorer Challenge is taking a breath. Tap to try again in a moment.')
-        setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [handleAuthError])
+  const daily = useDailyChallenge({ subject: 'social', onSignedOut: handleAuthError })
+  const { question, dateKey, completed, loading, error, reload, submit } = daily
 
-  function handleAnswered(correct) {
-    if (status !== 'asking' || !question) return
-    if (correct) {
-      setStatus('correct')
-      setReporting(true)
-      answerSocialQuestion(question.world, question.id, true)
-        .catch((err) => {
-          if (err && err.auth) handleAuthError()
-        })
-        .finally(() => setReporting(false))
-      return
-    }
-    const nextWrong = wrongCount + 1
-    setWrongCount(nextWrong)
-    if (nextWrong >= 2) {
-      setStatus('reveal')
-      answerSocialQuestion(question.world, question.id, false).catch((err) => {
-        if (err && err.auth) handleAuthError()
-      })
-    } else {
-      setStatus('retry')
-    }
+  // Reset the answer panel whenever a different question (or a different day)
+  // arrives. Done during render rather than in an effect so there is no extra
+  // pass, and keyed on dateKey so answering correctly does not immediately
+  // bounce the student out of the feedback they are reading. Revisiting a day
+  // that is already finished opens straight into the completed state.
+  const dayQuestionKey = question ? `${dateKey}:${question.id}` : ''
+  if (dayQuestionKey !== seenKey) {
+    setSeenKey(dayQuestionKey)
+    setExplanation((question && question.explanation) || '')
+    setStatus(completed ? 'complete' : 'asking')
+    setWrongCount(0)
   }
 
+  const handleAnswered = useCallback(
+    async (correct) => {
+      if (status !== 'asking' || !question) return
+
+      if (correct) {
+        setStatus('correct')
+        const saved = await submit(true)
+        if (saved?.error && !saved.auth) setStatus('retry')
+        return
+      }
+
+      const nextWrong = wrongCount + 1
+      setWrongCount(nextWrong)
+      if (nextWrong >= 2) {
+        setStatus('reveal')
+        submit(false)
+      } else {
+        setStatus('retry')
+      }
+    },
+    [status, question, wrongCount, submit]
+  )
+
   function tryAgain() {
-    setRetryToken((t) => t + 1)
     setStatus('asking')
     setWrongCount(0)
   }
@@ -109,11 +85,13 @@ export default function SocialDaily() {
   }
 
   const seedWorld = question ? findWorld(question.world) : null
-  const theme = (seedWorld && seedWorld.theme) || {}
-  const palette = theme.palette || DEFAULT_PALETTE
+  const palette = (seedWorld && seedWorld.theme && seedWorld.theme.palette) || DEFAULT_PALETTE
   const environment = seedWorld ? seedWorld.environment : 'space'
   const Explorer = SOCIAL_EXPLORER
   const Renderer = question ? QUESTION_RENDERERS[question.type] : null
+  const SceneComponent = SOCIAL_SCENES[environment]
+  const done = status === 'correct' || status === 'reveal'
+
   const paletteStyle = {
     '--soc-sky-top': palette.skyTop,
     '--soc-sky-bottom': palette.skyBottom,
@@ -122,12 +100,10 @@ export default function SocialDaily() {
     '--soc-card-bg': palette.cardBg,
     '--soc-card-accent': palette.cardAccent,
   }
-  const SceneComponent = SOCIAL_SCENES[environment]
-  const done = status === 'correct' || status === 'reveal' || status === 'done'
 
   if (loading) {
     return (
-      <div className="soc-root" style={{ ...paletteStyle, minHeight: 'clamp(520px, 60vh, 760px)' }}>
+      <div className="soc-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(520px, 60vh, 760px)' }}>
         <div className="soc-skeleton" role="status" aria-label="Loading daily challenge">
           <div className="soc-skel-block" style={{ top: '6%', height: 150 }} />
           <div className="soc-skel-block" style={{ top: '38%', height: 96 }} />
@@ -137,10 +113,10 @@ export default function SocialDaily() {
     )
   }
 
-  if (hardError || !question || !Renderer) {
-    const msg = hardError || "Today's challenge is not ready yet."
+  if (error || !question || !Renderer) {
+    const msg = error || "Today's challenge is not ready yet."
     return (
-      <div className="soc-root" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
+      <div className="soc-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
         <div className="soc-scene">
           <div className="soc-bg-sky" />
           <div className="soc-bg-scene">{SceneComponent && <SceneComponent />}</div>
@@ -151,8 +127,8 @@ export default function SocialDaily() {
             <span className="soc-intro-eyebrow">Today&apos;s Explorer Challenge</span>
             <p className="soc-intro-text">{msg}</p>
             <div className="soc-actions">
-              <button type="button" className="soc-btn soc-btn-primary" onClick={hardError ? () => window.location.reload() : backToMap}>
-                {hardError ? 'Try again' : 'Back to the World Explorer'}
+              <button type="button" className="soc-btn soc-btn-primary" onClick={error ? reload : backToMap}>
+                {error ? 'Try again' : 'Back to the World Explorer'}
               </button>
             </div>
           </div>
@@ -162,7 +138,11 @@ export default function SocialDaily() {
   }
 
   return (
-    <div className={`soc-root${done ? ' is-done' : ''}`} style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }} key={question.id}>
+    <div
+      className={`soc-root is-daily${done ? ' is-done' : ''}`}
+      style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }}
+      key={question.id}
+    >
       <div className="soc-scene">
         <div className="soc-bg-sky" />
         <div className="soc-bg-scene">{SceneComponent && <SceneComponent />}</div>
@@ -172,39 +152,30 @@ export default function SocialDaily() {
       <div className="soc-content">
         <header className="soc-intro">
           <div className="soc-intro-top">
-            <span className="soc-intro-eyebrow">Today&apos;s Explorer Challenge</span>
+            <span className="soc-intro-eyebrow">
+              Today&apos;s Explorer Challenge{completed ? ' · done!' : ''}
+            </span>
           </div>
-          <h1 className="soc-intro-title">{seedWorld ? seedWorld.nameEn : 'A world of wonder'}</h1>
-          {status !== 'done' && <p className="soc-intro-text">{question.question}</p>}
-          {status === 'done' && (
+          <h1 className="soc-intro-title">
+            {seedWorld ? seedWorld.nameEn : 'A world of wonder'}
+          </h1>
+          {completed ? (
             <p className="soc-intro-text">
-              You already finished today&apos;s challenge — the app remembers, so it&apos;s wrapped up for you. Here&apos;s
-              the one you solved:
+              Here is the discovery you made today. A brand new one arrives tomorrow.
             </p>
+          ) : (
+            <p className="soc-intro-text">{question.question}</p>
           )}
         </header>
 
-        {status !== 'done' && (
-          <div className="soc-stage" aria-live="polite">
-            <Renderer
-              key={`${question.id}:form${retryToken}`}
-              question={question}
-              disabled={done}
-              onAnswer={handleAnswered}
-            />
-          </div>
-        )}
-        {status === 'done' && (
-          <div className="soc-stage" aria-live="polite">
-            <Renderer key={`${question.id}:done`} question={question} disabled onAnswer={() => {}} />
-          </div>
-        )}
+        <div className="soc-stage" aria-live="polite">
+          <Renderer question={question} disabled={done} onAnswer={handleAnswered} />
+        </div>
 
         <SocialFeedback
-          status={status === 'done' ? 'correct' : status}
+          status={status}
           explanation={explanation}
           worldNameEn="today's challenge"
-          reporting={reporting}
           singleAction
           onMap={backToMap}
           onTryAgain={tryAgain}

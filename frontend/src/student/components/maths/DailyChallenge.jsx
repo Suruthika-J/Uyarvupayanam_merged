@@ -126,7 +126,7 @@ export default function DailyChallenge() {
 
   if (loading) {
     return (
-      <div className="mth-root" style={{ ...paletteStyle, minHeight: 'clamp(520px, 60vh, 760px)' }}>
+      <div className="mth-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(520px, 60vh, 760px)' }}>
         <div className="mth-skeleton" role="status" aria-label="Loading daily challenge">
           <div className="mth-skel-block" style={{ top: '6%', height: 150 }} />
           <div className="mth-skel-block" style={{ top: '38%', height: 96 }} />
@@ -139,7 +139,7 @@ export default function DailyChallenge() {
   if (hardError || !question || !Renderer) {
     const msg = hardError || "Today's challenge is not ready yet."
     return (
-      <div className="mth-root" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
+      <div className="mth-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
         <div className="mth-scene">
           <div className="mth-bg-sky" />
           <div className="mth-bg-scene">{SceneComponent && <SceneComponent />}</div>
@@ -161,7 +161,7 @@ export default function DailyChallenge() {
   }
 
   return (
-    <div className={`mth-root${done ? ' is-done' : ''}`} style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }} key={question.id}>
+    <div className={`mth-root is-daily${done ? ' is-done' : ''}`} style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }} key={question.id}>
       <div className="mth-scene">
         <div className="mth-bg-sky" />
         <div className="mth-bg-scene">{SceneComponent && <SceneComponent />}</div>

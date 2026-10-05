@@ -11,6 +11,8 @@ import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import { SBtn, SLoader, SEmpty, SBadge, SAlert, STabs } from '../../components/ui'
 import { C5 } from '../../components/class5/redesign/class5Theme'
+import SectionHeader from '../../components/class5/redesign/SectionHeader'
+import ScholarshipCard from '../../components/scholarships/ScholarshipCard'
 import ActivityCard from '../../components/class5/activities/ActivityCard'
 import { careerService } from '../../services'
 import { examService } from '../../../services/examService'
@@ -22,6 +24,40 @@ import CollegesInsight from '../../components/colleges/CollegesInsight'
 
 // Accent for the Class N pages — aligned with the green brand token (--s-primary).
 const ACCENT = '#1a7a50'
+
+// Scholarship entries that are no longer offered on the Scholarships tab.
+const REMOVED_SCHOLARSHIP_TITLES = new Set([
+  'state level scholarships (tamil nadu)',
+])
+
+// The Scholarships tab mixes two data shapes: Scholarship documents (which
+// already carry scholarshipName/provider/benefit/... ) and curated ClassContent
+// entries (which carry title/conductedBy/benefitAmount/... and an externalLink).
+// Normalise the latter onto the former so a single card can render both — this
+// is what keeps the Class 10 tab visually identical to the Class 5 one.
+function normaliseScholarshipContent(item) {
+  const grades = Array.isArray(item.grades)
+    ? item.grades
+    : item.targetClass
+      ? [`${item.targetClass}th`]
+      : []
+
+  return {
+    ...item,
+    scholarshipName: item.scholarshipName || item.title || '',
+    grades,
+    provider: item.provider || item.conductedBy || '',
+    benefit: item.benefit || item.benefitAmount || item.benefitType || '',
+    eligibility:
+      item.eligibility ||
+      [item.eligibilityClass, item.eligibilityMarks].filter(Boolean).join(' · ') ||
+      '',
+    deadline: item.deadline || '',
+    // Apply always leaves the site: prefer the Scholarship document's
+    // applicationLink, fall back to the curated entry's externalLink.
+    applicationLink: item.applicationLink || item.externalLink || '',
+  }
+}
 
 const CLASS_SECTIONS = {
   default: [
@@ -478,7 +514,15 @@ export default function ClassLevelPage(props) {
 
       // Merge curated content and career paths
       const allFetchedContent = [
-        ...contentList,
+        ...contentList
+          .filter(
+            (c) =>
+              !(
+                c.sectionType === 'Scholarships' &&
+                REMOVED_SCHOLARSHIP_TITLES.has(String(c.title || '').trim().toLowerCase())
+              )
+          )
+          .map((c) => (c.sectionType === 'Scholarships' ? normaliseScholarshipContent(c) : c)),
         ...(careerList || []).map(c => ({
           ...c,
           sectionType: 'Careers',
@@ -610,15 +654,21 @@ export default function ClassLevelPage(props) {
   }, [exams, searchQuery, activeSubTab])
 
   const handleCardClick = (item) => {
-    if (item.isDirect) {
-      if (item.applicationLink) window.open(item.applicationLink, '_blank');
-      else alert("No direct application link provided for this item.");
-    } else {
-      if (cleanLevel === '5' && item.title === 'Communication Skills') {
-        navigate('/student/class5/skills/communicationskills');
+    // Everything on the Scholarships tab is a real scholarship, so "Apply / View
+    // Details" must always leave the site for the scheme's own page. Curated
+    // ClassContent entries are normalised onto `applicationLink` during fetch.
+    if (activeSec === 'Scholarships' || item.isDirect) {
+      const link = item.applicationLink || item.externalLink
+      if (link) {
+        window.open(link, '_blank', 'noopener,noreferrer')
       } else {
-        navigate(`/student/career-path/class-${cleanLevel}/${item.slug}`);
+        setAlert({ type: 'info', text: 'No application link is available for this scholarship yet.' })
+        setTimeout(() => setAlert({ type: '', text: '' }), 3000)
       }
+    } else if (cleanLevel === '5' && item.title === 'Communication Skills') {
+      navigate('/student/class5/skills/communicationskills');
+    } else {
+      navigate(`/student/career-path/class-${cleanLevel}/${item.slug}`);
     }
   }
 
@@ -749,15 +799,19 @@ export default function ClassLevelPage(props) {
         ) : (
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
-               <div>
+               {activeSec === 'Scholarships' ? (
+                 // Same hero the Class 5 Scholarships tab uses.
+                 <SectionHeader
+                   eyebrow="Funding your dreams"
+                   title="Scholarships"
+                   subtitle="Explore available scholarships you are eligible for."
+                 />
+               ) : (
+                <div>
                  <h2 style={{ fontSize:28, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>
-                   {activeSec === 'Scholarships' ? `Scholarships for Class ${cleanLevel} Students` :
-                    activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
+                   {activeSec === 'Exams' ? `Exams for Class ${cleanLevel} Students` :
                     activeSec === 'Skills' ? `Skills to Build in Class ${cleanLevel}` : `${activeSec} Insight`}
                  </h2>
-                 {activeSec === 'Scholarships' && (
-                   <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Explore available scholarships you are eligible for.</p>
-                 )}
                  {activeSec === 'Exams' && (
                    <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Explore useful exams, learn what to study, and prepare in a simple way.</p>
                  )}
@@ -765,9 +819,10 @@ export default function ClassLevelPage(props) {
                    <p style={{ color:'#64748b', fontSize: 15, marginTop: 8, margin: '8px 0 0 0' }}>Grow your abilities step by step!</p>
                  )}
                </div>
+               )}
             </div>
 
-             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))' : '1fr', gap: 32 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))' : '1fr', gap: activeSec === 'Scholarships' ? 24 : 32 }}>
                 {activeSec === 'Careers' && cleanLevel !== '12' && filteredContent.length > 0 && (
                    <div style={{ marginBottom: 40 }}>
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap:32 }}>
@@ -995,67 +1050,24 @@ export default function ClassLevelPage(props) {
                     </div>
                   )}
                 {filteredContent.map(item => {
-                  if (item.isDirect) {
+                  // The Scholarships tab uses the shared Class 5 card for every
+                  // entry (Scholarship documents and curated ClassContent alike)
+                  // so its spacing, badges, bookmark and Apply action match the
+                  // Class 5 Scholarships page exactly. `alwaysShowFields` keeps
+                  // every card the same full height/layout — a few Class 10
+                  // entries have no benefit/eligibility/deadline on record, and
+                  // those cells say so explicitly rather than collapsing the
+                  // card and leaving a ragged, half-empty grid.
+                  if (activeSec === 'Scholarships') {
                     return (
-                      <div key={item._id} style={{ 
-                        background:'#fff', borderRadius:20, border:'1px solid var(--s-border)', 
-                        overflow:'hidden', display:'flex', flexDirection:'column', 
-                        boxShadow:'var(--s-shadow)', transition:'0.3s' 
-                      }} className="hover-lift">
-                        <div style={{ padding: 32, flex:1, display:'flex', flexDirection:'column', position: 'relative' }}>
-                          <button 
-                            onClick={() => handleSaveAction(item)} 
-                            style={{ 
-                              position:'absolute', top:24, right:24, width:44, height:44, 
-                              borderRadius:99, background:'#f8fafc', border:'1px solid var(--s-border)', cursor:'pointer', 
-                              display:'grid', placeItems:'center', color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
-                          </button>
-
-                          <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', paddingRight: 50 }}>
-                             <SBadge color="green">Scholarship</SBadge>
-
-                             {(item.grades || []).map(g => <SBadge key={g} color="gray">{g}</SBadge>)}
-                          </div>
-                          
-                          <h3 style={{ fontSize:22, fontWeight:900, margin:'0 0 8px', lineHeight:1.3 }}>{item.scholarshipName}</h3>
-                          <div style={{ fontSize:14, fontWeight:700, color:'#64748b', marginBottom:20, display:'flex', alignItems:'center', gap:6 }}>
-                             <FiBriefcase size={14}/> {item.provider || "Unknown Provider"}
-                          </div>
-                          
-                          <div style={{ background:'#f8fafc', borderRadius:16, padding:16, marginBottom:20, flex:1 }}>
-                             {item.benefit && (
-                                <div style={{ marginBottom:12 }}>
-                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Benefit</div>
-                                  <div style={{ fontSize:15, fontWeight:800, color:'#10b981' }}>{item.benefit}</div>
-                                </div>
-                             )}
-                             {item.eligibility && (
-                                <div style={{ marginBottom:12 }}>
-                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Eligibility</div>
-                                  <div style={{ fontSize:13, fontWeight:600, color:'#334155', lineHeight: 1.5 }}>{item.eligibility}</div>
-                                </div>
-                             )}
-                             {item.deadline && (
-                                <div>
-                                  <div style={{ fontSize:12, fontWeight:800, color:'#94a3b8', textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>Last Date</div>
-                                  <div style={{ fontSize:13, fontWeight:700, color:'#ef4444' }}>{item.deadline}</div>
-                                </div>
-                             )}
-                          </div>
-                          
-                          <SBtn 
-                             variant="outline"
-                             style={{ width:'100%', borderRadius:12, padding:'14px 0', border: `2px solid ${ACCENT}`, color: ACCENT }} 
-                             onClick={() => handleCardClick(item)}
-                          >
-                             Apply / View Details ↗
-                          </SBtn>
-                        </div>
-                      </div>
+                      <ScholarshipCard
+                        key={item._id}
+                        item={item}
+                        saved={savedIds.has(item._id)}
+                        onToggleSave={handleSaveAction}
+                        onApply={handleCardClick}
+                        alwaysShowFields
+                      />
                     )
                   }
 

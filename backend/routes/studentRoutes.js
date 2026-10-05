@@ -7,7 +7,7 @@ const {
   resendSignupOtp,
 } = require("../controllers/studentController");
 const { getClass12Categories, getClass12Content } = require("../controllers/class12Controller");
-const { getStudentCourseDetails } = require("../controllers/courseController");
+const { getStudentCourseDetails, checkCourseEligibility } = require("../controllers/courseController");
 const verifyStudent = require("../middleware/verifyStudent");
 const studentProfileController = require("../controllers/studentProfileController");
 const dashboardSummaryController = require("../controllers/dashboardSummaryController");
@@ -60,6 +60,7 @@ router.post("/resend-otp", signupResendCooldown, signupResendWindow, resendSignu
 router.get("/class12/categories", getClass12Categories);
 router.get("/class12/exploration", getClass12Content);
 router.get("/courses/:courseId", getStudentCourseDetails);
+router.post("/courses/:courseId/eligibility-check", checkCourseEligibility);
 
 // Protected routes (Login required)
 // School-student profile (Phase 3). Ownership is derived from req.student._id

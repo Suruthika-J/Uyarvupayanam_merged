@@ -122,6 +122,16 @@
   color: color-mix(in srgb, #ffffff 82%, var(--sci-card-bg));
 }
 
+/* Today's Science Challenge only. The intro panel takes its background from the
+   palette of the day's question, so it can land on a very light card while the
+   copy above is hard-coded white. Pin this section's headline and question text
+   to black so it stays readable on every palette. Scoped to `.is-daily` so the
+   Science world pages keep their own colours. */
+.sci-root.is-daily .sci-intro-title,
+.sci-root.is-daily .sci-intro-text {
+  color: #000000;
+}
+
 /* ── Stage (renderer surface) ──────────────────────────────── */
 .sci-stage {
   background: rgba(255, 255, 255, 0.96);

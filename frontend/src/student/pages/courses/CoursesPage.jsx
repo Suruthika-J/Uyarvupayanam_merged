@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { FiBookOpen, FiMapPin, FiChevronRight, FiSearch } from 'react-icons/fi'
 import { SBadge, SLoader, SEmpty, SSelect } from '../../components/ui'
 import { courseService, collegeService } from '../../services'
+import { buildCourseCategoryGroups } from '../../../utils/categoryGroups'
 
 const ADMIN_CATEGORIES = [
   "Agriculture", "Architecture", "Arts", "Commerce", "Design", 
@@ -50,46 +51,18 @@ export default function CoursesPage() {
     fetchData()
   }, [])
 
+  // Categories are derived from COURSES only and keyed case/whitespace
+  // insensitively, so duplicate and zero-course category cards cannot be
+  // rendered. Colleges only add to the "Colleges" count of an existing card.
+  const allCategoryGroups = useMemo(
+    () => buildCourseCategoryGroups(courses, colleges),
+    [courses, colleges]
+  )
+
   const groupedData = useMemo(() => {
-    const groups = {}
-    
-    // Group courses by category
-    courses.forEach(course => {
-      const cat = course.category || 'Others'
-      if (!groups[cat]) {
-        groups[cat] = { categoryName: cat, courseCount: 0, collegeCount: 0, courses: [] }
-      }
-      groups[cat].courseCount++
-      groups[cat].courses.push(course)
-    })
-
-    // Map colleges to categories (this is an approximation based on college.type or mapping)
-    // For now, we'll check if a college has courses in that category if the data allows,
-    // but usually, colleges are tagged with categories too.
-    colleges.forEach(college => {
-      // If college has a category field, use it. Otherwise, we might need a more complex mapping.
-      const cat = college.category || college.type
-      if (cat && groups[cat]) {
-        groups[cat].collegeCount++
-      } else if (cat) {
-        // Handle categories that might not have courses yet but exist in colleges
-        if (!groups[cat]) {
-           groups[cat] = { categoryName: cat, courseCount: 0, collegeCount: 1, courses: [] }
-        } else {
-           groups[cat].collegeCount++
-        }
-      }
-    })
-
-    // Filter by selected category if not "All Categories"
-    let result = Object.values(groups)
-    if (selectedCategory !== 'All Categories') {
-      result = result.filter(g => g.categoryName === selectedCategory)
-    }
-
-    // Sort by priority (Engineering, Medical, etc.) or just alphabetical
-    return result.sort((a, b) => a.categoryName.localeCompare(b.categoryName))
-  }, [courses, colleges, selectedCategory])
+    if (selectedCategory === 'All Categories') return allCategoryGroups
+    return allCategoryGroups.filter(g => g.categoryName === selectedCategory)
+  }, [allCategoryGroups, selectedCategory])
 
   const handleCardClick = (categoryName) => {
     navigate(`/student/courses/search?category=${encodeURIComponent(categoryName)}`)

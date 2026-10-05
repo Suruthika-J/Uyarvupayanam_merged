@@ -81,6 +81,7 @@ const class10SeedData = [
     subCategoryLabel: "Merit",
     shortDescription: "Scholarship for OBC, EBC, and DNT students by MSJE.",
     fullDescription: "Tuition and maintenance support.",
+    externalLink: "https://www.buddy4study.com/scholarship/pm-yasasvi-pre-matric-scholarship-scheme-for-obc-ebc-dnt-students-chandigarh",
     coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200",
     status: "published",
     displayOrder: 6,
@@ -92,21 +93,10 @@ const class10SeedData = [
     category: "Merit",
     shortDescription: "Keep receiving ₹1,000/month if you qualified in Class 8.",
     fullDescription: "Support till Class 12.",
+    externalLink: "https://www.buddy4study.com/article/nmms",
     coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200",
     status: "published",
     displayOrder: 7,
-    targetClass: "10"
-  },
-  {
-    title: "State Level Scholarships (Tamil Nadu)",
-    sectionType: "Scholarships",
-    category: "State Schemes",
-    shortDescription: "Unique financial aid programs from the Govt of TN.",
-    fullDescription: "Specific awards like Periyar Memorial Award.",
-    externalLink: "https://www.tndce.tn.gov.in/",
-    coverImage: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1200",
-    status: "published",
-    displayOrder: 8,
     targetClass: "10"
   },
   {

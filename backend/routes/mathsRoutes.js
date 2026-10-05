@@ -9,6 +9,7 @@ const MathsStudentLevel = require("../models/MathsStudentLevel");
 const MathsStudentMeta = require("../models/MathsStudentMeta");
 const verifyStudent = require("../middleware/verifyStudent");
 const { rateLimit } = require("../middleware/rateLimit");
+const class5Daily = require("../services/class5DailyChallenge");
 
 // Math Adventure Worlds.
 //   GET  /worlds         - public list. Themes stay browseable logged out;
@@ -17,6 +18,7 @@ const { rateLimit } = require("../middleware/rateLimit");
 //                          locked, completed } plus continueTopic.
 //   GET  /worlds/:topic  - public single-world meta (deep links).
 //   GET  /daily          - today's challenge for the logged-in student.
+//   POST /daily/complete - record today's challenge only (never per-world state).
 //   GET  /:topic         - next question for the logged-in student at their
 //                          adaptive difficulty (resumes where they left off).
 //   POST /answer         - record an answer + invisible adaptive level move.
@@ -201,6 +203,10 @@ router.get("/worlds/:topic", async (req, res) => {
 });
 
 // ── Today's single Challenge question (mixed topics, rotated daily) ──────
+// Rotation and per-day completion both come from the shared Class 5 daily
+// service. Deliberately NOT MathsProgress: that store is per-question and
+// permanent, so reading it here made today's challenge inherit world progress
+// and appear already finished.
 router.get("/daily", verifyStudent, async (req, res) => {
   try {
     const scope = {
@@ -213,18 +219,22 @@ router.get("/daily", verifyStudent, async (req, res) => {
       .lean();
     if (!all.length) return res.status(404).json({ success: false, message: "Question bank is empty." });
 
-    const question = all[dayIndex(all.length)];
-    const progress = await MathsProgress.findOne({
+    const dateKey = class5Daily.todayKey();
+    const question = class5Daily.pickDailyQuestion(all);
+    const record = await class5Daily.getDailyRecord({
       studentId: scope.studentId,
-      questionId: question.id,
-    }).lean();
+      subject: "maths",
+      dateKey,
+    });
 
     res.json({
       success: true,
       data: {
         question: shapeQuestion(question),
-        solved: Boolean(progress && progress.solved),
-        attempts: progress ? progress.attemptCount : 0,
+        dateKey,
+        solved: Boolean(record && record.solved),
+        completed: Boolean(record && record.completed),
+        attempts: record ? record.attempts : 0,
       },
     });
   } catch (error) {
@@ -232,6 +242,50 @@ router.get("/daily", verifyStudent, async (req, res) => {
     res.status(500).json({ success: false, message: "Error loading daily challenge", error: error.message });
   }
 });
+
+// ── Record an attempt at today's Math Challenge ──────────────────────────
+// Separate from POST /answer on purpose: /answer writes MathsProgress and moves
+// the adaptive difficulty, which are per-world concerns. Recording the daily
+// challenge there inflated a world's "x / 5" count and could unlock the next
+// world without the student playing it.
+router.post(
+  "/daily/complete",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `mathsDaily:${req.student._id}`, max: 20, windowMs: 60000 }),
+  async (req, res) => {
+    try {
+      const { questionId, correct } = req.body || {};
+      if (questionId == null || typeof correct !== "boolean") {
+        return res.status(400).json({ success: false, message: "questionId and correct are required." });
+      }
+      const question = await MathQuestion.findOne({ id: Number(questionId) }).lean();
+      if (!question) return res.status(404).json({ success: false, message: "Question not found." });
+
+      const record = await class5Daily.recordDailyAttempt({
+        studentId: req.student._id,
+        subject: "maths",
+        questionId: question.id,
+        correct,
+        classId: req.student.classLevel || "5",
+        schoolId: "default",
+      });
+
+      res.json({
+        success: true,
+        data: {
+          correct,
+          solved: Boolean(record && record.solved),
+          completed: Boolean(record && record.completed),
+          attempts: record ? record.attempts : 0,
+          explanation: question.explanation || "",
+        },
+      });
+    } catch (error) {
+      console.error("POST /api/maths/daily/complete failed:", error);
+      res.status(500).json({ success: false, message: "Error saving daily challenge", error: error.message });
+    }
+  }
+);
 
 // ── Next question for a topic, at the student's adaptive level ────────────
 // Serves undefeated (unsolved) questions at the current difficulty first,

@@ -3,6 +3,7 @@ import { SCard as Card, CardHeader, SBtn, SLoader } from '../../components/UI'
 import { adminService } from '../../../services/adminService'
 import axiosInstance from '../../../config/axios'
 import BulkCollegeCourseMapperModal from './BulkCollegeCourseMapperModal'
+import { toExternalUrl } from '../../../utils/externalUrl'
 
 const STREAMS = [
   "Engineering",
@@ -88,7 +89,7 @@ export default function CollegeCourseMappingPage() {
       
       setSuggestedCourses(data || [])
       setCollegeDetails(college || null)
-      setManualWebsite(college?.website || '')
+      setManualWebsite(toExternalUrl(college?.website))
       
       // Auto-check anything that is an ACTUAL mapping or from a high-conf source
       const initialCheckedIds = (data || [])

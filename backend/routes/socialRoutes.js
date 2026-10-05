@@ -9,6 +9,7 @@ const SocialStudentLevel = require("../models/SocialStudentLevel");
 const SocialStudentMeta = require("../models/SocialStudentMeta");
 const verifyStudent = require("../middleware/verifyStudent");
 const { rateLimit } = require("../middleware/rateLimit");
+const class5Daily = require("../services/class5DailyChallenge");
 
 // World Explorer (Class 5 Social Science).
 //   GET  /worlds         - public world list + themes + discoveries. Browseable
@@ -17,6 +18,7 @@ const { rateLimit } = require("../middleware/rateLimit");
 //                          plus continueWorld.
 //   GET  /worlds/:world  - public single-world meta (deep links).
 //   GET  /daily          - today's Explorer challenge for the logged-in student.
+//   POST /daily/complete - record today's challenge only (never per-world state).
 //   GET  /:world         - next activity for the logged-in student at their
 //                          adaptive difficulty (resumes where they left off).
 //   POST /answer         - record an answer + invisible adaptive level move.
@@ -205,6 +207,10 @@ router.get("/worlds/:world", async (req, res) => {
 });
 
 // ── Today's single Explorer Challenge (mixed worlds, rotated daily) ───────
+// Rotation and per-day completion come from the shared Class 5 daily service.
+// Deliberately NOT SocialProgress: that store is per-question and permanent, so
+// reading it here made today's challenge inherit world progress and appear
+// already finished.
 router.get("/daily", verifyStudent, async (req, res) => {
   try {
     const scope = {
@@ -217,30 +223,22 @@ router.get("/daily", verifyStudent, async (req, res) => {
       .lean();
     if (!all.length) return res.status(404).json({ success: false, message: "Question bank is empty." });
 
-    // Vary the TYPE day to day so the challenge is not the same kind twice:
-    // walk forward from today's index until the type differs from yesterday's
-    // pick (yesterday = yesterday's index, by construction one apart).
-    let idx = dayIndex(all.length);
-    const yesterday = (dayIndex(all.length) + all.length - 1) % all.length;
-    if (all[idx] && all[yesterday] && all[idx].type === all[yesterday].type) {
-      idx = (idx + 1) % all.length;
-      if (all[idx] && all[idx].type === all[yesterday].type && all.length > 2) {
-        idx = (idx + 1) % all.length;
-      }
-    }
-
-    const question = all[idx];
-    const progress = await SocialProgress.findOne({
+    const dateKey = class5Daily.todayKey();
+    const question = class5Daily.pickDailyQuestion(all);
+    const record = await class5Daily.getDailyRecord({
       studentId: scope.studentId,
-      questionId: question.id,
-    }).lean();
+      subject: "social",
+      dateKey,
+    });
 
     res.json({
       success: true,
       data: {
         question: shapeQuestion(question),
-        solved: Boolean(progress && progress.solved),
-        attempts: progress ? progress.attemptCount : 0,
+        dateKey,
+        solved: Boolean(record && record.solved),
+        completed: Boolean(record && record.completed),
+        attempts: record ? record.attempts : 0,
       },
     });
   } catch (error) {
@@ -248,6 +246,48 @@ router.get("/daily", verifyStudent, async (req, res) => {
     res.status(500).json({ success: false, message: "Error loading daily challenge", error: error.message });
   }
 });
+
+// ── Record an attempt at today's Explorer Challenge ───────────────────────
+// Separate from POST /answer on purpose: /answer writes SocialProgress and moves
+// the adaptive difficulty, which are per-world concerns.
+router.post(
+  "/daily/complete",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `socialDaily:${req.student._id}`, max: 20, windowMs: 60000 }),
+  async (req, res) => {
+    try {
+      const { questionId, correct } = req.body || {};
+      if (questionId == null || typeof correct !== "boolean") {
+        return res.status(400).json({ success: false, message: "questionId and correct are required." });
+      }
+      const question = await SocialQuestion.findOne({ id: Number(questionId) }).lean();
+      if (!question) return res.status(404).json({ success: false, message: "Question not found." });
+
+      const record = await class5Daily.recordDailyAttempt({
+        studentId: req.student._id,
+        subject: "social",
+        questionId: question.id,
+        correct,
+        classId: req.student.classLevel || "5",
+        schoolId: "default",
+      });
+
+      res.json({
+        success: true,
+        data: {
+          correct,
+          solved: Boolean(record && record.solved),
+          completed: Boolean(record && record.completed),
+          attempts: record ? record.attempts : 0,
+          explanation: question.explanation || "",
+        },
+      });
+    } catch (error) {
+      console.error("POST /api/social/daily/complete failed:", error);
+      res.status(500).json({ success: false, message: "Error saving daily challenge", error: error.message });
+    }
+  }
+);
 
 // ── Next activity for a world, at the student's adaptive level ────────────
 // Serves undefeated (unsolved) activities at the current difficulty first,

@@ -9,6 +9,7 @@ import { collegeService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import AdmissionHelpModal from '../../components/colleges/AdmissionHelpModal'
+import { toExternalUrl } from '../../../utils/externalUrl'
 
 const STREAM_STYLE = {
   Engineering: { color: '#1d5fba', bg: '#eaf0fb', icon: '⚙️' },
@@ -114,7 +115,7 @@ export default function CollegeDetailPage() {
                 {isSaved ? 'Saved to Profile' : 'Save College'}
               </SBtn>
               {college.website && (
-                <a href={college.website} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={toExternalUrl(college.website)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <SBtn variant="white" style={{ borderRadius: 14, padding: '16px 32px' }}>
                     Official Website <FiExternalLink style={{ marginLeft: 8 }} />
                   </SBtn>

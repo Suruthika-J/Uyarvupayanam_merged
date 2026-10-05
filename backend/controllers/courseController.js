@@ -4,6 +4,7 @@ const CollegeCourseMapping = require("../models/CollegeCourseMapping");
 const mongoose = require("mongoose");
 const { allSourceCourses, SOURCE_URL, SOURCE_NAME } = require("../data/sourceCoursesAfter12th");
 const collegesInsightCache = require("../services/collegesInsightCache");
+const { buildEligibilityCriteria, evaluateEligibility } = require("../utils/eligibilityCriteria");
 
 // ─── Normalize helper for duplicate checking ──────────────────────
 const normalize = (str) => String(str || "").trim().toLowerCase();
@@ -68,7 +69,12 @@ exports.getAllCourses = async (req, res) => {
       });
     }
     if (!isAll(category)) {
-      and.push({ category: new RegExp(`^${escapeRegex(category)}$`, "i") });
+      // Tolerate extra/duplicated whitespace so a card label matches every
+      // course the Student Courses page counted for that category (the page
+      // groups categories case/whitespace-insensitively).
+      const normalizedCategory = String(category).replace(/\s+/g, ' ').trim();
+      const categoryRegex = new RegExp(`^${escapeRegex(normalizedCategory).split('').join('[\\s]*')}$`, "i");
+      and.push({ category: categoryRegex });
     }
     if (!isAll(search)) {
       const searchRegex = new RegExp(escapeRegex(search), "i");
@@ -514,6 +520,14 @@ exports.getStudentCourseDetails = async (req, res) => {
     res.status(200).json({
       success: true,
       course,
+      // Derived from this course's own stored `eligibility` text on every
+      // request. The client receives criteria + the questions to ask; it never
+      // decides the rules itself.
+      eligibilityCriteria: buildEligibilityCriteria({
+        eligibility: course.eligibility,
+        level: course.level,
+        courseName: course.courseName,
+      }),
       collegeCount: offeringColleges.length,
       offeringColleges
     });
@@ -522,6 +536,58 @@ exports.getStudentCourseDetails = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch student course details",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Check a student's answers against a course's stored eligibility
+// @route   POST /api/student/courses/:courseId/eligibility-check
+// @access  Public
+exports.checkCourseEligibility = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    const isId = mongoose.Types.ObjectId.isValid(courseId);
+    const query = isId ? { _id: courseId } : { slug: courseId };
+
+    const course = await Course.findOne({ ...query, status: "active" })
+      .select("courseName eligibility level")
+      .lean();
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found or inactive",
+      });
+    }
+
+    // Criteria are re-derived from the stored course on every check, so the
+    // client cannot influence which rules are applied.
+    const criteria = buildEligibilityCriteria(course);
+
+    if (!criteria.determinable) {
+      return res.status(200).json({
+        success: true,
+        courseName: course.courseName,
+        criteria,
+        result: null,
+        message: criteria.reason,
+      });
+    }
+
+    const result = evaluateEligibility(criteria, req.body || {});
+
+    res.status(200).json({
+      success: true,
+      courseName: course.courseName,
+      criteria,
+      result,
+    });
+  } catch (error) {
+    console.error("❌ Error checking course eligibility:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check eligibility",
       error: error.message
     });
   }

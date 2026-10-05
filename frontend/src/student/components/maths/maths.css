@@ -136,6 +136,16 @@
   font-weight: 600;
 }
 
+/* Today's Math Challenge only. The intro panel takes its background from the
+   palette of whichever world today's question came from, so it can land on a
+   very light card. Pin this section's headline and question copy to black so it
+   stays readable on every palette. Scoped to `.is-daily` so the Math world pages
+   keep their own per-world colours. */
+.mth-root.is-daily .mth-intro-title,
+.mth-root.is-daily .mth-intro-text {
+  color: #000000;
+}
+
 /* ── Question stage ─────────────────────────────────────────── */
 .mth-stage {
   background: color-mix(in srgb, var(--mth-card-bg) 88%, rgba(255, 255, 255, 0.86));
