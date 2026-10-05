@@ -128,10 +128,14 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
 
       {/* ACTION FOR ACCEPTED / QUIZ_CREATED SESSION */}
       {isAccepted && (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button onClick={() => onRespond(msg._id, 'join', sessionId)}
             style={{ padding: '8px 18px', borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             🎯 Join Multiplayer Quiz Room →
+          </button>
+          <button onClick={() => onRespond(msg._id, 'end', sessionId)}
+            style={{ padding: '8px 16px', borderRadius: 10, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, fontSize: 13, border: '1px solid #fca5a5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            🛑 End Quiz
           </button>
         </div>
       )}
@@ -363,6 +367,18 @@ export default function PeerChatPage() {
   const respondToInvite = async (msgId, response, existingSessionId) => {
     if (response === 'join' && existingSessionId) {
       navigate(`/college/multiplayer-quiz/${existingSessionId}`)
+      return
+    }
+    if (response === 'end' && existingSessionId) {
+      if (!window.confirm('Are you sure you want to end this quiz session?')) return
+      try {
+        await axios.post(`${API}/multiplayer-quiz/${existingSessionId}/end`, {}, { headers })
+        setMessages(prev => prev.map(m =>
+          m._id === msgId ? { ...m, studyInvite: { ...m.studyInvite, status: 'ended' } } : m
+        ))
+      } catch (err) {
+        console.error('End quiz session error:', err)
+      }
       return
     }
     try {

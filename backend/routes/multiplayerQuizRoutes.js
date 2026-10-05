@@ -8,6 +8,7 @@ const {
   submitAnswer,
   markNextQuestionReady,
   handleQuestionTimeout,
+  endQuizSession,
   getSessionResults,
   getReviewData
 } = require("../controllers/multiplayerQuizController");
@@ -21,6 +22,7 @@ router.post("/:sessionId/ready", verifyStudent, setPlayerReady);
 router.post("/:sessionId/answer", verifyStudent, submitAnswer);
 router.post("/:sessionId/next-ready", verifyStudent, markNextQuestionReady);
 router.post("/:sessionId/timeout", verifyStudent, handleQuestionTimeout);
+router.post("/:sessionId/end", verifyStudent, endQuizSession);
 router.get("/:sessionId/results", verifyStudent, getSessionResults);
 router.get("/:sessionId/review", verifyStudent, getReviewData);
 

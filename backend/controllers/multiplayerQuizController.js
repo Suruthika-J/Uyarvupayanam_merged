@@ -854,6 +854,64 @@ exports.getReviewData = async (req, res) => {
   }
 };
 
+/**
+ * 9. POST /api/multiplayer-quiz/:sessionId/end
+ *    Ends/cancels an active multiplayer quiz session.
+ */
+exports.endQuizSession = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.student?.id;
+    const { sessionId } = req.params;
+
+    const session = await MultiplayerQuizSession.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ success: false, message: "Session not found." });
+    }
+
+    const isParticipant = session.participants.some(p => p.userId.toString() === userId.toString());
+    if (!isParticipant) {
+      return res.status(403).json({ success: false, message: "Unauthorized to end this quiz session." });
+    }
+
+    session.status = "CANCELLED";
+    session.completedAt = new Date();
+    session.nextQuestionReadyUsers = [];
+    session.participants.forEach(p => { p.status = "FINISHED"; });
+    await session.save();
+
+    if (session.inviteId) {
+      try {
+        const msg = await PeerMessage.findById(session.inviteId);
+        if (msg && msg.studyInvite) {
+          msg.studyInvite.status = "ended";
+          await msg.save();
+        }
+      } catch (msgErr) {
+        console.error("Error updating invite message status on end:", msgErr);
+      }
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      console.log(`[QUIZ] Broadcasting quiz:ended for session ${sessionId}`);
+      io.to(`quiz:${sessionId}`).emit("quiz:ended", {
+        sessionId,
+        status: "CANCELLED",
+        message: "Quiz session has been ended by a participant."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Quiz session ended successfully.",
+      session
+    });
+  } catch (err) {
+    console.error("endQuizSession error:", err);
+    res.status(500).json({ success: false, message: "Failed to end quiz session." });
+  }
+};
+
 module.exports.advanceToNextQuestion = advanceToNextQuestion;
 module.exports.processUserAnswer = processUserAnswer;
 module.exports.markUserReadyForNext = markUserReadyForNext;

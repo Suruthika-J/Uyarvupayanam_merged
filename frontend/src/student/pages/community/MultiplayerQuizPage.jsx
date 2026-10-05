@@ -231,6 +231,12 @@ export default function MultiplayerQuizPage() {
       fetchResults()
     })
 
+    socket.on('quiz:ended', ({ message }) => {
+      console.log('[QUIZ CLIENT] Received quiz:ended event', message)
+      alert(message || 'The quiz session was ended by a participant.')
+      navigate('/college/peer-chat')
+    })
+
     socket.on('quiz:chat-message', (msg) => {
       setChatMessages(prev => [...prev, msg])
     })
@@ -328,6 +334,17 @@ export default function MultiplayerQuizPage() {
     setChatInput('')
   }
 
+  const handleEndQuiz = async () => {
+    if (!window.confirm('Are you sure you want to end this quiz session for both players?')) return
+    try {
+      await axios.post(`${API}/multiplayer-quiz/${sessionId}/end`, {}, { headers })
+      navigate('/college/peer-chat')
+    } catch (err) {
+      console.error('End quiz error:', err)
+      alert('Failed to end quiz session.')
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ height: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
@@ -421,6 +438,9 @@ export default function MultiplayerQuizPage() {
               ✓ You are ready! Waiting for {opponent?.name || 'partner'} to click ready...
             </div>
           )}
+          <button type="button" onClick={handleEndQuiz} style={{ width: '100%', marginTop: 14, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '10px 20px', borderRadius: 14, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            🛑 End Quiz Session
+          </button>
         </SCard>
       </div>
     )
@@ -551,12 +571,15 @@ export default function MultiplayerQuizPage() {
             </h2>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: 14, fontSize: 13, fontWeight: 800 }}>
               <FiClock color="#38bdf8" size={16} /> ⏱ {formatTime(sessionTimeLeft)}
             </div>
             <button type="button" onClick={() => setShowChat(v => !v)} style={{ background: '#4338ca', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               💬 Chat {chatMessages.length > 0 && `(${chatMessages.length})`}
+            </button>
+            <button type="button" onClick={handleEndQuiz} style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+              🛑 End Quiz
             </button>
           </div>
         </div>
