@@ -63,10 +63,11 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
   const sessionId = msg.studyInvite?.sessionId
   const [accepting, setAccepting] = useState(false)
 
-  const isPending = rawStatus === 'PENDING'
-  const isAccepted = rawStatus === 'ACCEPTED' || rawStatus === 'QUIZ_CREATED' || rawStatus === 'IN_PROGRESS'
-  const isDeclined = rawStatus === 'DECLINED'
-  const isFailed = rawStatus === 'QUIZ_CREATION_FAILED'
+  const isEnded = rawStatus === 'ENDED' || rawStatus === 'CANCELLED'
+  const isPending = rawStatus === 'PENDING' && !isEnded
+  const isAccepted = (rawStatus === 'ACCEPTED' || rawStatus === 'QUIZ_CREATED' || rawStatus === 'IN_PROGRESS') && !isEnded
+  const isDeclined = rawStatus === 'DECLINED' && !isEnded
+  const isFailed = rawStatus === 'QUIZ_CREATION_FAILED' && !isEnded
 
   const senderName = typeof msg.senderId === 'object' ? (msg.senderId?.name || 'Peer') : 'Peer'
 
@@ -79,10 +80,10 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
         {/* Status Badge */}
         <span style={{
           marginLeft: 'auto', fontSize: 11, fontWeight: 800, padding: '2px 10px', borderRadius: 10,
-          color: isAccepted ? '#059669' : isDeclined ? '#dc2626' : isFailed ? '#d97706' : '#6366f1',
-          background: isAccepted ? '#ecfdf5' : isDeclined ? '#fef2f2' : isFailed ? '#fffbeb' : '#eef2ff'
+          color: isEnded ? '#64748b' : isAccepted ? '#059669' : isDeclined ? '#dc2626' : isFailed ? '#d97706' : '#6366f1',
+          background: isEnded ? '#f1f5f9' : isAccepted ? '#ecfdf5' : isDeclined ? '#fef2f2' : isFailed ? '#fffbeb' : '#eef2ff'
         }}>
-          {isAccepted ? '✓ Quiz Created' : isDeclined ? '✕ Declined' : isFailed ? '⚠ Creation Failed' : '⏳ Pending'}
+          {isEnded ? '🛑 Quiz Ended' : isAccepted ? '✓ Quiz Created' : isDeclined ? '✕ Declined' : isFailed ? '⚠ Creation Failed' : '⏳ Pending'}
         </span>
       </div>
 
@@ -137,6 +138,13 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
             style={{ padding: '8px 16px', borderRadius: 10, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, fontSize: 13, border: '1px solid #fca5a5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             🛑 End Quiz
           </button>
+        </div>
+      )}
+
+      {/* ENDED SESSION VIEW */}
+      {isEnded && (
+        <div style={{ marginTop: 10, fontSize: 12, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>🛑</span> This study quiz session has been ended.
         </div>
       )}
     </div>
@@ -234,9 +242,33 @@ export default function PeerChatPage() {
       }))
     }
 
+    const handleQuizEnded = (payload) => {
+      console.log('[PEER CHAT] Received socket event study:ended / quiz:ended:', payload)
+      const targetInviteId = getRawId(payload.inviteId)
+      const targetSessionId = payload.sessionId
+
+      setMessages(prev => prev.map(m => {
+        const isMatch = (targetInviteId && getRawId(m._id) === targetInviteId) ||
+          (targetSessionId && m.studyInvite?.sessionId === targetSessionId)
+        if (isMatch) {
+          return {
+            ...m,
+            studyInvite: {
+              ...m.studyInvite,
+              status: 'ended'
+            }
+          }
+        }
+        return m
+      }))
+    }
+
     socket.on('study:accepted', handleQuizCreated)
     socket.on('study:quiz-created', handleQuizCreated)
     socket.on('quiz:session-created', handleQuizCreated)
+
+    socket.on('study:ended', handleQuizEnded)
+    socket.on('quiz:ended', handleQuizEnded)
 
     socket.on('study:declined', ({ conversationId, messageId }) => {
       console.log('[PEER CHAT] Received study:declined for messageId:', messageId)
@@ -373,11 +405,24 @@ export default function PeerChatPage() {
       if (!window.confirm('Are you sure you want to end this quiz session?')) return
       try {
         await axios.post(`${API}/multiplayer-quiz/${existingSessionId}/end`, {}, { headers })
-        setMessages(prev => prev.map(m =>
-          m._id === msgId ? { ...m, studyInvite: { ...m.studyInvite, status: 'ended' } } : m
-        ))
+        const targetId = getRawId(msgId)
+        setMessages(prev => prev.map(m => {
+          const isMatch = (targetId && getRawId(m._id) === targetId) ||
+            (existingSessionId && m.studyInvite?.sessionId === existingSessionId)
+          if (isMatch) {
+            return {
+              ...m,
+              studyInvite: {
+                ...m.studyInvite,
+                status: 'ended'
+              }
+            }
+          }
+          return m
+        }))
       } catch (err) {
         console.error('End quiz session error:', err)
+        alert('Failed to end quiz session: ' + (err.response?.data?.message || err.message))
       }
       return
     }

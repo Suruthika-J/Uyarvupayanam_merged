@@ -899,6 +899,20 @@ exports.endQuizSession = async (req, res) => {
         status: "CANCELLED",
         message: "Quiz session has been ended by a participant."
       });
+
+      // Broadcast to all participants' user rooms as well
+      session.participants.forEach(p => {
+        io.to(`user_${p.userId}`).emit("study:ended", {
+          sessionId,
+          inviteId: session.inviteId,
+          conversationId: session.conversationId
+        });
+        io.to(`user_${p.userId}`).emit("quiz:ended", {
+          sessionId,
+          inviteId: session.inviteId,
+          conversationId: session.conversationId
+        });
+      });
     }
 
     res.status(200).json({
