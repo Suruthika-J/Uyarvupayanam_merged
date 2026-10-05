@@ -1,10 +1,12 @@
 const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
 const MultiplayerQuizAnswer = require("../models/MultiplayerQuizAnswer");
+const MultiplayerQuizResult = require("../models/MultiplayerQuizResult");
 const { PeerMessage, PeerConversation } = require("../models/PeerChat");
 const AhpFuzzyQuestion = require("../models/AhpFuzzyQuestion");
 const User = require("../models/User");
-const { sanitizeQuestionForClient, evaluateAnswer } = require("../services/multiplayerQuizService");
+const { sanitizeQuestionForClient } = require("../services/multiplayerQuizService");
 const { createQuiz } = require("../services/quizAI/QuizAIEngine");
+const { calculateQuestionScore } = require("../services/quizAI/QuizScoringEngine");
 
 // In-memory transition lock per session to prevent race conditions
 const transitionLocks = new Set();
@@ -39,10 +41,16 @@ async function checkAndEnforceQuestionTimeout(sessionId, io) {
             questionIndex: session.currentQuestionIndex,
             selectedOption: "UNANSWERED",
             isCorrect: false,
+            basePoints: 0,
+            speedBonus: 0,
+            difficultyBonus: 0,
+            streakBonus: 0,
+            totalPoints: 0,
             score: 0,
-            responseTime: (session.questionTimeoutSeconds || 45) * 1000
+            responseTimeMs: (session.questionTimeoutSeconds || 45) * 1000
           });
           p.answeredCount += 1;
+          p.streak = 0;
           p.status = "ANSWERED";
           newAnswersCreated = true;
         } catch (ansErr) {
@@ -74,7 +82,15 @@ async function checkAndEnforceQuestionTimeout(sessionId, io) {
           name: p.name,
           selectedOption: pAns ? pAns.selectedOption : "UNANSWERED",
           isCorrect: Boolean(pAns?.isCorrect),
-          pointsEarned: pAns ? pAns.score : 0,
+          basePoints: pAns?.basePoints || 0,
+          speedBonus: pAns?.speedBonus || 0,
+          difficultyBonus: pAns?.difficultyBonus || 0,
+          streakBonus: pAns?.streakBonus || 0,
+          totalPoints: pAns?.totalPoints || pAns?.score || 0,
+          pointsEarned: pAns?.totalPoints || pAns?.score || 0,
+          responseTimeMs: pAns?.responseTimeMs || 0,
+          streak: p.streak || 0,
+          bestStreak: p.bestStreak || 0,
           score: p.score
         };
       });
@@ -124,31 +140,100 @@ async function advanceToNextQuestion(sessionId, io) {
       session.participants.forEach(p => { p.status = "FINISHED"; });
       await session.save();
 
-      // Compute final results
+      // Compute final game metrics
       const answers = await MultiplayerQuizAnswer.find({ sessionId }).lean();
-      const results = session.participants.map(p => {
+      
+      let highestScore = -1;
+      let winnerId = null;
+      let isTie = false;
+
+      const participantResults = session.participants.map(p => {
         const pAnswers = answers.filter(a => a.userId.toString() === p.userId.toString());
         const correctCount = pAnswers.filter(a => a.isCorrect).length;
         const total = session.totalQuestions;
+        const incorrectCount = pAnswers.filter(a => !a.isCorrect && a.selectedOption !== "UNANSWERED").length;
+        const unansweredCount = total - (correctCount + incorrectCount);
         const accuracyPercent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        
+        const totalTimeMs = pAnswers.reduce((sum, a) => sum + (a.responseTimeMs || 0), 0);
+        const avgResponseSec = pAnswers.length > 0 ? Math.round((totalTimeMs / pAnswers.length / 1000) * 10) / 10 : 0;
+
+        if (p.score > highestScore) {
+          highestScore = p.score;
+          winnerId = p.userId;
+          isTie = false;
+        } else if (p.score === highestScore && p.score > 0) {
+          isTie = true;
+        }
+
         return {
           userId: p.userId,
           name: p.name,
-          score: p.score,
-          correctCount,
-          totalQuestions: total,
-          accuracyPercent
+          totalScore: p.score,
+          correctAnswers: correctCount,
+          incorrectAnswers: incorrectCount,
+          unanswered: Math.max(0, unansweredCount),
+          accuracy: accuracyPercent,
+          averageResponseTime: avgResponseSec,
+          bestStreak: p.bestStreak || p.streak || 0,
+          badges: []
         };
       });
-      results.sort((a, b) => b.score - a.score);
+
+      if (isTie) winnerId = null;
+
+      // Assign gamification badges
+      participantResults.forEach(pr => {
+        const badges = [];
+        if (pr.averageResponseTime > 0 && pr.averageResponseTime <= 5) badges.push("⚡ Speed Demon");
+        if (pr.accuracy >= 90) badges.push("🎯 Sharpshooter");
+        if (pr.bestStreak >= 5) badges.push("🔥 Streak Master");
+        if (pr.correctAnswers >= 8) badges.push("🧠 Knowledge Crusher");
+        if (winnerId && pr.userId.toString() === winnerId.toString()) badges.push("🏆 Study Champion");
+        pr.badges = badges;
+      });
+
+      // Save MultiplayerQuizResult document
+      try {
+        await MultiplayerQuizResult.findOneAndUpdate(
+          { sessionId },
+          {
+            sessionId,
+            inviteId: session.inviteId,
+            topicId: session.topicId || "general",
+            topicLabel: session.topicLabel || session.topic,
+            winnerId,
+            isTie,
+            participants: participantResults,
+            totalQuestions: session.totalQuestions,
+            completedAt: session.completedAt
+          },
+          { upsert: true, new: true }
+        );
+
+        // Award total XP to student profile
+        for (const p of participantResults) {
+          try {
+            await User.findByIdAndUpdate(p.userId, { $inc: { totalXP: p.totalScore } });
+          } catch (xpErr) {
+            console.error(`XP update error for user ${p.userId}:`, xpErr.message);
+          }
+        }
+      } catch (resErr) {
+        console.error("MultiplayerQuizResult save error:", resErr.message);
+      }
 
       const finalPayload = {
         sessionId,
         status: "COMPLETED",
+        topicId: session.topicId,
+        topicLabel: session.topicLabel || session.topic,
         topic: session.topic,
         subtopic: session.subtopic,
         completedAt: session.completedAt,
-        results,
+        winnerId,
+        isTie,
+        results: participantResults,
         totalQuestions: session.totalQuestions
       };
 
@@ -233,8 +318,19 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
   const qDoc = await AhpFuzzyQuestion.findById(currentQId).lean();
   if (!qDoc) throw new Error("Question definition not found");
 
-  const remainingRatio = Math.max(0, 1 - (responseTime || 0) / ((session.questionTimeoutSeconds || 45) * 1000));
-  const evalResult = evaluateAnswer(qDoc, selectedOption, remainingRatio);
+  // SERVER-SIDE RESPONSE TIME CALCULATION (AUTHORITATIVE SERVER TIMESTAMP)
+  const serverNow = Date.now();
+  const startTime = session.currentQuestionStartedAt ? new Date(session.currentQuestionStartedAt).getTime() : serverNow - 10000;
+  const serverResponseTimeMs = Math.max(0, serverNow - startTime);
+
+  // Gamified server scoring calculation
+  const evalResult = calculateQuestionScore({
+    qDoc,
+    selectedOption,
+    responseTimeMs: serverResponseTimeMs,
+    questionTimeoutSeconds: session.questionTimeoutSeconds || 45,
+    currentStreak: participant.streak || 0
+  });
 
   await MultiplayerQuizAnswer.create({
     sessionId,
@@ -243,15 +339,26 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
     questionIndex: session.currentQuestionIndex,
     selectedOption,
     isCorrect: evalResult.isCorrect,
-    score: evalResult.score,
-    responseTime: responseTime || 0
+    basePoints: evalResult.basePoints,
+    speedBonus: evalResult.speedBonus,
+    difficultyBonus: evalResult.difficultyBonus,
+    streakBonus: evalResult.streakBonus,
+    totalPoints: evalResult.totalPoints,
+    score: evalResult.totalPoints,
+    responseTimeMs: serverResponseTimeMs
   });
 
-  console.log(`[QUIZ ANSWER]\nSaved successfully`);
+  console.log(`[QUIZ ANSWER]\nSaved successfully: score=${evalResult.totalPoints}, correct=${evalResult.isCorrect}`);
 
   participant.answeredCount += 1;
-  participant.score += evalResult.score;
-  if (evalResult.isCorrect) participant.correctCount += 1;
+  participant.score += evalResult.totalPoints;
+  if (evalResult.isCorrect) {
+    participant.correctCount += 1;
+    participant.streak = (participant.streak || 0) + 1;
+    participant.bestStreak = Math.max(participant.bestStreak || 0, participant.streak);
+  } else {
+    participant.streak = 0;
+  }
   participant.status = "ANSWERED";
   participant.lastActiveAt = new Date();
 
@@ -264,6 +371,7 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
       questionIndex: session.currentQuestionIndex,
       answeredCount: participant.answeredCount,
       score: participant.score,
+      streak: participant.streak,
       status: "ANSWERED"
     });
   }
@@ -294,7 +402,15 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
         name: p.name,
         selectedOption: pAns ? pAns.selectedOption : "N/A",
         isCorrect: Boolean(pAns?.isCorrect),
-        pointsEarned: pAns ? pAns.score : 0,
+        basePoints: pAns?.basePoints || 0,
+        speedBonus: pAns?.speedBonus || 0,
+        difficultyBonus: pAns?.difficultyBonus || 0,
+        streakBonus: pAns?.streakBonus || 0,
+        totalPoints: pAns?.totalPoints || pAns?.score || 0,
+        pointsEarned: pAns?.totalPoints || pAns?.score || 0,
+        responseTimeMs: pAns?.responseTimeMs || 0,
+        streak: p.streak || 0,
+        bestStreak: p.bestStreak || 0,
         score: p.score
       };
     });
@@ -317,8 +433,14 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
 
   return {
     isCorrect: evalResult.isCorrect,
-    scoreGained: evalResult.score,
-    totalScore: participant.score
+    basePoints: evalResult.basePoints,
+    speedBonus: evalResult.speedBonus,
+    difficultyBonus: evalResult.difficultyBonus,
+    streakBonus: evalResult.streakBonus,
+    totalPoints: evalResult.totalPoints,
+    scoreGained: evalResult.totalPoints,
+    totalScore: participant.score,
+    streak: participant.streak
   };
 }
 

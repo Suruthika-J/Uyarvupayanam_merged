@@ -12,6 +12,8 @@ const participantSchema = new mongoose.Schema({
   score: { type: Number, default: 0 },
   answeredCount: { type: Number, default: 0 },
   correctCount: { type: Number, default: 0 },
+  streak: { type: Number, default: 0 },
+  bestStreak: { type: Number, default: 0 },
   currentQuestionIndex: { type: Number, default: 0 },
   lastActiveAt: { type: Date, default: Date.now }
 }, { _id: false });
