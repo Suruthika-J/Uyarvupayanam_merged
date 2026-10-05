@@ -52,6 +52,50 @@ const COMMON_SKILL_SUGGESTIONS = [
   'Hardware PCB Design (KiCAD)'
 ]
 
+// Verified Real-World Competitions Default
+const VERIFIED_COMPETITIONS_DEFAULT = [
+  {
+    id: 'sih-2026',
+    name: 'Smart India Hackathon (SIH 2026)',
+    shortName: 'SIH 2026',
+    organizer: 'Ministry of Education (MoE) & AICTE, Govt of India',
+    officialWebsite: 'https://www.sih.gov.in',
+    badge: '🏆 Govt of India'
+  },
+  {
+    id: 'tnsi-2026',
+    name: 'Tamil Nadu Student Innovators (TNSI)',
+    shortName: 'TNSI (EDII-TN)',
+    organizer: 'EDII-TN, Government of Tamil Nadu',
+    officialWebsite: 'https://editn.in',
+    badge: '🏛️ Govt of Tamil Nadu'
+  },
+  {
+    id: 'naan-mudhalvan-ideathon',
+    name: 'Naan Mudhalvan AI Innovation Challenge',
+    shortName: 'Naan Mudhalvan Challenge',
+    organizer: 'Tamil Nadu Skill Development Corporation (TNSDC)',
+    officialWebsite: 'https://naanmudhalvan.tn.gov.in',
+    badge: '⚡ TNSDC Mission'
+  },
+  {
+    id: 'kurukshetra-2026',
+    name: 'Anna University CEG Kurukshetra',
+    shortName: 'CEG Kurukshetra',
+    organizer: 'College of Engineering, Guindy (Anna University)',
+    officialWebsite: 'https://kurukshetra.org.in',
+    badge: '🚀 Anna University'
+  },
+  {
+    id: 'final-year-capstone',
+    name: 'B.E. Final Year Capstone Project',
+    shortName: 'Final Year Capstone',
+    organizer: 'Anna University Curriculum',
+    officialWebsite: 'https://www.annauniv.edu',
+    badge: '🎓 Final Year'
+  }
+]
+
 export default function TeammateMatchmakerPage() {
   const { student } = useStudentAuth()
   const { profile } = useCollegeProfile()
@@ -69,7 +113,7 @@ export default function TeammateMatchmakerPage() {
 
   // Listings & Filter States
   const [listings, setListings] = useState([])
-  const [competitions, setCompetitions] = useState([])
+  const [competitions, setCompetitions] = useState(VERIFIED_COMPETITIONS_DEFAULT)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -911,7 +955,16 @@ export default function TeammateMatchmakerPage() {
                 </label>
                 <select
                   value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  onChange={e => {
+                    const cat = e.target.value
+                    let defaultEvent = formData.eventName
+                    if (cat === 'hackathon') defaultEvent = 'Smart India Hackathon (SIH 2026)'
+                    else if (cat === 'final_year_project') defaultEvent = 'B.E. Final Year Capstone Project'
+                    else if (cat === 'mini_project') defaultEvent = 'College Mini Project'
+                    else if (cat === 'symposium') defaultEvent = 'Anna University CEG Kurukshetra'
+                    else if (cat === 'ideathon') defaultEvent = 'Tamil Nadu Student Innovators (TNSI)'
+                    setFormData({ ...formData, category: cat, eventName: defaultEvent })
+                  }}
                   style={{
                     width: '100%', padding: '12px 16px', borderRadius: 12,
                     background: isGamified ? '#091326' : '#f8fafc',
@@ -934,7 +987,8 @@ export default function TeammateMatchmakerPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Smart India Hackathon 2026"
+                  list="verified-competitions-datalist"
+                  placeholder="Select verified or enter custom competition..."
                   value={formData.eventName}
                   onChange={e => setFormData({ ...formData, eventName: e.target.value })}
                   style={{
@@ -944,6 +998,15 @@ export default function TeammateMatchmakerPage() {
                     color: isGamified ? '#f8fafc' : '#0f172a', fontSize: 14, fontWeight: 600, outline: 'none'
                   }}
                 />
+                <datalist id="verified-competitions-datalist">
+                  {competitions.map(c => (
+                    <option key={c.id || c.name} value={c.name}>
+                      {c.badge} {c.organizer}
+                    </option>
+                  ))}
+                  <option value="College Mini Project" />
+                  <option value="B.E. Final Year Capstone Project" />
+                </datalist>
               </div>
             </div>
 
