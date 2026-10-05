@@ -130,11 +130,11 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
       {/* ACTION FOR ACCEPTED / QUIZ_CREATED SESSION */}
       {isAccepted && (
         <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button onClick={() => onRespond(msg._id, 'join', sessionId)}
+          <button onClick={() => onRespond(getRawId(msg._id), 'join', sessionId)}
             style={{ padding: '8px 18px', borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             🎯 Join Multiplayer Quiz Room →
           </button>
-          <button onClick={() => onRespond(msg._id, 'end', sessionId)}
+          <button onClick={() => onRespond(getRawId(msg._id), 'end', sessionId)}
             style={{ padding: '8px 16px', borderRadius: 10, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, fontSize: 13, border: '1px solid #fca5a5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             🛑 End Quiz
           </button>
@@ -403,28 +403,42 @@ export default function PeerChatPage() {
     }
     if (response === 'end') {
       if (!window.confirm('Are you sure you want to end this quiz session?')) return
-      const targetParamId = existingSessionId || msgId
+      const rawMsgId = getRawId(msgId)
+      const validSessionId = (existingSessionId && existingSessionId !== 'undefined' && existingSessionId !== 'null') ? existingSessionId : null
+      const targetParamId = validSessionId || rawMsgId
+
+      let success = false
       try {
-        await axios.post(`${API}/multiplayer-quiz/${targetParamId}/end`, {}, { headers })
-        const targetId = getRawId(msgId)
-        setMessages(prev => prev.map(m => {
-          const isMatch = (targetId && getRawId(m._id) === targetId) ||
-            (existingSessionId && m.studyInvite?.sessionId === existingSessionId)
-          if (isMatch) {
-            return {
-              ...m,
-              studyInvite: {
-                ...m.studyInvite,
-                status: 'ended'
-              }
+        const res = await axios.post(`${API}/multiplayer-quiz/${targetParamId}/end`, {}, { headers })
+        if (res.data?.success) success = true
+      } catch (err) {
+        console.warn('POST /multiplayer-quiz/end failed, trying PATCH /peer-chat/messages/invite-response...', err)
+      }
+
+      if (!success && rawMsgId) {
+        try {
+          await axios.patch(`${API}/peer-chat/messages/${rawMsgId}/invite-response`, { response: 'ended' }, { headers })
+          success = true
+        } catch (patchErr) {
+          console.error('Fallback PATCH invite-response error:', patchErr)
+        }
+      }
+
+      // Update UI state immediately
+      setMessages(prev => prev.map(m => {
+        const isMatch = (rawMsgId && getRawId(m._id) === rawMsgId) ||
+          (validSessionId && m.studyInvite?.sessionId === validSessionId)
+        if (isMatch) {
+          return {
+            ...m,
+            studyInvite: {
+              ...m.studyInvite,
+              status: 'ended'
             }
           }
-          return m
-        }))
-      } catch (err) {
-        console.error('End quiz session error:', err)
-        alert('Failed to end quiz session: ' + (err.response?.data?.message || err.message))
-      }
+        }
+        return m
+      }))
       return
     }
     try {

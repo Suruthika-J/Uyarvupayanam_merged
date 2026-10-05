@@ -321,13 +321,41 @@ exports.respondToStudyInvite = async (req, res) => {
       return res.status(404).json({ success: false, message: "Invite not found." });
     }
 
+    const currentStatus = String(msg.studyInvite?.status || "PENDING").toUpperCase();
+
+    if (response === "ended" || response === "end") {
+      console.log(`[INVITE] Study invite ${msgId} marked as ended by user ${userId}`);
+      msg.studyInvite.status = "ended";
+      await msg.save();
+
+      if (msg.studyInvite?.sessionId) {
+        try {
+          const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
+          await MultiplayerQuizSession.findOneAndUpdate(
+            { sessionId: msg.studyInvite.sessionId },
+            { status: "CANCELLED", completedAt: new Date() }
+          );
+        } catch (sessErr) {
+          console.error("Error cancelling session in invite-response fallback:", sessErr);
+        }
+      }
+
+      const io = req.app.get("io");
+      if (io) {
+        const payload = { conversationId: msg.conversationId, inviteId: msg._id, sessionId: msg.studyInvite?.sessionId };
+        io.to(`user_${msg.senderId}`).emit("study:ended", payload);
+        io.to(`user_${userId}`).emit("study:ended", payload);
+      }
+
+      return res.json({ success: true, status: "ended", message: msg });
+    }
+
     // Only the receiver (non-sender) can accept or decline
     if (msg.senderId.toString() === userId.toString()) {
-      console.warn(`[INVITE] Sender ${userId} attempted to accept own invite ${msgId}`);
+      console.warn(`[INVITE] Sender ${userId} attempted to accept/decline own invite ${msgId}`);
       return res.status(403).json({ success: false, message: "Only the invited student can accept or decline this invitation." });
     }
 
-    const currentStatus = String(msg.studyInvite?.status || "PENDING").toUpperCase();
     if (response === "declined") {
       console.log(`[INVITE] Receiver explicitly declined invite ${msgId}`);
       msg.studyInvite.status = "DECLINED";
