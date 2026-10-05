@@ -264,6 +264,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("quiz:timeout", async ({ sessionId }) => {
+    try {
+      if (!sessionId) return;
+      const { checkAndEnforceQuestionTimeout } = require("./controllers/multiplayerQuizController");
+      await checkAndEnforceQuestionTimeout(sessionId, io);
+    } catch (err) {
+      console.error(`Socket quiz:timeout error:`, err.message);
+    }
+  });
+
   socket.on("quiz:chat", ({ sessionId, userId, senderName, message }) => {
     if (sessionId && message) {
       io.to(`quiz:${sessionId}`).emit("quiz:chat-message", {

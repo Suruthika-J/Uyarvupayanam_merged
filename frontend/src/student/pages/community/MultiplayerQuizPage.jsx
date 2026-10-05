@@ -246,15 +246,25 @@ export default function MultiplayerQuizPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages, showChat])
 
-  // Timers countdown
+  // Timers countdown & Question timeout handler
   useEffect(() => {
     if (session?.status !== 'LIVE') return
     const timer = setInterval(() => {
       setSessionTimeLeft(prev => Math.max(0, prev - 1))
-      setQuestionTimeLeft(prev => Math.max(0, prev - 1))
+      setQuestionTimeLeft(prev => {
+        const nextVal = Math.max(0, prev - 1)
+        if (nextVal === 0 && prev > 0) {
+          console.log('[QUIZ CLIENT] Question timer reached 0! Triggering question timeout check...')
+          if (socketRef.current) {
+            socketRef.current.emit('quiz:timeout', { sessionId })
+          }
+          axios.post(`${API}/multiplayer-quiz/${sessionId}/timeout`, {}, { headers }).catch(() => {})
+        }
+        return nextVal
+      })
     }, 1000)
     return () => clearInterval(timer)
-  }, [session?.status])
+  }, [session?.status, sessionId])
 
   // ── Actions ──
   const handleSetReady = async () => {

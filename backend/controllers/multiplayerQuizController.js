@@ -10,6 +10,96 @@ const { createQuiz } = require("../services/quizAI/QuizAIEngine");
 const transitionLocks = new Set();
 
 /**
+ * Server-side enforcement when question timer (45s) expires
+ */
+async function checkAndEnforceQuestionTimeout(sessionId, io) {
+  try {
+    const session = await MultiplayerQuizSession.findOne({ sessionId });
+    if (!session || (session.status !== "LIVE" && session.status !== "COUNTDOWN")) return;
+
+    const currentQId = session.questionIds[session.currentQuestionIndex];
+    if (!currentQId) return;
+
+    const activeParticipants = session.participants.filter(p => p.status !== "LEFT" && p.status !== "DISCONNECTED");
+    const expectedPlayers = Math.max(1, activeParticipants.length);
+
+    // Fetch existing answers for current question
+    const answersForCurrent = await MultiplayerQuizAnswer.find({ sessionId, questionId: currentQId });
+    const answeredUserIds = new Set(answersForCurrent.map(a => a.userId.toString()));
+
+    let newAnswersCreated = false;
+    for (const p of activeParticipants) {
+      if (!answeredUserIds.has(p.userId.toString())) {
+        console.log(`[QUIZ TIMEOUT] User ${p.userId} (${p.name}) did not answer Q${session.currentQuestionIndex + 1} within timeout. Recording UNANSWERED.`);
+        try {
+          await MultiplayerQuizAnswer.create({
+            sessionId,
+            userId: p.userId,
+            questionId: currentQId,
+            questionIndex: session.currentQuestionIndex,
+            selectedOption: "UNANSWERED",
+            isCorrect: false,
+            score: 0,
+            responseTime: (session.questionTimeoutSeconds || 45) * 1000
+          });
+          p.answeredCount += 1;
+          p.status = "ANSWERED";
+          newAnswersCreated = true;
+        } catch (ansErr) {
+          console.error(`Timeout answer creation error for user ${p.userId}:`, ansErr.message);
+        }
+      }
+    }
+
+    if (newAnswersCreated) {
+      await session.save();
+    }
+
+    // Now re-fetch all answers for current question
+    const updatedAnswers = await MultiplayerQuizAnswer.find({ sessionId, questionId: currentQId });
+
+    if (updatedAnswers.length >= expectedPlayers) {
+      console.log(`[QUIZ TIMEOUT] All players resolved for Q${session.currentQuestionIndex + 1} via timeout!`);
+      console.log(`[QUIZ] Changing state: QUESTION_ACTIVE → QUESTION_RESULT`);
+
+      session.status = "WAITING_FOR_NEXT";
+      session.nextQuestionReadyUsers = [];
+      await session.save();
+
+      const qDoc = await AhpFuzzyQuestion.findById(currentQId).lean();
+      const results = session.participants.map(p => {
+        const pAns = updatedAnswers.find(a => a.userId.toString() === p.userId.toString());
+        return {
+          userId: p.userId,
+          name: p.name,
+          selectedOption: pAns ? pAns.selectedOption : "UNANSWERED",
+          isCorrect: Boolean(pAns?.isCorrect),
+          pointsEarned: pAns ? pAns.score : 0,
+          score: p.score
+        };
+      });
+
+      console.log(`[QUIZ] Emitting quiz:question-result after timeout`);
+      if (io) {
+        io.to(`quiz:${sessionId}`).emit("quiz:question-result", {
+          sessionId,
+          questionId: currentQId,
+          questionNumber: session.currentQuestionIndex + 1,
+          totalQuestions: session.totalQuestions,
+          results,
+          correctOption: qDoc?.correctOption || "",
+          explanation: qDoc?.explanation || "No explanation provided.",
+          participants: session.participants,
+          nextQuestionReadyUsers: session.nextQuestionReadyUsers
+        });
+      }
+    }
+  } catch (err) {
+    console.error(`checkAndEnforceQuestionTimeout error for session ${sessionId}:`, err);
+  }
+}
+
+/**
  * Single server-side question advancement function
  */
 async function advanceToNextQuestion(sessionId, io) {
@@ -101,6 +191,11 @@ async function advanceToNextQuestion(sessionId, io) {
         participants: session.participants
       });
     }
+
+    // Schedule server-side timeout check for the newly advanced question
+    setTimeout(() => {
+      checkAndEnforceQuestionTimeout(sessionId, io);
+    }, ((session.questionTimeoutSeconds || 45) + 2) * 1000);
   } catch (err) {
     console.error(`advanceToNextQuestion error for session ${sessionId}:`, err);
   } finally {
@@ -634,7 +729,25 @@ exports.markNextQuestionReady = async (req, res) => {
 };
 
 /**
- * 6. GET /api/multiplayer-quiz/:sessionId/results
+ * 6. POST /api/multiplayer-quiz/:sessionId/timeout
+ *    Process question timer timeout
+ */
+exports.handleQuestionTimeout = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const io = req.app.get("io");
+
+    await checkAndEnforceQuestionTimeout(sessionId, io);
+
+    res.status(200).json({ success: true, message: "Question timeout processed." });
+  } catch (err) {
+    console.error("handleQuestionTimeout error:", err);
+    res.status(500).json({ success: false, message: "Failed to process question timeout." });
+  }
+};
+
+/**
+ * 7. GET /api/multiplayer-quiz/:sessionId/results
  *    Final game result payload.
  */
 exports.getSessionResults = async (req, res) => {
@@ -680,7 +793,7 @@ exports.getSessionResults = async (req, res) => {
 };
 
 /**
- * 7. GET /api/multiplayer-quiz/:sessionId/review
+ * 8. GET /api/multiplayer-quiz/:sessionId/review
  *    Full review with questions, user answer, correct answer, explanation & weak topic analysis.
  */
 exports.getReviewData = async (req, res) => {
@@ -744,4 +857,5 @@ exports.getReviewData = async (req, res) => {
 module.exports.advanceToNextQuestion = advanceToNextQuestion;
 module.exports.processUserAnswer = processUserAnswer;
 module.exports.markUserReadyForNext = markUserReadyForNext;
+module.exports.checkAndEnforceQuestionTimeout = checkAndEnforceQuestionTimeout;
 
