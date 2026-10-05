@@ -99,6 +99,7 @@ import ProfileAwareAskAIChatbotPage from './pages/advisor/ProfileAwareAskAIChatb
 import SkillGapAnalysisPage from './pages/career/SkillGapAnalysisPage'
 import CareerComparisonPage from './pages/career/CareerComparisonPage'
 import ResumeBuilderPage from './pages/career/ResumeBuilderPage'
+import AtsResumeCheckerPage from './pages/career/AtsResumeCheckerPage'
 import InterviewPreparationPage from './pages/career/InterviewPreparationPage'
 import NotesSummarizerPage from './pages/study-tools/NotesSummarizerPage'
 import CollegeScholarshipsPage from './pages/scholarships/CollegeScholarshipsPage'
@@ -316,6 +317,7 @@ export default function StudentRoutes() {
             <Route path="career/skill-gap" element={<SkillGapAnalysisPage />} />
             <Route path="career/compare" element={<CareerComparisonPage />} />
             <Route path="career/resume" element={<ResumeBuilderPage />} />
+            <Route path="career/ats-checker" element={<AtsResumeCheckerPage />} />
             <Route path="career/interview-prep" element={<InterviewPreparationPage />} />
             <Route path="study-tools/notes-summarizer" element={<NotesSummarizerPage />} />
             <Route path="study-tools/practice" element={<PracticeQuestionsPage />} />
@@ -342,6 +344,7 @@ export default function StudentRoutes() {
           <Route path="student/career/skill-gap" element={<Navigate to="/college/career/skill-gap" replace />} />
           <Route path="student/career/compare" element={<Navigate to="/college/career/compare" replace />} />
           <Route path="student/career/resume" element={<Navigate to="/college/career/resume" replace />} />
+          <Route path="student/career/ats-checker" element={<Navigate to="/college/career/ats-checker" replace />} />
           <Route path="student/career/interview-prep" element={<Navigate to="/college/career/interview-prep" replace />} />
           <Route path="student/study-tools/notes-summarizer" element={<Navigate to="/college/study-tools/notes-summarizer" replace />} />
           <Route path="student/study-tools/practice" element={<Navigate to="/college/study-tools/practice" replace />} />

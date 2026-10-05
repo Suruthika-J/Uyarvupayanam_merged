@@ -8,7 +8,7 @@ import {
   FiFileText, FiAward, FiBookmark, FiTarget, FiBarChart2,
   FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiBell,
   FiBookOpen, FiCpu, FiUsers, FiHelpCircle, FiSettings,
-  FiSearch,
+  FiSearch, FiCheckCircle
 } from 'react-icons/fi'
 
 // ── SIDEBAR NAVIGATION CONFIG ──────────────────────────────────────────────────
@@ -26,6 +26,14 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
+    title: 'Career & Placement',
+    items: [
+      { id: 'resume',    icon: FiFileText,      label: 'Resume Builder',     to: '/college/career/resume' },
+      { id: 'ats',       icon: FiCheckCircle,   label: 'ATS Score Checker',  to: '/college/career/ats-checker' },
+      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
+    ],
+  },
+  {
     title: 'Focus & Productivity',
     items: [
       { id: 'focus',     icon: FiCpu,     label: 'Intelligent Focus',   to: '/college/academic/focus' },
@@ -37,8 +45,7 @@ const SIDEBAR_SECTIONS = [
     items: [
       { id: 'dashboard',   icon: FiGrid,      label: 'Dashboard',           to: '/college/dashboard' },
       { id: 'profile',     icon: FiUser,      label: 'My Academic Profile', to: '/college/profile' },
-      { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
-      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
+      { id: 'planner',     icon: FiBook,      label: 'Study Planner',       to: '/college/academic/planner' },
       { id: 'performance', icon: FiBarChart2, label: 'Performance',         to: '/college/academic/performance' },
     ],
   },

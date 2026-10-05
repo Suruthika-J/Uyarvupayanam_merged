@@ -10,6 +10,8 @@ const AhpFuzzyResult = require("../models/AhpFuzzyResult");
 
 const StudyPlan = require("../models/StudyPlan");
 const studyPlanEngine = require("../services/studyPlanEngine");
+const pdf = require("pdf-parse");
+const { analyzeResumeForAts, ATS_JD_PRESETS } = require("../services/atsScannerEngine");
 
 const PlacementCompanyResearch = require("../models/PlacementCompanyResearch");
 const PlacementPlan = require("../models/PlacementPlan");
@@ -1410,6 +1412,7 @@ exports.generateResumeSuggestions = async (req, res) => {
     if (certs.length > 0) strengthScore += 5;
     else missingSections.push("Industry Certifications");
 
+    const professionalSummary = profile?.careerObjective || `Motivated ${degree || 'college'} student specializing in ${domain || 'technical studies'} with proficiency in ${skills.slice(0, 4).join(', ') || 'core domain practices'}. Seeking entry-level opportunities to apply technical skills and analytical problem-solving.`;
     const careerObjective = profile?.careerObjective || professionalSummary;
 
     const resumeData = {
@@ -2064,4 +2067,97 @@ exports.deleteActivePlacementPlan = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to reset placement plan" });
   }
 };
+
+// ── 14. ATS Resume Score & Keyword Checker ─────────────────────────────────
+exports.getAtsPresets = async (req, res) => {
+  try {
+    return res.status(200).json({ success: true, presets: ATS_JD_PRESETS });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Failed to load ATS presets" });
+  }
+};
+
+exports.checkResumeAtsScore = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id;
+    let resumeText = req.body?.resumeText || "";
+    const jobDescription = req.body?.jobDescription || "";
+    const useProfile = req.body?.useProfile === true || req.body?.useProfile === "true";
+
+    // 1. If PDF file was uploaded via multipart/form-data
+    if (req.file && req.file.buffer) {
+      try {
+        const parsedPdf = await pdf(req.file.buffer);
+        resumeText = parsedPdf.text || "";
+      } catch (pdfErr) {
+        console.error("PDF Parsing error:", pdfErr);
+        return res.status(400).json({
+          success: false,
+          message: "Failed to extract text from the uploaded PDF resume. Please ensure the file is not corrupted or password protected."
+        });
+      }
+    }
+
+    // 2. If user requested to use their generated profile telemetry or no text was supplied
+    let profile = null;
+    if (useProfile || (!resumeText && studentId)) {
+      const [user, studentProfile] = await Promise.all([
+        User.findById(studentId).select("name email phone").lean(),
+        CollegeStudentProfile.findOne({ userId: studentId }).lean()
+      ]);
+      profile = studentProfile;
+
+      if (studentProfile) {
+        const studentName = user?.name || "Student Name";
+        const email = user?.email || "";
+        const phone = studentProfile?.phone || user?.phone || "";
+        const college = studentProfile?.institution || "Engineering College";
+        const degree = studentProfile?.degreeProgramme || "Undergraduate";
+        const domain = studentProfile?.domain || studentProfile?.field || "Technical Studies";
+        const cgpa = studentProfile?.cgpa ? `CGPA: ${studentProfile.cgpa}` : "";
+        const skillsList = (studentProfile?.skills || []).join(", ");
+        const certsList = (studentProfile?.certifications || []).map(c => `• ${c}`).join("\n");
+        const projectsList = (studentProfile?.projects || []).map(p =>
+          `• ${p.title || 'Academic Project'}: ${p.description || ''} (Technologies: ${p.techStack || 'Relevant stack'})`
+        ).join("\n");
+        const summary = studentProfile?.careerObjective || `Motivated ${degree} graduate in ${domain} with strong technical foundation in ${skillsList}. Seeking entry-level opportunities to apply engineering skills.`;
+
+        // Synthesize full resume text
+        resumeText = [
+          `${studentName} | ${email} | ${phone}`,
+          `Education:\n${degree} in ${domain}, ${college}. ${cgpa}`,
+          studentProfile?.school10 ? `Secondary Education: ${studentProfile.school10} (CGPA/Score: ${studentProfile.cgpa10 || 'N/A'})` : '',
+          studentProfile?.institution12 ? `Higher Secondary: ${studentProfile.institution12} (${studentProfile.branch12 || 'HSC'}) (Score: ${studentProfile.cgpa12 || 'N/A'})` : '',
+          `Professional Summary:\n${summary}`,
+          `Technical Competencies:\n${skillsList}`,
+          projectsList ? `Projects & Portfolio:\n${projectsList}` : '',
+          certsList ? `Certifications & Credentials:\n${certsList}` : ''
+        ].filter(Boolean).join("\n\n");
+      }
+    }
+
+    if (!resumeText || resumeText.trim().length < 20) {
+      return res.status(400).json({
+        success: false,
+        message: "No resume content detected. Please upload a PDF resume, paste text, or select 'Use Profile Resume'."
+      });
+    }
+
+    // Run ATS scanner
+    const analysis = analyzeResumeForAts(resumeText, jobDescription, profile || {});
+
+    return res.status(200).json({
+      success: true,
+      analysis,
+      resumeSnippet: resumeText.slice(0, 300) + (resumeText.length > 300 ? '...' : '')
+    });
+  } catch (err) {
+    console.error("ATS Resume Checker error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while analyzing the resume for ATS compatibility."
+    });
+  }
+};
+
 

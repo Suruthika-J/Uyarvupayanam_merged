@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../../config/axios'
 import { SCard, SBtn, SInput, SBadge, AIGenerating, AIFailure, SEmpty } from '../../components/ui'
-import { FiFileText, FiDownload, FiCheckCircle, FiZap, FiPlus, FiUser, FiEdit3, FiTarget } from 'react-icons/fi'
+import { FiFileText, FiDownload, FiCheckCircle, FiZap, FiPlus, FiUser, FiEdit3, FiTarget, FiShield } from 'react-icons/fi'
 import { useCollegeProfile, useStudentContext } from '../../context/CollegeProfileContext'
 
 export default function ResumeBuilderPage() {
@@ -123,7 +123,19 @@ export default function ResumeBuilderPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/college/career/ats-checker?source=profile')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+              color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 12,
+              fontSize: 13, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.25)'
+            }}
+          >
+            <FiShield size={15} /> Check ATS Score
+          </button>
           <SBtn variant="secondary" onClick={() => setEditing(!editing)} style={{ borderRadius: 12 }}>
             <FiEdit3 size={15} style={{ marginRight: 6 }} /> {editing ? 'Done Editing' : 'Edit Resume Content'}
           </SBtn>
@@ -135,14 +147,27 @@ export default function ResumeBuilderPage() {
 
       {/* RESUME STRENGTH SCORE BAR */}
       <SCard className="no-print" style={{ padding: 22, borderRadius: 20, marginBottom: 28, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>Profile Resume Strength</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginTop: 2 }}>{strengthScore}% Optimized</div>
           </div>
-          <SBadge color={strengthScore >= 80 ? 'green' : 'orange'}>
-            {strengthScore >= 80 ? 'Placement Ready' : 'Action Recommended'}
-          </SBadge>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <SBadge color={strengthScore >= 80 ? 'green' : 'orange'}>
+              {strengthScore >= 80 ? 'Placement Ready' : 'Action Recommended'}
+            </SBadge>
+            <button
+              type="button"
+              onClick={() => navigate('/college/career/ats-checker?source=profile')}
+              style={{
+                background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+                color: '#fff', padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+              }}
+            >
+              <FiShield size={13} /> Run Full ATS Scan →
+            </button>
+          </div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.15)', height: 8, borderRadius: 99, overflow: 'hidden' }}>
           <div style={{ width: `${strengthScore}%`, height: '100%', background: '#34d399', transition: 'width 0.5s ease' }} />
