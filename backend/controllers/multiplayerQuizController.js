@@ -30,6 +30,7 @@ async function advanceToNextQuestion(sessionId, io) {
       console.log(`[QUIZ] Session ${sessionId} completed after Q${currentIndex + 1}`);
       session.status = "COMPLETED";
       session.completedAt = new Date();
+      session.nextQuestionReadyUsers = [];
       session.participants.forEach(p => { p.status = "FINISHED"; });
       await session.save();
 
@@ -70,6 +71,8 @@ async function advanceToNextQuestion(sessionId, io) {
 
     // Advance to next question
     session.currentQuestionIndex = nextIndex;
+    session.status = "LIVE";
+    session.nextQuestionReadyUsers = [];
     session.currentQuestionStartedAt = new Date();
     session.participants.forEach(p => {
       if (p.status !== "LEFT" && p.status !== "DISCONNECTED") {
@@ -83,12 +86,13 @@ async function advanceToNextQuestion(sessionId, io) {
     const questionStartedAt = session.currentQuestionStartedAt;
     const questionDeadline = new Date(questionStartedAt.getTime() + (session.questionTimeoutSeconds || 45) * 1000);
 
-    console.log(`[QUIZ] Advancing: Q${currentIndex + 1} → Q${nextIndex + 1}`);
-    console.log(`[QUIZ] Broadcasting next question: Q${nextIndex + 1}`);
+    console.log(`[QUIZ]\nAdvancing:\nQ${currentIndex + 1} → Q${nextIndex + 1}`);
+    console.log(`[QUIZ]\nEmitting quiz:next-question`);
 
     if (io) {
       io.to(`quiz:${sessionId}`).emit("quiz:next-question", {
         sessionId,
+        questionId: nextQData.questionId,
         questionNumber: nextIndex + 1,
         totalQuestions: session.totalQuestions,
         question: nextQData,
@@ -113,7 +117,7 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
   const session = await MultiplayerQuizSession.findOne({ sessionId });
   if (!session) throw new Error("Session not found");
 
-  if (session.status !== "LIVE" && session.status !== "COUNTDOWN") {
+  if (session.status !== "LIVE" && session.status !== "COUNTDOWN" && session.status !== "WAITING_FOR_NEXT") {
     throw new Error("Quiz session is not active");
   }
 
@@ -178,43 +182,102 @@ async function processUserAnswer({ sessionId, userId, questionId, selectedOption
     questionId: currentQId
   });
 
-  console.log(`[QUIZ STATE]\nExpected players: ${expectedPlayers}\nAnswered players: ${answersForCurrent.length}`);
+  console.log(`[QUIZ STATE]\nAnswers for question: ${answersForCurrent.length}/${expectedPlayers}`);
 
   if (answersForCurrent.length >= expectedPlayers) {
-    console.log(`[QUIZ STATE]\nALL PLAYERS ANSWERED`);
+    console.log(`[QUIZ STATE]\nAll players answered`);
+    console.log(`[QUIZ]\nChanging state:\nQUESTION_ACTIVE → QUESTION_RESULT`);
+
+    session.status = "WAITING_FOR_NEXT";
+    session.nextQuestionReadyUsers = [];
+    await session.save();
 
     const results = session.participants.map(p => {
       const pAns = answersForCurrent.find(a => a.userId.toString() === p.userId.toString());
       return {
         userId: p.userId,
+        name: p.name,
+        selectedOption: pAns ? pAns.selectedOption : "N/A",
         isCorrect: Boolean(pAns?.isCorrect),
+        pointsEarned: pAns ? pAns.score : 0,
         score: p.score
       };
     });
 
-    console.log(`[QUIZ]\nBroadcasting question result`);
+    console.log(`[QUIZ]\nEmitting quiz:question-result`);
     if (io) {
       io.to(`quiz:${sessionId}`).emit("quiz:question-result", {
         sessionId,
+        questionId: currentQId,
         questionNumber: session.currentQuestionIndex + 1,
         totalQuestions: session.totalQuestions,
         results,
         correctOption: evalResult.correctOption,
         explanation: evalResult.explanation,
-        participants: session.participants
+        participants: session.participants,
+        nextQuestionReadyUsers: session.nextQuestionReadyUsers
       });
     }
-
-    // Schedule single question transition after 1800ms delay
-    setTimeout(() => {
-      advanceToNextQuestion(sessionId, io);
-    }, 1800);
   }
 
   return {
     isCorrect: evalResult.isCorrect,
     scoreGained: evalResult.score,
     totalScore: participant.score
+  };
+}
+
+/**
+ * Handle user marking ready for next question
+ */
+async function markUserReadyForNext({ sessionId, userId, questionId, io }) {
+  console.log(`[QUIZ]\nNext ready:\nuser=${userId}`);
+
+  const session = await MultiplayerQuizSession.findOne({ sessionId });
+  if (!session) throw new Error("Session not found");
+
+  const participant = session.participants.find(p => p.userId.toString() === userId.toString());
+  if (!participant) throw new Error("Not a participant");
+
+  if (!session.nextQuestionReadyUsers) {
+    session.nextQuestionReadyUsers = [];
+  }
+
+  const alreadyReady = session.nextQuestionReadyUsers.some(id => id.toString() === userId.toString());
+  if (!alreadyReady) {
+    session.nextQuestionReadyUsers.push(userId);
+    await session.save();
+  }
+
+  const activeParticipants = session.participants.filter(p => p.status !== "LEFT" && p.status !== "DISCONNECTED");
+  const expectedPlayers = Math.max(1, activeParticipants.length);
+  const readyCount = session.nextQuestionReadyUsers.length;
+
+  console.log(`[QUIZ]\nReady:\n${readyCount}/${expectedPlayers}`);
+
+  if (io) {
+    io.to(`quiz:${sessionId}`).emit("quiz:next-question-ready-update", {
+      sessionId,
+      userId,
+      ready: true,
+      readyCount,
+      expectedPlayers,
+      readyUsers: session.nextQuestionReadyUsers
+    });
+  }
+
+  let transitioned = false;
+  if (readyCount >= expectedPlayers) {
+    console.log(`[QUIZ]\nBoth players ready for next question`);
+    transitioned = true;
+    await advanceToNextQuestion(sessionId, io);
+  }
+
+  return {
+    success: true,
+    readyCount,
+    expectedPlayers,
+    transitioned
   };
 }
 
@@ -236,7 +299,6 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
       return res.status(403).json({ success: false, message: "Cannot accept your own invite." });
     }
 
-    // Check if session already created for this invite
     let session = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
     if (!session) {
@@ -291,7 +353,8 @@ exports.acceptInviteAndCreateSession = async (req, res) => {
         totalQuestions: questionIds.length,
         durationSeconds: durationMins * 60,
         questionTimeoutSeconds: 45,
-        currentQuestionIndex: 0
+        currentQuestionIndex: 0,
+        nextQuestionReadyUsers: []
       });
 
       msg.studyInvite.status = "accepted";
@@ -369,6 +432,36 @@ exports.getSession = async (req, res) => {
       if (myAnswer) hasAnsweredCurrent = true;
     }
 
+    // Check answers for current question to see if round is complete
+    let currentQuestionResult = null;
+    if (currentQuestionData) {
+      const currentQId = session.questionIds[session.currentQuestionIndex];
+      const answersForCurrent = await MultiplayerQuizAnswer.find({ sessionId, questionId: currentQId }).lean();
+      const activeParticipants = session.participants.filter(p => p.status !== "LEFT" && p.status !== "DISCONNECTED");
+      if (answersForCurrent.length >= activeParticipants.length) {
+        const qDocFull = await AhpFuzzyQuestion.findById(currentQId).lean();
+        const results = session.participants.map(p => {
+          const pAns = answersForCurrent.find(a => a.userId.toString() === p.userId.toString());
+          return {
+            userId: p.userId,
+            name: p.name,
+            selectedOption: pAns ? pAns.selectedOption : "N/A",
+            isCorrect: Boolean(pAns?.isCorrect),
+            pointsEarned: pAns ? pAns.score : 0,
+            score: p.score
+          };
+        });
+        currentQuestionResult = {
+          questionId: currentQId,
+          questionNumber: session.currentQuestionIndex + 1,
+          totalQuestions: session.totalQuestions,
+          results,
+          correctOption: qDocFull?.correctOption || "",
+          explanation: qDocFull?.explanation || "No explanation provided."
+        };
+      }
+    }
+
     res.status(200).json({
       success: true,
       session: {
@@ -381,12 +474,14 @@ exports.getSession = async (req, res) => {
         totalQuestions: session.totalQuestions,
         durationSeconds: session.durationSeconds,
         questionTimeoutSeconds: session.questionTimeoutSeconds,
+        nextQuestionReadyUsers: session.nextQuestionReadyUsers || [],
         startAt: session.startAt,
         endAt: session.endAt,
         completedAt: session.completedAt
       },
       currentQuestion: currentQuestionData,
-      hasAnsweredCurrent
+      hasAnsweredCurrent,
+      currentQuestionResult
     });
   } catch (err) {
     console.error("getSession error:", err);
@@ -511,7 +606,35 @@ exports.submitAnswer = async (req, res) => {
 };
 
 /**
- * 5. GET /api/multiplayer-quiz/:sessionId/results
+ * 5. POST /api/multiplayer-quiz/:sessionId/next-ready
+ *    User clicks Next Question button.
+ */
+exports.markNextQuestionReady = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.student?.id;
+    const { sessionId } = req.params;
+    const { questionId } = req.body;
+    const io = req.app.get("io");
+
+    const result = await markUserReadyForNext({
+      sessionId,
+      userId,
+      questionId,
+      io
+    });
+
+    res.status(200).json({
+      success: true,
+      result
+    });
+  } catch (err) {
+    console.error("markNextQuestionReady error:", err.message);
+    res.status(500).json({ success: false, message: err.message || "Failed to mark ready for next question." });
+  }
+};
+
+/**
+ * 6. GET /api/multiplayer-quiz/:sessionId/results
  *    Final game result payload.
  */
 exports.getSessionResults = async (req, res) => {
@@ -557,7 +680,7 @@ exports.getSessionResults = async (req, res) => {
 };
 
 /**
- * 6. GET /api/multiplayer-quiz/:sessionId/review
+ * 7. GET /api/multiplayer-quiz/:sessionId/review
  *    Full review with questions, user answer, correct answer, explanation & weak topic analysis.
  */
 exports.getReviewData = async (req, res) => {
@@ -620,4 +743,5 @@ exports.getReviewData = async (req, res) => {
 
 module.exports.advanceToNextQuestion = advanceToNextQuestion;
 module.exports.processUserAnswer = processUserAnswer;
+module.exports.markUserReadyForNext = markUserReadyForNext;
 

@@ -50,6 +50,10 @@ export default function MultiplayerQuizPage() {
   const chatEndRef = useRef(null)
   const headers = { Authorization: `Bearer ${getToken()}` }
 
+  // ── State for Synchronized Next Question Button ──
+  const [nextQuestionReady, setNextQuestionReady] = useState(false)
+  const [partnerNextQuestionReady, setPartnerNextQuestionReady] = useState(false)
+
   // ── Fetch Session State ──
   const fetchSession = useCallback(async () => {
     try {
@@ -58,6 +62,17 @@ export default function MultiplayerQuizPage() {
         setSession(res.data.session)
         setCurrentQuestion(res.data.currentQuestion)
         setHasAnswered(res.data.hasAnsweredCurrent || false)
+
+        if (res.data.currentQuestionResult) {
+          console.log('[QUIZ CLIENT] Loaded question result from session')
+          setEvalResult(res.data.currentQuestionResult)
+        }
+
+        const readyUsers = res.data.session.nextQuestionReadyUsers || []
+        const isMeReady = readyUsers.some(id => id.toString() === myId?.toString())
+        const isOppReady = readyUsers.some(id => id.toString() !== myId?.toString())
+        setNextQuestionReady(isMeReady)
+        setPartnerNextQuestionReady(isOppReady)
 
         if (res.data.session.status === 'COMPLETED') {
           fetchResults()
@@ -71,7 +86,7 @@ export default function MultiplayerQuizPage() {
     } finally {
       setLoading(false)
     }
-  }, [sessionId])
+  }, [sessionId, myId])
 
   const fetchResults = async () => {
     try {
@@ -149,6 +164,8 @@ export default function MultiplayerQuizPage() {
       setHasAnswered(false)
       setSelectedOption(null)
       setEvalResult(null)
+      setNextQuestionReady(false)
+      setPartnerNextQuestionReady(false)
       setQuestionTimeLeft(45)
     })
 
@@ -165,19 +182,37 @@ export default function MultiplayerQuizPage() {
     })
 
     socket.on('quiz:question-result', (resData) => {
-      console.log('[QUIZ CLIENT] Received quiz:question-result', resData)
-      setEvalResult({ correctOption: resData.correctOption, explanation: resData.explanation, results: resData.results })
+      console.log('[QUIZ CLIENT] Received question-result', resData)
+      console.log('[QUIZ CLIENT] Showing result')
+      console.log('[QUIZ CLIENT] Next Question button displayed')
+      setEvalResult(resData)
       if (resData.participants) {
         setSession(prev => prev ? { ...prev, participants: resData.participants } : prev)
+      }
+      const readyUsers = resData.nextQuestionReadyUsers || []
+      setNextQuestionReady(readyUsers.some(id => id.toString() === myId?.toString()))
+      setPartnerNextQuestionReady(readyUsers.some(id => id.toString() !== myId?.toString()))
+    })
+
+    socket.on('quiz:next-question-ready-update', ({ userId: rUserId, readyUsers }) => {
+      console.log(`[QUIZ CLIENT] Received quiz:next-question-ready-update from user ${rUserId}`)
+      if (readyUsers) {
+        setNextQuestionReady(readyUsers.some(id => id.toString() === myId?.toString()))
+        setPartnerNextQuestionReady(readyUsers.some(id => id.toString() !== myId?.toString()))
+      } else if (rUserId?.toString() === myId?.toString()) {
+        setNextQuestionReady(true)
+      } else {
+        setPartnerNextQuestionReady(true)
       }
     })
 
     socket.on('quiz:next-question', (payload) => {
-      console.log('[QUIZ CLIENT] Received quiz:next-question', payload)
+      console.log('[QUIZ CLIENT] Received next-question', payload)
       const qNum = payload.questionNumber || ((payload.currentQuestionIndex ?? 0) + 1)
-      console.log(`[QUIZ CLIENT] Rendering Question ${qNum}`)
+      console.log(`[QUIZ CLIENT] Rendering Q${qNum}`)
       setSession(prev => prev ? {
         ...prev,
+        status: 'LIVE',
         currentQuestionIndex: qNum - 1,
         participants: payload.participants || prev.participants
       } : prev)
@@ -185,6 +220,8 @@ export default function MultiplayerQuizPage() {
       setHasAnswered(false)
       setSelectedOption(null)
       setEvalResult(null)
+      setNextQuestionReady(false)
+      setPartnerNextQuestionReady(false)
       setQuestionTimeLeft(45)
     })
 
@@ -232,7 +269,7 @@ export default function MultiplayerQuizPage() {
   }
 
   const handleSelectAnswer = async (optId) => {
-    if (hasAnswered || session?.status !== 'LIVE' || !currentQuestion) return
+    if (hasAnswered || (session?.status !== 'LIVE' && session?.status !== 'WAITING_FOR_NEXT') || !currentQuestion) return
     setSelectedOption(optId)
     setHasAnswered(true)
 
@@ -245,6 +282,28 @@ export default function MultiplayerQuizPage() {
       }, { headers })
     } catch (err) {
       console.error('Submit answer error:', err)
+    }
+  }
+
+  const handleNextQuestionReady = async () => {
+    if (nextQuestionReady) return
+    console.log('[QUIZ CLIENT] Sending next-question-ready')
+    setNextQuestionReady(true)
+
+    if (socketRef.current) {
+      socketRef.current.emit('quiz:next-question-ready', {
+        sessionId,
+        userId: myId,
+        questionId: currentQuestion?.questionId
+      })
+    }
+
+    try {
+      await axios.post(`${API}/multiplayer-quiz/${sessionId}/next-ready`, {
+        questionId: currentQuestion?.questionId
+      }, { headers })
+    } catch (err) {
+      console.error('Next question ready error:', err)
     }
   }
 
@@ -546,13 +605,64 @@ export default function MultiplayerQuizPage() {
               })}
             </div>
 
-            {/* STATUS / FEEDBACK BANNER */}
+            {/* STATUS / RESULT PANEL */}
             {evalResult ? (
-              <div style={{ background: '#f8fafc', padding: 18, borderRadius: 16, border: '1px solid #cbd5e1' }}>
-                <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--s-text)', marginBottom: 4 }}>
-                  💡 {evalResult.explanation}
+              <div style={{ background: '#f8fafc', padding: 22, borderRadius: 20, border: '2px solid #6366f1', marginTop: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: '#4338ca', background: '#e0e7ff', padding: '4px 14px', borderRadius: 12, textTransform: 'uppercase' }}>
+                    🎯 Q{session.currentQuestionIndex + 1} COMPLETE
+                  </span>
+                  {partnerNextQuestionReady && !nextQuestionReady && (
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '4px 14px', borderRadius: 12 }}>
+                      ✓ {opponent?.name || 'Partner'} is ready for next question!
+                    </span>
+                  )}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--s-text3)', fontStyle: 'italic' }}>Moving to next question in 2 seconds...</div>
+
+                {/* ANSWERS & SCORES COMPARISON GRID */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+                  <div style={{ background: '#fff', padding: 14, borderRadius: 14, border: evalResult.results?.find(r => r.userId?.toString() === myId?.toString())?.isCorrect ? '2px solid #059669' : '2px solid #cbd5e1' }}>
+                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 800 }}>Your Answer: <strong>{evalResult.results?.find(r => r.userId?.toString() === myId?.toString())?.selectedOption || selectedOption || 'N/A'}</strong></div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: evalResult.results?.find(r => r.userId?.toString() === myId?.toString())?.isCorrect ? '#059669' : '#dc2626', marginTop: 4 }}>
+                      {evalResult.results?.find(r => r.userId?.toString() === myId?.toString())?.isCorrect ? `✓ Correct (+${evalResult.results?.find(r => r.userId?.toString() === myId?.toString())?.pointsEarned || 100} XP)` : '✕ Incorrect (+0 XP)'}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#fff', padding: 14, borderRadius: 14, border: evalResult.results?.find(r => r.userId?.toString() !== myId?.toString())?.isCorrect ? '2px solid #059669' : '2px solid #cbd5e1' }}>
+                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 800 }}>{opponent?.name || 'Partner'} Answer: <strong>{evalResult.results?.find(r => r.userId?.toString() !== myId?.toString())?.selectedOption || 'N/A'}</strong></div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: evalResult.results?.find(r => r.userId?.toString() !== myId?.toString())?.isCorrect ? '#059669' : '#dc2626', marginTop: 4 }}>
+                      {evalResult.results?.find(r => r.userId?.toString() !== myId?.toString())?.isCorrect ? `✓ Correct (+${evalResult.results?.find(r => r.userId?.toString() !== myId?.toString())?.pointsEarned || 100} XP)` : '✕ Incorrect (+0 XP)'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* CORRECT OPTION & EXPLANATION */}
+                <div style={{ background: '#ecfdf5', color: '#047857', padding: 14, borderRadius: 14, fontSize: 13, fontWeight: 800, marginBottom: 20 }}>
+                  <div>✓ Correct Answer: <strong>{evalResult.correctOption}</strong> — {currentQuestion?.options?.find(o => o.id === evalResult.correctOption)?.text || ''}</div>
+                  {evalResult.explanation && (
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#065f46', marginTop: 6, fontStyle: 'italic' }}>
+                      💡 {evalResult.explanation}
+                    </div>
+                  )}
+                </div>
+
+                {/* NEXT QUESTION BUTTON CONTROL */}
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  {nextQuestionReady ? (
+                    <div style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #93c5fd', padding: '14px 24px', borderRadius: 16, fontSize: 14, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <FiCheckCircle size={18} color="#2563eb" />
+                      ✓ Ready for next question — Waiting for {opponent?.name || 'partner'}...
+                    </div>
+                  ) : (
+                    <SBtn
+                      variant="primary"
+                      onClick={handleNextQuestionReady}
+                      style={{ padding: '14px 36px', borderRadius: 16, fontSize: 16, fontWeight: 900, cursor: 'pointer', background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', boxShadow: '0 4px 14px rgba(79,70,229,0.3)' }}
+                    >
+                      {session.currentQuestionIndex + 1 >= session.totalQuestions ? 'VIEW FINAL RESULTS →' : 'NEXT QUESTION →'}
+                    </SBtn>
+                  )}
+                </div>
               </div>
             ) : hasAnswered ? (
               <div style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: 14, borderRadius: 14, fontSize: 13, fontWeight: 800, textAlign: 'center' }}>

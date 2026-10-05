@@ -254,6 +254,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("quiz:next-question-ready", async ({ sessionId, userId, questionId }) => {
+    try {
+      if (!sessionId || !userId) return;
+      const { markUserReadyForNext } = require("./controllers/multiplayerQuizController");
+      await markUserReadyForNext({ sessionId, userId, questionId, io });
+    } catch (err) {
+      console.error(`Socket quiz:next-question-ready error for user ${userId}:`, err.message);
+    }
+  });
+
   socket.on("quiz:chat", ({ sessionId, userId, senderName, message }) => {
     if (sessionId && message) {
       io.to(`quiz:${sessionId}`).emit("quiz:chat-message", {

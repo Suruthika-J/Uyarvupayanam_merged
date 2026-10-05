@@ -31,7 +31,7 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["WAITING", "READY", "COUNTDOWN", "LIVE", "COMPLETED", "CANCELLED", "SOLO_AFTER_DISCONNECT"],
+    enum: ["WAITING", "READY", "COUNTDOWN", "LIVE", "WAITING_FOR_NEXT", "COMPLETED", "CANCELLED", "SOLO_AFTER_DISCONNECT"],
     default: "WAITING",
     index: true
   },
@@ -45,6 +45,8 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
 
   currentQuestionIndex: { type: Number, default: 0 },
   currentQuestionStartedAt: { type: Date },
+
+  nextQuestionReadyUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
   completedAt: { type: Date }
 }, { timestamps: true });
