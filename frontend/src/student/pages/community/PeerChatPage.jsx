@@ -401,10 +401,11 @@ export default function PeerChatPage() {
       navigate(`/college/multiplayer-quiz/${existingSessionId}`)
       return
     }
-    if (response === 'end' && existingSessionId) {
+    if (response === 'end') {
       if (!window.confirm('Are you sure you want to end this quiz session?')) return
+      const targetParamId = existingSessionId || msgId
       try {
-        await axios.post(`${API}/multiplayer-quiz/${existingSessionId}/end`, {}, { headers })
+        await axios.post(`${API}/multiplayer-quiz/${targetParamId}/end`, {}, { headers })
         const targetId = getRawId(msgId)
         setMessages(prev => prev.map(m => {
           const isMatch = (targetId && getRawId(m._id) === targetId) ||

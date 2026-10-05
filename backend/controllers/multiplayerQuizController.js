@@ -861,65 +861,106 @@ exports.getReviewData = async (req, res) => {
 exports.endQuizSession = async (req, res) => {
   try {
     const userId = req.student?._id || req.student?.id;
-    const { sessionId } = req.params;
+    const { sessionId: paramId } = req.params;
+    const mongoose = require("mongoose");
 
-    const session = await MultiplayerQuizSession.findOne({ sessionId });
-    if (!session) {
-      return res.status(404).json({ success: false, message: "Session not found." });
+    let session = await MultiplayerQuizSession.findOne({
+      $or: [
+        { sessionId: paramId },
+        { inviteId: mongoose.Types.ObjectId.isValid(paramId) ? paramId : null }
+      ].filter(c => c.sessionId || c.inviteId)
+    });
+
+    if (!session && mongoose.Types.ObjectId.isValid(paramId)) {
+      session = await MultiplayerQuizSession.findOne({ inviteId: paramId });
     }
 
-    const isParticipant = session.participants.some(p => p.userId.toString() === userId.toString());
-    if (!isParticipant) {
-      return res.status(403).json({ success: false, message: "Unauthorized to end this quiz session." });
-    }
+    if (session) {
+      const isParticipant = session.participants.some(p => p.userId.toString() === userId.toString());
+      if (!isParticipant) {
+        return res.status(403).json({ success: false, message: "Unauthorized to end this quiz session." });
+      }
 
-    session.status = "CANCELLED";
-    session.completedAt = new Date();
-    session.nextQuestionReadyUsers = [];
-    session.participants.forEach(p => { p.status = "FINISHED"; });
-    await session.save();
+      session.status = "CANCELLED";
+      session.completedAt = new Date();
+      session.nextQuestionReadyUsers = [];
+      session.participants.forEach(p => { p.status = "FINISHED"; });
+      await session.save();
 
-    if (session.inviteId) {
-      try {
-        const msg = await PeerMessage.findById(session.inviteId);
-        if (msg && msg.studyInvite) {
-          msg.studyInvite.status = "ended";
-          await msg.save();
+      if (session.inviteId) {
+        try {
+          const msg = await PeerMessage.findById(session.inviteId);
+          if (msg && msg.studyInvite) {
+            msg.studyInvite.status = "ended";
+            await msg.save();
+          }
+        } catch (msgErr) {
+          console.error("Error updating invite message status on end:", msgErr);
         }
-      } catch (msgErr) {
-        console.error("Error updating invite message status on end:", msgErr);
+      }
+
+      const io = req.app.get("io");
+      if (io) {
+        console.log(`[QUIZ] Broadcasting quiz:ended for session ${session.sessionId}`);
+        io.to(`quiz:${session.sessionId}`).emit("quiz:ended", {
+          sessionId: session.sessionId,
+          status: "CANCELLED",
+          message: "Quiz session has been ended by a participant."
+        });
+
+        session.participants.forEach(p => {
+          io.to(`user_${p.userId}`).emit("study:ended", {
+            sessionId: session.sessionId,
+            inviteId: session.inviteId,
+            conversationId: session.conversationId
+          });
+          io.to(`user_${p.userId}`).emit("quiz:ended", {
+            sessionId: session.sessionId,
+            inviteId: session.inviteId,
+            conversationId: session.conversationId
+          });
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Quiz session ended successfully.",
+        session
+      });
+    }
+
+    // Fallback: If no session document exists, check if paramId is a PeerMessage inviteId
+    if (mongoose.Types.ObjectId.isValid(paramId)) {
+      const msg = await PeerMessage.findById(paramId);
+      if (msg && msg.studyInvite) {
+        msg.studyInvite.status = "ended";
+        await msg.save();
+
+        const io = req.app.get("io");
+        if (io) {
+          io.to(`user_${msg.senderId}`).emit("study:ended", {
+            inviteId: msg._id,
+            conversationId: msg.conversationId
+          });
+          const convo = await PeerConversation.findById(msg.conversationId);
+          if (convo) {
+            convo.participants.forEach(pId => {
+              io.to(`user_${pId}`).emit("study:ended", {
+                inviteId: msg._id,
+                conversationId: msg.conversationId
+              });
+            });
+          }
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Study invite ended successfully."
+        });
       }
     }
 
-    const io = req.app.get("io");
-    if (io) {
-      console.log(`[QUIZ] Broadcasting quiz:ended for session ${sessionId}`);
-      io.to(`quiz:${sessionId}`).emit("quiz:ended", {
-        sessionId,
-        status: "CANCELLED",
-        message: "Quiz session has been ended by a participant."
-      });
-
-      // Broadcast to all participants' user rooms as well
-      session.participants.forEach(p => {
-        io.to(`user_${p.userId}`).emit("study:ended", {
-          sessionId,
-          inviteId: session.inviteId,
-          conversationId: session.conversationId
-        });
-        io.to(`user_${p.userId}`).emit("quiz:ended", {
-          sessionId,
-          inviteId: session.inviteId,
-          conversationId: session.conversationId
-        });
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Quiz session ended successfully.",
-      session
-    });
+    return res.status(404).json({ success: false, message: "Quiz session or study invite not found." });
   } catch (err) {
     console.error("endQuizSession error:", err);
     res.status(500).json({ success: false, message: "Failed to end quiz session." });
