@@ -22,6 +22,8 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
   conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "PeerConversation" },
 
   topic: { type: String, required: true },
+  topicId: { type: String },
+  topicLabel: { type: String },
   subtopic: { type: String, default: "General" },
   difficulty: { type: String, default: "Medium" },
 

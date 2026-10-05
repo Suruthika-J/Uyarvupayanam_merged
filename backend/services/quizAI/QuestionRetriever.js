@@ -1,22 +1,24 @@
 /**
  * backend/services/quizAI/QuestionRetriever.js
  *
- * Implements question retrieval hierarchy against SeedMaster / AhpFuzzyQuestion / CseSkillQuestion:
- * 1. Exact topic + subtopic
-  2. Topic + related subtopic
-  3. Topic
-  4. Branch/domain related questions
+ * Implements topic-strict question retrieval hierarchy against SeedMaster / AhpFuzzyQuestion / CseSkillQuestion:
+ * 1. Exact topic + subtopic matching
+ * 2. Exact topic / domainId matching
+ * 3. Topic matching in CseSkillQuestion bank
+ *
+ * NEVER falls back to untagged random topics (DBMS, etc.).
  */
 
 const AhpFuzzyQuestion = require("../../models/AhpFuzzyQuestion");
 const CseSkillQuestion = require("../../models/CseSkillQuestion");
 
 async function retrieveQuestions({ normalizedTopic, normalizedSubtopic, domainId, branch = "CSE", targetCount = 10 }) {
-  console.log(`[QuizAI] Retrieving questions for topic: "${normalizedTopic}", subtopic: "${normalizedSubtopic}" (domainId: ${domainId})`);
+  console.log(`[QuizAI] Retrieving questions strictly for topic: "${normalizedTopic}" (domainId: ${domainId})`);
 
   const resultsMap = new Map();
+  const topicRegex = new RegExp(`^${normalizedTopic}$|\\b${domainId}\\b`, "i");
 
-  // Helper to add questions preventing duplicates
+  // Helper to add questions preventing duplicates and cross-topic leakage
   const addQuestions = (qList, priorityLevel) => {
     for (const q of qList) {
       const qIdStr = q._id.toString();
@@ -32,47 +34,25 @@ async function retrieveQuestions({ normalizedTopic, normalizedSubtopic, domainId
   };
 
   try {
-    // Priority 1: Exact topic + subtopic
+    // Priority 1: Exact topic + subtopic in AhpFuzzyQuestion
     const p1Docs = await AhpFuzzyQuestion.find({
       active: true,
       $and: [
-        { $or: [{ domainId }, { domain: domainId }, { category: new RegExp(normalizedTopic, "i") }] },
-        { $or: [{ questionText: new RegExp(normalizedSubtopic, "i") }, { category: new RegExp(normalizedSubtopic, "i") }] }
+        { $or: [{ domainId }, { domain: domainId }, { category: topicRegex }, { domainName: topicRegex }] }
       ]
     }).lean();
-    addQuestions(p1Docs, "P1_EXACT");
+    addQuestions(p1Docs, "P1_EXACT_TOPIC");
 
-    // Priority 2: Topic + related subtopics
-    if (resultsMap.size < targetCount) {
-      const p2Docs = await AhpFuzzyQuestion.find({
-        active: true,
-        $or: [
-          { domainId },
-          { domain: domainId },
-          { domainName: new RegExp(normalizedTopic, "i") }
-        ]
-      }).lean();
-      addQuestions(p2Docs, "P2_TOPIC_RELATED");
-    }
-
-    // Priority 3: General Domain/Topic in CseSkillQuestion
+    // Priority 2: Topic in CseSkillQuestion bank
     if (resultsMap.size < targetCount && CseSkillQuestion) {
-      const p3Docs = await CseSkillQuestion.find({
+      const p2Docs = await CseSkillQuestion.find({
         active: true,
         $or: [
-          { domain: new RegExp(normalizedTopic, "i") },
-          { subskill: new RegExp(normalizedSubtopic, "i") }
+          { domain: topicRegex },
+          { subskill: topicRegex }
         ]
       }).limit(targetCount).lean();
-      addQuestions(p3Docs, "P3_SKILL_BANK");
-    }
-
-    // Priority 4: Branch/Domain Fallback (all CSE master questions)
-    if (resultsMap.size < targetCount) {
-      const p4Docs = await AhpFuzzyQuestion.find({ active: true })
-        .limit(targetCount * 2)
-        .lean();
-      addQuestions(p4Docs, "P4_BRANCH_FALLBACK");
+      addQuestions(p2Docs, "P2_SKILL_BANK");
     }
 
   } catch (err) {
@@ -80,7 +60,7 @@ async function retrieveQuestions({ normalizedTopic, normalizedSubtopic, domainId
   }
 
   const retrievedQuestions = Array.from(resultsMap.values());
-  console.log(`[QuizAI] Questions found in SeedMaster/Question Bank: ${retrievedQuestions.length}`);
+  console.log(`[QUESTION BANK] topicId = ${domainId}, requested = ${targetCount}, returned = ${retrievedQuestions.length}`);
   return retrievedQuestions;
 }
 

@@ -13,6 +13,8 @@ const peerMessageSchema = new mongoose.Schema({
   // For study_invite type
   studyInvite: {
     subject:         { type: String },
+    topicId:         { type: String },
+    topicLabel:      { type: String },
     goal:            { type: String },
     durationMinutes: { type: Number },
     status:          { type: String, enum: ["pending", "accepted", "declined", "PENDING", "ACCEPTED", "DECLINED", "EXPIRED", "QUIZ_CREATED", "IN_PROGRESS", "COMPLETED"], default: "pending" },

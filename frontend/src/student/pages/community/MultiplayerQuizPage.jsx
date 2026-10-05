@@ -60,6 +60,7 @@ export default function MultiplayerQuizPage() {
       const res = await axios.get(`${API}/multiplayer-quiz/${sessionId}`, { headers })
       if (res.data?.success) {
         setSession(res.data.session)
+        console.log(`[QUIZ UI] Rendering topic: ${res.data.session.topicLabel || res.data.session.topic}`)
         setCurrentQuestion(res.data.currentQuestion)
         setHasAnswered(res.data.hasAnsweredCurrent || false)
 
@@ -404,7 +405,7 @@ export default function MultiplayerQuizPage() {
             Multiplayer Study Quiz
           </span>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--s-text)', margin: '12px 0 6px' }}>
-            {session.topic} — {session.subtopic}
+            {session.topic === session.subtopic ? session.topic : `${session.topic} — ${session.subtopic}`}
           </h1>
           <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '0 0 28px' }}>
             {session.totalQuestions} Questions • {Math.round(session.durationSeconds / 60)} Minutes • SeedMaster Question Bank
@@ -567,7 +568,7 @@ export default function MultiplayerQuizPage() {
               🎯 MULTIPLAYER QUIZ • QUESTION {session.currentQuestionIndex + 1} OF {session.totalQuestions}
             </span>
             <h2 style={{ fontSize: 18, fontWeight: 900, margin: '2px 0 0', color: '#fff' }}>
-              {session.topic} — {session.subtopic}
+              {session.topic === session.subtopic ? session.topic : `${session.topic} — ${session.subtopic}`}
             </h2>
           </div>
 

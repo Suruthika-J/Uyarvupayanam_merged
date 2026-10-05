@@ -11,12 +11,16 @@ const { filterAndValidateQuestions } = require("./QuestionValidator");
 const { balanceDifficulty } = require("./DifficultyEngine");
 
 async function buildQuiz({ topic, subtopic, questionCount = 10, difficulty = "mixed" }) {
+  if (!topic) {
+    throw new Error("Multiplayer quiz topic is missing from study invite");
+  }
+
   const norm = normalizeTopic(topic, subtopic);
   const targetCount = Math.max(3, Math.min(20, Number(questionCount) || 10));
 
-  console.log(`[QuizAI] Building quiz for "${norm.normalizedTopic}" — "${norm.normalizedSubtopic}" (${targetCount} questions)`);
+  console.log(`[QUIZ SESSION] topicId: ${norm.domainId}, topicLabel: ${norm.normalizedTopic}`);
 
-  // Step 1: Retrieve existing questions from SeedMaster
+  // Step 1: Retrieve existing questions from SeedMaster/DB
   let retrieved = await retrieveQuestions({
     normalizedTopic: norm.normalizedTopic,
     normalizedSubtopic: norm.normalizedSubtopic,
@@ -29,7 +33,7 @@ async function buildQuiz({ topic, subtopic, questionCount = 10, difficulty = "mi
   const shortage = targetCount - retrieved.length;
 
   if (shortage > 0) {
-    console.log(`[QuizAI] Shortage of ${shortage} questions. Invoking AI Question Generator fallback...`);
+    console.log(`[QuizAI] Shortage of ${shortage} questions for topic "${norm.normalizedTopic}". Invoking topic-specific AI Question Generator...`);
     const aiQuestions = await generateAIQuestions({
       topic: norm.normalizedTopic,
       subtopic: norm.normalizedSubtopic,
@@ -49,9 +53,11 @@ async function buildQuiz({ topic, subtopic, questionCount = 10, difficulty = "mi
   // Step 5: Ensure exact count
   const finalQuestions = balanced.slice(0, targetCount);
 
-  console.log(`[QuizAI] Quiz build complete. Final Question Count: ${finalQuestions.length}`);
+  console.log(`[QUESTIONS SELECTED] topicId: ${norm.domainId}, count: ${finalQuestions.length}`);
 
   return {
+    topicId: norm.domainId,
+    topicLabel: norm.normalizedTopic,
     normalizedTopic: norm.normalizedTopic,
     normalizedSubtopic: norm.normalizedSubtopic,
     domainId: norm.domainId,
