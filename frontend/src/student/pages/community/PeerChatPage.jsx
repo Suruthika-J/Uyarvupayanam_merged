@@ -57,7 +57,7 @@ function getRawId(val) {
 }
 
 // ── Study Invite Banner ───────────────────────────────────────────────────────
-function StudyInviteBanner({ msg, myId, onRespond }) {
+function StudyInviteBanner({ msg, myId, onRespond, isLatest }) {
   const isMe = getRawId(msg.senderId) === getRawId(myId)
   const rawStatus = String(msg.studyInvite?.status || 'PENDING').toUpperCase()
   const sessionId = msg.studyInvite?.sessionId
@@ -95,14 +95,14 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
       </div>
 
       {/* SENDER VIEW */}
-      {isMe && isPending && (
+      {isMe && isPending && isLatest && (
         <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>⏳</span> Waiting for study partner to accept…
         </div>
       )}
 
       {/* RECEIVER VIEW */}
-      {!isMe && isPending && (
+      {!isMe && isPending && isLatest && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           <button
             disabled={accepting}
@@ -127,8 +127,8 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
         </div>
       )}
 
-      {/* ACTION FOR ACCEPTED / QUIZ_CREATED SESSION */}
-      {isAccepted && (
+      {/* ACTION FOR ACCEPTED / QUIZ_CREATED SESSION (LATEST ACTIVE INVITE ONLY) */}
+      {isAccepted && isLatest && (
         <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button onClick={() => onRespond(getRawId(msg._id), 'join', sessionId)}
             style={{ padding: '8px 18px', borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #6366f1)', color: '#fff', fontWeight: 800, fontSize: 13, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -138,6 +138,13 @@ function StudyInviteBanner({ msg, myId, onRespond }) {
             style={{ padding: '8px 16px', borderRadius: 10, background: '#fee2e2', color: '#b91c1c', fontWeight: 800, fontSize: 13, border: '1px solid #fca5a5', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             🛑 End Quiz
           </button>
+        </div>
+      )}
+
+      {/* PREVIOUS SUPERSEEDED SESSION VIEW */}
+      {isAccepted && !isLatest && (
+        <div style={{ marginTop: 10, fontSize: 12, color: '#64748b', fontWeight: 600, fontStyle: 'italic' }}>
+          ✓ Previous quiz session (superseded)
         </div>
       )}
 
@@ -661,27 +668,39 @@ export default function PeerChatPage() {
                     <div style={{ fontSize: 12 }}>Use Quick Actions below to break the ice.</div>
                   </div>
                 )
-                : messages.map((msg, i) => {
-                  const isMe = getRawId(msg.senderId) === getRawId(myId)
-                  if (msg.type === 'study_invite') {
-                    return <StudyInviteBanner key={msg._id || i} msg={msg} myId={myId} onRespond={respondToInvite} />
-                  }
-                  return (
-                    <div key={msg._id || i} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                      <div style={{
-                        maxWidth: '72%', padding: '10px 16px', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                        background: isMe ? '#0284c7' : '#fff', color: isMe ? '#fff' : '#0f172a',
-                        fontSize: 13, fontWeight: 500, lineHeight: 1.5, border: isMe ? 'none' : '1px solid #f1f5f9',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                      }}>
-                        {msg.content}
-                        <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.6)' : '#94a3b8', marginTop: 4, textAlign: 'right' }}>
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                : (() => {
+                  const lastActiveInviteId = [...messages].reverse().find(m => {
+                    if (m.type !== 'study_invite') return false
+                    const st = String(m.studyInvite?.status || 'PENDING').toUpperCase()
+                    const isEnded = st === 'ENDED' || st === 'CANCELLED'
+                    const isDeclined = st === 'DECLINED'
+                    const isFailed = st === 'QUIZ_CREATION_FAILED'
+                    return !isEnded && !isDeclined && !isFailed
+                  })?._id
+
+                  return messages.map((msg, i) => {
+                    const isMe = getRawId(msg.senderId) === getRawId(myId)
+                    if (msg.type === 'study_invite') {
+                      const isLatest = getRawId(msg._id) === getRawId(lastActiveInviteId)
+                      return <StudyInviteBanner key={msg._id || i} msg={msg} myId={myId} onRespond={respondToInvite} isLatest={isLatest} />
+                    }
+                    return (
+                      <div key={msg._id || i} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+                        <div style={{
+                          maxWidth: '72%', padding: '10px 16px', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                          background: isMe ? '#0284c7' : '#fff', color: isMe ? '#fff' : '#0f172a',
+                          fontSize: 13, fontWeight: 500, lineHeight: 1.5, border: isMe ? 'none' : '1px solid #f1f5f9',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                        }}>
+                          {msg.content}
+                          <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.6)' : '#94a3b8', marginTop: 4, textAlign: 'right' }}>
+                            {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })
+                    )
+                  })
+                })()
             }
             {peerTyping && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
