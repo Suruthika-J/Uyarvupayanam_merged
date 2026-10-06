@@ -66,7 +66,11 @@ router.get("/students/:id/certificates", verifyStudent, c.getCertificates);
 router.get("/certificates/:id/pdf", verifyStudent, c.getCertificatePdf);
 router.post("/certificates/badge", verifyStudent, c.generateBadgeCertificate);
 
-// ── Parent / teacher read-only snapshot (public, like the existing passport route)
-router.get("/parent/career-snapshot", c.getParentSnapshot);
+// ── Parent / teacher read-only snapshot ─────────────────────────────────────
+// Locked to the authenticated student's OWN snapshot. There is no separate
+// parent/teacher role in the app, and the endpoint used to expose any
+// student's name/district/skills by id-enumeration (IDOR). The frontend does
+// not call it, but keeping it own-data-only preserves the sharing idea safely.
+router.get("/parent/career-snapshot", verifyStudent, c.getParentSnapshot);
 
 module.exports = router;

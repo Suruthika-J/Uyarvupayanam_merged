@@ -7,6 +7,8 @@ const MentorRequest = require("../models/MentorRequest");
 const User = require("../models/User");
 const AhpCareerProfile = require("../models/AhpCareerProfile");
 const AhpFuzzyResult = require("../models/AhpFuzzyResult");
+const MemorySettings = require("../models/MemorySettings");
+const { retrieveMemories } = require("../services/memoryRetrievalService");
 
 const StudyPlan = require("../models/StudyPlan");
 const studyPlanEngine = require("../services/studyPlanEngine");
@@ -1250,6 +1252,42 @@ exports.askAdvisorChat = async (req, res) => {
     // Intent classification
     const intent = classifyAdvisorIntent(message, subjects);
 
+    // ── Personal memory retrieval (grounding for memory-based questions) ──
+    // Runs only when the student has not disabled memory usage in chat. The
+    // engine is hard-scoped to this student and returns compact excerpts only.
+    let memoriesBlock = "";
+    let memorySources = [];
+    try {
+      const settings = await MemorySettings.findOne({ userId: studentId });
+      if (!settings || settings.useMemoryInChat !== false) {
+        const hits = await retrieveMemories({ userId: studentId, query: message, limit: 4, minScore: 0.2 });
+        if (hits.length > 0) {
+          memorySources = hits.map((h) => ({
+            id: h.memoryId,
+            type: h.type,
+            title: h.title,
+            date: h.date,
+            excerpt: h.excerpt,
+          }));
+          const typeLabel = { voice: "Voice recording", journal: "Journal entry", email: "Email/letter", document: "Document", story: "Story/note" };
+          memoriesBlock =
+            "SAVED PERSONAL MEMORIES (the student's own recorded past — private vault):\n" +
+            hits
+              .map((h, i) => {
+                const dateStr = h.date ? new Date(h.date).toISOString().slice(0, 10) : "date unknown";
+                return `  ${i + 1}. [${typeLabel[h.type] || "Note"}, ${dateStr}] ${h.title ? `"${h.title}" — ` : ""}"${h.excerpt}"`;
+              })
+              .join("\n");
+        }
+      }
+    } catch (memErr) {
+      console.warn("[askAdvisorChat] memory retrieval skipped:", memErr.message);
+    }
+
+    const memoryRules = memoriesBlock
+      ? `9. For questions about the student's personal past, use the SAVED PERSONAL MEMORIES when they are relevant: quote only what the student actually recorded, clearly distinguish the student's own words from your interpretation, and cite the source type/date naturally (e.g. "in your journal entry from 2025-06-01 you wrote...").\n10. If the student asks about a personal memory and nothing relevant was retrieved, say clearly that you could not find it in their saved memories — NEVER invent names, events, dates, decisions or experiences.\n11. Interests can change over time; older memories may not reflect the student's current view — ask a clarifying question when memories conflict or are ambiguous.\n12. Keep memories private: never repeat unrelated personal information, and never mention this retrieval process in your reply.`
+      : `9. If the student asks about a personal memory or past event and no saved memory covers it, say you could not find it in their saved memories and NEVER invent personal details, names, dates or events.`;
+
     // Format project info strictly from profile (no fake projects!)
     let projectsSummary = "None recorded in profile yet";
     if (projects.length > 0) {
@@ -1275,6 +1313,8 @@ STUDENT PROFILE CONTEXT (Authoritative Source of Truth):
 - Student Projects: ${projectsSummary}
 - Certifications: ${certs.length > 0 ? certs.join(", ") : '"None recorded"'}
 - Classified Question Intent: [${intent}]
+- Personal Memory Context: ${memoriesBlock ? "Relevant saved memories included below" : "None retrieved for this question"}
+${memoriesBlock || ""}
 
 CRITICAL RULES FOR YOUR RESPONSE:
 1. NEVER return repetitive generic advice like "learn fundamentals -> practice -> build projects -> take courses".
@@ -1284,7 +1324,8 @@ CRITICAL RULES FOR YOUR RESPONSE:
 5. If the student asks about projects, reference their existing projects (${projectsSummary}) or propose specific ideas aligned to ${targetCareer} without claiming they have already built them.
 6. NEVER invent fake marks, fake projects, or fake experience. If data is missing from their profile, explicitly state "I don't have this in your profile yet" and guide them to update their profile.
 7. Maintain continuity with the chat conversation history.
-8. Keep response focused, highly structured, professional, and under 280 words. Format with clean bullet points.`;
+8. Keep response focused, highly structured, professional, and under 280 words. Format with clean bullet points.
+${memoryRules}`;
 
     // Personalized generative fallback if external API is unreachable
     let fallbackReply = "";
@@ -1332,7 +1373,12 @@ ${weakTopics.length > 0 ? `• **Recommended Revision**: Review ${weakTopics.sli
 How can I assist you with your coursework, interview preparation, or career goals today?`;
     }
 
-    let reply = fallbackReply;
+    // Ground the offline fallback with any retrieved memories so it stays
+    // honest even when the external AI is unreachable.
+    if (memorySources.length > 0) {
+      const sourceLines = memorySources.slice(0, 3).map((s) => `- ${s.title || s.type}: "${s.excerpt}"`).join("\n");
+      fallbackReply = `From your saved memories:\n${sourceLines}\n\n${fallbackReply}`;
+    }
 
     if (GROK_API_KEY) {
       try {
@@ -1356,6 +1402,15 @@ How can I assist you with your coursework, interview preparation, or career goal
             timeout: 10000
           }
         );
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${GROK_API_KEY}`
+            },
+            timeout: 10000
+          }
+        );
         const grokText = response.data?.choices?.[0]?.message?.content;
         if (grokText && grokText.trim().length > 30) {
           reply = grokText.trim();
@@ -1365,7 +1420,7 @@ How can I assist you with your coursework, interview preparation, or career goal
       }
     }
 
-    return res.json({ success: true, reply, intent, targetCareer });
+    return res.json({ success: true, reply, intent, targetCareer, memorySources, memoryUsed: memorySources.length > 0 });
   } catch (err) {
     console.error("Ask AI Chat error:", err);
     res.status(500).json({ success: false, message: "Chat response error" });
@@ -1417,7 +1472,13 @@ exports.generateResumeSuggestions = async (req, res) => {
     if (certs.length > 0) strengthScore += 5;
     else missingSections.push("Industry Certifications");
 
-    const professionalSummary = profile?.careerObjective || `Motivated ${degree || 'college'} student specializing in ${domain || 'technical studies'} with proficiency in ${skills.slice(0, 4).join(', ') || 'core domain practices'}. Seeking entry-level opportunities to apply technical skills and analytical problem-solving.`;
+    // Professional summary — composed strictly from real profile fields
+    // (the profile model has no free-text "professional summary", so this is
+    // derived from the student's own verified data, never placeholders).
+    const professionalSummary =
+      (profile?.careerObjective && String(profile.careerObjective).trim()
+        ? String(profile.careerObjective).trim()
+        : [studentName, domain && `pursuing ${domain}`, college && `at ${college}`].filter(Boolean).join(" ") || "");
     const careerObjective = profile?.careerObjective || professionalSummary;
 
     const resumeData = {

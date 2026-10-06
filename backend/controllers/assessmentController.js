@@ -5,6 +5,8 @@ const College = require("../models/College");
 const Exam = require("../models/Exam");
 const Scholarship = require("../models/Scholarship");
 const User = require("../models/User");
+const academicRecommendationService = require("../services/academicRecommendationService");
+const reassessment = require("../services/schoolReassessmentService");
 
 // GET /api/assessment/questions/:classLevel
 exports.getQuestionsByLevel = async (req, res) => {
@@ -21,7 +23,11 @@ exports.getQuestionsByLevel = async (req, res) => {
 // POST /api/assessment/submit
 exports.submitAssessment = async (req, res) => {
     try {
-        const { userId, classLevel, answers } = req.body;
+        // Identity is always the authenticated student's _id (verifyStudent).
+        // A client-supplied userId (if any) is ignored — the server never
+        // trusts identity from the request body.
+        const userId = req.student ? String(req.student._id) : (req.body.userId || null);
+        const { classLevel, answers } = req.body;
 
         if (!userId || !classLevel || !answers) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -173,6 +179,67 @@ exports.submitAssessment = async (req, res) => {
     } catch (error) {
         console.error("Submit assessment error:", error);
         res.status(500).json({ success: false, message: "Failed to submit assessment" });
+    }
+};
+
+// POST /api/assessment/reassess (verifyStudent)
+// Prepares a short "Check Your Progress" re-assessment for the authenticated
+// student: reconciles their latest Area of Growth recommendation (weakest
+// subjects), builds the question plan and serves bank/generated questions in
+// the exact shape the CheckYourProgressPage expects.
+exports.getReassessmentQuestions = async (req, res) => {
+    try {
+        const userId = req.student ? String(req.student._id) : null;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Not authorized" });
+        }
+
+        const rec = await academicRecommendationService.buildAcademicRecommendations({ userId });
+        if (rec.status && rec.status !== 200) {
+            return res.status(rec.status).json({ success: false, message: rec.error || "Student not found" });
+        }
+        const data = (rec && rec.data) || rec || {};
+        if (!data.hasAssessment) {
+            return res.json({ success: true, code: "NO_ASSESSMENT", questions: [], plan: [], sources: [], totalCount: 0 });
+        }
+
+        const student = await User.findById(userId).select("classLevel").lean();
+        const classKey = reassessment.normalizeClass(student ? student.classLevel : null);
+
+        const plan = reassessment.buildReassessmentPlan({
+            weakSubjects: data.weakSubjects || [],
+            weakTopics: data.weakTopics || [],
+            questions: 8,
+        });
+        if (!plan.length) {
+            return res.json({ success: true, code: "NO_ASSESSMENT", questions: [], plan: [], sources: [], totalCount: 0 });
+        }
+
+        // Serve bank questions per planned subject; generate + persist only the
+        // shortage (fallback is class-aware and deterministic when AI is down).
+        const seen = new Set();
+        const questions = [];
+        const sources = [];
+        for (const entry of plan) {
+            const { questions: served, generatedCount } = await reassessment.fetchOrGenerateQuestions({
+                classLevel: classKey,
+                category: entry.category,
+                topic: entry.topic,
+                count: entry.count,
+            });
+            sources.push({ subject: entry.subject, category: entry.category, topic: entry.topic, served: served.length, generated: generatedCount });
+            for (const q of served) {
+                if (!seen.has(String(q._id))) {
+                    seen.add(String(q._id));
+                    questions.push(q);
+                }
+            }
+        }
+
+        return res.json({ success: true, questions, plan, sources, totalCount: questions.length });
+    } catch (error) {
+        console.error("Reassessment prepare error:", error);
+        res.status(500).json({ success: false, message: "Failed to prepare reassessment questions" });
     }
 };
 

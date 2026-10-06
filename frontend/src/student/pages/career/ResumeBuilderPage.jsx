@@ -78,7 +78,9 @@ export default function ResumeBuilderPage() {
     )
   }
 
-  const strengthScore = resumeData?.resumeStrengthScore || 85
+  // Real score from the backend resume-builder; show an honest 0 (not a fake
+  // optimistic default) when the telemetry score is missing.
+  const strengthScore = Number(resumeData?.resumeStrengthScore) || 0
 
   return (
     <div style={{ maxWidth: 1050, margin: '0 auto' }} className="s-anim-up">

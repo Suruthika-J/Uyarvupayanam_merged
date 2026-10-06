@@ -3,6 +3,7 @@ const PasswordResetToken = require("../models/PasswordResetToken");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const getJwtSecret = require("../utils/jwtSecret");
 
 // Reuse the project's shared Gmail transporter (see config/mailer.js). Credentials
 // come from environment variables only — never hardcoded.
@@ -108,7 +109,7 @@ const verifyLoginOtp = async (req, res) => {
       await student.save();
     }
 
-    const token = jwt.sign({ id: student._id }, process.env.JWT_SECRET || "fallback_secret", {
+    const token = jwt.sign({ id: student._id }, getJwtSecret(), {
       expiresIn: "7d",
     });
 

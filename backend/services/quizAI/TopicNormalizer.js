@@ -1,121 +1,204 @@
 /**
  * backend/services/quizAI/TopicNormalizer.js
  *
- * Normalizes user-entered topic and subtopic variations to standard domain keys and canonical names.
- * Example: "python", "Python programming", "python basics" -> "Python"
- * Example: "oops", "OOP", "Object Oriented Programming" -> "Object Oriented Programming"
+ * Centralized Canonical Topic Registry for Multiplayer Quiz Engine.
+ * Enforces strict topic mapping:
+ * - C++ / CPP -> topicId: "cpp", topicLabel: "C++"
+ * - SQL -> topicId: "sql", topicLabel: "SQL"
+ * - DBMS -> topicId: "dbms", topicLabel: "DBMS"
+ * - Java -> topicId: "java", topicLabel: "Java"
+ * - Python -> topicId: "python", topicLabel: "Python"
+ * - OOPS -> topicId: "oops", topicLabel: "OOPS"
+ * - OS -> topicId: "os", topicLabel: "OS"
+ * - Computer Networks -> topicId: "cn", topicLabel: "Computer Networks"
+ * - Data Structures -> topicId: "dsa", topicLabel: "Data Structures & Algorithms"
  */
 
-const TOPIC_MAPPINGS = [
-  {
-    regex: /\b(dbms|database|sql|queries|normalization|tables|indexing|relational|rdbms|postgres|mysql|oracle|sqlite)\b/i,
-    normalizedTopic: "DBMS",
+const CANONICAL_TOPICS = {
+  CPP: {
+    topicId: "cpp",
+    topicLabel: "C++",
+    domainId: "cpp",
+    domainName: "C++ Programming",
+    branch: "CSE",
+    regex: /^\s*(c\+\+|cpp|cplusplus|c plus plus)\s*$/i
+  },
+  "C++": {
+    topicId: "cpp",
+    topicLabel: "C++",
+    domainId: "cpp",
+    domainName: "C++ Programming",
+    branch: "CSE",
+    regex: /^\s*(c\+\+|cpp|cplusplus|c plus plus)\s*$/i
+  },
+  CPLUSPLUS: {
+    topicId: "cpp",
+    topicLabel: "C++",
+    domainId: "cpp",
+    domainName: "C++ Programming",
+    branch: "CSE",
+    regex: /^\s*(c\+\+|cpp|cplusplus|c plus plus)\s*$/i
+  },
+  SQL: {
+    topicId: "sql",
+    topicLabel: "SQL",
+    domainId: "sql",
+    domainName: "SQL & Relational Queries",
+    branch: "CSE",
+    regex: /^\s*(sql|sql queries|relational queries|sql programming|sqlite|mysql|postgres|postgresql)\s*$/i
+  },
+  DBMS: {
+    topicId: "dbms",
+    topicLabel: "DBMS",
     domainId: "dbms",
     domainName: "Database Management Systems",
-    branch: "CSE"
+    branch: "CSE",
+    regex: /^\s*(dbms|database|rdbms|database management|database architecture)\s*$/i
   },
-  {
-    regex: /\b(dsa|data structure|algorithms|trees|graphs|arrays|sorting|recursion|linked list|heap|stack|queue)\b/i,
-    normalizedTopic: "Data Structures & Algorithms",
-    domainId: "data_structures",
-    domainName: "Data Structures & Algorithms",
-    branch: "CSE"
+  JAVA: {
+    topicId: "java",
+    topicLabel: "Java",
+    domainId: "java",
+    domainName: "Java Programming",
+    branch: "CSE",
+    regex: /^\s*(java|jdk|jvm|jre|core java|java programming)\s*$/i
   },
-  {
-    regex: /\b(python|python3|py|pandas|numpy|scripting)\b/i,
-    normalizedTopic: "Python",
+  PYTHON: {
+    topicId: "python",
+    topicLabel: "Python",
     domainId: "python",
     domainName: "Python Programming",
-    branch: "CSE"
+    branch: "CSE",
+    regex: /^\s*(python|python3|py|scripting|pandas|numpy)\s*$/i
   },
-  {
-    regex: /\b(oops|oop|object oriented|classes|inheritance|polymorphism|encapsulation|abstraction|java|c\+\+)\b/i,
-    normalizedTopic: "Object Oriented Programming",
-    domainId: "oop",
+  OOPS: {
+    topicId: "oops",
+    topicLabel: "OOPS",
+    domainId: "oops",
     domainName: "Object Oriented Programming",
-    branch: "CSE"
+    branch: "CSE",
+    regex: /^\s*(oops|oop|object oriented|classes|inheritance|polymorphism|encapsulation)\s*$/i
   },
-  {
-    regex: /\b(os|operating system|operating systems|linux|unix|process|threads|memory management|deadlock)\b/i,
-    normalizedTopic: "Operating Systems",
+  OS: {
+    topicId: "os",
+    topicLabel: "OS",
     domainId: "os",
-    domainName: "Operating Systems & Kernel Architecture",
-    branch: "CSE"
+    domainName: "Operating Systems",
+    branch: "CSE",
+    regex: /^\s*(os|operating system|operating systems|linux|kernel)\s*$/i
   },
-  {
-    regex: /\b(cn|network|networks|computer network|tcp|ip|osi|http|sockets|dns)\b/i,
-    normalizedTopic: "Computer Networks",
-    domainId: "computer_networks",
+  CN: {
+    topicId: "cn",
+    topicLabel: "Computer Networks",
+    domainId: "cn",
     domainName: "Computer Networks & Protocol Stack",
-    branch: "CSE"
+    branch: "CSE",
+    regex: /^\s*(cn|computer networks|networking|tcp\/ip|osi)\s*$/i
   },
-  {
-    regex: /\b(cyber|security|ethical hacking|firewall|encryption|cia|xss|sql injection|penetration|cryptography)\b/i,
-    normalizedTopic: "Cyber Security",
-    domainId: "cyber_security",
-    domainName: "Cyber Security & Ethical Hacking",
-    branch: "CSE"
+  "COMPUTER NETWORKS": {
+    topicId: "cn",
+    topicLabel: "Computer Networks",
+    domainId: "cn",
+    domainName: "Computer Networks & Protocol Stack",
+    branch: "CSE",
+    regex: /^\s*(cn|computer networks|networking|tcp\/ip|osi)\s*$/i
   },
-  {
-    regex: /\b(ai|ml|machine learning|deep learning|neural|tensorflow|pytorch|scikit|nlp)\b/i,
-    normalizedTopic: "AI & Machine Learning",
-    domainId: "ai_ml",
-    domainName: "Artificial Intelligence & Machine Learning",
-    branch: "CSE"
+  DSA: {
+    topicId: "dsa",
+    topicLabel: "Data Structures & Algorithms",
+    domainId: "dsa",
+    domainName: "Data Structures & Algorithms",
+    branch: "CSE",
+    regex: /^\s*(dsa|data structures|algorithms|data structures & algorithms)\s*$/i
   },
-  {
-    regex: /\b(web|web dev|frontend|backend|react|node|express|javascript|js|html|css|full stack)\b/i,
-    normalizedTopic: "Web Development",
-    domainId: "web_dev",
-    domainName: "Full-Stack Web Development",
-    branch: "CSE"
+  "DATA STRUCTURES": {
+    topicId: "dsa",
+    topicLabel: "Data Structures & Algorithms",
+    domainId: "dsa",
+    domainName: "Data Structures & Algorithms",
+    branch: "CSE",
+    regex: /^\s*(dsa|data structures|algorithms|data structures & algorithms)\s*$/i
   },
-  {
-    regex: /\b(cloud|devops|aws|docker|kubernetes|ci\/cd|azure|gcp)\b/i,
-    normalizedTopic: "Cloud & DevOps",
-    domainId: "cloud_devops",
-    domainName: "Cloud Computing & DevOps",
-    branch: "CSE"
+  "DATA STRUCTURES & ALGORITHMS": {
+    topicId: "dsa",
+    topicLabel: "Data Structures & Algorithms",
+    domainId: "dsa",
+    domainName: "Data Structures & Algorithms",
+    branch: "CSE",
+    regex: /^\s*(dsa|data structures|algorithms|data structures & algorithms)\s*$/i
   }
-]
+};
+
+const TOPIC_MAPPINGS = [
+  CANONICAL_TOPICS.CPP,
+  CANONICAL_TOPICS.SQL,
+  CANONICAL_TOPICS.DBMS,
+  CANONICAL_TOPICS.JAVA,
+  CANONICAL_TOPICS.PYTHON,
+  CANONICAL_TOPICS.OOPS,
+  CANONICAL_TOPICS.OS,
+  CANONICAL_TOPICS.CN,
+  CANONICAL_TOPICS.DSA
+];
 
 function normalizeTopic(rawTopic = "", rawSubtopic = "") {
-  const combined = `${rawTopic} ${rawSubtopic}`.trim()
-  if (!combined) {
+  const cleanTopic = String(rawTopic || "").trim();
+  const cleanSubtopic = String(rawSubtopic || "").trim();
+  const upperKey = cleanTopic.toUpperCase();
+
+  // 1. Direct match check against canonical dictionary keys
+  if (CANONICAL_TOPICS[upperKey]) {
+    const item = CANONICAL_TOPICS[upperKey];
+    console.log(`[PEER-QUIZ]\nInvite topic: ${cleanTopic}\nNormalized topic: ${item.topicId}\nCanonical Label: ${item.topicLabel}`);
     return {
-      normalizedTopic: "Computer Science Core",
-      normalizedSubtopic: "General",
-      domainId: "general_cs",
-      domainName: "Computer Science Core",
-      branch: "CSE"
-    }
+      topicId: item.topicId,
+      topicLabel: item.topicLabel,
+      normalizedTopic: item.topicLabel,
+      normalizedSubtopic: cleanSubtopic || item.topicLabel,
+      domainId: item.domainId,
+      domainName: item.domainName,
+      branch: item.branch
+    };
   }
 
-  for (const mapping of TOPIC_MAPPINGS) {
-    if (mapping.regex.test(combined)) {
-      return {
-        normalizedTopic: mapping.normalizedTopic,
-        normalizedSubtopic: rawSubtopic ? rawSubtopic.trim() : mapping.normalizedTopic,
-        domainId: mapping.domainId,
-        domainName: mapping.domainName,
-        branch: mapping.branch
+  // 2. Regex matching against registered mappings
+  const combined = `${cleanTopic} ${cleanSubtopic}`.trim();
+  if (combined) {
+    for (const mapping of TOPIC_MAPPINGS) {
+      if (mapping.regex && mapping.regex.test(combined)) {
+        console.log(`[PEER-QUIZ]\nInvite topic: ${cleanTopic}\nNormalized topic via regex: ${mapping.topicId}\nCanonical Label: ${mapping.topicLabel}`);
+        return {
+          topicId: mapping.topicId || mapping.domainId,
+          topicLabel: mapping.topicLabel || mapping.domainName,
+          normalizedTopic: mapping.topicLabel || mapping.domainName,
+          normalizedSubtopic: cleanSubtopic || (mapping.topicLabel || mapping.domainName),
+          domainId: mapping.domainId || mapping.topicId,
+          domainName: mapping.domainName || mapping.topicLabel,
+          branch: mapping.branch || "CSE"
+        };
       }
     }
   }
 
-  const cleanTopic = rawTopic.trim() || "Computer Science Core"
-  const cleanSubtopic = rawSubtopic.trim() || "General"
+  // 3. Fallback to clean user input (NEVER convert to DBMS)
+  const finalTopicLabel = cleanTopic || "Computer Science Core";
+  const finalTopicId = finalTopicLabel.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
+  console.log(`[PEER-QUIZ]\nInvite topic: ${cleanTopic}\nCustom topic normalized: ${finalTopicId}\nCanonical Label: ${finalTopicLabel}`);
 
   return {
-    normalizedTopic: cleanTopic,
-    normalizedSubtopic: cleanSubtopic,
-    domainId: cleanTopic.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-    domainName: cleanTopic,
+    topicId: finalTopicId,
+    topicLabel: finalTopicLabel,
+    normalizedTopic: finalTopicLabel,
+    normalizedSubtopic: cleanSubtopic || finalTopicLabel,
+    domainId: finalTopicId,
+    domainName: finalTopicLabel,
     branch: "CSE"
-  }
+  };
 }
 
 module.exports = {
   normalizeTopic,
-  TOPIC_MAPPINGS
-}
+  TOPIC_MAPPINGS,
+  CANONICAL_TOPICS
+};

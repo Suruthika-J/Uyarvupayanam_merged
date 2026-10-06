@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Settings = require("../models/Settings");
+const getJwtSecret = require("../utils/jwtSecret");
 
 const verifyStudent = async (req, res, next) => {
     try {
@@ -30,8 +31,7 @@ const verifyStudent = async (req, res, next) => {
     }
 
     try {
-        const secret = process.env.JWT_SECRET || "fallback_secret";
-        const decoded = jwt.verify(token, secret);
+        const decoded = jwt.verify(token, getJwtSecret());
         req.student = await User.findById(decoded.id).select("-password");
 
         if (!req.student) {

@@ -14,7 +14,8 @@
 const axios = require("axios");
 const AssessmentQuestion = require("../models/AssessmentQuestion");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "";
+// AI key comes from the environment ONLY — never hardcode secrets in source.
+const GROK_API_KEY = process.env.GROK_API_KEY || process.env.XAI_API_KEY || "";
 const GROK_TIMEOUT = 5000;
 
 const SUPPORTED_CLASSES = ["5", "8", "10", "12"];
@@ -184,6 +185,7 @@ const fetchOrGenerateQuestions = async ({ classLevel, category, topic, count }) 
 // ── Generation: Grok first, safe template fallback second ────────────────
 
 const generateSchoolQuestions = async ({ classLevel, category, topic, count }) => {
+  if (!GROK_API_KEY) return buildFallbackQuestions({ classLevel, category, topic, count });
   try {
     const raw = await askGrok({ classLevel, category, topic, count });
     const normalized = normalizeGrok(raw, { topic });
