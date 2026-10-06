@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const multiplayerQuizAnswerSchema = new mongoose.Schema({
   sessionId: { type: String, required: true, index: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  questionId: { type: mongoose.Schema.Types.ObjectId, ref: "AhpFuzzyQuestion", required: true, index: true },
+  questionId: { type: mongoose.Schema.Types.Mixed, required: true, index: true },
   questionIndex: { type: Number, required: true },
   selectedOption: { type: String, default: null },
   isCorrect: { type: Boolean, required: true, default: false },

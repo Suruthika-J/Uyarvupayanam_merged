@@ -7,8 +7,8 @@ import { io as socketIo } from 'socket.io-client'
 import {
   FiZap, FiClock, FiCheckCircle, FiXCircle, FiAward, FiMessageSquare,
   FiArrowLeft, FiPlay, FiCheck, FiX, FiRefreshCw, FiBookOpen, FiSend,
-  FiSliders, FiUser, FiHelpCircle, FiChevronRight, FiShield, FiFlame,
-  FiTarget, FiCrown, FiTrendingUp
+  FiSliders, FiUser, FiHelpCircle, FiChevronRight, FiShield,
+  FiTarget, FiTrendingUp
 } from 'react-icons/fi'
 import { SCard, SBtn, SBadge, SLoader } from '../../components/ui'
 

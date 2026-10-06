@@ -29,7 +29,7 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
   subtopic: { type: String, default: "General" },
   difficulty: { type: String, default: "Medium" },
 
-  questionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "AhpFuzzyQuestion" }],
+  questionIds: [{ type: mongoose.Schema.Types.Mixed }],
 
   participants: [participantSchema],
 
