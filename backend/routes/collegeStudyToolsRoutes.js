@@ -34,6 +34,12 @@ const {
   getAtsPresets,
   checkResumeAtsScore
 } = require("../controllers/collegeStudyToolsController");
+const {
+  createPracticeSession,
+  submitAnswer,
+  getPracticeSession,
+  getSessionResults
+} = require("../controllers/practiceSessionController");
 const requireTestFlag = require("../middleware/requireTestFlag");
 
 const multer = require("multer");
@@ -69,6 +75,13 @@ router.get("/mentors/student-requests", verifyStudent, getMentorRequestsForStude
 router.post("/mentors/request-action", verifyStudent, handleMentorRequestAction);
 router.post("/interview-prep/submit", verifyStudent, submitInterviewResult);
 router.post("/summarize", verifyStudent, summarizeNotes);
+
+// LLM Adaptive Practice Session Routes
+router.post("/practice/session", verifyStudent, createPracticeSession);
+router.post("/practice/session/:sessionId/answer", verifyStudent, submitAnswer);
+router.get("/practice/session/:sessionId", verifyStudent, getPracticeSession);
+router.get("/practice/session/:sessionId/results", verifyStudent, getSessionResults);
+
 router.get("/practice/questions", verifyStudent, getPracticeQuestions);
 router.get("/practice-questions", verifyStudent, getPracticeQuestions);
 router.post("/practice-questions", verifyStudent, generatePracticeQuestions);
