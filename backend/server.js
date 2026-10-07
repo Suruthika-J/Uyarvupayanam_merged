@@ -321,6 +321,7 @@ app.use("/api/user-actions", require("./routes/userActionRoutes"));
 app.use("/api/recommendations", require("./routes/recommendationRoutes"));
 app.use("/api/assessment", require("./routes/grokAssessmentRoutes"));
 app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
+app.use("/api/practice", require("./routes/practiceRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
 app.use("/api/mentor-requests", require("./routes/mentorRequestRoutes"));
 app.use("/api/assessment", require("./routes/assessmentRoutes"));
