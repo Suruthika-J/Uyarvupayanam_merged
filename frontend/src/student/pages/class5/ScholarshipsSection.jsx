@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FiHeart, FiBookmark, FiBriefcase } from 'react-icons/fi'
 import axiosInstance from '../../../config/axios'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
-import { SBtn, SLoader, SEmpty, SBadge, SAlert } from '../../components/ui'
+import { SLoader, SEmpty, SAlert } from '../../components/ui'
 import AuthModal from '../../components/ui/AuthModal'
 import SectionHeader from '../../components/class5/redesign/SectionHeader'
+import ScholarshipCard from '../../components/scholarships/ScholarshipCard'
 
 // Scholarships tab for Class 5. Content and behaviour mirror the original
 // ClassLevelPage Scholarships section exactly (same API, same card layout,
@@ -110,105 +110,15 @@ export default function ScholarshipsSection() {
       ) : scholarships.length === 0 ? (
         <SEmpty title="No scholarships found" desc="We couldn't find any scholarships matching your criteria." />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap: 24 }}>
           {scholarships.map((item) => (
-            <div
+            <ScholarshipCard
               key={item._id}
-              style={{
-                background: '#fff',
-                borderRadius: 32,
-                border: '1px solid #f1f5f9',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.02)',
-                transition: '0.3s',
-              }}
-              className="hover-lift"
-            >
-              <div style={{ padding: 32, flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                <button
-                  onClick={() => handleSaveAction(item)}
-                  style={{
-                    position: 'absolute',
-                    top: 24,
-                    right: 24,
-                    width: 44,
-                    height: 44,
-                    borderRadius: 99,
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    cursor: 'pointer',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: savedIds.has(item._id) ? '#ef4444' : '#64748b',
-                    transition: 'all 0.2s',
-                  }}
-                  aria-label={savedIds.has(item._id) ? 'Unsave scholarship' : 'Save scholarship'}
-                >
-                  {savedIds.has(item._id) ? <FiHeart size={20} fill="#ef4444" /> : <FiBookmark size={20} />}
-                </button>
-
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', paddingRight: 50 }}>
-                  <SBadge color="green">Scholarship</SBadge>
-                  {(item.grades || []).map((g) => (
-                    <SBadge key={g} color="purple">{g}</SBadge>
-                  ))}
-                </div>
-
-                <h3 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 8px', lineHeight: 1.3 }}>
-                  {item.scholarshipName}
-                </h3>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: '#64748b',
-                    marginBottom: 20,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <FiBriefcase size={14} /> {item.provider || 'Unknown Provider'}
-                </div>
-
-                <div style={{ background: '#f8fafc', borderRadius: 16, padding: 16, marginBottom: 20, flex: 1 }}>
-                  {item.benefit && (
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                        Benefit
-                      </div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: '#10b981' }}>{item.benefit}</div>
-                    </div>
-                  )}
-                  {item.eligibility && (
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                        Eligibility
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', lineHeight: 1.5 }}>{item.eligibility}</div>
-                    </div>
-                  )}
-                  {item.deadline && (
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                        Last Date
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444' }}>{item.deadline}</div>
-                    </div>
-                  )}
-                </div>
-
-                <SBtn
-                  variant="outline"
-                  style={{ width: '100%', borderRadius: 16, padding: '14px 0', border: '2px solid #3b82f6', color: '#3b82f6' }}
-                  onClick={() => handleCardClick(item)}
-                >
-                  Apply / View Details ↗
-                </SBtn>
-              </div>
-            </div>
+              item={item}
+              saved={savedIds.has(item._id)}
+              onToggleSave={handleSaveAction}
+              onApply={handleCardClick}
+            />
           ))}
         </div>
       )}

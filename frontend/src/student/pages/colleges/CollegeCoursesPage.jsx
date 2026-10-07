@@ -7,6 +7,7 @@ import { SBtn, SEmpty, SLoader } from '../../components/ui'
 import InsightRow, { StatusBadge, TypeBadge, Chip } from '../../components/colleges/InsightRow'
 import { collegesInsightService } from '../../../services/collegesInsightService'
 import { getInsightStyle, getLevelLabel } from '../../../constants/collegesInsightTheme'
+import { toExternalUrl } from '../../../utils/externalUrl'
 
 /**
  * /student/class12/colleges/:category/college/:collegeId
@@ -153,7 +154,7 @@ export default function CollegeCoursesPage() {
           )}
           {data.college.website && (
             <a
-              href={data.college.website}
+              href={toExternalUrl(data.college.website)}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -161,7 +162,7 @@ export default function CollegeCoursesPage() {
                 fontSize: 14, fontWeight: 800, color: '#1d5fba', textDecoration: 'none',
               }}
             >
-              <FiExternalLink size={15} /> {data.college.website}
+              <FiExternalLink size={15} /> {toExternalUrl(data.college.website)}
             </a>
           )}
         </div>

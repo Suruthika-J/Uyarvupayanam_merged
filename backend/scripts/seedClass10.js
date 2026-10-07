@@ -62,53 +62,12 @@ const class10SeedData = [
     displayOrder: 4,
     targetClass: "10"
   },
-  {
-    title: "Government Scholarships After 10th (India)",
-    sectionType: "Scholarships",
-    category: "Government",
-    shortDescription: "Centralized government support for Class 11, 12, and beyond.",
-    fullDescription: "NSP acts as a gateway for multiple central scholarship schemes.",
-    externalLink: "https://scholarships.gov.in/",
-    coverImage: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?q=80&w=1200",
-    status: "published",
-    displayOrder: 5,
-    targetClass: "10"
-  },
-  {
-    title: "PM-YASASVI Post-Matric Scholarship",
-    sectionType: "Scholarships",
-    category: "Government",
-    subCategoryLabel: "Merit",
-    shortDescription: "Scholarship for OBC, EBC, and DNT students by MSJE.",
-    fullDescription: "Tuition and maintenance support.",
-    coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200",
-    status: "published",
-    displayOrder: 6,
-    targetClass: "10"
-  },
-  {
-    title: "NMMS Scholarship Continuation",
-    sectionType: "Scholarships",
-    category: "Merit",
-    shortDescription: "Keep receiving ₹1,000/month if you qualified in Class 8.",
-    fullDescription: "Support till Class 12.",
-    coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200",
-    status: "published",
-    displayOrder: 7,
-    targetClass: "10"
-  },
-  {
-    title: "State Level Scholarships (Tamil Nadu)",
-    sectionType: "Scholarships",
-    category: "State Schemes",
-    shortDescription: "Unique financial aid programs from the Govt of TN.",
-    fullDescription: "Specific awards like Periyar Memorial Award.",
-    externalLink: "https://www.tndce.tn.gov.in/",
-    coverImage: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1200",
-    status: "published",
-    displayOrder: 8,
-    targetClass: "10"
-  },
+  // NOTE: Class 10 scholarships are intentionally absent from this seed.
+  // They all live in the `scholarships` collection (see scripts/seedScholarshipsClean.js),
+  // which is what the Scholarships tab reads. "Government Scholarships After 10th
+  // (India)" and "NMMS Scholarship Continuation" were removed by request, and
+  // "PM-YASASVI Post-Matric Scholarship" was moved there so it renders with the
+  // same complete detail panel as every other scholarship card.
   {
     title: "National Talent Search Examination (NTSE)",
     sectionType: "Entrance Exams",

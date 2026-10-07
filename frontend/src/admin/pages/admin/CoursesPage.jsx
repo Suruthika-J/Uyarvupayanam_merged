@@ -31,7 +31,8 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     try {
       setLoading(true)
-      const result = await courseService.getAllCourses()
+      // status:'all' — admin must still see archived/draft courses here.
+      const result = await courseService.getAllCourses({ status: 'all' })
       if (result.success) {
         setCourses(result.data)
       }

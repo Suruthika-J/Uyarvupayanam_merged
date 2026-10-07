@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentAuth } from '../../context/StudentAuthContext';
 import onboardingService from '../../../services/onboardingService';
+import activityService from '../../services/activityService';
 import { SBtn, SCard, SLoader } from '../../components/ui';
 import { FiTrendingUp, FiTarget, FiZap, FiCheck, FiArrowRight, FiBook, FiAward, FiStar, FiLock, FiUnlock, FiMap, FiActivity, FiSmile } from 'react-icons/fi';
 
@@ -76,6 +77,18 @@ export default function RecommendationResultPage() {
             return;
         }
     }, [student, navigate]);
+
+    // Recent Activity — a completed career assessment (fire-and-forget; the
+    // server dedupes so revisiting this page won't stack duplicate entries).
+    useEffect(() => {
+        if (loading || (!ld && !result)) return;
+        activityService.record({
+            type: 'career_assessment_completed',
+            title: 'Completed Career Assessment',
+            description: 'Your personalized career recommendations are ready',
+            metadata: { entityId: 'career-assessment', link: '/student/onboarding/result' },
+        });
+    }, [loading, ld, result]);
 
     if (student?.userType === 'college_student') return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SLoader /></div>;
     if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SLoader /></div>;

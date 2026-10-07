@@ -25,9 +25,12 @@ export const courseService = {
     return response.data
   },
 
-  // Get all courses
-  getAllCourses: async () => {
-    const response = await axiosInstance.get('/courses')
+  // Get all courses.
+  // Defaults to the public listing (active only) so every course returned can
+  // actually open its Course Detail page. Admin screens pass
+  // { status: 'all' } to also see archived/draft records.
+  getAllCourses: async (params = {}) => {
+    const response = await axiosInstance.get('/courses', { params })
     return response.data
   },
 

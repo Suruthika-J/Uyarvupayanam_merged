@@ -12,6 +12,7 @@ const ScienceExperimentResult = require("../models/ScienceExperimentResult");
 const ScienceDaily = require("../models/ScienceDaily");
 const verifyStudent = require("../middleware/verifyStudent");
 const { rateLimit } = require("../middleware/rateLimit");
+const class5Daily = require("../services/class5DailyChallenge");
 
 // Cartoon Science Adventure World (Class 5 Science).
 //   GET  /worlds                      - public world list + themes + discoveries
@@ -72,19 +73,8 @@ function shuffleArr(arr) {
   return a;
 }
 
-function dayIndex(bankLength) {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((now - start) / 86400000);
-  return dayOfYear % Math.max(1, bankLength);
-}
-
-function todayKey() {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}
+// Day rotation and the day key now live in the shared Class 5 daily service
+// (services/class5DailyChallenge.js) so all three worlds rotate identically.
 
 function normStr(v) {
   return String(v == null ? "" : v).trim().toLowerCase();
@@ -480,6 +470,10 @@ router.post(
 );
 
 // ── Daily Science Challenge (today's mixed question, rotated daily) ─────────
+// Science World's daily store is the shared Class5DailyChallenge collection like
+// the other two worlds. `ScienceDaily` is passed as `legacy` so any completion a
+// student earned before this change is carried across on first read instead of
+// silently resetting.
 router.get("/daily", verifyStudent, async (req, res) => {
   try {
     const all = await ScienceQuestion.find({ world: "daily" }, { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 })
@@ -487,29 +481,23 @@ router.get("/daily", verifyStudent, async (req, res) => {
       .lean();
     if (!all.length) return res.status(404).json({ success: false, message: "Question bank is empty." });
 
-    let idx = dayIndex(all.length);
-    const yesterday = (dayIndex(all.length) + all.length - 1) % all.length;
-    if (all[idx] && all[yesterday] && all[idx].type === all[yesterday].type) {
-      idx = (idx + 1) % all.length;
-      if (all[idx] && all[idx].type === all[yesterday].type && all.length > 2) {
-        idx = (idx + 1) % all.length;
-      }
-    }
-
-    const question = all[idx];
-    const key = todayKey();
-    const rec = await ScienceDaily.findOne({
+    const dateKey = class5Daily.todayKey();
+    const question = class5Daily.pickDailyQuestion(all);
+    const record = await class5Daily.getDailyRecord({
       studentId: req.student._id,
-      dateKey: key,
-      questionId: question.id,
-    }).lean();
+      subject: "science",
+      dateKey,
+      legacy: { model: ScienceDaily, match: {} },
+    });
 
     res.json({
       success: true,
       data: {
         question: shapeQuestion(question),
-        solved: Boolean(rec && rec.solved),
-        attempts: rec ? rec.attempts : 0,
+        dateKey,
+        solved: Boolean(record && record.solved),
+        completed: Boolean(record && record.completed),
+        attempts: record ? record.attempts : 0,
       },
     });
   } catch (error) {
@@ -537,30 +525,27 @@ router.post(
         return res.status(400).json({ success: false, message: validated.message || "Invalid answer format." });
       }
 
-      const key = todayKey();
-      const rec = await ScienceDaily.findOne({
+      const key = class5Daily.todayKey();
+      // Written to the shared Class 5 daily store. Science already had its own
+      // date-scoped collection, so nothing else changes here - it just moves to
+      // the store the other two worlds share.
+      const record = await class5Daily.recordDailyAttempt({
         studentId: req.student._id,
-        dateKey: key,
+        subject: "science",
         questionId: question.id,
+        correct: Boolean(validated.correct),
+        dateKey: key,
+        classId: req.student.classLevel || "5",
+        schoolId: "default",
       });
-      const solved = Boolean(validated.correct) || Boolean(rec && rec.solved);
-      await ScienceDaily.findOneAndUpdate(
-        { studentId: req.student._id, dateKey: key, questionId: question.id },
-        {
-          $set: {
-            solved,
-            solvedAt: solved && (!rec || !rec.solved) ? new Date() : rec ? rec.solvedAt : null,
-          },
-          $inc: { attempts: 1 },
-        },
-        { upsert: true }
-      );
 
       res.json({
         success: true,
         data: {
           correct: validated.correct,
-          solved,
+          solved: Boolean(record && record.solved),
+          completed: Boolean(record && record.completed),
+          attempts: record ? record.attempts : 0,
           hint: question.hint || "",
           explanation: question.explanation || "",
           answer: question.answer,

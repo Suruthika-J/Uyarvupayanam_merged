@@ -39,6 +39,13 @@ const scholarshipSchema = new mongoose.Schema(
       trim: true,
       default: ""
     },
+    // Extra guidance shown under the Eligibility row on the scholarship card
+    // (e.g. PM-YASASVI's "choose one scholarship" caveat).
+    importantNote: {
+      type: String,
+      trim: true,
+      default: ""
+    },
     applicationLink: { 
       type: String, 
       alias: "link",

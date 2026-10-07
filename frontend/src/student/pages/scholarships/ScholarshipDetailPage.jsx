@@ -9,6 +9,7 @@ import { SBadge, SCard, SBtn, SLoader, SEmpty } from '../../components/ui'
 import { scholarshipService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
 import { useStudentAuth } from '../../context/StudentAuthContext'
+import useTrackActivity from '../../hooks/useTrackActivity'
 
 export default function ScholarshipDetailPage() {
   const { id } = useParams()
@@ -20,6 +21,15 @@ export default function ScholarshipDetailPage() {
   const [error, setError] = useState(null)
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Recent Activity — record that this scholarship was viewed (fire-and-forget).
+  useTrackActivity({
+    type: 'scholarship_viewed',
+    entityId: scholarship?._id,
+    title: 'Checked Scholarship',
+    description: scholarship?.scholarshipName || scholarship?.name || '',
+    link: `/student/scholarships/${id}`,
+  })
 
   useEffect(() => {
     console.log("Frontend: Scholarship ID from route params:", id)

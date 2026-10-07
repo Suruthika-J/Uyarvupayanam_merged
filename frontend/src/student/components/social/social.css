@@ -118,6 +118,16 @@
   color: color-mix(in srgb, #ffffff 82%, var(--soc-card-bg));
 }
 
+/* Today's Explorer Challenge only. The intro panel takes its background from the
+   palette of whichever world today's question came from, so it can land on a
+   very light card while the copy above is hard-coded white. Pin this section's
+   headline and question text to black so it stays readable on every palette.
+   Scoped to `.is-daily` so the Explorer world pages keep their own colours. */
+.soc-root.is-daily .soc-intro-title,
+.soc-root.is-daily .soc-intro-text {
+  color: #000000;
+}
+
 /* ── Stage (renderer surface) ──────────────────────────────── */
 .soc-stage {
   background: rgba(255, 255, 255, 0.96);

@@ -335,6 +335,36 @@ const after10th = [
     ],
     deadline: "June–July (after 10th results)",
     status: "published"
+  },
+  {
+    scholarshipName: "PM-YASASVI Post-Matric Scholarship",
+    provider: "MSJE (Ministry of Social Justice and Empowerment)",
+    description:
+      "Post-matric scholarship for OBC, EBC and DNT students of Chandigarh domicile who study in Class 9 or 10 in a government-recognised school.",
+    benefit: "₹4,000 per annum.",
+    grades: ["10th"],
+    targetClass: ["10th"],
+    category: "Government",
+    // One criterion per line — the card renders multi-line values as a bulleted
+    // list, using the same typography as a single-line eligibility value.
+    eligibility: [
+      "Be an Indian citizen.",
+      "Be a domicile of Chandigarh.",
+      "Belong to the Other Backwards Class (OBC), Economically Backwards Class (EBC), or De-Notified Tribes (DNT) category.",
+      "Be studying in Class 9 or 10 in a government-recognised school.",
+      "Have an annual parental/guardian income of less than ₹2,50,000 from all sources.",
+      "Not be receiving benefits under any other scholarship scheme for studies in Class 9 or 10."
+    ].join("\n"),
+    importantNote:
+      "If students are receiving benefits under any other scholarship for Classes 9 or 10, they must choose one scholarship. They should inform both the awarding authority of the other scholarship and the school principal of their decision.",
+    applicationLink: "https://www.buddy4study.com/scholarship/pm-yasasvi-pre-matric-scholarship-scheme-for-obc-ebc-dnt-students-chandigarh",
+    stepsToApply: [
+      "Confirm you are not already receiving another scholarship for Class 9 or 10",
+      "Tell the other awarding authority and your school principal about your choice",
+      "Apply through the Chandigarh administration portal with income and category proof"
+    ],
+    deadline: "Closed",
+    status: "published"
   }
 ];
 

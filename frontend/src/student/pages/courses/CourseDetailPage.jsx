@@ -11,6 +11,13 @@ import { userActionService } from '../../../services/userActionService'
 import { adminService } from '../../../services/adminService'
 import { cutoffService } from '../../../services/cutoffService'
 
+// jspdf is a heavy dependency and is only needed when the student actually
+// clicks "Download Guide", so it is code-split and loaded on demand.
+// (imported dynamically inside handleDownloadGuide below)
+import { toExternalUrl } from '../../../utils/externalUrl'
+import EligibilityCheckerModal from '../../components/courses/EligibilityCheckerModal'
+import useTrackActivity from '../../hooks/useTrackActivity'
+
 // Map course category → college stream field in DB
 const CATEGORY_STREAM_MAP = {
   'Engineering': 'Engineering',
@@ -111,6 +118,16 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState('Overview')
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setIsSaving] = useState(false)
+  const [generatingGuide, setGeneratingGuide] = useState(false)
+
+  // Recent Activity — record that this course was viewed (fire-and-forget).
+  useTrackActivity({
+    type: 'course_viewed',
+    entityId: course?._id,
+    title: 'Viewed a Course',
+    description: course?.courseName || '',
+    link: `/student/courses/${slug}`,
+  })
 
   // ── College directory state (Offering Colleges section) ──
   const [clgPage, setClgPage] = useState(1)
@@ -118,6 +135,9 @@ export default function CourseDetailPage() {
   const [clgDistrict, setClgDistrict] = useState('All')
   const [clgType, setClgType] = useState('All')
   const [clgSort, setClgSort] = useState('name')
+  // "Check My Eligibility" modal. The questions it shows are derived from this
+  // course's own stored eligibility criteria, so no rule lives in this file.
+  const [eligibilityOpen, setEligibilityOpen] = useState(false)
   const PAGE_SIZE = 10
 
   const districts = useMemo(() =>
@@ -163,7 +183,9 @@ export default function CourseDetailPage() {
       if (!cRes.success) return
 
       const courseData = cRes.course
-      setCourse(courseData)
+      // Criteria are derived server-side from this course's stored eligibility
+      // text and travel alongside it.
+      setCourse({ ...courseData, eligibilityCriteria: cRes.eligibilityCriteria })
 
       const isCourseEngineering =
         courseData.category?.toLowerCase().includes('engineering') ||
@@ -208,6 +230,24 @@ export default function CourseDetailPage() {
       console.error('Error toggling save:', err)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Download the course guide as a real PDF built from the data already
+  // loaded on this page (course / colleges / cutoffs). No refetch, and no
+  // browser print dialog. jsPDF is dynamically imported to keep it out of the
+  // main bundle.
+  const handleDownloadGuide = async () => {
+    if (!course || generatingGuide) return
+    setGeneratingGuide(true)
+    try {
+      const { downloadCourseGuidePdf } = await import('../../services/courseGuidePdf')
+      downloadCourseGuidePdf(course, colleges, cutoffs)
+    } catch (err) {
+      console.error('Failed to generate course guide PDF:', err)
+      alert('Could not generate the guide PDF. Please try again.')
+    } finally {
+      setGeneratingGuide(false)
     }
   }
 
@@ -266,8 +306,14 @@ export default function CourseDetailPage() {
               >
                 {isSaved ? '🔖 Saved' : '🔖 Bookmark Course'}
               </SBtn>
-              <SBtn variant="white" style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }} onClick={() => window.print()}>
-                <FiDownload style={{ marginRight: 8 }} /> Download Guide
+              <SBtn
+                variant="white"
+                style={{ borderRadius: 14, padding: '16px 32px', flexShrink: 0 }}
+                onClick={handleDownloadGuide}
+                disabled={generatingGuide}
+              >
+                <FiDownload style={{ marginRight: 8 }} />
+                {generatingGuide ? 'Preparing…' : 'Download Guide'}
               </SBtn>
             </div>
           </div>
@@ -494,7 +540,7 @@ export default function CourseDetailPage() {
                   ))}
                 </div>
                 <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid var(--s-border)' }} />
-                <SBtn fullWidth onClick={() => alert('Eligibility assessment tool coming soon! Currently, please refer to the criteria listed below.')}>Check My Eligibility</SBtn>
+                <SBtn fullWidth onClick={() => setEligibilityOpen(true)}>Check My Eligibility</SBtn>
               </SCard>
             </aside>
           </div>
@@ -573,7 +619,7 @@ export default function CourseDetailPage() {
                         {clg.rank && <span style={{ marginLeft: 12 }}>Rank #{clg.rank}</span>}
                       </div>
                       {clg.website && (
-                        <a href={clg.website} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                        <a href={toExternalUrl(clg.website)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                           <SBtn variant="outline" size="sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             Website <FiGlobe size={13} />
                           </SBtn>
@@ -637,6 +683,12 @@ export default function CourseDetailPage() {
         )}
 
       </main>
+
+      <EligibilityCheckerModal
+        isOpen={eligibilityOpen}
+        onClose={() => setEligibilityOpen(false)}
+        course={course}
+      />
     </div>
   )
 }

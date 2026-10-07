@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getScienceDaily, completeScienceDaily } from '../../services/scienceService'
 import { QUESTION_RENDERERS } from '../../data/scienceQuestionTypes'
 import ScienceFeedback from './ScienceFeedback'
 import { SCIENCE_SCENES, SCIENCE_GUIDE } from '../../data/scienceEnvironments'
 import SciArt from './art'
+import useDailyChallenge from '../class5/daily/useDailyChallenge'
 import './science.css'
 
 // Daily Science Challenge: one fresh question every day, picked from the
@@ -23,47 +23,34 @@ const DEFAULT_PALETTE = {
 
 export default function ScienceDaily() {
   const navigate = useNavigate()
-  const [question, setQuestion] = useState(null)
-  const [solved, setSolved] = useState(false)
   const [status, setStatus] = useState('asking') // asking | retry | correct | reveal | complete
   const [result, setResult] = useState(null)
-  const [reporting, setReporting] = useState(false)
   const [retryToken, setRetryToken] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [hardError, setHardError] = useState('')
+  const [seenKey, setSeenKey] = useState('')
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      setHardError('')
-      try {
-        const res = await getScienceDaily()
-        if (cancelled) return
-        if (!res || !res.question) {
-          setHardError('No daily puzzle is ready yet. Tap to try again in a moment.')
-          setLoading(false)
-          return
-        }
-        setQuestion(res.question)
-        setSolved(res.solved)
-        setStatus(res.solved ? 'complete' : 'asking')
-        setResult(null)
-        setLoading(false)
-      } catch (err) {
-        if (cancelled) return
-        if (err && err.auth) {
-          navigate('/student/signin', { state: { from: { pathname: '/student/class5/science/daily' } }, replace: true })
-          return
-        }
-        setHardError('The Daily Challenge is catching its breath. Tap to try again in a moment.')
-        setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [navigate])
+  const handleAuthError = useCallback(
+    () => navigate('/student/signin', { state: { from: { pathname: '/student/class5/science/daily' } }, replace: true }),
+    [navigate]
+  )
+
+  // Same shared daily state as the other two worlds. The server re-validates
+  // the student's pick, so the client never decides what counts as correct.
+  const daily = useDailyChallenge({ subject: 'science', onSignedOut: handleAuthError })
+  const { question, dateKey, completed, loading, error, reload, submit, reset } = daily
+
+  // A new question (or a new day) resets the panel. Done during render rather
+  // than in an effect so there is no extra pass, and keyed on dateKey so
+  // answering correctly does not immediately bounce the student out of the
+  // feedback they are reading; revisiting a finished day does show the completed
+  // panel straight away.
+  const dayQuestionKey = question ? `${dateKey}:${question.id}` : ''
+  if (dayQuestionKey !== seenKey) {
+    setSeenKey(dayQuestionKey)
+    setResult(null)
+    setWrongCount(0)
+    setStatus(completed ? 'complete' : 'asking')
+  }
 
   const palette = DEFAULT_PALETTE
   const SceneComponent = SCIENCE_SCENES.weatherstation
@@ -79,36 +66,35 @@ export default function ScienceDaily() {
     '--sci-card-accent': palette.cardAccent,
   }
 
-  function handleAnswered(pick) {
-    if (status === 'complete') return
-    setReporting(true)
-    completeScienceDaily(question.id, pick)
-      .then((r) => {
-        setResult(r)
-        setSolved(r.solved)
-        if (r && r.correct) {
-          setStatus('correct')
-        } else {
-          const nextWrong = wrongCount + 1
-          setWrongCount(nextWrong)
-          setStatus(nextWrong >= 2 ? 'reveal' : 'retry')
-        }
-      })
-      .catch((err) => {
-        if (err && err.auth) {
-          navigate('/student/signin', { state: { from: { pathname: '/student/class5/science/daily' } }, replace: true })
-          return
-        }
+  const handleAnswered = useCallback(
+    async (pick) => {
+      if (status === 'complete' || !question) return
+      const saved = await submit(pick)
+
+      if (!saved || saved.error) {
+        // A failed save must not silently look like a wrong answer.
         setStatus('retry')
         setResult({ correct: false, hint: 'Your answer could not be saved. Tap try again in a moment.' })
-      })
-      .finally(() => setReporting(false))
-  }
+        return
+      }
+
+      setResult(saved)
+      if (saved.correct) {
+        setStatus('correct')
+        return
+      }
+      const nextWrong = wrongCount + 1
+      setWrongCount(nextWrong)
+      setStatus(nextWrong >= 2 ? 'reveal' : 'retry')
+    },
+    [status, question, submit, wrongCount]
+  )
 
   function tryAgain() {
     setRetryToken((t) => t + 1)
     setResult(null)
     setStatus('asking')
+    reset()
   }
 
   function showExplanation() {
@@ -118,7 +104,7 @@ export default function ScienceDaily() {
 
   if (loading && !question) {
     return (
-      <div className="sci-root" style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }}>
+      <div className="sci-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }}>
         <div className="sci-skeleton" role="status" aria-label="Loading daily challenge">
           <div className="sci-skel-block" style={{ top: '8%', height: 120 }} />
           <div className="sci-skel-block" style={{ top: '42%', height: 96 }} />
@@ -127,10 +113,10 @@ export default function ScienceDaily() {
     )
   }
 
-  if (hardError || !question || !Renderer) {
-    const msg = hardError || 'Today’s puzzle is not ready yet. It may be resting for a moment.'
+  if (error || !question || !Renderer) {
+    const msg = error || 'Today’s puzzle is not ready yet. It may be resting for a moment.'
     return (
-      <div className="sci-root" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
+      <div className="sci-root is-daily" style={{ ...paletteStyle, minHeight: 'clamp(420px, 50vh, 620px)' }}>
         <div className="sci-scene">
           <div className="sci-bg-sky" />
           <div className="sci-bg-scene">{SceneComponent && <SceneComponent />}</div>
@@ -140,10 +126,10 @@ export default function ScienceDaily() {
           <div className="sci-intro">
             <span className="sci-intro-eyebrow">Daily Science Challenge</span>
             <h1 className="sci-intro-title">One puzzle a day</h1>
-            <p className="sci-intro-text">{msg}</p>
+            <p className="sci-intro-text" role={error ? 'alert' : undefined}>{msg}</p>
             <div className="sci-actions">
-              <button type="button" className="sci-btn sci-btn-primary" onClick={() => navigate('/student/class5/science')}>
-                Back to the Science map
+              <button type="button" className="sci-btn sci-btn-primary" onClick={error ? reload : () => navigate('/student/class5/science')}>
+                {error ? 'Try again' : 'Back to the Science map'}
               </button>
             </div>
           </div>
@@ -155,7 +141,7 @@ export default function ScienceDaily() {
   const done = status === 'correct' || status === 'reveal' || status === 'complete'
 
   return (
-    <div className={`sci-root sci-root-daily${done ? ' is-done' : ''}`} style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }} key={question.id}>
+    <div className={`sci-root is-daily sci-root-daily${done ? ' is-done' : ''}`} style={{ ...paletteStyle, minHeight: 'clamp(640px, 70vh, 900px)' }} key={question.id}>
       <div className="sci-scene">
         <div className="sci-bg-sky" />
         <div className="sci-bg-scene">{SceneComponent && <SceneComponent />}</div>
@@ -166,7 +152,7 @@ export default function ScienceDaily() {
         <header className="sci-intro">
           <div className="sci-intro-top">
             <span className="sci-intro-eyebrow">
-              Daily Science Challenge {solved ? '· solved today!' : '· one fresh question'}
+              Daily Science Challenge {completed ? '· done today!' : '· one fresh question'}
             </span>
             <span className="sci-daily-badge"><SciArt k="star" size={26} /></span>
           </div>
@@ -193,14 +179,12 @@ export default function ScienceDaily() {
           complete={status === 'complete'}
           finalWorld
           completeNextName=""
-          reporting={reporting}
           onMap={() => navigate('/student/class5/science')}
           onTryAgain={tryAgain}
           onShowExplanation={showExplanation}
           onNext={() => {
             setResult(null)
             setStatus('complete')
-            setSolved(true)
           }}
           nextLabel="Done for today →"
           onCompleteContinue={() => navigate('/student/class5/science')}
@@ -214,7 +198,7 @@ export default function ScienceDaily() {
           </div>
         )}
 
-        {solved && (
+        {completed && (
           <p className="sci-daily-note">Come back tomorrow for a brand-new puzzle. 🌙</p>
         )}
       </div>
