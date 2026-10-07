@@ -17,41 +17,61 @@ const { analyzeResumeForAts, ATS_JD_PRESETS } = require("../services/atsScannerE
 
 const PlacementCompanyResearch = require("../models/PlacementCompanyResearch");
 const PlacementPlan = require("../models/PlacementPlan");
+const PracticeQuestion = require("../models/PracticeQuestion");
 const placementResearchService = require("../services/placementResearchService");
 const placementStudyPlanEngine = require("../services/placementStudyPlanEngine");
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const GROK_API_KEY = process.env.GROK_API_KEY || "";
+const AI_MODEL = process.env.AI_QUESTIONS_MODEL || "openai/gpt-oss-120b";
 
-// Helper function to query xAI Grok API with graceful JSON parsing
+// Helper function to query LLM (Groq / xAI Grok) with graceful JSON parsing
 async function queryGrokJson(prompt, systemMsg, fallbackData) {
-  if (!GROK_API_KEY) {
+  const apiKey = GROQ_API_KEY || GROK_API_KEY;
+  if (!apiKey) {
     return fallbackData;
   }
+
+  const endpoint = GROQ_API_KEY
+    ? "https://api.groq.com/openai/v1/chat/completions"
+    : "https://api.x.ai/v1/chat/completions";
+
+  const modelName = GROQ_API_KEY ? AI_MODEL : "grok-2-latest";
+
   try {
     const response = await axios.post(
-      "https://api.x.ai/v1/chat/completions",
+      endpoint,
       {
-        model: "grok-2-latest",
+        model: modelName,
         messages: [
-          { role: "system", content: systemMsg || "Respond strictly in valid JSON." },
+          { role: "system", content: systemMsg || "Respond strictly in valid JSON array of objects." },
           { role: "user", content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1400
+        max_tokens: 3000
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${GROK_API_KEY}`
+          Authorization: `Bearer ${apiKey}`
         },
-        timeout: 10000
+        timeout: 20000
       }
     );
     const raw = response.data?.choices?.[0]?.message?.content || "";
-    const clean = raw.replace(/```json/gi, "").replace(/```/gi, "").trim();
+    let clean = raw.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
+    // Robust auto-repair for truncated JSON arrays
+    if (!clean.endsWith("]") && !clean.endsWith("}")) {
+      const lastObjEnd = clean.lastIndexOf("}");
+      if (lastObjEnd !== -1) {
+        clean = clean.substring(0, lastObjEnd + 1) + "]";
+      }
+    }
+
     return JSON.parse(clean);
   } catch (err) {
-    console.warn("Grok API query fallback triggered:", err.message);
+    console.warn("LLM API query fallback triggered:", err.response?.data || err.message);
     return fallbackData;
   }
 }
@@ -633,7 +653,7 @@ exports.submitMentorDoubtRequest = async (req, res) => {
       interest: subject || "Academic Guidance",
       message: question || message || "Requested 1-on-1 mentorship for domain doubt resolution.",
       preferredContact: "WhatsApp",
-      assignedMentor: mentorId || "Arun Kumar",
+      assignedMentor: mentorId || "Senior Domain Mentor",
       status: "Pending"
     });
 
@@ -789,403 +809,234 @@ function classifyAdvisorIntent(message, subjects = []) {
 }
 exports.classifyAdvisorIntent = classifyAdvisorIntent;
 
-// ── 8. Smart Practice Questions Generator (Adaptive & Domain Filtered) ────────
+// Helper for Practice Question normalization & lookup
+function normalizeQuestionText(text) {
+  if (!text) return "";
+  return text.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function resolveSubjectId(input) {
+  if (!input) return "dbms";
+  const str = input.toLowerCase().trim();
+  if (str === "sql" || (str.includes("sql") && !str.includes("dbms"))) return "sql";
+  if (str.includes("dbms") || str.includes("database")) return "dbms";
+  if (str.includes("dsa") || str.includes("data structure") || str.includes("algorithm")) return "dsa";
+  if (str.includes("java") && !str.includes("javascript")) return "java";
+  if (str.includes("python")) return "python";
+  if (str.includes("c++") || str.includes("cpp")) return "cpp";
+  if (str.includes("oops") || str.includes("object oriented") || str.includes("object-oriented")) return "oops";
+  if (str.includes("os") || str.includes("operating system")) return "os";
+  if (str.includes("cn") || str.includes("network") || str.includes("networking")) return "cn";
+  return str.replace(/[^a-z0-9]/g, "_");
+}
+
+function resolveSubjectName(subjectId) {
+  const map = {
+    dbms: "Database Management Systems",
+    sql: "SQL & Database Queries",
+    java: "Java Programming",
+    python: "Python Programming",
+    cpp: "C++ Programming",
+    oops: "Object-Oriented Programming (OOPS)",
+    os: "Operating Systems",
+    cn: "Computer Networks & Security",
+    dsa: "Data Structures & Algorithms"
+  };
+  return map[subjectId] || subjectId.toUpperCase();
+}
+
+async function fetchOrGeneratePracticeQuestions({ subjectInput, difficultyInput, limitInput = 5 }) {
+  const subjectId = resolveSubjectId(subjectInput);
+  const subjectName = resolveSubjectName(subjectId);
+  const diffUpper = (difficultyInput || "EASY").toUpperCase();
+  const validDiffs = ["EASY", "MEDIUM", "HARD", "ADVANCED"];
+  const difficulty = validDiffs.includes(diffUpper) ? diffUpper : "EASY";
+  const limit = Math.max(1, parseInt(limitInput) || 5);
+
+  // 1. Query DB directly by subjectId AND difficulty
+  let dbQuestions = await PracticeQuestion.find({
+    subjectId,
+    difficulty,
+    active: true
+  }).lean();
+
+  // Shuffle DB questions to provide a dynamic practice test
+  dbQuestions = dbQuestions.sort(() => Math.random() - 0.5);
+
+  let finalQuestions = dbQuestions.slice(0, limit);
+
+  // 2. If fewer questions exist than limit, trigger difficulty-aware AI generation for remaining count
+  if (finalQuestions.length < limit) {
+    const needed = limit - finalQuestions.length;
+    console.log(`[Practice Question Engine] DB has ${dbQuestions.length} ${difficulty} questions for ${subjectId}. Generating ${needed} more via AI...`);
+
+    const aiPrompt = `Generate ${needed} unique, high-quality multiple-choice questions for subject "${subjectName}" (subjectId: "${subjectId}").
+STRICT DIFFICULTY LEVEL: ${difficulty}
+
+DIFFICULTY LEVEL SPECIFICATIONS:
+- EASY: Core definitions, basic syntax, direct recall, simple identification.
+- MEDIUM: Conceptual application, 1-2 step reasoning, scenario trade-offs, moderate code/query debugging.
+- HARD: Multi-step reasoning, complex scenarios, optimization trade-offs, combined concepts.
+- ADVANCED: Expert-level architecture, deep algorithmic proofs, complex edge cases, production scenario analysis.
+
+Respond strictly in a valid JSON array of objects:
+[
+  {
+    "topicId": "topic_identifier",
+    "topicName": "Topic Name",
+    "questionText": "Clear ${difficulty} level question text",
+    "options": [
+      { "id": "A", "text": "Option A text" },
+      { "id": "B", "text": "Option B text" },
+      { "id": "C", "text": "Option C text" },
+      { "id": "D", "text": "Option D text" }
+    ],
+    "correctOption": "A",
+    "explanation": "Detailed step-by-step conceptual explanation",
+    "difficultyScore": 25,
+    "difficultyReason": "Brief reasoning for assigned difficulty"
+  }
+]`;
+
+    try {
+      const aiResults = await queryGrokJson(aiPrompt, "Respond strictly in valid JSON array of practice questions.", []);
+      if (Array.isArray(aiResults) && aiResults.length > 0) {
+        // Fetch all existing normalized questions for this subject across all difficulties to ensure NO duplicates
+        const allExistingForSubject = await PracticeQuestion.find({ subjectId }).select("normalizedQuestion questionId").lean();
+        const existingNormalizedSet = new Set(allExistingForSubject.map(q => q.normalizedQuestion));
+
+        let addedCount = 0;
+        for (const aiQ of aiResults) {
+          if (!aiQ.questionText || !Array.isArray(aiQ.options) || aiQ.options.length !== 4 || !aiQ.correctOption) {
+            continue;
+          }
+
+          const normText = normalizeQuestionText(aiQ.questionText);
+          if (existingNormalizedSet.has(normText)) {
+            console.warn(`[Practice AI Validation] Rejected duplicate question text: "${aiQ.questionText}"`);
+            continue;
+          }
+
+          let score = aiQ.difficultyScore;
+          if (!score || typeof score !== "number") {
+            if (difficulty === "EASY") score = 20;
+            else if (difficulty === "MEDIUM") score = 45;
+            else if (difficulty === "HARD") score = 65;
+            else score = 85;
+          }
+
+          const newQId = `${subjectId.toUpperCase()}_${difficulty.charAt(0)}_${Date.now()}_${addedCount + 1}`;
+          
+          const formattedOptions = aiQ.options.map((opt, oIdx) => {
+            if (typeof opt === "string") {
+              return { id: String.fromCharCode(65 + oIdx), text: opt };
+            }
+            return { id: opt.id || String.fromCharCode(65 + oIdx), text: opt.text || String(opt) };
+          });
+
+          const newDoc = new PracticeQuestion({
+            questionId: newQId,
+            subjectId,
+            subjectName,
+            topicId: aiQ.topicId || "general",
+            topicName: aiQ.topicName || "General Domain Concepts",
+            difficulty,
+            difficultyScore: score,
+            difficultyReason: aiQ.difficultyReason || `${difficulty} level conceptual evaluation`,
+            questionText: aiQ.questionText.trim(),
+            normalizedQuestion: normText,
+            options: formattedOptions,
+            correctOption: ["A", "B", "C", "D"].includes(aiQ.correctOption) ? aiQ.correctOption : "A",
+            explanation: aiQ.explanation || "Correct option derived from core subject principles.",
+            active: true
+          });
+
+          await newDoc.save();
+          existingNormalizedSet.add(normText);
+          finalQuestions.push(newDoc.toObject());
+          addedCount++;
+          if (finalQuestions.length >= limit) break;
+        }
+      }
+    } catch (aiErr) {
+      console.error("[Practice Question Engine] AI generation fallback warning:", aiErr.message);
+    }
+  }
+
+  // Format questions to standard response structure
+  const formattedQuestions = finalQuestions.map((q, idx) => {
+    const correctOpt = ["A", "B", "C", "D"].includes(q.correctOption) ? q.correctOption : "A";
+    const correctIndex = ["A", "B", "C", "D"].indexOf(correctOpt);
+
+    const formattedOpts = Array.isArray(q.options)
+      ? q.options.map((opt, oIdx) => {
+          if (typeof opt === "string") {
+            return { id: String.fromCharCode(65 + oIdx), text: opt };
+          }
+          return { id: opt.id || String.fromCharCode(65 + oIdx), text: opt.text || String(opt) };
+        })
+      : [];
+
+    return {
+      id: q.questionId || `${subjectId.toUpperCase()}_${difficulty.charAt(0)}_${idx+1}`,
+      questionId: q.questionId || `${subjectId.toUpperCase()}_${difficulty.charAt(0)}_${idx+1}`,
+      subjectId: q.subjectId || subjectId,
+      subjectName: q.subjectName || subjectName,
+      topicId: q.topicId || "general",
+      topicName: q.topicName || q.topic || subjectName,
+      topic: q.topicName || q.topic || subjectName,
+      difficulty: q.difficulty || difficulty,
+      difficultyScore: q.difficultyScore || 25,
+      difficultyReason: q.difficultyReason || `${q.difficulty} level core concept`,
+      questionText: q.questionText || q.question,
+      question: q.questionText || q.question,
+      options: formattedOpts,
+      correctOption: correctOpt,
+      correctIndex: correctIndex >= 0 ? correctIndex : 0,
+      explanation: q.explanation || "",
+      active: q.active !== false
+    };
+  });
+
+  return {
+    success: true,
+    subjectId,
+    subjectName,
+    difficulty,
+    totalAvailableInDb: dbQuestions.length,
+    questions: formattedQuestions
+  };
+}
+
+// GET /api/practice/questions?subjectId=dbms&difficulty=EASY&limit=5
+exports.getPracticeQuestions = async (req, res) => {
+  try {
+    const { subjectId, subject, difficulty, limit, count } = req.query;
+    const result = await fetchOrGeneratePracticeQuestions({
+      subjectInput: subjectId || subject,
+      difficultyInput: difficulty,
+      limitInput: limit || count || 5
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("GET Practice Questions error:", err);
+    return res.status(500).json({ success: false, message: "Failed to retrieve practice questions" });
+  }
+};
+
+// POST /api/study-tools/practice-questions or POST /api/practice/questions
 exports.generatePracticeQuestions = async (req, res) => {
   try {
-    const studentId = req.student?.id || req.student?._id;
-    const { subject, difficulty, count } = req.body;
-
-    const [profile, testResults] = await Promise.all([
-      CollegeStudentProfile.findOne({ userId: studentId }).lean(),
-      StudentTestResult.find({ $or: [{ studentId }, { userId: studentId }] }).sort({ createdAt: -1 }).limit(5).lean()
-    ]);
-
-    const domain = profile?.domain || "Computer Science";
-    const targetCareer = profile?.targetCareer || "Software Engineer";
-    const selectedSub = subject || profile?.subjects?.[0] || "Core Discipline Fundamentals";
-
-    // Gather past weak topics in this subject for adaptive testing
-    const weakTopicsInSub = [];
-    testResults.forEach(tr => {
-      (tr.weaknesses || []).forEach(w => {
-        if (!weakTopicsInSub.includes(w)) weakTopicsInSub.push(w);
-      });
+    const { subjectId, subject, difficulty, count, limit } = req.body;
+    const result = await fetchOrGeneratePracticeQuestions({
+      subjectInput: subjectId || subject,
+      difficultyInput: difficulty,
+      limitInput: count || limit || 5
     });
-
-    const isWeakTopicFocus = weakTopicsInSub.some(w => selectedSub.toLowerCase().includes(w.toLowerCase()) || w.toLowerCase().includes(selectedSub.toLowerCase()));
-
-    const prompt = `Generate ${count || 5} multiple-choice academic practice questions for a college student.
-Degree: "${profile?.degreeProgramme || 'B.E./B.Tech'}"
-Domain: "${domain}"
-Target Career: "${targetCareer}"
-Subject: "${selectedSub}"
-Difficulty Level: "${difficulty || 'Medium'}"
-${isWeakTopicFocus ? `Adaptive Note: The student previously struggled with "${weakTopicsInSub.join(', ')}". Include focused questions to reinforce these weak concepts.` : ''}
-
-Respond strictly in valid JSON array of objects with keys:
-- "id": string (e.g. "q1")
-- "question": string
-- "options": array of 4 distinct strings
-- "correctIndex": integer (0 to 3)
-- "topic": string (specific subtopic tested)
-- "explanation": string (clear conceptual rationale)
-`;
-
-    // High quality domain-specific fallback bank
-    const sLower = selectedSub.toLowerCase();
-    let fallback = [];
-
-    if (sLower.includes("dbms") || sLower.includes("database")) {
-      fallback = [
-        {
-          id: "db1",
-          question: "Which normal form eliminates partial functional dependencies on a candidate key?",
-          options: ["First Normal Form (1NF)", "Second Normal Form (2NF)", "Third Normal Form (3NF)", "Boyce-Codd Normal Form (BCNF)"],
-          correctIndex: 1,
-          topic: "Database Normalization",
-          explanation: "2NF requires the relation to be in 1NF and guarantees every non-prime attribute is fully functionally dependent on any candidate key."
-        },
-        {
-          id: "db2",
-          question: "Which ACID property guarantees database transactions complete entirely or roll back completely on failure?",
-          options: ["Atomicity", "Consistency", "Isolation", "Durability"],
-          correctIndex: 0,
-          topic: "Transaction Management",
-          explanation: "Atomicity enforces an all-or-nothing guarantee for transaction statements."
-        },
-        {
-          id: "db3",
-          question: "What is the primary architectural purpose of a B+ Tree index in relational databases?",
-          options: ["To encrypt stored records", "To provide efficient equality and range-based disk search queries", "To ensure foreign key integrity", "To compress disk images"],
-          correctIndex: 1,
-          topic: "Indexing & Query Optimization",
-          explanation: "B+ Trees maintain balanced logarithmic depth and store data pointers only at leaf nodes, optimizing disk I/O for point lookups and range scans."
-        },
-        {
-          id: "db4",
-          question: "Which isolation level completely prevents dirty reads, non-repeatable reads, and phantom reads?",
-          options: ["Read Uncommitted", "Read Committed", "Repeatable Read", "Serializable"],
-          correctIndex: 3,
-          topic: "Concurrency Control",
-          explanation: "Serializable is the highest isolation level and simulates sequential transaction execution."
-        },
-        {
-          id: "db5",
-          question: "What distinguishes a clustered index from a non-clustered index?",
-          options: ["A clustered index dictates the physical storage order of table data", "A clustered index uses binary trees while non-clustered uses hash tables", "A table can possess up to 10 clustered indexes", "Clustered indexes only apply to string columns"],
-          correctIndex: 0,
-          topic: "Storage Architecture",
-          explanation: "Because table rows can only be sorted on disk in one physical order, only one clustered index can exist per table."
-        }
-      ];
-    } else if (sLower.includes("machine learning") || sLower.includes("ai") || sLower.includes("python")) {
-      fallback = [
-        {
-          id: "ml1",
-          question: "What machine learning phenomenon occurs when a model achieves high training accuracy but poor test accuracy?",
-          options: ["Underfitting", "Overfitting (High Variance)", "High Bias", "Data Leakage"],
-          correctIndex: 1,
-          topic: "Model Evaluation & Bias-Variance Tradeoff",
-          explanation: "Overfitting happens when a model learns training noise and specific details, hurting generalizability to unseen data."
-        },
-        {
-          id: "ml2",
-          question: "Which regularization technique adds the absolute sum of coefficients (L1 penalty) to the loss function, inducing feature sparsity?",
-          options: ["Ridge Regression (L2)", "Lasso Regression (L1)", "ElasticNet without L1", "Dropout alone"],
-          correctIndex: 1,
-          topic: "Regularization",
-          explanation: "Lasso penalizes absolute coefficient values, shrinking less impactful weights to zero for automatic feature selection."
-        },
-        {
-          id: "ml3",
-          question: "For an imbalanced dataset where false negatives are critical (e.g. medical diagnosis), which metric should be prioritized?",
-          options: ["Accuracy", "Recall (Sensitivity)", "Precision alone", "Specificity"],
-          correctIndex: 1,
-          topic: "Classification Metrics",
-          explanation: "Recall measures the proportion of actual positives correctly identified (TP / (TP + FN)), minimizing missed critical cases."
-        },
-        {
-          id: "ml4",
-          question: "In neural network optimization, what primary problem does the Adam optimizer mitigate compared to basic Stochastic Gradient Descent?",
-          options: ["Vanishing gradients in output layers", "Slow convergence across sparse features via adaptive per-parameter learning rates", "Memory limitations on CPU", "Overfitting on small datasets"],
-          correctIndex: 1,
-          topic: "Optimization Algorithms",
-          explanation: "Adam computes adaptive learning rates using first and second moment estimates of gradients."
-        },
-        {
-          id: "ml5",
-          question: "Which data manipulation library in Python is the industry standard for fast tabular DataFrame operations?",
-          options: ["NumPy alone", "Pandas", "Matplotlib", "Scipy"],
-          correctIndex: 1,
-          topic: "Data Manipulation",
-          explanation: "Pandas provides intuitive DataFrame structures built on NumPy arrays for tabular transformation and cleaning."
-        }
-      ];
-    } else if (sLower.includes("operating") || sLower.includes("os")) {
-      fallback = [
-        {
-          id: "os1",
-          question: "Which of the following is NOT one of Coffman's four necessary conditions for deadlock?",
-          options: ["Mutual Exclusion", "Hold and Wait", "Preemption Allowed", "Circular Wait"],
-          correctIndex: 2,
-          topic: "Deadlock Handling",
-          explanation: "The condition is No Preemption (resources cannot be forcibly taken from a holding process)."
-        },
-        {
-          id: "os2",
-          question: "What is the primary role of the Translation Lookaside Buffer (TLB) in virtual memory management?",
-          options: ["To store dirty cache lines", "To cache recent virtual-to-physical address translations for rapid page lookups", "To schedule background I/O requests", "To compress disk swap files"],
-          correctIndex: 1,
-          topic: "Memory Management & Paging",
-          explanation: "The TLB is a high-speed hardware cache that avoids multiple memory lookups during page table walks."
-        },
-        {
-          id: "os3",
-          question: "Which scheduling algorithm is non-preemptive and assigns the CPU to the process with the shortest execution time?",
-          options: ["Round Robin", "Shortest Job First (Non-preemptive SJF)", "Shortest Remaining Time First", "Priority Preemptive"],
-          correctIndex: 1,
-          topic: "CPU Scheduling",
-          explanation: "Non-preemptive SJF runs the shortest queued job to completion before switching."
-        },
-        {
-          id: "os4",
-          question: "What synchronization primitive uses atomic wait() and signal() operations to manage concurrent access to shared resources?",
-          options: ["Semaphore", "Thread Local Storage", "Pipe buffer", "Socket"],
-          correctIndex: 0,
-          topic: "Process Synchronization",
-          explanation: "Counting and binary semaphores coordinate critical section access via atomic P/V operations."
-        },
-        {
-          id: "os5",
-          question: "What term describes excessive swapping between RAM and disk paging space, causing near-zero CPU progress?",
-          options: ["Segmentation fault", "Thrashing", "Starvation", "Context jitter"],
-          correctIndex: 1,
-          topic: "Virtual Memory",
-          explanation: "Thrashing occurs when active processes lack sufficient page frames, forcing continuous disk page faults."
-        }
-      ];
-    } else if (sLower.includes("circuit") || sLower.includes("electrical") || sLower.includes("power") || sLower.includes("machine") || sLower.includes("control")) {
-      fallback = [
-        {
-          id: "ee1",
-          question: "Which theorem states that any linear bilateral network can be replaced by an equivalent voltage source in series with an impedance?",
-          options: ["Norton's Theorem", "Thevenin's Theorem", "Superposition Theorem", "Maximum Power Transfer Theorem"],
-          correctIndex: 1,
-          topic: "Network Analysis & Circuit Theorems",
-          explanation: "Thevenin's theorem reduces complex linear two-terminal circuits into an open-circuit voltage Vth in series with an equivalent resistance Rth."
-        },
-        {
-          id: "ee2",
-          question: "In a 3-phase induction motor, what is the relative speed between the rotating magnetic field and the stator structure?",
-          options: ["Zero", "Synchronous Speed (Ns = 120f / P)", "Rotor Speed (Nr)", "Slip Speed (s * Ns)"],
-          correctIndex: 1,
-          topic: "Electrical Machines",
-          explanation: "The stator windings produce a magnetic flux wave revolving at constant synchronous speed Ns = 120f / P."
-        },
-        {
-          id: "ee3",
-          question: "Which power semiconductor device combines the simple gate-drive characteristics of MOSFETs with the high-current/low-saturation-voltage capability of bipolar transistors?",
-          options: ["SCR (Thyristor)", "TRIAC", "IGBT (Insulated Gate Bipolar Transistor)", "BJT alone"],
-          correctIndex: 2,
-          topic: "Power Electronics",
-          explanation: "IGBTs feature high input impedance voltage control from a MOS gate combined with low on-state conduction loss from a bipolar collector."
-        },
-        {
-          id: "ee4",
-          question: "For a negative feedback closed-loop system, what condition on the Nyquist plot guarantees closed-loop stability?",
-          options: ["The Nyquist path must encircle the critical point (-1 + j0) twice", "The critical point (-1 + j0) must NOT be encircled by the Nyquist contour for open-loop stable systems", "The phase margin must be negative", "The gain margin must be zero dB"],
-          correctIndex: 1,
-          topic: "Control Systems",
-          explanation: "By the Nyquist stability criterion, N = Z - P. If open-loop poles P = 0, stability requires encirclements N = 0 of the point -1+j0."
-        },
-        {
-          id: "ee5",
-          question: "In high-voltage power transmission, why is bundling of sub-conductors employed per phase?",
-          options: ["To increase line resistance", "To reduce corona discharge loss and decrease line inductive reactance", "To reduce mechanical tower height", "To eliminate the need for insulators"],
-          correctIndex: 1,
-          topic: "Power Transmission & High Voltage",
-          explanation: "Bundled conductors increase the effective conductor radius (GMR), lowering electric field intensity at the surface to suppress corona and reduce line reactance."
-        }
-      ];
-    } else if (sLower.includes("robot") || sLower.includes("kinematic") || sLower.includes("ros")) {
-      fallback = [
-        {
-          id: "rob1",
-          question: "In robotic manipulator kinematics, what convention standardizes link coordinate frames using four parameters (a, alpha, d, theta)?",
-          options: ["Euler-Lagrange Matrix", "Denavit-Hartenberg (D-H) Convention", "Rodrigues Formula", "Quaternion Mapping"],
-          correctIndex: 1,
-          topic: "Robot Kinematics",
-          explanation: "The D-H convention uses link length (a), link twist (alpha), link offset (d), and joint angle (theta) to represent spatial kinematic chains."
-        },
-        {
-          id: "rob2",
-          question: "In the Robot Operating System (ROS 2), which communication pattern is asynchronous and follows a many-to-many publish-subscribe model?",
-          options: ["Services", "Actions", "Topics", "Parameters"],
-          correctIndex: 2,
-          topic: "Robot Operating System (ROS 2)",
-          explanation: "ROS Topics provide unidirectional, streaming, asynchronous publish-subscribe transport between independent sensor and controller nodes."
-        },
-        {
-          id: "rob3",
-          question: "What mathematical operator maps joint velocities to operational end-effector Cartesian velocities in a robotic manipulator?",
-          options: ["Hessian Matrix", "Jacobian Matrix", "Inertia Tensor", "Rotation Quaternions"],
-          correctIndex: 1,
-          topic: "Differential Kinematics",
-          explanation: "The geometric Jacobian J(q) relates joint velocity vectors to linear and angular velocities of the end-effector: v = J(q) * q_dot."
-        },
-        {
-          id: "rob4",
-          question: "Which sensor is most essential for real-time 2D/3D Simultaneous Localization and Mapping (SLAM) in autonomous mobile robots?",
-          options: ["Thermistor", "Ultrasonic Transducer", "LiDAR (Light Detection and Ranging)", "Strain Gauge"],
-          correctIndex: 2,
-          topic: "Robotic Perception & SLAM",
-          explanation: "LiDAR produces millimeter-accurate distance point clouds enabling scan-matching algorithms to build environmental maps while tracking robot pose."
-        },
-        {
-          id: "rob5",
-          question: "What is the primary role of a PID controller's derivative (D) term in robotic motor position control?",
-          options: ["Eliminating steady-state error", "Providing predictive damping to reduce overshoot and settling oscillations", "Maximizing steady-state torque", "Inverting motor polarity"],
-          correctIndex: 1,
-          topic: "Control Systems & PID",
-          explanation: "The derivative term acts on the rate of change of error, exerting a braking/damping force that mitigates system overshoot."
-        }
-      ];
-    } else if (sLower.includes("thermo") || sLower.includes("fluid") || sLower.includes("mechanical") || sLower.includes("strength") || sLower.includes("cad")) {
-      fallback = [
-        {
-          id: "me1",
-          question: "Which ideal thermodynamic cycle operates with maximum theoretical thermal efficiency between two temperature reservoirs?",
-          options: ["Rankine Cycle", "Otto Cycle", "Carnot Cycle", "Brayton Cycle"],
-          correctIndex: 2,
-          topic: "Thermodynamics",
-          explanation: "The Carnot cycle consists of two reversible isothermal and two reversible adiabatic processes, bounding maximum theoretical efficiency."
-        },
-        {
-          id: "me2",
-          question: "In fluid dynamics, what non-dimensional quantity characterizes the ratio of inertial forces to viscous forces in a flowing fluid?",
-          options: ["Mach Number", "Prandtl Number", "Reynolds Number", "Nusselt Number"],
-          correctIndex: 2,
-          topic: "Fluid Mechanics",
-          explanation: "The Reynolds number (Re = rho * v * L / mu) indicates whether fluid flow is laminar (low Re) or turbulent (high Re)."
-        },
-        {
-          id: "me3",
-          question: "On a stress-strain diagram of mild steel, what point marks the boundary where deformation transitions from elastic to permanent plastic deformation?",
-          options: ["Ultimate Tensile Strength", "Yield Point / Proportional Limit", "Breaking Point", "Resilience Point"],
-          correctIndex: 1,
-          topic: "Strength of Materials",
-          explanation: "Beyond the yield strength, atomic planes slip permanently and the material experiences irreversible plastic strain."
-        },
-        {
-          id: "me4",
-          question: "According to Grashof's theorem for a planar four-bar mechanism, what condition guarantees that at least one link can execute a continuous 360-degree rotation?",
-          options: ["s + l <= p + q (shortest + longest link <= sum of remaining two links)", "s + l > p + q", "All link lengths must be strictly identical", "l - s = p + q"],
-          correctIndex: 0,
-          topic: "Kinematics of Machinery",
-          explanation: "Grashof's law states that if s + l <= p + q, at least one revolving crank exists in the four-bar kinematic chain."
-        },
-        {
-          id: "me5",
-          question: "In Finite Element Analysis (FEA), what is the primary consequence of refining the mesh grid across high-stress concentration zones?",
-          options: ["Stress results diverge to zero", "Convergence toward the true continuous analytical stress solution", "Computation time drops significantly", "Material stiffness matrix becomes singular"],
-          correctIndex: 1,
-          topic: "FEA & Computational Mechanics",
-          explanation: "Finer mesh elements capture steep stress gradients near notches or holes, converging numerical displacement approximations."
-        }
-      ];
-    } else if (sLower.includes("civil") || sLower.includes("structur") || sLower.includes("concrete") || sLower.includes("soil") || sLower.includes("survey")) {
-      fallback = [
-        {
-          id: "ce1",
-          question: "According to Terzaghi's bearing capacity theory for shallow foundations, which factor is NOT included in the ultimate bearing capacity equation?",
-          options: ["Cohesion factor (Nc)", "Surcharge depth factor (Nq)", "Soil unit weight factor (Ngamma)", "Atmospheric pressure factor (Np)"],
-          correctIndex: 3,
-          topic: "Soil Mechanics & Foundations",
-          explanation: "Terzaghi's ultimate capacity is q_ult = c*Nc + q*Nq + 0.5*gamma*B*Ngamma, governed by soil shear strength parameters."
-        },
-        {
-          id: "ce2",
-          question: "In reinforced concrete design, what is the primary structural purpose of providing transverse stirrup reinforcement?",
-          options: ["Resisting longitudinal bending tension", "Resisting diagonal shear stresses and preventing brittle shear failure", "Increasing concrete thermal expansion", "Reducing dead weight of the beam"],
-          correctIndex: 1,
-          topic: "Concrete Technology & RCC Design",
-          explanation: "Vertical and inclined stirrups intercept diagonal 45-degree tension cracks caused by high vertical shear forces near beam supports."
-        },
-        {
-          id: "ce3",
-          question: "Which structural method is an iterative moment-relaxation procedure used to analyze statically indeterminate continuous beams and frames?",
-          options: ["Hardy Cross Moment Distribution Method", "Castigliano's Energy Method", "Euler-Bernoulli Beam Theorem", "Maxwell's Reciprocal Theorem"],
-          correctIndex: 0,
-          topic: "Structural Analysis",
-          explanation: "The Moment Distribution Method successively relaxes fixed-end moments to adjacent spans proportionally to their relative stiffness."
-        },
-        {
-          id: "ce4",
-          question: "What test is standardly performed on fresh concrete on construction sites to measure its immediate workability and consistency?",
-          options: ["Vicat Needle Test", "Slump Cone Test", "Core Cutter Test", "Standard Penetration Test"],
-          correctIndex: 1,
-          topic: "Concrete Technology",
-          explanation: "The Slump Cone test measures the vertical subsidence of fresh concrete under its own weight to verify workability."
-        },
-        {
-          id: "ce5",
-          question: "In modern geomatics surveying, what electronic optical instrument integrates digital electronic theodolite angle measurement with an electromagnetic EDM distance meter?",
-          options: ["Dumpy Level", "Total Station", "Plane Table Alidade", "Prismatic Compass"],
-          correctIndex: 1,
-          topic: "Surveying & Geomatics",
-          explanation: "A Total Station measures slope distances, horizontal angles, and vertical angles simultaneously using onboard microprocessors."
-        }
-      ];
-    } else {
-      fallback = [
-        {
-          id: "ds1",
-          question: `In ${domain}, what is the time complexity of searching an element in a balanced Binary Search Tree with N nodes?`,
-          options: ["O(1)", "O(log N)", "O(N)", "O(N log N)"],
-          correctIndex: 1,
-          topic: "Data Structures & Complexity",
-          explanation: "Because a balanced BST halves the search space at each level, lookup is bounded by O(log N)."
-        },
-        {
-          id: "ds2",
-          question: "Which sorting algorithm achieves O(N log N) worst-case time complexity while maintaining stable ordering?",
-          options: ["Quick Sort", "Merge Sort", "Heap Sort", "Selection Sort"],
-          correctIndex: 1,
-          topic: "Algorithms",
-          explanation: "Merge Sort consistently divides arrays into halves and merges in linear time, guaranteeing O(N log N) stability."
-        },
-        {
-          id: "ds3",
-          question: "What is the primary difference between a process and a thread?",
-          options: ["Threads have independent memory address spaces", "Threads within the same process share code, data, and OS resources", "Processes cannot spawn multiple threads", "Threads execute slower than processes"],
-          correctIndex: 1,
-          topic: "System Concurrency",
-          explanation: "Threads are lightweight execution units that share the heap and address space of their parent process."
-        },
-        {
-          id: "ds4",
-          question: `Which fundamental principle of system design decouples modules to maximize testability and maintainability in ${targetCareer} architectures?`,
-          options: ["Tight Coupling", "High Cohesion and Low Coupling", "Monolithic Monopolization", "Cyclic Dependencies"],
-          correctIndex: 1,
-          topic: "System Architecture",
-          explanation: "High cohesion ensures modules focus on a single task, while low coupling minimizes cross-module dependencies."
-        },
-        {
-          id: "ds5",
-          question: "Which data structure follows a First-In-First-Out (FIFO) access order?",
-          options: ["Stack", "Queue", "Binary Tree", "Heap"],
-          correctIndex: 1,
-          topic: "Core Data Structures",
-          explanation: "Queues enforce FIFO ordering where elements inserted first are removed first."
-        }
-      ];
-    }
-
-    const questions = await queryGrokJson(prompt, "Respond strictly in valid JSON array of questions.", fallback);
-    return res.json({ success: true, subject: selectedSub, questions });
+    return res.status(200).json(result);
   } catch (err) {
-    console.error("Generate practice questions error:", err);
-    res.status(500).json({ success: false, message: "Failed to generate practice questions" });
+    console.error("POST Practice Questions error:", err);
+    return res.status(500).json({ success: false, message: "Failed to generate practice questions" });
   }
 };
 
@@ -1658,40 +1509,166 @@ exports.generateInterviewQuestions = async (req, res) => {
 // ── 12. Peer Mentors Listing ──────────────────────────────────────────────────
 exports.getPeerMentors = async (req, res) => {
   try {
-    const mentors = [
-      {
-        id: "m1",
-        name: "Arun Kumar",
-        degree: "B.E. Computer Science (4th Year)",
-        college: "PSG Tech, Coimbatore",
-        expertise: ["Data Structures", "System Design", "Placement Prep"],
+    const GraduateProfile = require("../models/GraduateProfile");
+    const currentStudentId = req.student?.id || req.student?._id || req.user?._id;
+
+    // 1. Fetch Graduate Profiles from DB
+    const gradProfiles = await GraduateProfile.find({})
+      .populate("userId", "name email phone userType role")
+      .lean();
+
+    // 2. Fetch Users registered as graduates
+    const gradUsers = await User.find({ userType: "graduate" }).lean();
+
+    // 3. Fetch Senior / Graduated College Student Profiles
+    const seniorProfiles = await CollegeStudentProfile.find({
+      $or: [
+        { currentYear: { $in: ["Graduated", "Alumni", "Graduate", "4th Year", "Final Year"] } },
+        { currentSemester: { $regex: /7th|8th|Graduated/i } }
+      ]
+    })
+      .populate("userId", "name email phone userType role")
+      .lean();
+
+    const mentorMap = new Map();
+
+    // Process Graduate Profiles (most detailed for graduates)
+    for (const gp of gradProfiles) {
+      if (!gp.userId) continue;
+      const uId = String(gp.userId._id || gp.userId);
+      const name = gp.userId.name || [gp.firstName, gp.lastName].filter(Boolean).join(" ") || "Graduate Domain Mentor";
+      const yearLabel = gp.graduationYear ? `Class of ${gp.graduationYear}` : "Graduate Alumni";
+      const degName = gp.degree || gp.domain || gp.field || "Degree Graduate";
+      const degree = `${degName} • ${yearLabel}`;
+      const college = gp.college || gp.university || "Engineering Alumnus";
+
+      let skillsList = [];
+      if (Array.isArray(gp.technicalSkills) && gp.technicalSkills.length > 0) {
+        skillsList = gp.technicalSkills.map(s => (typeof s === "string" ? s : s.name)).filter(Boolean);
+      }
+      if (skillsList.length === 0 && Array.isArray(gp.interests)) {
+        skillsList = gp.interests;
+      }
+      if (skillsList.length === 0) {
+        skillsList = ["Career Guidance", "Placement Strategy", "Domain Expertise"];
+      }
+
+      mentorMap.set(uId, {
+        id: uId,
+        name,
+        degree,
+        college,
+        expertise: skillsList.slice(0, 3),
         rating: 4.9,
         available: true,
-        avatar: "👨‍💻"
-      },
-      {
-        id: "m2",
-        name: "Priya Sundaram",
-        degree: "M.Tech Data Science",
-        college: "Anna University, Chennai",
-        expertise: ["Machine Learning", "Python Analytics", "Research Papers"],
-        rating: 4.8,
-        available: true,
-        avatar: "👩‍🔬"
-      },
-      {
-        id: "m3",
-        name: "Karthik Raja",
-        degree: "B.Tech IT (Final Year)",
-        college: "CIT, Coimbatore",
-        expertise: ["Full Stack React/Node", "Cloud DevOps", "Hackathons"],
-        rating: 4.95,
-        available: true,
-        avatar: "🚀"
+        avatar: "🎓",
+        employmentStatus: gp.employmentStatus || gp.targetCareer || "Industry Professional"
+      });
+    }
+
+    // Process Users with userType === "graduate"
+    for (const u of gradUsers) {
+      const uId = String(u._id);
+      if (!mentorMap.has(uId)) {
+        mentorMap.set(uId, {
+          id: uId,
+          name: u.name || "Graduate Mentor",
+          degree: u.selectedCareer ? `${u.selectedCareer} • Graduate Alumni` : "Verified Graduate Mentor",
+          college: u.district ? `Graduate Alumnus (${u.district})` : "Verified Alumni Mentor",
+          expertise: ["Career Mentorship", "Technical Guidance", "Industry Advice"],
+          rating: 4.8,
+          available: true,
+          avatar: "🎓",
+          employmentStatus: u.selectedCareer || "Graduate Mentor"
+        });
       }
-    ];
+    }
+
+    // Process Senior College Student Profiles (4th year / Final Year / Graduated)
+    for (const sp of seniorProfiles) {
+      if (!sp.userId) continue;
+      const uId = String(sp.userId._id || sp.userId);
+      if (!mentorMap.has(uId)) {
+        const name = sp.userId.name || [sp.firstName, sp.lastName].filter(Boolean).join(" ") || "Senior Mentor";
+        const yr = sp.currentYear === "Graduated" || sp.currentYear === "Alumni" ? "Graduate Alumni" : "Senior (4th Year)";
+        const degree = `${sp.degreeProgramme || sp.domain || "B.E. / B.Tech"} • ${yr}`;
+        const college = sp.institution || sp.institutionDistrict || "Engineering Institution";
+        const skillsList = Array.isArray(sp.skills) && sp.skills.length > 0 ? sp.skills.slice(0, 3) : ["Academic Guidance", "Core Domain"];
+
+        mentorMap.set(uId, {
+          id: uId,
+          name,
+          degree,
+          college,
+          expertise: skillsList,
+          rating: 4.8,
+          available: true,
+          avatar: "🎓"
+        });
+      }
+    }
+
+    let mentors = Array.from(mentorMap.values());
+
+    // Fallback verified graduate alumni if database has no registered graduates yet
+    if (mentors.length === 0) {
+      mentors = [
+        {
+          id: "grad-default-1",
+          name: "Priyadharshini G",
+          degree: "B.E. Computer Science • Graduate (Class of 2024)",
+          college: "Manonmaniam Sundaranar University",
+          expertise: ["Python / Data Science", "Problem Solving & Logic", "System Design"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-2",
+          name: "Ananya Ramaswamy",
+          degree: "B.E. Electronics • Graduate (Class of 2023)",
+          college: "Jaya College of Engineering",
+          expertise: ["Python", "React", "Docker / DevOps"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-3",
+          name: "Kavitha Sundaram",
+          degree: "B.Tech IT • Graduate (Class of 2023)",
+          college: "PSG College of Technology, Coimbatore",
+          expertise: ["JavaScript", "React", "Node.js Architecture"],
+          rating: 5.0,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-4",
+          name: "Suruthika J",
+          degree: "B.E. Computer Science • Graduate (Class of 2024)",
+          college: "National Engineering College",
+          expertise: ["Full Stack Development", "Database Indexing", "Cloud Architecture"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-5",
+          name: "Akash M",
+          degree: "B.E. Electrical Engineering • Graduate (Class of 2023)",
+          college: "Anna University Campus",
+          expertise: ["Core Engineering", "Embedded Systems", "Technical Interviews"],
+          rating: 4.8,
+          available: true,
+          avatar: "🎓"
+        }
+      ];
+    }
+
     return res.json({ success: true, mentors });
   } catch (err) {
+    console.error("Failed to fetch graduate mentors:", err);
     res.status(500).json({ success: false, message: "Failed to load mentors" });
   }
 };

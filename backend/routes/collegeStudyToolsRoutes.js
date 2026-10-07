@@ -24,6 +24,7 @@ const {
   handleMentorRequestAction,
   submitInterviewResult,
   summarizeNotes,
+  getPracticeQuestions,
   generatePracticeQuestions,
   askAdvisorChat,
   generateResumeSuggestions,
@@ -68,6 +69,8 @@ router.get("/mentors/student-requests", verifyStudent, getMentorRequestsForStude
 router.post("/mentors/request-action", verifyStudent, handleMentorRequestAction);
 router.post("/interview-prep/submit", verifyStudent, submitInterviewResult);
 router.post("/summarize", verifyStudent, summarizeNotes);
+router.get("/practice/questions", verifyStudent, getPracticeQuestions);
+router.get("/practice-questions", verifyStudent, getPracticeQuestions);
 router.post("/practice-questions", verifyStudent, generatePracticeQuestions);
 router.post("/chat", verifyStudent, askAdvisorChat);
 router.get("/resume-builder", verifyStudent, generateResumeSuggestions);
