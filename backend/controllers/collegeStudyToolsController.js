@@ -20,38 +20,57 @@ const PlacementPlan = require("../models/PlacementPlan");
 const placementResearchService = require("../services/placementResearchService");
 const placementStudyPlanEngine = require("../services/placementStudyPlanEngine");
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const GROK_API_KEY = process.env.GROK_API_KEY || "";
+const AI_MODEL = process.env.AI_QUESTIONS_MODEL || "openai/gpt-oss-120b";
 
-// Helper function to query xAI Grok API with graceful JSON parsing
+// Helper function to query LLM (Groq / xAI Grok) with graceful JSON parsing
 async function queryGrokJson(prompt, systemMsg, fallbackData) {
-  if (!GROK_API_KEY) {
+  const apiKey = GROQ_API_KEY || GROK_API_KEY;
+  if (!apiKey) {
     return fallbackData;
   }
+
+  const endpoint = GROQ_API_KEY
+    ? "https://api.groq.com/openai/v1/chat/completions"
+    : "https://api.x.ai/v1/chat/completions";
+
+  const modelName = GROQ_API_KEY ? AI_MODEL : "grok-2-latest";
+
   try {
     const response = await axios.post(
-      "https://api.x.ai/v1/chat/completions",
+      endpoint,
       {
-        model: "grok-2-latest",
+        model: modelName,
         messages: [
-          { role: "system", content: systemMsg || "Respond strictly in valid JSON." },
+          { role: "system", content: systemMsg || "Respond strictly in valid JSON array of objects." },
           { role: "user", content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1400
+        max_tokens: 3000
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${GROK_API_KEY}`
+          Authorization: `Bearer ${apiKey}`
         },
-        timeout: 10000
+        timeout: 20000
       }
     );
     const raw = response.data?.choices?.[0]?.message?.content || "";
-    const clean = raw.replace(/```json/gi, "").replace(/```/gi, "").trim();
+    let clean = raw.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
+    // Robust auto-repair for truncated JSON arrays
+    if (!clean.endsWith("]") && !clean.endsWith("}")) {
+      const lastObjEnd = clean.lastIndexOf("}");
+      if (lastObjEnd !== -1) {
+        clean = clean.substring(0, lastObjEnd + 1) + "]";
+      }
+    }
+
     return JSON.parse(clean);
   } catch (err) {
-    console.warn("Grok API query fallback triggered:", err.message);
+    console.warn("LLM API query fallback triggered:", err.response?.data || err.message);
     return fallbackData;
   }
 }
