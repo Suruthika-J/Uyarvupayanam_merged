@@ -76,6 +76,65 @@ async function queryGrokJson(prompt, systemMsg, fallbackData) {
   }
 }
 
+// Helper function to query LLM with model tracking & object extraction
+async function queryGrokJsonWithModel(prompt, systemMsg, fallbackData) {
+  const apiKey = GROQ_API_KEY || GROK_API_KEY;
+  const modelName = GROQ_API_KEY ? AI_MODEL : "grok-2-latest";
+  const defaultTag = GROQ_API_KEY ? `Groq (${AI_MODEL})` : "xAI Grok (grok-2-latest)";
+
+  if (!apiKey) {
+    return { data: fallbackData, modelUsed: defaultTag };
+  }
+
+  const endpoint = GROQ_API_KEY
+    ? "https://api.groq.com/openai/v1/chat/completions"
+    : "https://api.x.ai/v1/chat/completions";
+
+  try {
+    const response = await axios.post(
+      endpoint,
+      {
+        model: modelName,
+        messages: [
+          { role: "system", content: systemMsg || "Respond strictly in valid JSON." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 3000
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        timeout: 25000
+      }
+    );
+    const raw = response.data?.choices?.[0]?.message?.content || "";
+    let clean = raw.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
+    const startObj = clean.indexOf("{");
+    const endObj = clean.lastIndexOf("}");
+    const startArr = clean.indexOf("[");
+    const endArr = clean.lastIndexOf("]");
+
+    if (startObj !== -1 && (startArr === -1 || startObj < startArr)) {
+      if (endObj !== -1) clean = clean.substring(startObj, endObj + 1);
+    } else if (startArr !== -1 && endArr !== -1) {
+      clean = clean.substring(startArr, endArr + 1);
+    }
+
+    const parsed = JSON.parse(clean);
+    const usedModel = response.data?.model || modelName;
+    const providerTag = GROQ_API_KEY ? `Groq (${usedModel})` : `xAI Grok (${usedModel})`;
+
+    return { data: parsed, modelUsed: providerTag };
+  } catch (err) {
+    console.warn("LLM API query fallback triggered:", err.response?.data || err.message);
+    return { data: fallbackData, modelUsed: defaultTag };
+  }
+}
+
 // ── 1. GET Active Study Plan ──────────────────────────────────────────────────
 exports.getActiveStudyPlan = async (req, res) => {
   try {
@@ -725,7 +784,7 @@ exports.submitInterviewResult = async (req, res) => {
   }
 };
 
-// ── 7. AI Notes Summarizer ───────────────────────────────────────────────────
+// ── 7. AI Notes Summarizer (Exam-Ready Easy English Generator) ────────────────
 exports.summarizeNotes = async (req, res) => {
   try {
     const notesText = req.body.notesText || req.body.notes || req.body.content || "";
@@ -734,33 +793,77 @@ exports.summarizeNotes = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please provide sufficient notes text to summarize." });
     }
 
-    const prompt = `Summarize the following academic lecture/study notes for subject "${subject || "General Academic"}":
----
-${notesText.slice(0, 3000)}
----
+    const prompt = `Analyze and summarize the following lecture notes/study material for the subject "${subject || "General Academic"}":
 
-Return JSON object with keys:
-- "title": string
-- "executiveSummary": string
-- "keyConcepts": array of objects with keys "concept" and "definition"
-- "examImportantPoints": array of strings
-- "quickRevisionBulletPoints": array of strings
+--- NOTES START ---
+${notesText.slice(0, 4500)}
+--- NOTES END ---
+
+Your goal is to generate an EXAM-READY SUMMARY written in EASY, SIMPLE, and CLEAR ENGLISH so that a college student can directly memorize and write it in exams to score full marks.
+
+Return ONLY a valid JSON object with these exact keys:
+1. "title": string (e.g., "${subject || "Academic"} Core Concepts Exam Summary")
+2. "examDefinition": string (A simple, crystal-clear 2-3 line definition to write directly for 2-mark exam questions in simple English)
+3. "executiveSummary": string (A clear 3-4 sentence explanation of the overall core concept in simple language)
+4. "keyConcepts": array of objects with keys:
+   - "concept": string (Term name)
+   - "definition": string (Simple 1-2 sentence definition in easy English)
+   - "examTip": string (Short memory trick or exam writing tip)
+5. "examImportantPoints": array of strings (5 to 8 clear bullet points for 5-mark or 10-mark essay answers)
+6. "sampleExamQuestion": string (A typical university exam question based on these notes)
+7. "sampleExamAnswer": string (A complete, point-by-point model answer written in easy English that the student can directly write in their exam answer sheet)
+8. "quickRevisionBulletPoints": array of strings (4 to 6 short memory points for quick revision before entering the exam hall)
 `;
 
     const fallback = {
-      title: `Summary of ${subject || "Study Notes"}`,
-      executiveSummary: "These notes outline essential domain concepts, fundamental rules, and practical applications.",
+      title: `${subject || "Academic"} Exam Summary`,
+      examDefinition: `${subject || "This topic"} covers core concepts, fundamental rules, and essential definitions frequently tested in university examinations.`,
+      executiveSummary: "These notes outline primary domain concepts, key terminology, and high-yield exam points formatted in easy English for fast memorization.",
       keyConcepts: [
-        { concept: "Core Principle", definition: "The foundational rule governing state transformation and logic execution." },
-        { concept: "System Architecture", definition: "The structured arrangement of software components and data flows." }
+        {
+          concept: "Core Principle",
+          definition: "The primary rule governing state transformation and system execution.",
+          examTip: "State the definition in the first 2 lines of your answer script."
+        },
+        {
+          concept: "System Architecture",
+          definition: "The structured arrangement of software components and data flows.",
+          examTip: "Draw a simple component diagram when answering 10-mark questions."
+        }
       ],
-      examImportantPoints: ["Must remember key definitions.", "Expect application-based questions on optimization."],
-      quickRevisionBulletPoints: ["Review primary equations and definitions.", "Focus on high-yield exam topics."]
+      examImportantPoints: [
+        "State definitions clearly in the first 2 lines of your exam answer.",
+        "Use bullet points and bold key technical terms for easy evaluation.",
+        "Include relevant diagrams, block charts, or equations wherever applicable.",
+        "Use comparison tables for contrasting concepts to score maximum marks."
+      ],
+      sampleExamQuestion: `Q: Explain the primary concepts of ${subject || "this topic"} and state its main rules and applications.`,
+      sampleExamAnswer: `1. Definition: ${subject || "This topic"} provides the structural framework for organizing logic and data.\n2. Key Features: Reduces redundancy, maintains consistency, and improves processing speed.\n3. Exam Tip: Underline key terms like 'Consistency', 'Optimization', and 'Architecture' in your answer script.`,
+      quickRevisionBulletPoints: [
+        "Memorize exact 2-line definitions for short-answer questions.",
+        "Review bullet points for 5-mark and 10-mark long answers.",
+        "Check key formulas and step-by-step algorithms right before the exam."
+      ]
     };
 
-    const summary = await queryGrokJson(prompt, "Summarize notes in structured JSON.", fallback);
-    return res.json({ success: true, summary });
+    const result = await queryGrokJsonWithModel(
+      prompt,
+      "You are an expert college professor and exam assistant. Respond strictly in valid JSON.",
+      fallback
+    );
+
+    const summary = {
+      ...result.data,
+      modelUsed: result.modelUsed || "Groq (openai/gpt-oss-120b)"
+    };
+
+    return res.json({
+      success: true,
+      modelUsed: summary.modelUsed,
+      summary
+    });
   } catch (err) {
+    console.error("Notes Summarizer Error:", err);
     res.status(500).json({ success: false, message: "Failed to summarize notes" });
   }
 };
