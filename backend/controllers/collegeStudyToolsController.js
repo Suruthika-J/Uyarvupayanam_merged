@@ -633,7 +633,7 @@ exports.submitMentorDoubtRequest = async (req, res) => {
       interest: subject || "Academic Guidance",
       message: question || message || "Requested 1-on-1 mentorship for domain doubt resolution.",
       preferredContact: "WhatsApp",
-      assignedMentor: mentorId || "Arun Kumar",
+      assignedMentor: mentorId || "Senior Domain Mentor",
       status: "Pending"
     });
 
@@ -795,10 +795,18 @@ exports.generatePracticeQuestions = async (req, res) => {
     const studentId = req.student?.id || req.student?._id;
     const { subject, difficulty, count } = req.body;
 
-    const [profile, testResults] = await Promise.all([
-      CollegeStudentProfile.findOne({ userId: studentId }).lean(),
-      StudentTestResult.find({ $or: [{ studentId }, { userId: studentId }] }).sort({ createdAt: -1 }).limit(5).lean()
-    ]);
+    let profile = null;
+    let testResults = [];
+    if (studentId) {
+      try {
+        [profile, testResults] = await Promise.all([
+          CollegeStudentProfile.findOne({ userId: studentId }).lean(),
+          StudentTestResult.find({ $or: [{ studentId }, { userId: studentId }] }).sort({ createdAt: -1 }).limit(5).lean()
+        ]);
+      } catch (dbErr) {
+        console.warn("DB profile lookup skipped in generatePracticeQuestions:", dbErr.message);
+      }
+    }
 
     const domain = profile?.domain || "Computer Science";
     const targetCareer = profile?.targetCareer || "Software Engineer";
@@ -814,156 +822,380 @@ exports.generatePracticeQuestions = async (req, res) => {
 
     const isWeakTopicFocus = weakTopicsInSub.some(w => selectedSub.toLowerCase().includes(w.toLowerCase()) || w.toLowerCase().includes(selectedSub.toLowerCase()));
 
-    const prompt = `Generate ${count || 5} multiple-choice academic practice questions for a college student.
+    const targetDiff = (difficulty || "Medium").toUpperCase();
+    const dLower = (difficulty || "Medium").toLowerCase();
+
+    const prompt = `You are a distinguished university professor setting official ${targetDiff} level examination questions for a college student in India.
 Degree: "${profile?.degreeProgramme || 'B.E./B.Tech'}"
 Domain: "${domain}"
 Target Career: "${targetCareer}"
 Subject: "${selectedSub}"
-Difficulty Level: "${difficulty || 'Medium'}"
-${isWeakTopicFocus ? `Adaptive Note: The student previously struggled with "${weakTopicsInSub.join(', ')}". Include focused questions to reinforce these weak concepts.` : ''}
+Target Difficulty Level: ${targetDiff} (CRITICAL: Questions MUST strictly match ${targetDiff} level complexity!)
 
-Respond strictly in valid JSON array of objects with keys:
-- "id": string (e.g. "q1")
-- "question": string
-- "options": array of 4 distinct strings
-- "correctIndex": integer (0 to 3)
-- "topic": string (specific subtopic tested)
-- "explanation": string (clear conceptual rationale)
-`;
+DIFFICULTY LEVEL REQUIREMENTS:
+- EASY: Basic definitions, core terminology, identification of fundamental principles.
+- MEDIUM: Conceptual application, scenario-based trade-offs, architecture/algorithm comparison, intermediate debugging & design choices.
+- HARD: Deep analytical mechanics, multi-faceted engineering trade-offs, low-level concurrency/hardware optimization, advanced edge cases.
+- ADVANCED: Expert system design, algorithmic efficiency proofs, micro-optimizations, real-world high-concurrency production scenarios.
 
-    // High quality domain-specific fallback bank
+Generate ${count || 5} completely NEW, UNSEEN multiple-choice questions for ${selectedSub} at ${targetDiff} level.
+Batch Seed / Timestamp: ${req.body.timestamp || Date.now()}
+${isWeakTopicFocus ? `Adaptive Focus: Include focused questions reinforcing ${weakTopicsInSub.join(', ')}.` : ''}
+
+Respond strictly in valid JSON array of objects:
+[
+  {
+    "id": "q1",
+    "question": "Clear, precise ${targetDiff} level question string",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIndex": 0,
+    "topic": "Subtopic Name",
+    "explanation": "Detailed conceptual explanation of why the correct option is right and others are wrong."
+  }
+]`;
+
+    // High quality domain-specific fallback bank (Difficulty Aware)
     const sLower = selectedSub.toLowerCase();
     let fallback = [];
 
     if (sLower.includes("dbms") || sLower.includes("database")) {
-      fallback = [
-        {
-          id: "db1",
-          question: "Which normal form eliminates partial functional dependencies on a candidate key?",
-          options: ["First Normal Form (1NF)", "Second Normal Form (2NF)", "Third Normal Form (3NF)", "Boyce-Codd Normal Form (BCNF)"],
-          correctIndex: 1,
-          topic: "Database Normalization",
-          explanation: "2NF requires the relation to be in 1NF and guarantees every non-prime attribute is fully functionally dependent on any candidate key."
-        },
-        {
-          id: "db2",
-          question: "Which ACID property guarantees database transactions complete entirely or roll back completely on failure?",
-          options: ["Atomicity", "Consistency", "Isolation", "Durability"],
-          correctIndex: 0,
-          topic: "Transaction Management",
-          explanation: "Atomicity enforces an all-or-nothing guarantee for transaction statements."
-        },
-        {
-          id: "db3",
-          question: "What is the primary architectural purpose of a B+ Tree index in relational databases?",
-          options: ["To encrypt stored records", "To provide efficient equality and range-based disk search queries", "To ensure foreign key integrity", "To compress disk images"],
-          correctIndex: 1,
-          topic: "Indexing & Query Optimization",
-          explanation: "B+ Trees maintain balanced logarithmic depth and store data pointers only at leaf nodes, optimizing disk I/O for point lookups and range scans."
-        },
-        {
-          id: "db4",
-          question: "Which isolation level completely prevents dirty reads, non-repeatable reads, and phantom reads?",
-          options: ["Read Uncommitted", "Read Committed", "Repeatable Read", "Serializable"],
-          correctIndex: 3,
-          topic: "Concurrency Control",
-          explanation: "Serializable is the highest isolation level and simulates sequential transaction execution."
-        },
-        {
-          id: "db5",
-          question: "What distinguishes a clustered index from a non-clustered index?",
-          options: ["A clustered index dictates the physical storage order of table data", "A clustered index uses binary trees while non-clustered uses hash tables", "A table can possess up to 10 clustered indexes", "Clustered indexes only apply to string columns"],
-          correctIndex: 0,
-          topic: "Storage Architecture",
-          explanation: "Because table rows can only be sorted on disk in one physical order, only one clustered index can exist per table."
-        }
-      ];
+      if (dLower === "easy") {
+        fallback = [
+          {
+            id: "db-e1",
+            question: "Which SQL DML command is used to retrieve matching rows from a relational database table?",
+            options: ["FETCH", "SELECT", "GET", "QUERY"],
+            correctIndex: 1,
+            topic: "SQL Commands",
+            explanation: "SELECT is the standard Data Manipulation Language (DML) statement used to retrieve rows from database tables."
+          },
+          {
+            id: "db-e2",
+            question: "What is a Primary Key constraint in a relational database table?",
+            options: ["A column that can contain NULL values", "A column or combination of columns that uniquely identifies each row in a table", "A key imported from an external table", "An index used only for full-text search"],
+            correctIndex: 1,
+            topic: "Database Integrity & Keys",
+            explanation: "A Primary Key uniquely identifies every record in a table and cannot contain NULL values."
+          },
+          {
+            id: "db-e3",
+            question: "Which normal form requires a table to be in 1NF and have no partial functional dependencies on a candidate key?",
+            options: ["First Normal Form (1NF)", "Second Normal Form (2NF)", "Third Normal Form (3NF)", "Boyce-Codd Normal Form (BCNF)"],
+            correctIndex: 1,
+            topic: "Database Normalization",
+            explanation: "2NF eliminates partial functional dependencies where a non-prime attribute depends on a proper subset of a candidate key."
+          },
+          {
+            id: "db-e4",
+            question: "Which ACID property guarantees that database transactions complete entirely or roll back completely on failure?",
+            options: ["Atomicity", "Consistency", "Isolation", "Durability"],
+            correctIndex: 0,
+            topic: "ACID Transaction Properties",
+            explanation: "Atomicity enforces an all-or-nothing execution model for database transactions."
+          },
+          {
+            id: "db-e5",
+            question: "Which integrity rule ensures that a foreign key value must match a primary key value in the referenced parent table?",
+            options: ["Entity Integrity", "Referential Integrity", "Domain Integrity", "User-Defined Integrity"],
+            correctIndex: 1,
+            topic: "Referential Integrity",
+            explanation: "Referential integrity guarantees that foreign keys always point to valid, existing parent table rows."
+          }
+        ];
+      } else if (dLower === "medium") {
+        fallback = [
+          {
+            id: "db-m1",
+            question: "What distinguishes Boyce-Codd Normal Form (BCNF) from Third Normal Form (3NF)?",
+            options: [
+              "3NF permits A -> B where A is not a superkey if B is a prime attribute, whereas BCNF strictly requires A to be a superkey for every non-trivial functional dependency A -> B",
+              "BCNF allows partial functional dependencies while 3NF does not",
+              "3NF applies only to single-attribute keys",
+              "BCNF requires multi-valued dependencies to be eliminated"
+            ],
+            correctIndex: 0,
+            topic: "Advanced Normalization (3NF vs BCNF)",
+            explanation: "3NF permits A -> B if B is a prime attribute even if A is not a superkey; BCNF eliminates this exception."
+          },
+          {
+            id: "db-m2",
+            question: "What is the primary physical storage difference between a Clustered Index and a Non-Clustered Index?",
+            options: [
+              "A clustered index physically sorts and stores data rows on disk in order of the index key, allowing only 1 per table; non-clustered indexes store pointers to rows and allow multiple per table",
+              "Non-clustered indexes physically sort table rows on disk while clustered indexes use hash buckets",
+              "Clustered indexes can only be created on foreign keys",
+              "There is no performance difference between clustered and non-clustered indexes"
+            ],
+            correctIndex: 0,
+            topic: "Physical Index Storage",
+            explanation: "Because physical table rows can only be stored in one sorted order on disk, a table can have only one clustered index."
+          },
+          {
+            id: "db-m3",
+            question: "In transaction concurrency control, which anomaly occurs when Transaction A reads data modified by Transaction B before B commits or rolls back?",
+            options: ["Non-repeatable Read", "Phantom Read", "Dirty Read", "Lost Update"],
+            correctIndex: 2,
+            topic: "Transaction Isolation Anomalies",
+            explanation: "A Dirty Read occurs when uncommitted changes from one transaction are read by another concurrent transaction."
+          },
+          {
+            id: "db-m4",
+            question: "Why are B+ Trees preferred over standard Binary Search Trees for disk-based relational database indexing?",
+            options: [
+              "B+ Trees have high node fan-out, resulting in low tree height that minimizes expensive disk block I/O reads, and leaf nodes are linked for sequential range scans",
+              "Binary Search Trees store leaf nodes faster on magnetic drives",
+              "B+ Trees take less memory space than binary trees",
+              "B+ Trees eliminate the need for foreign keys"
+            ],
+            correctIndex: 0,
+            topic: "Storage Architecture & B+ Trees",
+            explanation: "B+ Tree fan-out reduces tree height to 3-4 levels for millions of records, drastically reducing disk I/O reads."
+          },
+          {
+            id: "db-m5",
+            question: "What is the primary role of Write-Ahead Logging (WAL) in database storage engines?",
+            options: [
+              "Ensuring log changes are flushed to persistent storage BEFORE corresponding dirty data pages are written to disk, guaranteeing Durability and Crash Recovery",
+              "Encrypting user passwords before indexing",
+              "Compressing table indexes to save disk space",
+              "Preventing deadlocks between concurrent SELECT queries"
+            ],
+            correctIndex: 0,
+            topic: "Write-Ahead Logging (WAL) & Recovery",
+            explanation: "WAL guarantees that transaction log records are written to persistent media prior to flushing modified data pages, enabling REDO/UNDO on crash."
+          }
+        ];
+      } else {
+        // Hard / Advanced Level
+        fallback = [
+          {
+            id: "db-h1",
+            question: "In Two-Phase Locking (2PL), what specific property distinguishes Strict 2PL from Basic 2PL, and what critical database recovery issue does Strict 2PL prevent?",
+            options: [
+              "Strict 2PL holds all exclusive (write) locks until the transaction commits or aborts; preventing cascading aborts (cascading rollbacks)",
+              "Strict 2PL releases read locks before write locks; preventing deadlocks",
+              "Strict 2PL eliminates the need for shared locks entirely",
+              "Strict 2PL guarantees serializable isolation without locking"
+            ],
+            correctIndex: 0,
+            topic: "Two-Phase Locking (Strict 2PL)",
+            explanation: "By keeping exclusive locks until commit/abort, Strict 2PL prevents other transactions from reading uncommitted modifications, avoiding cascading rollbacks."
+          },
+          {
+            id: "db-h2",
+            question: "In Multi-Version Concurrency Control (MVCC), how do database engines (like PostgreSQL / InnoDB) allow concurrent readers and writers without blocking each other?",
+            options: [
+              "Writers create a new tuple version with creation/deletion transaction IDs (xmin/xmax), while readers inspect a snapshot of committed tuple versions active at their transaction start",
+              "Readers lock the entire database table in exclusive mode while writers queue in RAM",
+              "MVCC uses global OS thread locks to pause readers during write operations",
+              "MVCC converts all SQL statements into in-memory single-threaded execution loops"
+            ],
+            correctIndex: 0,
+            topic: "Multi-Version Concurrency Control (MVCC)",
+            explanation: "MVCC maintains multiple historical tuple versions so readers read older committed snapshots without blocking concurrent writers."
+          },
+          {
+            id: "db-h3",
+            question: "When executing a SQL query joining a 10M row table with a 100 row lookup table, which join algorithm is optimal for the query optimizer?",
+            options: ["Hash Join (building an in-memory hash table on the 100 row relation)", "Nested Loop Join scanning 10M rows 100 times", "Sort-Merge Join requiring sorting 10M rows", "Cross Cartesian Product Join"],
+            correctIndex: 0,
+            topic: "Query Optimization & Join Algorithms",
+            explanation: "Hash Join builds an in-memory hash table of the small relation in O(M) time, then probes it in a single linear O(N) pass over the large table."
+          },
+          {
+            id: "db-h4",
+            question: "Under ANSI SQL Isolation Levels, which anomaly is STILL possible under Repeatable Read isolation, but prevented under Serializable isolation?",
+            options: ["Phantom Read (where concurrent inserts cause a range query to return new matching rows on re-execution)", "Dirty Read", "Non-Repeatable Read", "Dirty Write"],
+            correctIndex: 0,
+            topic: "Phantom Reads & Serializable Isolation",
+            explanation: "Repeatable Read locks existing records but can allow new concurrent inserts (phantoms) unless range locks or predicate locks are acquired."
+          },
+          {
+            id: "db-h5",
+            question: "What buffer pool page replacement algorithm improves upon basic LRU by maintaining two queues (one for single-touch pages and one for frequently accessed pages) to prevent sequential scan pollution?",
+            options: ["2Q Algorithm (or LRU-2 / Clock-Pro)", "Basic First-In-First-Out (FIFO)", "Random Page Replacement", "Optimal Belady Algorithm"],
+            correctIndex: 0,
+            topic: "Buffer Pool Management & Page Replacement",
+            explanation: "The 2Q algorithm separates cold single-access pages (from sequential table scans) from hot multi-touch pages to avoid flushing high-utility cache pages."
+          }
+        ];
+      }
     } else if (sLower.includes("machine learning") || sLower.includes("ai") || sLower.includes("python")) {
-      fallback = [
-        {
-          id: "ml1",
-          question: "What machine learning phenomenon occurs when a model achieves high training accuracy but poor test accuracy?",
-          options: ["Underfitting", "Overfitting (High Variance)", "High Bias", "Data Leakage"],
-          correctIndex: 1,
-          topic: "Model Evaluation & Bias-Variance Tradeoff",
-          explanation: "Overfitting happens when a model learns training noise and specific details, hurting generalizability to unseen data."
-        },
-        {
-          id: "ml2",
-          question: "Which regularization technique adds the absolute sum of coefficients (L1 penalty) to the loss function, inducing feature sparsity?",
-          options: ["Ridge Regression (L2)", "Lasso Regression (L1)", "ElasticNet without L1", "Dropout alone"],
-          correctIndex: 1,
-          topic: "Regularization",
-          explanation: "Lasso penalizes absolute coefficient values, shrinking less impactful weights to zero for automatic feature selection."
-        },
-        {
-          id: "ml3",
-          question: "For an imbalanced dataset where false negatives are critical (e.g. medical diagnosis), which metric should be prioritized?",
-          options: ["Accuracy", "Recall (Sensitivity)", "Precision alone", "Specificity"],
-          correctIndex: 1,
-          topic: "Classification Metrics",
-          explanation: "Recall measures the proportion of actual positives correctly identified (TP / (TP + FN)), minimizing missed critical cases."
-        },
-        {
-          id: "ml4",
-          question: "In neural network optimization, what primary problem does the Adam optimizer mitigate compared to basic Stochastic Gradient Descent?",
-          options: ["Vanishing gradients in output layers", "Slow convergence across sparse features via adaptive per-parameter learning rates", "Memory limitations on CPU", "Overfitting on small datasets"],
-          correctIndex: 1,
-          topic: "Optimization Algorithms",
-          explanation: "Adam computes adaptive learning rates using first and second moment estimates of gradients."
-        },
-        {
-          id: "ml5",
-          question: "Which data manipulation library in Python is the industry standard for fast tabular DataFrame operations?",
-          options: ["NumPy alone", "Pandas", "Matplotlib", "Scipy"],
-          correctIndex: 1,
-          topic: "Data Manipulation",
-          explanation: "Pandas provides intuitive DataFrame structures built on NumPy arrays for tabular transformation and cleaning."
-        }
-      ];
+      if (dLower === "easy") {
+        fallback = [
+          {
+            id: "ml-e1",
+            question: "What machine learning paradigm uses labeled datasets to train models to predict targets?",
+            options: ["Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Self-Supervised Learning"],
+            correctIndex: 0,
+            topic: "Machine Learning Paradigms",
+            explanation: "Supervised learning relies on labeled input-output pairs to learn mapping functions."
+          },
+          {
+            id: "ml-e2",
+            question: "What machine learning phenomenon occurs when a model fits training data perfectly but fails to generalize to unseen test data?",
+            options: ["Underfitting", "Overfitting", "High Bias", "Data Leakage"],
+            correctIndex: 1,
+            topic: "Model Overfitting",
+            explanation: "Overfitting happens when a model memorizes noise in training data instead of learning general patterns."
+          },
+          {
+            id: "ml-e3",
+            question: "Which Python library is the industry standard for fast multidimensional array processing and linear algebra?",
+            options: ["NumPy", "Flask", "BeautifulSoup", "NLTK"],
+            correctIndex: 0,
+            topic: "Python Data Science Libraries",
+            explanation: "NumPy provides vectorised N-dimensional array objects optimized in C/Fortran."
+          },
+          {
+            id: "ml-e4",
+            question: "In binary classification, what does the Precision metric measure?",
+            options: ["True Positives / (True Positives + False Positives)", "True Positives / (True Positives + False Negatives)", "Total Correct / Total Samples", "True Negatives / Total Negatives"],
+            correctIndex: 0,
+            topic: "Classification Metrics",
+            explanation: "Precision measures the accuracy of positive predictions (how many predicted positives were actually positive)."
+          },
+          {
+            id: "ml-e5",
+            question: "Which algorithm is a popular unsupervised technique used for partitioning data into K distinct clusters?",
+            options: ["K-Means Clustering", "Linear Regression", "Logistic Regression", "Decision Tree Classifier"],
+            correctIndex: 0,
+            topic: "Unsupervised Clustering",
+            explanation: "K-Means minimizes intra-cluster variance by iteratively updating K centroid locations."
+          }
+        ];
+      } else {
+        fallback = [
+          {
+            id: "ml1",
+            question: "Which regularization technique adds the absolute sum of coefficients (L1 penalty) to the loss function, inducing feature sparsity?",
+            options: ["Ridge Regression (L2)", "Lasso Regression (L1)", "ElasticNet without L1", "Dropout alone"],
+            correctIndex: 1,
+            topic: "L1 Regularization & Feature Selection",
+            explanation: "Lasso penalizes absolute coefficient values, shrinking non-essential feature weights to zero."
+          },
+          {
+            id: "ml2",
+            question: "For an imbalanced dataset where false negatives are critical (e.g. cancer diagnosis), which metric should be prioritized?",
+            options: ["Accuracy", "Recall (Sensitivity)", "Precision alone", "Specificity"],
+            correctIndex: 1,
+            topic: "Classification Metrics & Sensitivity",
+            explanation: "Recall measures the proportion of actual positives correctly identified (TP / (TP + FN)), minimizing missed critical cases."
+          },
+          {
+            id: "ml3",
+            question: "In neural network optimization, what primary problem does the Adam optimizer mitigate compared to basic Stochastic Gradient Descent?",
+            options: ["Vanishing gradients in output layers", "Slow convergence across sparse features via adaptive per-parameter learning rates", "Memory limitations on CPU", "Overfitting on small datasets"],
+            correctIndex: 1,
+            topic: "Adaptive Optimization (Adam)",
+            explanation: "Adam computes adaptive learning rates using first and second moment estimates of gradients."
+          },
+          {
+            id: "ml4",
+            question: "How do Residual Networks (ResNets) solve the vanishing gradient problem in extremely deep neural networks (100+ layers)?",
+            options: ["Using skip/shortcut connections that pass identity mappings F(x) + x across blocks", "Replacing ReLU activation with Sigmoid", "Removing backpropagation entirely", "Increasing learning rate exponentially"],
+            correctIndex: 0,
+            topic: "Deep Learning & ResNet Architecture",
+            explanation: "Skip connections allow gradients to flow directly back through identity shortcuts during backpropagation."
+          },
+          {
+            id: "ml5",
+            question: "What is the primary self-attention mechanism complexity in standard Transformer models with sequence length L?",
+            options: ["O(L)", "O(L^2)", "O(L log L)", "O(L^3)"],
+            correctIndex: 1,
+            topic: "Transformer Self-Attention Complexity",
+            explanation: "Standard Scaled Dot-Product Attention computes Q * K^T, resulting in quadratic O(L^2) time and memory complexity."
+          }
+        ];
+      }
     } else if (sLower.includes("operating") || sLower.includes("os")) {
-      fallback = [
-        {
-          id: "os1",
-          question: "Which of the following is NOT one of Coffman's four necessary conditions for deadlock?",
-          options: ["Mutual Exclusion", "Hold and Wait", "Preemption Allowed", "Circular Wait"],
-          correctIndex: 2,
-          topic: "Deadlock Handling",
-          explanation: "The condition is No Preemption (resources cannot be forcibly taken from a holding process)."
-        },
-        {
-          id: "os2",
-          question: "What is the primary role of the Translation Lookaside Buffer (TLB) in virtual memory management?",
-          options: ["To store dirty cache lines", "To cache recent virtual-to-physical address translations for rapid page lookups", "To schedule background I/O requests", "To compress disk swap files"],
-          correctIndex: 1,
-          topic: "Memory Management & Paging",
-          explanation: "The TLB is a high-speed hardware cache that avoids multiple memory lookups during page table walks."
-        },
-        {
-          id: "os3",
-          question: "Which scheduling algorithm is non-preemptive and assigns the CPU to the process with the shortest execution time?",
-          options: ["Round Robin", "Shortest Job First (Non-preemptive SJF)", "Shortest Remaining Time First", "Priority Preemptive"],
-          correctIndex: 1,
-          topic: "CPU Scheduling",
-          explanation: "Non-preemptive SJF runs the shortest queued job to completion before switching."
-        },
-        {
-          id: "os4",
-          question: "What synchronization primitive uses atomic wait() and signal() operations to manage concurrent access to shared resources?",
-          options: ["Semaphore", "Thread Local Storage", "Pipe buffer", "Socket"],
-          correctIndex: 0,
-          topic: "Process Synchronization",
-          explanation: "Counting and binary semaphores coordinate critical section access via atomic P/V operations."
-        },
-        {
-          id: "os5",
-          question: "What term describes excessive swapping between RAM and disk paging space, causing near-zero CPU progress?",
-          options: ["Segmentation fault", "Thrashing", "Starvation", "Context jitter"],
-          correctIndex: 1,
-          topic: "Virtual Memory",
-          explanation: "Thrashing occurs when active processes lack sufficient page frames, forcing continuous disk page faults."
-        }
-      ];
+      if (dLower === "easy") {
+        fallback = [
+          {
+            id: "os-e1",
+            question: "What is the core component of an Operating System that manages CPU scheduling, memory, and hardware devices?",
+            options: ["Shell", "Kernel", "Compiler", "Linker"],
+            correctIndex: 1,
+            topic: "OS Core Concepts",
+            explanation: "The Kernel is the central core of the OS residing in memory, managing system calls and hardware resources."
+          },
+          {
+            id: "os-e2",
+            question: "What is a deadlock in operating system process management?",
+            options: ["A state where two or more processes are blocked forever, waiting for resources held by each other", "A memory leak caused by unreleased heap allocations", "A CPU crash caused by infinite recursion", "A fast process execution queue"],
+            correctIndex: 0,
+            topic: "Deadlocks",
+            explanation: "Deadlock occurs when processes hold resources while waiting for other resources locked in a circular dependency."
+          },
+          {
+            id: "os-e3",
+            question: "Which CPU scheduling algorithm allocates fixed time slices (time quanta) to queued processes in cyclic order?",
+            options: ["First-Come First-Served (FCFS)", "Round Robin (RR)", "Shortest Job First (SJF)", "Priority Non-preemptive"],
+            correctIndex: 1,
+            topic: "CPU Scheduling",
+            explanation: "Round Robin uses time-slicing to guarantee fair preemption across all active processes."
+          },
+          {
+            id: "os-e4",
+            question: "What is Virtual Memory in modern operating systems?",
+            options: ["A memory management technique that allows execution of processes larger than physical RAM by swapping pages to secondary disk storage", "GPU memory reserved for 3D rendering", "A hardware RAM chip with zero latency", "A high-speed CPU L1 cache"],
+            correctIndex: 0,
+            topic: "Virtual Memory",
+            explanation: "Virtual memory maps virtual address spaces to physical RAM and disk swap space."
+          },
+          {
+            id: "os-e5",
+            question: "What hardware component translates Virtual Memory addresses to Physical RAM addresses?",
+            options: ["Arithmetic Logic Unit (ALU)", "Memory Management Unit (MMU)", "Direct Memory Access (DMA)", "Control Unit (CU)"],
+            correctIndex: 1,
+            topic: "Memory Management Hardware",
+            explanation: "The MMU performs rapid hardware page table lookups to translate virtual addresses into physical addresses."
+          }
+        ];
+      } else {
+        fallback = [
+          {
+            id: "os1",
+            question: "Which condition is NOT one of Coffman's four necessary conditions for deadlock?",
+            options: ["Mutual Exclusion", "Hold and Wait", "Preemption Allowed", "Circular Wait"],
+            correctIndex: 2,
+            topic: "Deadlock Handling",
+            explanation: "The Coffman condition is No Preemption (resources cannot be forcibly reclaimed from a holding process)."
+          },
+          {
+            id: "os2",
+            question: "What is the primary role of the Translation Lookaside Buffer (TLB) in virtual memory management?",
+            options: ["To store dirty cache lines", "To cache recent virtual-to-physical address translations for rapid page lookups", "To schedule background I/O requests", "To compress disk swap files"],
+            correctIndex: 1,
+            topic: "Memory Management & Paging",
+            explanation: "The TLB is a high-speed hardware cache that avoids multiple memory lookups during page table walks."
+          },
+          {
+            id: "os3",
+            question: "What synchronization primitive uses atomic wait() and signal() operations to manage concurrent access to shared resources?",
+            options: ["Semaphore", "Thread Local Storage", "Pipe buffer", "Socket"],
+            correctIndex: 0,
+            topic: "Process Synchronization",
+            explanation: "Semaphores coordinate critical section access via atomic P/V operations."
+          },
+          {
+            id: "os4",
+            question: "What term describes excessive swapping between RAM and disk paging space, causing near-zero CPU progress?",
+            options: ["Segmentation fault", "Thrashing", "Starvation", "Context jitter"],
+            correctIndex: 1,
+            topic: "Virtual Memory & Thrashing",
+            explanation: "Thrashing occurs when active processes lack sufficient page frames, forcing continuous disk page faults."
+          },
+          {
+            id: "os5",
+            question: "In disk I/O scheduling, how does the SCAN (Elevator) algorithm optimize seek times?",
+            options: ["It services disk requests by moving the drive head back and forth across tracks from one end of the disk to the other", "It always services the nearest request first regardless of direction", "It services requests strictly in order of arrival", "It reads disk sectors in random order"],
+            correctIndex: 0,
+            topic: "Disk Scheduling Algorithms",
+            explanation: "SCAN moves continuously in one direction servicing pending requests until reaching the disk boundary, then reverses direction."
+          }
+        ];
+      }
     } else if (sLower.includes("circuit") || sLower.includes("electrical") || sLower.includes("power") || sLower.includes("machine") || sLower.includes("control")) {
       fallback = [
         {
@@ -1402,15 +1634,6 @@ How can I assist you with your coursework, interview preparation, or career goal
             timeout: 10000
           }
         );
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${GROK_API_KEY}`
-            },
-            timeout: 10000
-          }
-        );
         const grokText = response.data?.choices?.[0]?.message?.content;
         if (grokText && grokText.trim().length > 30) {
           reply = grokText.trim();
@@ -1667,40 +1890,166 @@ exports.generateInterviewQuestions = async (req, res) => {
 // ── 12. Peer Mentors Listing ──────────────────────────────────────────────────
 exports.getPeerMentors = async (req, res) => {
   try {
-    const mentors = [
-      {
-        id: "m1",
-        name: "Arun Kumar",
-        degree: "B.E. Computer Science (4th Year)",
-        college: "PSG Tech, Coimbatore",
-        expertise: ["Data Structures", "System Design", "Placement Prep"],
+    const GraduateProfile = require("../models/GraduateProfile");
+    const currentStudentId = req.student?.id || req.student?._id || req.user?._id;
+
+    // 1. Fetch Graduate Profiles from DB
+    const gradProfiles = await GraduateProfile.find({})
+      .populate("userId", "name email phone userType role")
+      .lean();
+
+    // 2. Fetch Users registered as graduates
+    const gradUsers = await User.find({ userType: "graduate" }).lean();
+
+    // 3. Fetch Senior / Graduated College Student Profiles
+    const seniorProfiles = await CollegeStudentProfile.find({
+      $or: [
+        { currentYear: { $in: ["Graduated", "Alumni", "Graduate", "4th Year", "Final Year"] } },
+        { currentSemester: { $regex: /7th|8th|Graduated/i } }
+      ]
+    })
+      .populate("userId", "name email phone userType role")
+      .lean();
+
+    const mentorMap = new Map();
+
+    // Process Graduate Profiles (most detailed for graduates)
+    for (const gp of gradProfiles) {
+      if (!gp.userId) continue;
+      const uId = String(gp.userId._id || gp.userId);
+      const name = gp.userId.name || [gp.firstName, gp.lastName].filter(Boolean).join(" ") || "Graduate Domain Mentor";
+      const yearLabel = gp.graduationYear ? `Class of ${gp.graduationYear}` : "Graduate Alumni";
+      const degName = gp.degree || gp.domain || gp.field || "Degree Graduate";
+      const degree = `${degName} • ${yearLabel}`;
+      const college = gp.college || gp.university || "Engineering Alumnus";
+
+      let skillsList = [];
+      if (Array.isArray(gp.technicalSkills) && gp.technicalSkills.length > 0) {
+        skillsList = gp.technicalSkills.map(s => (typeof s === "string" ? s : s.name)).filter(Boolean);
+      }
+      if (skillsList.length === 0 && Array.isArray(gp.interests)) {
+        skillsList = gp.interests;
+      }
+      if (skillsList.length === 0) {
+        skillsList = ["Career Guidance", "Placement Strategy", "Domain Expertise"];
+      }
+
+      mentorMap.set(uId, {
+        id: uId,
+        name,
+        degree,
+        college,
+        expertise: skillsList.slice(0, 3),
         rating: 4.9,
         available: true,
-        avatar: "👨‍💻"
-      },
-      {
-        id: "m2",
-        name: "Priya Sundaram",
-        degree: "M.Tech Data Science",
-        college: "Anna University, Chennai",
-        expertise: ["Machine Learning", "Python Analytics", "Research Papers"],
-        rating: 4.8,
-        available: true,
-        avatar: "👩‍🔬"
-      },
-      {
-        id: "m3",
-        name: "Karthik Raja",
-        degree: "B.Tech IT (Final Year)",
-        college: "CIT, Coimbatore",
-        expertise: ["Full Stack React/Node", "Cloud DevOps", "Hackathons"],
-        rating: 4.95,
-        available: true,
-        avatar: "🚀"
+        avatar: "🎓",
+        employmentStatus: gp.employmentStatus || gp.targetCareer || "Industry Professional"
+      });
+    }
+
+    // Process Users with userType === "graduate"
+    for (const u of gradUsers) {
+      const uId = String(u._id);
+      if (!mentorMap.has(uId)) {
+        mentorMap.set(uId, {
+          id: uId,
+          name: u.name || "Graduate Mentor",
+          degree: u.selectedCareer ? `${u.selectedCareer} • Graduate Alumni` : "Verified Graduate Mentor",
+          college: u.district ? `Graduate Alumnus (${u.district})` : "Verified Alumni Mentor",
+          expertise: ["Career Mentorship", "Technical Guidance", "Industry Advice"],
+          rating: 4.8,
+          available: true,
+          avatar: "🎓",
+          employmentStatus: u.selectedCareer || "Graduate Mentor"
+        });
       }
-    ];
+    }
+
+    // Process Senior College Student Profiles (4th year / Final Year / Graduated)
+    for (const sp of seniorProfiles) {
+      if (!sp.userId) continue;
+      const uId = String(sp.userId._id || sp.userId);
+      if (!mentorMap.has(uId)) {
+        const name = sp.userId.name || [sp.firstName, sp.lastName].filter(Boolean).join(" ") || "Senior Mentor";
+        const yr = sp.currentYear === "Graduated" || sp.currentYear === "Alumni" ? "Graduate Alumni" : "Senior (4th Year)";
+        const degree = `${sp.degreeProgramme || sp.domain || "B.E. / B.Tech"} • ${yr}`;
+        const college = sp.institution || sp.institutionDistrict || "Engineering Institution";
+        const skillsList = Array.isArray(sp.skills) && sp.skills.length > 0 ? sp.skills.slice(0, 3) : ["Academic Guidance", "Core Domain"];
+
+        mentorMap.set(uId, {
+          id: uId,
+          name,
+          degree,
+          college,
+          expertise: skillsList,
+          rating: 4.8,
+          available: true,
+          avatar: "🎓"
+        });
+      }
+    }
+
+    let mentors = Array.from(mentorMap.values());
+
+    // Fallback verified graduate alumni if database has no registered graduates yet
+    if (mentors.length === 0) {
+      mentors = [
+        {
+          id: "grad-default-1",
+          name: "Priyadharshini G",
+          degree: "B.E. Computer Science • Graduate (Class of 2024)",
+          college: "Manonmaniam Sundaranar University",
+          expertise: ["Python / Data Science", "Problem Solving & Logic", "System Design"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-2",
+          name: "Ananya Ramaswamy",
+          degree: "B.E. Electronics • Graduate (Class of 2023)",
+          college: "Jaya College of Engineering",
+          expertise: ["Python", "React", "Docker / DevOps"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-3",
+          name: "Kavitha Sundaram",
+          degree: "B.Tech IT • Graduate (Class of 2023)",
+          college: "PSG College of Technology, Coimbatore",
+          expertise: ["JavaScript", "React", "Node.js Architecture"],
+          rating: 5.0,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-4",
+          name: "Suruthika J",
+          degree: "B.E. Computer Science • Graduate (Class of 2024)",
+          college: "National Engineering College",
+          expertise: ["Full Stack Development", "Database Indexing", "Cloud Architecture"],
+          rating: 4.9,
+          available: true,
+          avatar: "🎓"
+        },
+        {
+          id: "grad-default-5",
+          name: "Akash M",
+          degree: "B.E. Electrical Engineering • Graduate (Class of 2023)",
+          college: "Anna University Campus",
+          expertise: ["Core Engineering", "Embedded Systems", "Technical Interviews"],
+          rating: 4.8,
+          available: true,
+          avatar: "🎓"
+        }
+      ];
+    }
+
     return res.json({ success: true, mentors });
   } catch (err) {
+    console.error("Failed to fetch graduate mentors:", err);
     res.status(500).json({ success: false, message: "Failed to load mentors" });
   }
 };

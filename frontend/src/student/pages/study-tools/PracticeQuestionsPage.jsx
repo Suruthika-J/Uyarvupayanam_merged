@@ -28,7 +28,10 @@ export default function PracticeQuestionsPage() {
       'Power Electronics & Motor Drives',
       'Microprocessors & Microcontrollers',
       'Renewable Energy & Smart Grids',
-      'Analog & Digital Electronics'
+      'Analog & Digital Electronics',
+      'Electric Vehicle (EV) Technology & Drives',
+      'Transmission & Distribution Systems',
+      'Energy Management & Power Quality'
     ]
   } else if (/robot|robotics|mechatronics|automation/.test(profileDomainText) || (studentContext?.targetCareer && /robot/i.test(studentContext.targetCareer))) {
     domainFallbackSubjects = [
@@ -38,27 +41,39 @@ export default function PracticeQuestionsPage() {
       'Control Systems & PID Tuning',
       'Computer Vision & OpenCV',
       'Sensors & Actuators in Automation',
-      'SLAM & Autonomous Navigation'
+      'Programmable Logic Controllers (PLC) & SCADA',
+      'SLAM & Autonomous Navigation',
+      'Hydraulics & Pneumatics Systems'
     ]
   } else if (/ece|electronics|communication|telecom|vlsi/.test(profileDomainText)) {
     domainFallbackSubjects = [
-      'Electronic Devices & Circuits',
-      'Digital Signal Processing',
-      'VLSI Design & Semiconductor Tech',
-      'Microcontrollers & Embedded Systems',
-      'Communication Systems & Antennas',
+      'Electronic Devices & Circuits (EDC)',
+      'Digital Logic & Circuit Design',
       'Signals and Systems',
-      'Electromagnetic Fields'
+      'Digital Signal Processing (DSP)',
+      'VLSI Design & Semiconductor Tech',
+      'Microprocessors & Microcontrollers (8085 / 8086 / ARM)',
+      'Communication Systems & Wireless Tech',
+      'Electromagnetic Fields & Transmission Lines',
+      'Antenna & Wave Propagation',
+      'Embedded Systems & Real-Time OS (RTOS)',
+      'RF & Microwave Engineering',
+      'Analog Integrated Circuits (LIC / Op-Amps)',
+      'Optical Communication & Fiber Tech'
     ]
   } else if (/mechanical|mech|thermal|automobile|aerospace/.test(profileDomainText)) {
     domainFallbackSubjects = [
       'Engineering Thermodynamics & Heat Transfer',
-      'Fluid Mechanics & Machinery',
+      'Fluid Mechanics & Hydraulic Machinery',
       'Strength of Materials & Mechanics of Solids',
-      'Kinematics & Dynamics of Machinery',
+      'Kinematics & Dynamics of Machinery (DOM)',
       'Manufacturing Technology & Metallurgy',
-      'CAD / CAM & Finite Element Analysis (FEA)',
-      'Automotive Systems Engineering'
+      'Engineering Materials & Metallurgy',
+      'CAD / CAM / CAE & Finite Element Analysis (FEA)',
+      'Mechatronics, Robotics & Automation',
+      'Internal Combustion Engines & Automobile Engineering',
+      'Industrial Engineering & Operations Research',
+      'Refrigeration & Air Conditioning (RAC)'
     ]
   } else if (/civil|structural|construction|geotechnical/.test(profileDomainText)) {
     domainFallbackSubjects = [
@@ -68,38 +83,101 @@ export default function PracticeQuestionsPage() {
       'Concrete Technology & RCC Design',
       'Surveying & Geomatics Engineering',
       'Design of Steel Structures',
-      'Construction Project Management'
+      'Environmental Engineering & Water Treatment',
+      'Transportation & Highway Engineering',
+      'Construction Project Management & Building Code',
+      'Hydrology & Water Resources Engineering'
     ]
-  } else {
+  } else if (/ai|data science|machine learning|artificial intelligence/.test(profileDomainText)) {
     domainFallbackSubjects = [
       'Data Structures & Algorithms',
-      'Database Management Systems',
+      'Artificial Intelligence & Knowledge Representation',
+      'Machine Learning & Statistical Modeling',
+      'Deep Learning & Neural Networks',
+      'Natural Language Processing (NLP)',
+      'Computer Vision & Image Processing',
+      'Big Data Analytics & Data Engineering',
+      'Database Management Systems (DBMS)',
+      'Python Programming & Data Science Libraries',
+      'Generative AI & Prompt Engineering',
+      'Reinforcement Learning & Autonomous Agents'
+    ]
+  } else if (/it\b|information technology/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Data Structures & Algorithms',
+      'Database Management Systems (DBMS)',
+      'Web Architecture & Cloud Microservices',
+      'Operating Systems & System Administration',
+      'Computer Networks & Information Security',
+      'Object Oriented Programming (Java / Python)',
+      'Enterprise Software & DevOps',
+      'Information Systems & IT Management',
+      'Big Data Analytics & Data Engineering',
+      'Cyber Security & Cryptography',
+      'Mobile Computing & Wireless Tech'
+    ]
+  } else if (/bio|biotech|biomedical|chemical/.test(profileDomainText)) {
+    domainFallbackSubjects = [
+      'Biochemistry & Cell Biology',
+      'Molecular Biology & Genetic Engineering',
+      'Bioprocess Engineering & Fermentation Tech',
+      'Heat & Mass Transfer Operations',
+      'Chemical Reaction Engineering & Thermodynamics',
+      'Immunology & Medical Instrumentation',
+      'Bioinformatics & Computational Biology',
+      'Process Dynamics & Control'
+    ]
+  } else {
+    // Computer Science & Engineering (CSE) / Software Engineering
+    domainFallbackSubjects = [
+      'Data Structures & Algorithms',
+      'Database Management Systems (DBMS)',
       'Operating Systems',
-      'Computer Networks',
-      'Machine Learning & Artificial Intelligence',
+      'Computer Networks & Security',
+      'Object Oriented Programming (C++ / Java / Python)',
       'Web Technologies & Cloud Computing',
-      'Software Engineering & System Design'
+      'Software Engineering & Agile Architecture',
+      'Design & Analysis of Algorithms (DAA)',
+      'Computer Organization & Architecture',
+      'Theory of Computation & Automata',
+      'Compiler Design',
+      'Artificial Intelligence & Machine Learning',
+      'Cyber Security & Cryptography',
+      'Cloud Computing & DevOps',
+      'Distributed Systems & Parallel Computing',
+      'Mobile Application Development',
+      'Data Mining & Data Warehousing',
+      'Microprocessors & Assembly Language'
     ]
   }
 
   const studentSubjects = (studentContext?.subjects || profile?.subjects || []).filter(Boolean)
-  const recommendedSubjects = studentSubjects.length > 0 ? studentSubjects : domainFallbackSubjects
+  // Merge enrolled student subjects with complete department core subjects so no subjects are missing
+  const recommendedSubjects = Array.from(new Set([...studentSubjects, ...domainFallbackSubjects]))
   
-  const allSystemSubjects = [
+  const allSystemSubjects = Array.from(new Set([
+    'Data Structures & Algorithms', 'Database Management Systems (DBMS)', 'Operating Systems', 'Computer Networks & Security',
+    'Object Oriented Programming (C++ / Java / Python)', 'Web Technologies & Cloud Computing', 'Software Engineering & Agile Architecture',
+    'Design & Analysis of Algorithms (DAA)', 'Computer Organization & Architecture', 'Theory of Computation & Automata',
+    'Compiler Design', 'Artificial Intelligence & Machine Learning', 'Cyber Security & Cryptography', 'Cloud Computing & DevOps',
+    'Distributed Systems & Parallel Computing', 'Mobile Application Development', 'Data Mining & Data Warehousing',
+    'Artificial Intelligence & Knowledge Representation', 'Machine Learning & Statistical Modeling', 'Deep Learning & Neural Networks',
+    'Natural Language Processing (NLP)', 'Computer Vision & Image Processing', 'Big Data Analytics & Data Engineering',
     'Circuit Theory & Network Analysis', 'Electrical Machines (Transformers & Motors)', 'Power Systems & High Voltage Engineering',
     'Control Systems Engineering', 'Power Electronics & Motor Drives', 'Microprocessors & Microcontrollers',
-    'Robot Operating System (ROS 2)', 'Robotics Kinematics & Dynamics', 'Computer Vision & OpenCV',
-    'Electronic Devices & Circuits', 'Digital Signal Processing', 'VLSI Design & Semiconductor Tech',
-    'Engineering Thermodynamics & Heat Transfer', 'Fluid Mechanics & Machinery', 'Strength of Materials & Mechanics of Solids',
+    'Robot Operating System (ROS 2)', 'Robotics Kinematics & Dynamics', 'OpenCV & Computer Vision',
+    'Electronic Devices & Circuits (EDC)', 'Digital Signal Processing (DSP)', 'VLSI Design & Semiconductor Tech',
+    'Engineering Thermodynamics & Heat Transfer', 'Fluid Mechanics & Hydraulic Machinery', 'Strength of Materials & Mechanics of Solids',
+    'Kinematics & Dynamics of Machinery (DOM)', 'Manufacturing Technology & Metallurgy', 'CAD / CAM / CAE & FEA',
     'Structural Analysis & Solid Mechanics', 'Soil Mechanics & Foundation Engineering', 'Concrete Technology & RCC Design',
-    'Data Structures & Algorithms', 'Database Management Systems', 'Operating Systems', 'Computer Networks', 'Machine Learning & Artificial Intelligence'
-  ]
+    'Biochemistry & Cell Biology', 'Molecular Biology & Genetic Engineering', 'Bioprocess Engineering'
+  ]))
 
   const activeSubjectList = exploreAll ? allSystemSubjects : recommendedSubjects
 
   useEffect(() => {
     if (recommendedSubjects.length > 0) {
-      if (!subject || !recommendedSubjects.includes(subject)) {
+      if (!subject || !activeSubjectList.includes(subject)) {
         setSubject(recommendedSubjects[0])
       }
     }
@@ -113,19 +191,26 @@ export default function PracticeQuestionsPage() {
   const [resultData, setResultData] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (targetDiff = null) => {
     setLoading(true)
     setError('')
     setSubmitted(false)
     setResultData(null)
     setCurrentIndex(0)
     setSelectedAnswers({})
-    setCurrentDifficulty('Easy')
+
+    const diffToUse = targetDiff || currentDifficulty || 'Easy'
+    setCurrentDifficulty(diffToUse)
 
     try {
       const res = await axiosInstance.post(
         '/study-tools/practice-questions',
-        { subject, difficulty: currentDifficulty, count: 5 }
+        {
+          subject,
+          difficulty: diffToUse,
+          count: 5,
+          timestamp: Date.now()
+        }
       )
       if (res.data?.success && Array.isArray(res.data.questions)) {
         setQuestions(res.data.questions)
@@ -144,19 +229,12 @@ export default function PracticeQuestionsPage() {
   }
 
   useEffect(() => {
-    fetchQuestions()
+    fetchQuestions('Easy')
   }, [subject])
 
   const handleSelectOption = (qId, optionIdx) => {
     if (submitted) return
     setSelectedAnswers(prev => ({ ...prev, [qId]: optionIdx }))
-
-    // Rule-based adaptive difficulty logic:
-    const q = questions[currentIndex]
-    if (q && optionIdx === q.correctIndex) {
-      if (currentDifficulty === 'Easy') setCurrentDifficulty('Medium')
-      else if (currentDifficulty === 'Medium') setCurrentDifficulty('Hard')
-    }
   }
 
   const handleSubmitQuiz = async () => {
@@ -174,7 +252,7 @@ export default function PracticeQuestionsPage() {
 
       const res = await axiosInstance.post(
         '/study-tools/assessment/submit',
-        { subject, assessmentType: 'Practice Test', userAnswers, totalQuestions: questions.length }
+        { subject, assessmentType: `${currentDifficulty} Practice Test`, userAnswers, totalQuestions: questions.length }
       )
 
       if (res.data?.success) {
@@ -186,6 +264,14 @@ export default function PracticeQuestionsPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const getNextDifficulty = (current, scorePct = 100) => {
+    if (scorePct < 60) return current
+    if (current === 'Easy') return 'Medium'
+    if (current === 'Medium') return 'Hard'
+    if (current === 'Hard') return 'Advanced'
+    return 'Hard'
   }
 
   return (
@@ -201,16 +287,31 @@ export default function PracticeQuestionsPage() {
             Subject & Skill Practice Quiz
           </h1>
           <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '4px 0 0' }}>
-            Adaptive difficulty questions (Easy → Medium → Hard). Diagnostic results persist to performance analytics.
+            Adaptive difficulty questions (Easy → Medium → Hard → Advanced). Diagnostic results persist to performance analytics.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 16, background: '#dbeafe', color: '#1e40af' }}>
-            Difficulty: {currentDifficulty}
-          </span>
-          <SBtn variant="primary" onClick={fetchQuestions} disabled={loading}>
-            <FiRefreshCw size={15} style={{ marginRight: 6 }} /> Reset Test
+        {/* DIFFICULTY SWITCHER PILLS */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-text3)' }}>Difficulty:</span>
+          {['Easy', 'Medium', 'Hard', 'Advanced'].map(diff => (
+            <button
+              key={diff}
+              type="button"
+              onClick={() => fetchQuestions(diff)}
+              style={{
+                padding: '6px 14px', borderRadius: 16, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                border: currentDifficulty === diff ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
+                background: currentDifficulty === diff ? 'var(--s-primary)' : '#f8fafc',
+                color: currentDifficulty === diff ? '#fff' : 'var(--s-text2)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {diff}
+            </button>
+          ))}
+          <SBtn variant="secondary" onClick={() => fetchQuestions(currentDifficulty)} disabled={loading} style={{ padding: '6px 12px', fontSize: 12 }}>
+            <FiRefreshCw size={14} style={{ marginRight: 4 }} /> New Test
           </SBtn>
         </div>
       </div>
@@ -240,14 +341,14 @@ export default function PracticeQuestionsPage() {
       {/* QUIZ QUESTION CARDS */}
       {loading ? (
         <AIGenerating
-          label={`Generating adaptive practice questions for ${subject}`}
+          label={`Generating ${currentDifficulty} level practice questions for ${subject}`}
           sub="Crafting a personalized diagnostic test with adaptive difficulty escalation..."
         />
       ) : error ? (
         <AIFailure
           title="Couldn’t generate practice questions"
           message={error}
-          onRetry={fetchQuestions}
+          onRetry={() => fetchQuestions(currentDifficulty)}
           retryLabel="Retry Generation"
         />
       ) : submitted && resultData ? (
@@ -256,7 +357,7 @@ export default function PracticeQuestionsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
               <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: 'var(--s-primary)' }}>
-                Assessment Completed
+                {currentDifficulty} Level Assessment Completed
               </span>
               <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--s-text)', margin: '2px 0 0' }}>
                 Diagnostic Performance Score
@@ -301,25 +402,47 @@ export default function PracticeQuestionsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, borderTop: '1px solid var(--s-border)' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--s-text2)' }}>
-              Recommended Next Action: <strong>{resultData.recommendedNextAction}</strong>
-            </span>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <SBtn variant="primary" onClick={() => navigate('/college/academic/planner')}>
-                Open Study Planner <FiArrowRight style={{ marginLeft: 6 }} />
-              </SBtn>
-              <SBtn variant="secondary" onClick={fetchQuestions}>
-                Retake Assessment
-              </SBtn>
-            </div>
-          </div>
+          {/* ACTION FOOTER WITH CONTINUOUS PROGRESSION */}
+          {(() => {
+            const scorePct = resultData.scorePercentage || 0
+            const nextDiff = getNextDifficulty(currentDifficulty, scorePct)
+            const isAdvance = nextDiff !== currentDifficulty
+
+            return (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, borderTop: '1px solid var(--s-border)', flexWrap: 'wrap', gap: 14 }}>
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--s-text2)', display: 'block' }}>
+                    Recommended Next Action: <strong>{isAdvance ? `Proceed to ${nextDiff} Level Assessment` : `Practice Fresh ${currentDifficulty} Questions`}</strong>
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--s-text3)' }}>
+                    {isAdvance ? `Great job! Step up to ${nextDiff} difficulty level for ${subject}.` : `Score under 60% — retry ${currentDifficulty} level to master core concepts.`}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <SBtn
+                    variant="primary"
+                    onClick={() => fetchQuestions(nextDiff)}
+                    style={{ background: isAdvance ? '#047857' : 'var(--s-primary)', border: 'none', padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 800 }}
+                  >
+                    <FiZap style={{ marginRight: 6 }} />
+                    {isAdvance ? `Proceed to ${nextDiff} Level Test (5 Fresh Qs) →` : `Generate Fresh ${currentDifficulty} Test (5 Qs) →`}
+                  </SBtn>
+                  <SBtn variant="secondary" onClick={() => fetchQuestions(currentDifficulty)} style={{ borderRadius: 12, fontSize: 13 }}>
+                    <FiRefreshCw style={{ marginRight: 6 }} /> Repeat {currentDifficulty} Level
+                  </SBtn>
+                  <SBtn variant="secondary" onClick={() => navigate('/college/academic/planner')} style={{ borderRadius: 12, fontSize: 13 }}>
+                    Open Study Planner <FiArrowRight style={{ marginLeft: 6 }} />
+                  </SBtn>
+                </div>
+              </div>
+            )
+          })()}
         </SCard>
       ) : questions.length === 0 ? (
         <SEmpty
           icon="📝"
           title="No questions generated yet"
-          desc="Pick a subject and reset the test to generate a fresh set of adaptive practice questions."
+          desc="Pick a subject and select a difficulty level to generate a fresh set of adaptive practice questions."
         />
       ) : (
         /* ACTIVE QUESTION LIST */
@@ -334,7 +457,9 @@ export default function PracticeQuestionsPage() {
                   <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
                     Question {qIdx + 1} of {questions.length} • {q.topic || subject}
                   </span>
-                  <SBadge color="blue">{currentDifficulty} Level</SBadge>
+                  <SBadge color={currentDifficulty === 'Easy' ? 'green' : currentDifficulty === 'Medium' ? 'orange' : 'purple'}>
+                    {currentDifficulty} Level
+                  </SBadge>
                 </div>
 
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 16px', lineHeight: 1.5 }}>
@@ -373,7 +498,7 @@ export default function PracticeQuestionsPage() {
               disabled={submitting || Object.keys(selectedAnswers).length === 0}
               style={{ padding: '12px 30px', borderRadius: 14, fontSize: 15 }}
             >
-              {submitting ? 'Submitting Result...' : 'Submit Diagnostic Assessment'}
+              {submitting ? 'Submitting Result...' : `Submit ${currentDifficulty} Level Assessment`}
             </SBtn>
           </div>
         </div>
