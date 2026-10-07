@@ -9,7 +9,16 @@ import AdminLayout from './admin/pages/AdminLayout'
 import StudentRoutes from './student/StudentRoutes'
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
+  // Wait for the token restore effect to finish before deciding auth state,
+  // otherwise a hard refresh of a deep admin link bounces to /admin.
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif', color: '#64748b', fontWeight: 700 }}>
+        Loading…
+      </div>
+    )
+  }
   return isAuthenticated ? children : <Navigate to="/login" replace />
 }
 

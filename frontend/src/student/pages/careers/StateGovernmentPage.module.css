@@ -1,0 +1,155 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   StateGovernmentPage — state-level government careers. Currently offers the
+   Tamil Nadu drill-down; more states can be added as cards.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  background: #fff;
+  border-bottom: 1px solid var(--s-border);
+  padding: 72px 24px 56px;
+}
+
+.heroInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 14px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--s-text);
+}
+
+.heroDesc {
+  max-width: 640px;
+  margin: 0 auto 24px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--s-text2);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--s-text3);
+}
+
+.crumb a {
+  color: var(--s-blue);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  text-decoration: underline;
+}
+
+.section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 24px 8px;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--s-text);
+}
+
+.sectionDesc {
+  max-width: 620px;
+  margin: 0 auto;
+  font-size: 14.5px;
+  color: var(--s-text2);
+}
+
+/* ── State cards (Tamil Nadu for now) ──────────────────────────────────────── */
+.stateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.stateCard {
+  display: block;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stateCard:hover {
+  border-color: var(--s-blue);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.stateName {
+  margin: 0 0 10px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--s-blue);
+}
+
+.stateDesc {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--s-text2);
+}
+
+.stateLink {
+  display: inline-block;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--s-blue);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .hero {
+    padding: 52px 20px 40px;
+  }
+
+  .section {
+    padding: 40px 20px 4px;
+  }
+
+  .stateCard {
+    padding: 24px;
+  }
+}

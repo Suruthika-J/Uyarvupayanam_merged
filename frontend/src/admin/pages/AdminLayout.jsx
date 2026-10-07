@@ -39,6 +39,13 @@ import CollegeCareerCatalogManagementPage from './admin/CollegeCareerCatalogMana
 import CollegeStudentsPage from './admin/CollegeStudentsPage'
 import CollegeScholarshipsPage from './admin/CollegeScholarshipsPage'
 
+import GraduateExamsHome from './admin/graduate/GraduateExamsHome'
+import GraduateStatesPage from './admin/graduate/GraduateStatesPage'
+import GraduateStatePage from './admin/graduate/GraduateStatePage'
+import GraduateCentralPage from './admin/graduate/GraduateCentralPage'
+import GraduateOrgExamsPage from './admin/graduate/GraduateOrgExamsPage'
+import GraduateExamFormPage from './admin/graduate/GraduateExamFormPage'
+
 const NAV = [
   { id: 'dashboard', icon: '📊', label: 'Dashboard', path: '' },
   { id: 'users', icon: '👥', label: 'School Students', path: 'users' },
@@ -51,6 +58,7 @@ const NAV = [
   { id: 'streams', icon: '🧭', label: 'Streams After 10th', path: 'streams' },
   { id: 'courses', icon: '📘', label: 'Course Management', path: 'courses' },
   { id: 'exams', icon: '📝', label: 'Exam Management', path: 'exams' },
+  { id: 'graduate-exams', icon: '🏅', label: 'Graduate Exams', path: 'graduate-exams' },
   { id: 'colleges', icon: '🏫', label: 'College Management', path: 'colleges' },
   { id: 'courses-colleges', icon: '📚', label: 'Courses & Colleges', path: 'courses-colleges' },
   { id: 'scholarships', icon: '🎓', label: 'School Scholarships', path: 'scholarships' },
@@ -77,6 +85,7 @@ const PAGE_META = {
   'streams': { title: 'Streams After 10th', sub: 'HSC groups, vocational & polytechnic diploma courses' },
   'courses': { title: 'Course Management', sub: 'Academic & skill courses' },
   'exams': { title: 'Exam Management', sub: 'Entrance exams & important dates' },
+  'graduate-exams': { title: 'Graduate Exams', sub: 'Graduate-level government recruitment examinations' },
   'colleges': { title: 'College Management', sub: 'College database' },
   'courses-colleges': { title: 'Courses & Colleges', sub: 'Select a stream to view its courses and colleges' },
   'scholarships': { title: 'School Scholarships', sub: 'School scholarship listings & deadlines' },
@@ -104,9 +113,13 @@ export default function AdminLayout() {
   const nestedStream = currentPath.startsWith('courses-colleges/')
     ? currentPath.replace('courses-colleges/', '').split('/')[0]
     : null
+  // Nested "graduate-exams/…" pages keep the graduate-exams module label.
+  const nestedGrad = currentPath === 'graduate-exams' || currentPath.startsWith('graduate-exams/')
   const meta = nestedStream
     ? { title: PAGE_META['courses-colleges'].title, sub: `${streamLabel(nestedStream)} — courses, colleges & seats` }
-    : (PAGE_META[currentPath] || PAGE_META[''])
+    : nestedGrad
+      ? PAGE_META['graduate-exams']
+      : (PAGE_META[currentPath] || PAGE_META[''])
 
   const go = (path) => navigate(path ? `/admin/${path}` : '/admin')
 
@@ -132,7 +145,7 @@ export default function AdminLayout() {
         <nav className={styles.nav}>
           <div className={styles.navLabel}>{sidebarOpen && 'MAIN MENU'}</div>
           {NAV.map(n => {
-            const isActive = currentPath === n.path || (n.id === 'careers' && currentPath.includes('career-paths')) || (n.id === 'courses-colleges' && currentPath.startsWith('courses-colleges'))
+            const isActive = currentPath === n.path || (n.id === 'careers' && currentPath.includes('career-paths')) || (n.id === 'courses-colleges' && currentPath.startsWith('courses-colleges')) || (n.id === 'graduate-exams' && currentPath.startsWith('graduate-exams'))
             return (
               <button key={n.id}
                 className={`${styles.navItem} ${isActive ? styles.navActive : ''}`}
@@ -206,6 +219,15 @@ export default function AdminLayout() {
             <Route path="courses" element={<CoursesPage />} />
             <Route path="courses/edit/:id" element={<CourseDetailsEditPage />} />
             <Route path="exams" element={<ExamsPage />} />
+
+            {/* Graduate Exams Module */}
+            <Route path="graduate-exams" element={<GraduateExamsHome />} />
+            <Route path="graduate-exams/state" element={<GraduateStatesPage />} />
+            <Route path="graduate-exams/state/:state" element={<GraduateStatePage />} />
+            <Route path="graduate-exams/central" element={<GraduateCentralPage />} />
+            <Route path="graduate-exams/organization/:orgId" element={<GraduateOrgExamsPage />} />
+            <Route path="graduate-exams/exam/new" element={<GraduateExamFormPage />} />
+            <Route path="graduate-exams/exam/:id" element={<GraduateExamFormPage />} />
             <Route path="colleges" element={<CollegesPage />} />
             <Route path="courses-colleges" element={<StreamSelectorPage />} />
             <Route path="courses-colleges/:stream" element={<CoursesCollegesPage />} />

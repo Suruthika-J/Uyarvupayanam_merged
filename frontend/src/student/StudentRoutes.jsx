@@ -50,6 +50,13 @@ import RecommendationResultPage from './pages/onboarding/RecommendationResultPag
 import Class5CommunicationPage from './pages/careers/Class5CommunicationPage'
 import Class5PassportPage from './pages/careers/Class5PassportPage'
 import PatternMasterPage from './pages/careers/PatternMasterPage'
+import GovernmentCareerPage from './pages/careers/GovernmentCareerPage'
+import CentralGovernmentPage from './pages/careers/CentralGovernmentPage'
+import StateGovernmentPage from './pages/careers/StateGovernmentPage'
+import TamilNaduCareerPage from './pages/careers/TamilNaduCareerPage'
+import OrgExamsPage from './pages/careers/OrgExamsPage'
+import GraduateExamDetailPage from './pages/careers/GraduateExamDetailPage'
+import PrivateCareerPage from './pages/careers/PrivateCareerPage'
 
 // Class 8 Maths Missions (gamified learning)
 import MathsMissionsPage from './pages/class8/maths/MathsMissionsPage'
@@ -303,6 +310,37 @@ export default function StudentRoutes() {
             <Route path="careers/class/:classKey" element={<PreserveParamRedirect to="/student/careers/class/:classKey" />} />
             <Route path="student/careers/path/:id" element={<CareerDetailPage />} />
             <Route path="careers/path/:id" element={<PreserveParamRedirect to="/student/careers/path/:id" />} />
+            <Route path="student/careers/government" element={<GovernmentCareerPage />} />
+            <Route path="careers/government" element={<Navigate to="/student/careers/government" replace />} />
+            <Route path="student/careers/government/central" element={<CentralGovernmentPage />} />
+            <Route path="careers/government/central" element={<Navigate to="/student/careers/government/central" replace />} />
+            <Route path="student/careers/government/central/organization/:orgId" element={<OrgExamsPage />} />
+            <Route path="careers/government/central/organization/:orgId" element={<PreserveParamRedirect to="/student/careers/government/central/organization/:orgId" />} />
+            <Route path="student/careers/government/central/organization/:orgId/exam/:slug" element={<GraduateExamDetailPage />} />
+            <Route path="careers/government/central/organization/:orgId/exam/:slug" element={<PreserveParamRedirect to="/student/careers/government/central/organization/:orgId/exam/:slug" />} />
+            <Route path="student/careers/government/state" element={<StateGovernmentPage />} />
+            <Route path="careers/government/state" element={<Navigate to="/student/careers/government/state" replace />} />
+            <Route path="student/careers/government/state/tamil-nadu" element={<TamilNaduCareerPage />} />
+            <Route path="careers/government/state/tamil-nadu" element={<Navigate to="/student/careers/government/state/tamil-nadu" replace />} />
+            <Route path="student/careers/government/state/:stateSlug" element={<TamilNaduCareerPage />} />
+            <Route path="careers/government/state/:stateSlug" element={<PreserveParamRedirect to="/student/careers/government/state/:stateSlug" />} />
+            <Route path="student/careers/government/state/tamil-nadu/tnpsc" element={<OrgExamsPage orgSlug="tnpsc" />} />
+            <Route path="careers/government/state/tamil-nadu/tnpsc" element={<Navigate to="/student/careers/government/state/tamil-nadu/tnpsc" replace />} />
+            <Route path="student/careers/government/state/tamil-nadu/tnpsc/:examId" element={<GraduateExamDetailPage />} />
+            <Route path="careers/government/state/tamil-nadu/tnpsc/:examId" element={<PreserveParamRedirect to="/student/careers/government/state/tamil-nadu/tnpsc/:examId" />} />
+            {/* Legacy state-less TNPSC drill-down aliases (kept working) */}
+            <Route path="student/careers/government/tamil-nadu" element={<Navigate to="/student/careers/government/state/tamil-nadu" replace />} />
+            <Route path="careers/government/tamil-nadu" element={<Navigate to="/student/careers/government/state/tamil-nadu" replace />} />
+            <Route path="student/careers/government/tamil-nadu/tnpsc" element={<OrgExamsPage orgSlug="tnpsc" />} />
+            <Route path="careers/government/tamil-nadu/tnpsc" element={<Navigate to="/student/careers/government/state/tamil-nadu/tnpsc" replace />} />
+            <Route path="student/careers/government/tamil-nadu/tnpsc/:examId" element={<GraduateExamDetailPage />} />
+            <Route path="careers/government/tamil-nadu/tnpsc/:examId" element={<PreserveParamRedirect to="/student/careers/government/tamil-nadu/tnpsc/:examId" />} />
+            <Route path="student/careers/government/state/:stateSlug/organization/:orgId" element={<OrgExamsPage />} />
+            <Route path="careers/government/state/:stateSlug/organization/:orgId" element={<PreserveParamRedirect to="/student/careers/government/state/:stateSlug/organization/:orgId" />} />
+            <Route path="student/careers/government/state/:stateSlug/organization/:orgId/exam/:slug" element={<GraduateExamDetailPage />} />
+            <Route path="careers/government/state/:stateSlug/organization/:orgId/exam/:slug" element={<PreserveParamRedirect to="/student/careers/government/state/:stateSlug/organization/:orgId/exam/:slug" />} />
+            <Route path="student/careers/private" element={<PrivateCareerPage />} />
+            <Route path="careers/private" element={<Navigate to="/student/careers/private" replace />} />
             <Route path="student/colleges" element={<CollegesPage />} />
             <Route path="colleges" element={<Navigate to="/student/colleges" replace />} />
             <Route path="student/colleges/explorer" element={<CollegeCourseExplorer />} />
