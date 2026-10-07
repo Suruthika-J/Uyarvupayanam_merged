@@ -4,6 +4,7 @@ import {
   FiArrowRight, FiCheckCircle, FiChevronDown, FiLayers, FiExternalLink
 } from 'react-icons/fi'
 import JOURNEY_DATA from '../../../data/journeyData'
+import CareerDirectionSection from './CareerDirectionSection'
 import styles from './CareerJourneyExplorer.module.css'
 
 const TRACKS = [JOURNEY_DATA.school, JOURNEY_DATA.college, JOURNEY_DATA.graduate]
@@ -141,7 +142,7 @@ function PlanBlock({ plan }) {
   )
 }
 
-/* ── Shared detail panel content (used by School cards + College/Grad accordion) ── */
+/* ── Shared detail panel content (used by School cards + College accordion) ── */
 
 function StageDetail({ stage, stages, onOpenNext }) {
   const next = stages.find((s) => s.id === stage.nextStage)
@@ -198,6 +199,7 @@ export default function CareerJourneyExplorer() {
   const track = TRACKS.find((t) => t.id === activeTrackId) || TRACKS[0]
   const stages = track.stages
   const isSchool = track.id === 'school'
+  const isGraduate = track.id === 'graduate'
 
   const switchTrack = (id) => {
     setActiveTrackId(id)
@@ -254,7 +256,10 @@ export default function CareerJourneyExplorer() {
         })}
       </div>
 
-      {stages.length === 0 ? (
+      {isGraduate ? (
+        /* ── Graduate: two career choices rendered directly (no accordion) ── */
+        <CareerDirectionSection />
+      ) : stages.length === 0 ? (
         <div className={styles.comingSoon}>This journey is coming soon — check back shortly.</div>
       ) : (
         <>
@@ -290,7 +295,7 @@ export default function CareerJourneyExplorer() {
               </div>
             </>
           ) : (
-            /* ── College / Graduate: vertical accordion timeline (unchanged) ── */
+            /* ── College: vertical accordion timeline (unchanged) ── */
             <ol className={styles.timeline}>
               {stages.map((stage, i) => {
                 const open = openStageId === stage.id

@@ -1,0 +1,300 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   TnpscExamPage — individual TNPSC exam details. Shows ONLY the selected exam:
+   overview, posts, eligibility, age, selection process, exam pattern, syllabus,
+   important dates and application links. Volatile data defers to the official
+   notification.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  background: #fff;
+  border-bottom: 1px solid var(--s-border);
+  padding: 72px 24px 56px;
+}
+
+.heroInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 14px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--s-text);
+}
+
+.heroDesc {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--s-text2);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--s-text3);
+}
+
+.crumb a {
+  color: var(--s-blue);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  text-decoration: underline;
+}
+
+/* ── Detail shell ──────────────────────────────────────────────────────────── */
+.content {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px 24px 8px;
+}
+
+.overviewCard {
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.overviewTitle {
+  margin: 0 0 16px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--s-text);
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 28px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+}
+
+.fieldValue {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--s-text2);
+}
+
+.section {
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--s-blue);
+}
+
+.list {
+  margin: 0;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list li {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--s-text2);
+}
+
+/* ── Exam pattern table ────────────────────────────────────────────────────── */
+.patternTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.patternTable th,
+.patternTable td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--s-border);
+  font-size: 14px;
+  vertical-align: top;
+}
+
+.patternTable th {
+  width: 34%;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+  background: var(--s-surface2);
+}
+
+.patternTable th:first-child {
+  border-radius: 10px 0 0 0;
+}
+
+.patternTable td {
+  color: var(--s-text2);
+}
+
+.subjectList {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subjectList li {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--s-text2);
+}
+
+/* ── Application buttons ───────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+
+.actionPrimary {
+  background: var(--s-blue);
+  color: #fff;
+}
+
+.actionPrimary:hover {
+  filter: brightness(0.94);
+}
+
+.actionSecondary {
+  background: var(--s-surface2);
+  color: var(--s-blue);
+  border: 1.5px solid var(--s-border);
+}
+
+.actionSecondary:hover {
+  border-color: var(--s-blue);
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--s-blue);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.note {
+  max-width: 760px;
+  margin: 40px auto 72px;
+  padding: 20px 24px;
+  background: var(--s-surface2);
+  border: 1px dashed var(--s-border);
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--s-text2);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .hero {
+    padding: 52px 20px 40px;
+  }
+
+  .content {
+    padding: 36px 20px 4px;
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewCard,
+  .section {
+    padding: 22px;
+  }
+
+  .patternTable th {
+    width: 40%;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actionBtn {
+    text-align: center;
+  }
+
+  .note {
+    margin: 32px auto 56px;
+  }
+}
