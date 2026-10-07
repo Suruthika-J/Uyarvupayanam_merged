@@ -10,6 +10,19 @@ exports.saveItem = async (req, res) => {
     // Try to create saved item
     const saved = await SavedItem.create({ userId, contentId, contentType, metadata });
 
+    // Automatic activity tracking (fire-and-forget): record the *_saved event
+    // with the item's display name. Never blocks or fails the save response.
+    if (req.student?._id) {
+      const activityController = require("./activityController");
+      SavedItem.findById(saved._id)
+        .populate("contentId")
+        .lean()
+        .then((populated) =>
+          activityController.recordSavedActivity({ studentId: req.student._id, savedItem: populated || saved.toObject() })
+        )
+        .catch(() => {});
+    }
+
     res.status(201).json({ success: true, message: "Item saved to your profile", data: saved });
   } catch (error) {
     if (error.code === 11000) {

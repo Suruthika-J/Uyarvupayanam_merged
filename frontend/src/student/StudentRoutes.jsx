@@ -18,6 +18,7 @@ import SignupOtpPage from './pages/auth/SignupOtpPage'
 
 // School student pages
 import DashboardPage from './pages/dashboard/DashboardPage'
+import RecentActivityPage from './pages/dashboard/RecentActivityPage'
 import CareersPage from './pages/careers/CareersPage'
 import CareerClassPage from './pages/careers/CareerClassPage'
 import CareerDetailPage from './pages/careers/CareerDetailPage'
@@ -290,6 +291,8 @@ export default function StudentRoutes() {
             <Route path="dashboard" element={<Navigate to="/student/dashboard" replace />} />
             <Route path="student/bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
             <Route path="bookmarks" element={<Navigate to="/student/bookmarks" replace />} />
+            <Route path="student/recent-activity" element={<StudentProtectedRoute><RecentActivityPage /></StudentProtectedRoute>} />
+            <Route path="recent-activity" element={<Navigate to="/student/recent-activity" replace />} />
             <Route path="student/notifications" element={<StudentProtectedRoute><NotificationsPage /></StudentProtectedRoute>} />
             <Route path="notifications" element={<Navigate to="/student/notifications" replace />} />
             <Route path="student/profile" element={<StudentProtectedRoute><ProfilePage /></StudentProtectedRoute>} />

@@ -1,0 +1,200 @@
+/* frontend/src/student/pages/dashboard/RecentActivityPage.module.css */
+
+.container {
+  padding: 40px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 90vh;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.title {
+  font-family: var(--s-font-display);
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 900;
+  color: var(--s-text);
+  margin: 0 0 10px;
+  letter-spacing: -0.04em;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--s-text3);
+  margin: 0;
+  max-width: 620px;
+  line-height: 1.6;
+}
+
+/* ── Tabs ── */
+.tabBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 99px;
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--s-text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--s-primary);
+  outline-offset: 2px;
+}
+
+.tab:hover {
+  border-color: var(--s-primary);
+  background: var(--s-bg);
+}
+
+.tabActive {
+  background: var(--s-primary);
+  color: #fff;
+  border-color: var(--s-primary);
+  box-shadow: 0 8px 16px rgba(26, 122, 80, 0.2);
+}
+
+/* ── Card / timeline surface ── */
+.card {
+  background: var(--s-surface);
+  border: 1.5px solid var(--s-border);
+  border-radius: var(--s-radius-lg);
+  box-shadow: var(--s-shadow);
+  padding: 26px 26px 28px;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 70px 0;
+}
+
+/* ── Empty / error states ── */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 20px;
+}
+
+.stateIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  margin-bottom: 18px;
+}
+
+.stateIconError {
+  background: var(--s-error-l);
+  color: var(--s-error);
+}
+
+.stateTitle {
+  margin: 0;
+  font-family: var(--s-font-display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--s-text);
+}
+
+.stateDesc {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--s-text3);
+  max-width: 360px;
+}
+
+.retryBtn {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--s-border);
+  background: #fff;
+  font-family: var(--s-font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--s-primary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.retryBtn:hover {
+  border-color: var(--s-primary);
+  background: var(--s-bg);
+}
+
+/* ── Load More ── */
+.loadMoreWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--s-border);
+}
+
+.loadMoreBtn {
+  padding: 11px 34px;
+  border-radius: 999px;
+  border: 1.5px solid var(--s-primary);
+  background: #fff;
+  color: var(--s-primary);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: var(--s-primary);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(26, 122, 80, 0.22);
+}
+
+.loadMoreBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 28px 16px;
+  }
+
+  .card {
+    padding: 20px 18px 22px;
+  }
+}

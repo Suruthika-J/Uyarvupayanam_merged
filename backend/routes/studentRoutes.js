@@ -82,6 +82,14 @@ const collegeStudyToolsController = require("../controllers/collegeStudyToolsCon
 router.get("/dashboard", verifyStudent, collegeStudyToolsController.getCollegeDashboardSummary);
 router.get("/dashboard-summary", verifyStudent, dashboardSummaryController.getDashboardSummary);
 
+// Recent Activity feed (per-student). Ownership derives exclusively from
+// req.student._id (verifyStudent) — no client-supplied userId is accepted.
+const activityController = require("../controllers/activityController");
+
+router.get("/recent-activities", verifyStudent, activityController.getRecentActivities);
+router.get("/activities", verifyStudent, activityController.getActivities);
+router.post("/activities", verifyStudent, activityController.recordActivity);
+
 router.get("/recommendations", verifyStudent, (req, res) => {
     res.json({ message: "Protected personalized recommendations", student: req.student._id });
 });

@@ -4,8 +4,20 @@ const StudentDailyMission = require("../models/StudentDailyMission");
 const StudentVoiceRecording = require("../models/StudentVoiceRecording");
 const StudentActivityHistory = require("../models/StudentActivityHistory");
 const User = require("../models/User");
+const { recordStudentActivity } = require("./activityController");
 const fs = require("fs");
 const path = require("path");
+
+// Human-readable labels for communication-lab steps, used by the Recent
+// Activity feed when a module is completed.
+const STEP_LABELS = {
+  video: "Communication Skills Video",
+  emotion_detective: "Emotion Detective",
+  one_minute_talk: "One Minute Talk",
+  conversation_builder: "Conversation Builder",
+  school_simulator: "School Simulator",
+  communication_hero: "Communication Hero",
+};
 
 // Helper to calculate level from XP
 // Level 1: 0 - 99 XP
@@ -169,6 +181,15 @@ exports.completeStep = async (req, res) => {
       activityDetail: `Completed Communication step: ${stepId}`,
       xpEarned
     });
+
+    // Recent Activity — a completed learning module (fire-and-forget).
+    recordStudentActivity({
+      studentId,
+      type: "module_completed",
+      title: "Completed a Learning Module",
+      description: STEP_LABELS[stepId] || stepId,
+      metadata: { entityId: `comm-step:${stepId}` },
+    }).catch(() => {});
 
     // Save Badge if unlocked
     if (unlockedBadge) {

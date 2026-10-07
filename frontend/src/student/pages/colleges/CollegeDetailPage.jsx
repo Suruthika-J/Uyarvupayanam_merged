@@ -7,6 +7,7 @@ import {
 import { SBadge, SCard, SBtn, SLoader, SEmpty } from '../../components/ui'
 import { collegeService } from '../../services'
 import { userActionService } from '../../../services/userActionService'
+import useTrackActivity from '../../hooks/useTrackActivity'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import AdmissionHelpModal from '../../components/colleges/AdmissionHelpModal'
 import { toExternalUrl } from '../../../utils/externalUrl'
@@ -31,6 +32,15 @@ export default function CollegeDetailPage() {
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Recent Activity — record that this college was viewed (fire-and-forget).
+  useTrackActivity({
+    type: 'college_viewed',
+    entityId: college?._id,
+    title: 'Viewed a College',
+    description: college?.collegeName || '',
+    link: `/student/colleges/${id}`,
+  })
 
   useEffect(() => {
     fetchCollege()

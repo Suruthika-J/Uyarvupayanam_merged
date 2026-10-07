@@ -7,6 +7,7 @@ import {
 import { careerService } from '../../services'
 import { SBadge, SBtn, SCard, SLoader } from '../../components/ui'
 import { CAREER_CLASS_MAP, CAREER_CLASS_CONFIGS } from './careerCatalog'
+import useTrackActivity from '../../hooks/useTrackActivity'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,15 @@ export default function CareerDetailPage() {
   const [career, setCareer] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  // Recent Activity — record that this career was explored (fire-and-forget).
+  useTrackActivity({
+    type: 'career_explored',
+    entityId: career?._id,
+    title: 'Explored a Career',
+    description: career?.title || '',
+    link: `/student/careers/${id}`,
+  })
 
   useEffect(() => {
     setLoading(true)

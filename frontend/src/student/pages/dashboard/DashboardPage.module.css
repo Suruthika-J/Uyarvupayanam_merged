@@ -182,6 +182,40 @@
   max-width: 960px;
 }
 
+/* ── Recent Activity rail (dashboard) ────────────────────── */
+/* On wide desktops the content area widens and a sticky activity card
+   sits on the right. Below the breakpoint the layout stays exactly as
+   before and the activity card stacks below the dashboard content. */
+.dashGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.dashMain {
+  min-width: 0;
+}
+
+.dashSide {
+  min-width: 0;
+}
+
+@media (min-width: 1240px) {
+  .main {
+    max-width: 1240px;
+  }
+
+  .dashGrid {
+    grid-template-columns: minmax(0, 1fr) 332px;
+  }
+
+  .dashSide {
+    position: sticky;
+    top: 24px;
+  }
+}
+
 /* ── Welcome Banner ──────────────────────────────────────── */
 .welcomeBanner {
   background: linear-gradient(135deg, #1a7a50 0%, #2d9d6a 50%, #1a6845 100%);

@@ -21,6 +21,7 @@ import { courseService } from '../../../services/courseService'
 import axiosInstance from '../../../config/axios'
 import StreamsInsight from '../../components/streams/StreamsInsight'
 import CollegesInsight from '../../components/colleges/CollegesInsight'
+import activityService from '../../services/activityService'
 
 // Accent for the Class N pages — aligned with the green brand token (--s-primary).
 const ACCENT = '#1a7a50'
@@ -661,6 +662,13 @@ export default function ClassLevelPage(props) {
     if (activeSec === 'Scholarships' || item.isDirect) {
       const link = item.applicationLink || item.externalLink
       if (link) {
+        // Recent Activity — a scholarship the student opened (fire-and-forget).
+        activityService.record({
+          type: 'scholarship_viewed',
+          title: 'Checked Scholarship',
+          description: item.scholarshipName || item.name || item.title || '',
+          metadata: { entityId: String(item._id || item.slug || item.title || '') },
+        })
         window.open(link, '_blank', 'noopener,noreferrer')
       } else {
         setAlert({ type: 'info', text: 'No application link is available for this scholarship yet.' })
@@ -1018,7 +1026,16 @@ export default function ClassLevelPage(props) {
                                    <ExamCardDetails exam={exam} />
                                 </div>
                                 
-                                <SBtn variant="outline" style={{ width: '100%', marginTop: 20, borderRadius: 12 }} onClick={() => window.open(exam.officialWebsite, '_blank')}>
+                                <SBtn variant="outline" style={{ width: '100%', marginTop: 20, borderRadius: 12 }} onClick={() => {
+                                     // Recent Activity — an entrance exam the student opened (fire-and-forget).
+                                     activityService.record({
+                                       type: 'exam_viewed',
+                                       title: 'Viewed Entrance Exam',
+                                       description: exam.name || '',
+                                       metadata: { entityId: String(exam._id || exam.name || '') },
+                                     })
+                                     if (exam.officialWebsite) window.open(exam.officialWebsite, '_blank')
+                                   }}>
                                    Official Website ↗
                                 </SBtn>
                              </div>

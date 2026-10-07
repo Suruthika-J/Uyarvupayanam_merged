@@ -10,6 +10,7 @@ const ChallengeSubmission = require("../models/ChallengeSubmission");
 const MiniGame = require("../models/MiniGame");
 const GameAttempt = require("../models/GameAttempt");
 const ExpeditionContribution = require("../models/ExpeditionContribution");
+const { recordStudentActivity } = require("./activityController");
 const SpotlightEntry = require("../models/SpotlightEntry");
 const CareerVideo = require("../models/CareerVideo");
 const CareerEvent = require("../models/CareerEvent");
@@ -315,6 +316,17 @@ exports.submitQuiz = async (req, res) => {
       resultWorldName: (world && world.name) || resultWorldKey,
       classId,
     });
+
+    // Recent Activity — a completed quiz (fire-and-forget, never blocks).
+    if (studentId) {
+      recordStudentActivity({
+        studentId,
+        type: "quiz_completed",
+        title: "Completed a Quiz",
+        description: (world && world.name) || resultWorldKey,
+        metadata: { entityId: `sorting-quiz:${resultWorldKey}` },
+      }).catch(() => {});
+    }
 
     // Update skill profile (average per answered question, weighted by option axes)
     const gains = {};

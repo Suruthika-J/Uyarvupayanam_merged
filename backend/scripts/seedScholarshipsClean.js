@@ -356,7 +356,7 @@ const after10th = [
       "Not be receiving benefits under any other scholarship scheme for studies in Class 9 or 10."
     ].join("\n"),
     importantNote:
-      "Note: If students are receiving benefits under any other scholarship for Classes 9 or 10, they must choose one scholarship. They should inform both the awarding authority of the other scholarship and the school principal of their decision.",
+      "If students are receiving benefits under any other scholarship for Classes 9 or 10, they must choose one scholarship. They should inform both the awarding authority of the other scholarship and the school principal of their decision.",
     applicationLink: "https://www.buddy4study.com/scholarship/pm-yasasvi-pre-matric-scholarship-scheme-for-obc-ebc-dnt-students-chandigarh",
     stepsToApply: [
       "Confirm you are not already receiving another scholarship for Class 9 or 10",

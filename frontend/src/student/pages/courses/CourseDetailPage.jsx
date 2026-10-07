@@ -16,6 +16,7 @@ import { cutoffService } from '../../../services/cutoffService'
 // (imported dynamically inside handleDownloadGuide below)
 import { toExternalUrl } from '../../../utils/externalUrl'
 import EligibilityCheckerModal from '../../components/courses/EligibilityCheckerModal'
+import useTrackActivity from '../../hooks/useTrackActivity'
 
 // Map course category → college stream field in DB
 const CATEGORY_STREAM_MAP = {
@@ -118,6 +119,15 @@ export default function CourseDetailPage() {
   const [isSaved, setIsSaved] = useState(false)
   const [saving, setIsSaving] = useState(false)
   const [generatingGuide, setGeneratingGuide] = useState(false)
+
+  // Recent Activity — record that this course was viewed (fire-and-forget).
+  useTrackActivity({
+    type: 'course_viewed',
+    entityId: course?._id,
+    title: 'Viewed a Course',
+    description: course?.courseName || '',
+    link: `/student/courses/${slug}`,
+  })
 
   // ── College directory state (Offering Colleges section) ──
   const [clgPage, setClgPage] = useState(1)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import studentApi from '../../services/studentApi'
+import activityService from '../../services/activityService'
 import { userActionService } from '../../../services/userActionService'
 import { SBtn, SLoader, SSectionHeader, SEmpty, SBadge, SCard } from '../../components/ui'
 import {
@@ -11,6 +12,7 @@ import {
 } from 'react-icons/fi'
 import s from './DashboardPage.module.css'
 import MentorRequestModal from '../../components/mentor/MentorRequestModal'
+import RecentActivityCard from '../../components/dashboard/RecentActivityCard'
 import onboardingService from '../../../services/onboardingService'
 import class5CommunicationService from '../../../services/class5CommunicationService'
 
@@ -376,6 +378,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Two-column dashboard: existing content + Recent Activity rail.
+            Collapses to a single column (card below content) on tablet/mobile. */}
+        <div className={s.dashGrid}>
+          <div className={s.dashMain}>
         {loading ? (
           <SLoader />
         ) : (
@@ -404,7 +410,15 @@ export default function DashboardPage() {
                 <SSectionHeader
                   title="My Personalized Recommendation"
                   subtitle="Detailed analysis based on your assessment and interests"
-                  action={() => navigate('/student/onboarding/result')}
+                  action={() => {
+                    activityService.record({
+                      type: 'recommendation_viewed',
+                      title: 'Viewed Recommendation',
+                      description: 'Personalized career recommendation',
+                      metadata: { entityId: 'career-assessment', link: '/student/onboarding/result' },
+                    })
+                    navigate('/student/onboarding/result')
+                  }}
                   actionLabel="View Full Result"
                 />
                 <SCard style={{ padding: 0, borderRadius: 20, overflow: 'hidden', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
@@ -419,7 +433,15 @@ export default function DashboardPage() {
                         <div style={{ marginTop: 8 }}><SBadge color="white" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}>{recommendation.performanceLevel}</SBadge></div>
                       </div>
                       <div style={{ display: 'flex', gap: 12 }}>
-                        <SBtn variant="white" onClick={() => navigate('/student/onboarding/result')} style={{ borderRadius: 14, fontWeight: 700 }}>
+                        <SBtn variant="white" onClick={() => {
+                          activityService.record({
+                            type: 'recommendation_viewed',
+                            title: 'Viewed Recommendation',
+                            description: 'Personalized career recommendation',
+                            metadata: { entityId: 'career-assessment', link: '/student/onboarding/result' },
+                          })
+                          navigate('/student/onboarding/result')
+                        }} style={{ borderRadius: 14, fontWeight: 700 }}>
                           View Full Details <FiArrowRight style={{ marginLeft: 8 }} />
                         </SBtn>
                       </div>
@@ -772,6 +794,12 @@ export default function DashboardPage() {
             </div>
           </>
         )}
+          </div>
+
+          <aside className={s.dashSide}>
+            <RecentActivityCard />
+          </aside>
+        </div>
       </div>
 
       <MentorRequestModal 
