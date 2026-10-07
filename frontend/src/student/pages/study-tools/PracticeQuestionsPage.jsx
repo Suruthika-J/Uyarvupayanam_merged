@@ -207,7 +207,7 @@ export default function PracticeQuestionsPage() {
         '/study-tools/practice-questions',
         {
           subject,
-          difficulty: diffToUse,
+          difficulty: diffToUse.toUpperCase(),
           count: 5,
           timestamp: Date.now()
         }
@@ -215,13 +215,13 @@ export default function PracticeQuestionsPage() {
       if (res.data?.success && Array.isArray(res.data.questions)) {
         setQuestions(res.data.questions)
         if (res.data.questions.length === 0) {
-          setError('No questions could be generated for this subject right now.')
+          setError('No practice questions could be retrieved for this difficulty right now.')
         }
       } else {
         setError('The question engine couldn’t prepare a test for this subject.')
       }
     } catch (err) {
-      console.warn('Failed to load practice questions')
+      console.warn('Failed to load practice questions:', err)
       setError('We couldn’t reach the question engine. Please try again in a moment.')
     } finally {
       setLoading(false)
@@ -232,21 +232,30 @@ export default function PracticeQuestionsPage() {
     fetchQuestions('Easy')
   }, [subject])
 
-  const handleSelectOption = (qId, optionIdx) => {
+  const handleSelectOption = (qId, optionVal) => {
     if (submitted) return
-    setSelectedAnswers(prev => ({ ...prev, [qId]: optionIdx }))
+    setSelectedAnswers(prev => ({ ...prev, [qId]: optionVal }))
   }
 
   const handleSubmitQuiz = async () => {
     setSubmitting(true)
     try {
       const userAnswers = questions.map((q, idx) => {
-        const sel = selectedAnswers[q.id || idx]
+        const qId = q.questionId || q.id || idx
+        const sel = selectedAnswers[qId]
+        
+        let isCorrect = false
+        if (q.correctOption) {
+          isCorrect = sel === q.correctOption || sel === ["A", "B", "C", "D"].indexOf(q.correctOption)
+        } else {
+          isCorrect = sel === q.correctIndex
+        }
+
         return {
-          questionId: q.id || idx,
+          questionId: qId,
           selectedOption: sel,
-          isCorrect: sel === q.correctIndex,
-          topic: q.topic || subject
+          isCorrect,
+          topic: q.topicName || q.topic || subject
         }
       })
 
@@ -448,31 +457,41 @@ export default function PracticeQuestionsPage() {
         /* ACTIVE QUESTION LIST */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {questions.map((q, qIdx) => {
-            const qId = q.id || qIdx
+            const qId = q.questionId || q.id || qIdx
             const selectedOpt = selectedAnswers[qId]
+            const qText = q.questionText || q.question
+            const topicText = q.topicName || q.topic || subject
+
+            const diffColor =
+              currentDifficulty?.toLowerCase() === 'easy' ? 'green' :
+              currentDifficulty?.toLowerCase() === 'medium' ? 'blue' :
+              currentDifficulty?.toLowerCase() === 'hard' ? 'orange' : 'purple'
 
             return (
               <SCard key={qId} style={{ padding: 26, borderRadius: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--s-primary)' }}>
-                    Question {qIdx + 1} of {questions.length} • {q.topic || subject}
+                    Question {qIdx + 1} of {questions.length} • {topicText}
                   </span>
-                  <SBadge color={currentDifficulty === 'Easy' ? 'green' : currentDifficulty === 'Medium' ? 'orange' : 'purple'}>
-                    {currentDifficulty} Level
+                  <SBadge color={diffColor}>
+                    {currentDifficulty.toUpperCase()} LEVEL
                   </SBadge>
                 </div>
 
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 16px', lineHeight: 1.5 }}>
-                  {q.question}
+                  {qText}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                   {q.options?.map((opt, oIdx) => {
-                    const isSelected = selectedOpt === oIdx
+                    const optId = typeof opt === 'object' && opt.id ? opt.id : String.fromCharCode(65 + oIdx)
+                    const optText = typeof opt === 'object' && opt.text ? opt.text : opt
+                    const isSelected = selectedOpt === optId || selectedOpt === oIdx
+
                     return (
                       <div
-                        key={oIdx}
-                        onClick={() => handleSelectOption(qId, oIdx)}
+                        key={optId}
+                        onClick={() => handleSelectOption(qId, optId)}
                         style={{
                           padding: '12px 18px', borderRadius: 14,
                           background: isSelected ? '#dbeafe' : '#f8fafc',
@@ -482,7 +501,7 @@ export default function PracticeQuestionsPage() {
                           cursor: 'pointer', transition: 'all 0.15s ease'
                         }}
                       >
-                        {String.fromCharCode(65 + oIdx)}. {opt}
+                        <strong style={{ marginRight: 6 }}>{optId}.</strong> {optText}
                       </div>
                     )
                   })}
