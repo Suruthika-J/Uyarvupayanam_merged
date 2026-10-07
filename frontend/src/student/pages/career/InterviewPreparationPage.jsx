@@ -73,6 +73,15 @@ export default function InterviewPreparationPage() {
     }
   }, [recommendedDomain])
 
+  // Resilient API helper trying both /interview-prep and /study-tools/interview-prep
+  const postApi = async (endpoint, payload) => {
+    try {
+      return await axiosInstance.post(`/interview-prep${endpoint}`, payload)
+    } catch (err) {
+      return await axiosInstance.post(`/study-tools/interview-prep${endpoint}`, payload)
+    }
+  }
+
   // Perform Research
   const handleResearchCompany = async () => {
     if (!companyName.trim()) return
@@ -82,7 +91,7 @@ export default function InterviewPreparationPage() {
     setMockActive(false)
 
     try {
-      const res = await axiosInstance.post('/interview-prep/research', {
+      const res = await postApi('/research', {
         companyName,
         role: targetRole,
         hiringType
@@ -118,7 +127,7 @@ export default function InterviewPreparationPage() {
     setPracticeScore(0)
 
     try {
-      const res = await axiosInstance.post('/interview-prep/generate-practice', {
+      const res = await postApi('/generate-practice', {
         companyName: researchData?.company || companyName,
         role: targetRole,
         hiringType,
@@ -167,7 +176,7 @@ export default function InterviewPreparationPage() {
     setSyncingPlanner(true)
     try {
       const weakAreas = practiceQuestions.map(q => q.patternTested || q.category).filter(Boolean)
-      const res = await axiosInstance.post('/interview-prep/submit', {
+      const res = await postApi('/submit', {
         targetRole,
         score: Math.round((practiceScore / practiceQuestions.length) * 100),
         weakAreas
@@ -188,7 +197,7 @@ export default function InterviewPreparationPage() {
     setMockActive(true)
     setMockTurn(1)
     try {
-      const res = await axiosInstance.post('/interview-prep/mock-interview/start', {
+      const res = await postApi('/mock-interview/start', {
         companyName: researchData?.company || companyName,
         role: targetRole,
         hiringType
@@ -214,7 +223,7 @@ export default function InterviewPreparationPage() {
     setLoadingMock(true)
 
     try {
-      const res = await axiosInstance.post('/interview-prep/mock-interview/respond', {
+      const res = await postApi('/mock-interview/respond', {
         companyName: researchData?.company || companyName,
         role: targetRole,
         userResponse: userText,

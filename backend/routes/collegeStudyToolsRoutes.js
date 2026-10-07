@@ -40,6 +40,13 @@ const {
   getPracticeSession,
   getSessionResults
 } = require("../controllers/practiceSessionController");
+const {
+  researchCompany,
+  generatePracticeQuestions: generateCompanyPracticeQuestions,
+  startMockInterview,
+  respondMockInterview,
+  submitInterviewResult: submitCompanyInterviewResult
+} = require("../controllers/companyInterviewPrepController");
 const requireTestFlag = require("../middleware/requireTestFlag");
 
 const multer = require("multer");
@@ -73,7 +80,11 @@ router.get("/analytics", verifyStudent, getAnalyticsData);
 router.post("/mentors/doubt-request", verifyStudent, submitMentorDoubtRequest);
 router.get("/mentors/student-requests", verifyStudent, getMentorRequestsForStudent);
 router.post("/mentors/request-action", verifyStudent, handleMentorRequestAction);
-router.post("/interview-prep/submit", verifyStudent, submitInterviewResult);
+router.post("/interview-prep/research", verifyStudent, researchCompany);
+router.post("/interview-prep/generate-practice", verifyStudent, generateCompanyPracticeQuestions);
+router.post("/interview-prep/mock-interview/start", verifyStudent, startMockInterview);
+router.post("/interview-prep/mock-interview/respond", verifyStudent, respondMockInterview);
+router.post("/interview-prep/submit", verifyStudent, submitCompanyInterviewResult);
 router.post("/summarize", verifyStudent, summarizeNotes);
 
 // LLM Adaptive Practice Session Routes
