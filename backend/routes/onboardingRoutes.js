@@ -8,7 +8,7 @@ const onboardingAssessmentController = require("../controllers/onboardingAssessm
 const OnboardingQuestion = require("../models/OnboardingQuestion");
 
 router.get("/questions/:grade", onboardingController.getQuestions);
-router.post("/submit", onboardingController.submitOnboarding);
+router.post("/submit", verifyStudent, onboardingController.submitOnboarding);
 router.get("/recommendations/user/:userId", verifyStudent, verifyOwnership("userId"), onboardingController.getRecommendations);
 router.get("/assessment/questions", onboardingAssessmentController.generateAssessment);
 router.post("/generate-questions", onboardingAssessmentController.generateOnboardingQuestions);
@@ -79,9 +79,9 @@ router.delete("/admin/questions/:id", verifyAdmin, async (req, res) => {
 const learningDiagnosis = require("../controllers/learningDiagnosisController");
 
 // Student flow
-router.post("/ld/generate-questions", learningDiagnosis.generateDiagnosticQuestions);
-router.post("/ld/submit", learningDiagnosis.submitDiagnostic);
-router.post("/ld/reassess", learningDiagnosis.reassessDiagnostic);
+router.post("/ld/generate-questions", verifyStudent, learningDiagnosis.generateDiagnosticQuestions);
+router.post("/ld/submit", verifyStudent, learningDiagnosis.submitDiagnostic);
+router.post("/ld/reassess", verifyStudent, learningDiagnosis.reassessDiagnostic);
 router.get("/ld/result/:studentId", verifyStudent, verifyOwnership("studentId"), learningDiagnosis.getDiagnosticResult);
 
 // Admin configuration (Part 27)

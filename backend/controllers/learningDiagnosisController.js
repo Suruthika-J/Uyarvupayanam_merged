@@ -73,7 +73,11 @@ async function getBlueprintRows(grade, cfg) {
 // ────────────────────────────────────────────────────────────────────────────
 exports.generateDiagnosticQuestions = async (req, res) => {
     try {
-        const { studentId, grade, sessionId, forceBank } = req.body || {};
+        const { studentId: bodyStudentId, grade, sessionId, forceBank } = req.body || {};
+        // Identity is taken from the authenticated student (verifyStudent) and
+        // never trusted from the request body. Keeps a legacy fallback only for
+        // any unauthenticated callers that might still exist.
+        const studentId = req.student ? String(req.student._id) : bodyStudentId;
         if (!studentId) return res.status(400).json({ success: false, message: "studentId is required" });
 
         const student = await User.findById(studentId).select("name classLevel userType recommendationGenerated onboardingCompleted").lean();
@@ -159,7 +163,8 @@ exports.generateDiagnosticQuestions = async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 exports.submitDiagnostic = async (req, res) => {
     try {
-        const { studentId, sessionId, grade, answers = [], interestAnswers, ...legacyFields } = req.body || {};
+        const { studentId: bodyStudentId, sessionId, grade, answers = [], interestAnswers, ...legacyFields } = req.body || {};
+        const studentId = req.student ? String(req.student._id) : bodyStudentId;
         if (!studentId || !sessionId) {
             return res.status(400).json({ success: false, message: "studentId and sessionId are required" });
         }
@@ -223,7 +228,8 @@ exports.submitDiagnostic = async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 exports.reassessDiagnostic = async (req, res) => {
     try {
-        const { studentId, grade, sessionId, target, forceBank } = req.body || {};
+        const { studentId: bodyStudentId, grade, sessionId, target, forceBank } = req.body || {};
+        const studentId = req.student ? String(req.student._id) : bodyStudentId;
         if (!studentId) return res.status(400).json({ success: false, message: "studentId is required" });
         const student = await User.findById(studentId).select("classLevel userType").lean();
         if (!student) return res.status(404).json({ success: false, message: "Student not found" });

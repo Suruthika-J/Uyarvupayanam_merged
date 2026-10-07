@@ -203,8 +203,10 @@ router.post("/grammar-answer", verifyStudent, rateLimit({ keyFn: (req) => `engli
     const meta = await loadMeta(req.student._id);
     let row = meta.grammarTopics.find((t) => t.topicId === topicId);
     if (!row) {
-      row = { topicId, solved: 0, total: 0, lastAt: new Date() };
-      meta.grammarTopics.push(row);
+      // Push first, then re-read the LIVE subdocument: mongooose push() copies
+      // plain objects, so increments on the pre-push reference would be lost.
+      meta.grammarTopics.push({ topicId, solved: 0, total: 0, lastAt: new Date() });
+      row = meta.grammarTopics[meta.grammarTopics.length - 1];
     }
     if (correct) row.solved += 1;
     row.total += 1;

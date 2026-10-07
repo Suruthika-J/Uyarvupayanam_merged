@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import axiosInstance from '../../../config/axios'
 import { SBtn, SCard, SLoader, SBadge, StreamingText } from '../../components/ui'
 import { FiMessageSquare, FiSend, FiUser, FiZap, FiBookOpen, FiTarget, FiCompass } from 'react-icons/fi'
@@ -45,7 +46,8 @@ export default function ProfileAwareAskAIChatbotPage() {
         setMessages(prev => [...prev, {
           sender: 'ai',
           text: res.data.reply,
-          intent: res.data.intent
+          intent: res.data.intent,
+          memorySources: (res.data.memorySources || []).filter(s => s && s.id)
         }])
       }
     } catch (err) {
@@ -72,6 +74,9 @@ export default function ProfileAwareAskAIChatbotPage() {
             <FiZap size={13} /> Profile-Grounded AI Advisor
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link to="/college/memories" style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 12, background: '#ede9fe', color: '#6d28d9', textDecoration: 'none' }}>
+              🗂 My Memories
+            </Link>
             <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12, background: '#e0f2fe', color: '#0369a1' }}>
               🎓 {degree}
             </span>
@@ -98,9 +103,10 @@ export default function ProfileAwareAskAIChatbotPage() {
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 6 }}>
           {messages.map((m, idx) => {
             const isUser = m.sender === 'user'
+            const srcs = !isUser && Array.isArray(m.memorySources) ? m.memorySources.filter(s => s && s.id) : []
             return (
+              <React.Fragment key={idx}>
               <div
-                key={idx}
                 style={{
                   display: 'flex', gap: 10, justifyContent: isUser ? 'flex-end' : 'flex-start',
                   alignItems: 'flex-start'
@@ -140,6 +146,23 @@ export default function ProfileAwareAskAIChatbotPage() {
                   </div>
                 )}
               </div>
+              {srcs.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, margin: '2px 0 6px 44px', padding: '9px 12px', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 10 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#6d28d9' }}>
+                    🧠 From your saved memories
+                  </div>
+                  {srcs.map(s => (
+                    <Link
+                      key={s.id}
+                      to={`/college/memories?open=${s.id}`}
+                      style={{ fontSize: 12.5, color: '#4c1d95', fontWeight: 600, textDecoration: 'none', lineHeight: 1.45 }}
+                    >
+                      {s.title || s.type}: “{(s.excerpt || '').slice(0, 110)}{(s.excerpt || '').length > 110 ? '…' : ''}”
+                    </Link>
+                  ))}
+                </div>
+              )}
+              </React.Fragment>
             )
           })}
           {loading && (

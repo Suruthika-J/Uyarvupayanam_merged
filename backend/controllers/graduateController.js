@@ -3,6 +3,37 @@ const User = require("../models/User");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const Exam = require("../models/Exam");
 
+// Public onboarding fields a client may write via /profile/step and
+// /onboarding/complete. Ownership (userId), completion flag (onboardingCompleted),
+// step/telemetry fields (currentStep, profileCompletion, careerReadinessScore)
+// and the recommendation caches (cachedRecommendations) are server-controlled
+// and can never be set or overwritten by the client (mass-assignment hardening).
+const ONBOARDING_EDITABLE_FIELDS = new Set([
+  "field", "degree", "domain", "specialization", "college", "university",
+  "graduationYear", "cgpa", "percentage", "hasBacklogs", "backlogCount",
+  "employmentStatus",
+  "technicalSkills", "softSkills", "tools", "interests",
+  "primaryCareerDirection", "secondaryDirections", "preferredWorkType",
+  "preferredEnvironment", "careerPriority", "targetCareer",
+  "examInterest", "selectedExams",
+  "higherStudyInterest", "preferredHigherDegrees", "targetCountries",
+  "upskillingFocusAreas",
+  "lookingForOpportunity", "preferredRoles", "preferredIndustries",
+  "preferredLocations", "remotePreference", "expectedSalary",
+  "relocationWillingness",
+  "projects", "internships", "certifications", "workExperience", "resumeUrl"
+]);
+
+// Merges only server-allowlisted fields onto a graduate profile.
+const mergeEditableFields = (profile, source) => {
+  Object.keys(source || {}).forEach((key) => {
+    if (ONBOARDING_EDITABLE_FIELDS.has(key) && source[key] !== undefined) {
+      profile[key] = source[key];
+    }
+  });
+  return profile;
+};
+
 // ── Profile Completion Calculator ─────────────────────────────────────────────
 const calculateProfileCompletion = (profile) => {
   let score = 0;
@@ -241,12 +272,9 @@ exports.saveOnboardingStep = async (req, res) => {
     let profile = await GraduateProfile.findOne({ userId });
     if (!profile) profile = new GraduateProfile({ userId });
 
-    // Merge provided fields
-    Object.keys(stepData).forEach(key => {
-      if (stepData[key] !== undefined) {
-        profile[key] = stepData[key];
-      }
-    });
+    // Merge only server-allowlisted fields (ownership/telemetry/completion
+    // flags are never client-settable).
+    mergeEditableFields(profile, stepData);
 
     if (!validateAcademicCombination(profile.field, profile.degree, profile.domain)) {
       return res.status(400).json({
@@ -275,12 +303,9 @@ exports.completeOnboarding = async (req, res) => {
     let profile = await GraduateProfile.findOne({ userId });
     if (!profile) profile = new GraduateProfile({ userId });
 
-    // Merge any final fields submitted
-    if (req.body) {
-      Object.keys(req.body).forEach(k => {
-        if (req.body[k] !== undefined) profile[k] = req.body[k];
-      });
-    }
+    // Merge only server-allowlisted final fields (ownership/telemetry/completion
+    // flags are never client-settable).
+    mergeEditableFields(profile, req.body);
 
     profile.onboardingCompleted = true;
     profile.currentStep = 6;

@@ -268,14 +268,25 @@ exports.sendStudyInvite = async (req, res) => {
     const convo = await PeerConversation.findOne({ _id: convoId, participants: userId });
     if (!convo) return res.status(403).json({ success: false, message: "Access denied." });
 
-    const inviteText = `📚 Study Invite: ${subject || "General Study"} — ${goal || "Let's study together!"} (${durationMinutes || 25} mins)`;
+    const { normalizeTopic } = require("../services/quizAI/TopicNormalizer");
+    const rawTopic = String(subject || "").trim();
+    if (!rawTopic) {
+      return res.status(400).json({ success: false, message: "Study invite topic is required." });
+    }
+
+    const norm = normalizeTopic(rawTopic, goal);
+    console.log(`[PEER-QUIZ]\nInvite topic:\n${rawTopic}\n[PEER-QUIZ]\nNormalized topic:\n${norm.domainId} (${norm.normalizedTopic})`);
+
+    const inviteText = `📚 Study Invite: ${norm.normalizedTopic} — ${goal || "Let's study together!"} (${durationMinutes || 25} mins)`;
     const message = await PeerMessage.create({
       conversationId: convoId,
       senderId:       userId,
       content:        inviteText,
       type:           "study_invite",
       studyInvite: {
-        subject:         subject || "General Study",
+        subject:         norm.normalizedTopic,
+        topicId:         norm.domainId,
+        topicLabel:      norm.normalizedTopic,
         goal:            goal    || "",
         durationMinutes: durationMinutes || 25,
         status:          "pending"
@@ -294,7 +305,10 @@ exports.sendStudyInvite = async (req, res) => {
       io.to(`user_${peerId}`).emit("study:invite", {
         conversationId: convoId,
         messageId: message._id,
-        subject, goal, durationMinutes,
+        subject: norm.normalizedTopic,
+        topicId: norm.domainId,
+        topicLabel: norm.normalizedTopic,
+        goal, durationMinutes,
         fromUserId: userId
       });
     }
@@ -321,13 +335,41 @@ exports.respondToStudyInvite = async (req, res) => {
       return res.status(404).json({ success: false, message: "Invite not found." });
     }
 
+    const currentStatus = String(msg.studyInvite?.status || "PENDING").toUpperCase();
+
+    if (response === "ended" || response === "end") {
+      console.log(`[INVITE] Study invite ${msgId} marked as ended by user ${userId}`);
+      msg.studyInvite.status = "ended";
+      await msg.save();
+
+      if (msg.studyInvite?.sessionId) {
+        try {
+          const MultiplayerQuizSession = require("../models/MultiplayerQuizSession");
+          await MultiplayerQuizSession.findOneAndUpdate(
+            { sessionId: msg.studyInvite.sessionId },
+            { status: "CANCELLED", completedAt: new Date() }
+          );
+        } catch (sessErr) {
+          console.error("Error cancelling session in invite-response fallback:", sessErr);
+        }
+      }
+
+      const io = req.app.get("io");
+      if (io) {
+        const payload = { conversationId: msg.conversationId, inviteId: msg._id, sessionId: msg.studyInvite?.sessionId };
+        io.to(`user_${msg.senderId}`).emit("study:ended", payload);
+        io.to(`user_${userId}`).emit("study:ended", payload);
+      }
+
+      return res.json({ success: true, status: "ended", message: msg });
+    }
+
     // Only the receiver (non-sender) can accept or decline
     if (msg.senderId.toString() === userId.toString()) {
-      console.warn(`[INVITE] Sender ${userId} attempted to accept own invite ${msgId}`);
+      console.warn(`[INVITE] Sender ${userId} attempted to accept/decline own invite ${msgId}`);
       return res.status(403).json({ success: false, message: "Only the invited student can accept or decline this invitation." });
     }
 
-    const currentStatus = String(msg.studyInvite?.status || "PENDING").toUpperCase();
     if (response === "declined") {
       console.log(`[INVITE] Receiver explicitly declined invite ${msgId}`);
       msg.studyInvite.status = "DECLINED";
@@ -357,20 +399,24 @@ exports.respondToStudyInvite = async (req, res) => {
       quizSession = await MultiplayerQuizSession.findOne({ inviteId: msg._id });
 
       if (!quizSession) {
-        const topic = msg.studyInvite?.subject || "DBMS";
-        const subtopic = msg.studyInvite?.goal || "Queries";
+        const topicToUse = msg.studyInvite?.topicId || msg.studyInvite?.subject || msg.studyInvite?.topicLabel;
+        if (!topicToUse) {
+          throw new Error("Multiplayer quiz topic is missing from study invite");
+        }
+        const subtopic = msg.studyInvite?.goal || topicToUse;
         const durationMins = msg.studyInvite?.durationMinutes || 25;
 
-        console.log(`[QUIZ-AI] Creating quiz for topic: "${topic}", subtopic: "${subtopic}"...`);
+        console.log(`[PEER-QUIZ]\nCreating session with topic:\n${topicToUse}`);
         const quizData = await createQuiz({
-          topic,
+          topic: topicToUse,
           subtopic,
           questionCount: 10,
           duration: durationMins
         });
 
+        console.log(`[PEER-QUIZ]\nSession topic:\n${quizData.topicId} (${quizData.topicLabel})`);
+
         const questionIds = quizData.questionIds;
-        console.log(`[QUIZ-AI] Quiz created with ${questionIds.length} questions. Assembling session...`);
 
         const [senderUser, responderUser] = await Promise.all([
           User.findById(msg.senderId).select("name").lean(),
@@ -383,7 +429,9 @@ exports.respondToStudyInvite = async (req, res) => {
           sessionId,
           inviteId: msg._id,
           conversationId: msg.conversationId,
-          topic: quizData.normalizedTopic || topic,
+          topic: quizData.normalizedTopic || topicToUse,
+          topicId: quizData.domainId || quizData.topicId,
+          topicLabel: quizData.normalizedTopic || topicToUse,
           subtopic: quizData.normalizedSubtopic || subtopic,
           questionIds,
           participants: [

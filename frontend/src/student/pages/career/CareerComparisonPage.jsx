@@ -20,6 +20,10 @@ export default function CareerComparisonPage() {
   const [loading, setLoading] = useState(true)
   const [comparing, setComparing] = useState(false)
   const [error, setError] = useState('')
+  // True when the recommendations engine returned nothing and we fall back to the
+  // generic career catalog for the selector — surfaced in the UI so it is never
+  // mistaken for profile-matched choices.
+  const [usingCatalogFallback, setUsingCatalogFallback] = useState(false)
 
   // 1. Fetch available careers
   useEffect(() => {
@@ -35,10 +39,12 @@ export default function CareerComparisonPage() {
             title: r.title
           }))
           setAvailableCareers(mapped)
+          setUsingCatalogFallback(false)
           if (mapped[0]) setSlug1(mapped[0].value)
           if (mapped[1]) setSlug2(mapped[1].value)
         } else {
-          // Fallback options matching DB seed
+          // Fallback options matching DB seed — labeled in the UI as catalog, so
+          // they are never mistaken for profile-matched recommendations.
           const fallback = [
             { value: 'software-engineer', label: 'Software Engineer' },
             { value: 'data-scientist', label: 'Data Scientist' },
@@ -50,6 +56,7 @@ export default function CareerComparisonPage() {
             { value: 'biomedical-engineer', label: 'Biomedical Engineer' }
           ]
           setAvailableCareers(fallback)
+          setUsingCatalogFallback(true)
         }
       } catch (err) {
         console.warn('Failed to load career options:', err)
@@ -110,6 +117,11 @@ export default function CareerComparisonPage() {
           <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '4px 0 0' }}>
             Compare qualifications, skills matching your profile, salary outlook, and actionable skill gaps side-by-side.
           </p>
+          {usingCatalogFallback && (
+            <p style={{ fontSize: 12, color: '#b45309', margin: '8px 0 0', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '8px 12px' }}>
+              Your career recommendations are not available right now, so the selector shows the general career catalog. Comparison data is still fetched live.
+            </p>
+          )}
         </div>
 
         <SBtn variant="secondary" onClick={() => navigate('/college/career/skill-gap')} style={{ borderRadius: 12 }}>

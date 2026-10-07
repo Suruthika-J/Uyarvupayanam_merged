@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useStudentAuth } from '../context/StudentAuthContext'
-import { CollegeProfileProvider } from '../context/CollegeProfileContext'
+import { CollegeProfileProvider, useCollegeProfile } from '../context/CollegeProfileContext'
 import { CollegeThemeProvider, useCollegeTheme } from '../context/CollegeThemeContext'
+import { getCollegeFeatureEligibility } from '../services/collegeFeatureEligibilityEngine'
 import {
   FiGrid, FiUser, FiCompass, FiZap, FiBriefcase,
   FiFileText, FiAward, FiBookmark, FiTarget, FiBarChart2,
   FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiBell,
   FiBookOpen, FiCpu, FiUsers, FiHelpCircle, FiSettings,
-  FiSearch,
+  FiSearch, FiCheckCircle, FiArchive
 } from 'react-icons/fi'
 
 // ── SIDEBAR NAVIGATION CONFIG ──────────────────────────────────────────────────
@@ -26,6 +27,14 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
+    title: 'Career & Placement',
+    items: [
+      { id: 'resume',    icon: FiFileText,      label: 'Resume Builder',     to: '/college/career/resume' },
+      { id: 'ats',       icon: FiCheckCircle,   label: 'ATS Score Checker',  to: '/college/career/ats-checker' },
+      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
+    ],
+  },
+  {
     title: 'Focus & Productivity',
     items: [
       { id: 'focus',     icon: FiCpu,     label: 'Intelligent Focus',   to: '/college/academic/focus' },
@@ -33,12 +42,17 @@ const SIDEBAR_SECTIONS = [
     ],
   },
   {
+    title: 'Personal',
+    items: [
+      { id: 'memories', icon: FiArchive, label: 'My Memories', to: '/college/memories' },
+    ],
+  },
+  {
     title: 'Academic',
     items: [
       { id: 'dashboard',   icon: FiGrid,      label: 'Dashboard',           to: '/college/dashboard' },
       { id: 'profile',     icon: FiUser,      label: 'My Academic Profile', to: '/college/profile' },
-      { id: 'planner',   icon: FiBook,          label: 'Study Planner',      to: '/college/academic/planner' },
-      { id: 'skill-gap', icon: FiZap,           label: 'Skill Gap Analysis', to: '/college/career/skill-gap' },
+      { id: 'planner',     icon: FiBook,      label: 'Study Planner',       to: '/college/academic/planner' },
       { id: 'performance', icon: FiBarChart2, label: 'Performance',         to: '/college/academic/performance' },
     ],
   },
@@ -57,6 +71,8 @@ const SIDEBAR_SECTIONS = [
 // ── INNER LAYOUT (has access to theme context) ─────────────────────────────────
 function CollegeLayoutInner() {
   const { student, logout } = useStudentAuth()
+  const { profile } = useCollegeProfile()
+  const flags = getCollegeFeatureEligibility(profile)
   const navigate = useNavigate()
   const location = useLocation()
   const { theme, themeKey } = useCollegeTheme()
@@ -64,6 +80,23 @@ function CollegeLayoutInner() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const isGamified = themeKey === 'gamified'
+
+  // Dynamically inject Engineering-only Teammate Matchmaker in Community section
+  const dynamicSidebarSections = SIDEBAR_SECTIONS.map(sec => {
+    if (sec.title === 'Community & Resources' && flags.hackathonTeammates) {
+      const alreadyHas = sec.items.some(i => i.id === 'teammates')
+      if (!alreadyHas) {
+        return {
+          ...sec,
+          items: [
+            { id: 'teammates', icon: FiUsers, label: 'Teammate Matchmaker', to: '/college/teammate-matchmaker', isEngineering: true },
+            ...sec.items
+          ]
+        }
+      }
+    }
+    return sec
+  })
 
   const handleLogout = () => {
     logout()
@@ -147,7 +180,7 @@ function CollegeLayoutInner() {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '10px 10px 14px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
-          {SIDEBAR_SECTIONS.map((section) => (
+          {dynamicSidebarSections.map((section) => (
             <div key={section.title}>
               {/* Section label */}
               <div style={{ padding: '0 12px 6px', marginTop: 4 }}>
@@ -196,6 +229,13 @@ function CollegeLayoutInner() {
                     >
                       <Icon size={15} />
                       <span style={{ flex: 1 }}>{label}</span>
+                      {id === 'teammates' && !active && (
+                        <span style={{
+                          fontSize: 8, fontWeight: 900,
+                          background: 'rgba(99,102,241,0.25)', color: '#818cf8',
+                          padding: '2px 6px', borderRadius: 5, letterSpacing: '0.05em'
+                        }}>ENG</span>
+                      )}
                       {section.ai && !active && (
                         <span style={{
                           fontSize: 8, fontWeight: 800,
@@ -367,20 +407,21 @@ function CollegeLayoutInner() {
           background: theme.contentBg,
           transition: 'background 0.3s ease',
         }}>
-          <CollegeProfileProvider>
-            <Outlet />
-          </CollegeProfileProvider>
+          <Outlet />
         </main>
       </div>
     </div>
   )
 }
 
-// ── WRAPPER (injects theme provider) ──────────────────────────────────────────
+// ── WRAPPER (injects theme & profile providers) ───────────────────────────────
 export default function CollegeStudentLayout() {
   return (
-    <CollegeThemeProvider>
-      <CollegeLayoutInner />
-    </CollegeThemeProvider>
+    <CollegeProfileProvider>
+      <CollegeThemeProvider>
+        <CollegeLayoutInner />
+      </CollegeThemeProvider>
+    </CollegeProfileProvider>
   )
 }
+

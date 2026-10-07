@@ -621,15 +621,22 @@ exports.uploadScholarshipsCSV = async (req, res) => {
 // @route   POST /api/scholarships/apply
 exports.applyForScholarship = async (req, res) => {
   try {
-    const { studentId, studentName, studentEmail, scholarshipName, scholarshipProvider } = req.body;
-    if (!studentName || !studentEmail || !scholarshipName) {
+    // Identity is the authenticated student (verifyStudent). The body's
+    // studentId (if any) is ignored, and name/email come from the server-side
+    // User record so they cannot be forged.
+    const { scholarshipName, scholarshipProvider } = req.body;
+    const student = req.student;
+    if (!student) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+    if (!scholarshipName) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
     const application = await ScholarshipApplication.create({
-      studentId: studentId || null,
-      studentName,
-      studentEmail,
+      studentId: String(student._id),
+      studentName: student.name,
+      studentEmail: student.email,
       scholarshipName,
       scholarshipProvider: scholarshipProvider || "Unknown Provider",
       status: "Pending"

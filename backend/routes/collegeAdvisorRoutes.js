@@ -18,6 +18,7 @@ const {
 } = require("../controllers/collegeAdvisorController");
 const verifyStudent = require("../middleware/verifyStudent");
 const verifyAdmin = require("../middleware/verifyAdmin");
+const requireTestFlag = require("../middleware/requireTestFlag");
 
 // Protected Student Routes
 router.get("/recommendations", verifyStudent, getAdvisorRecommendations);
@@ -30,7 +31,7 @@ router.post("/skill/verify", verifyStudent, verifySkillAssessment);
 router.get("/roadmap", verifyStudent, getStudentRoadmap);
 router.post("/roadmap/progress", verifyStudent, updateRoadmapProgress);
 router.post("/compare", verifyStudent, compareCareers);
-router.get("/test-profiles", runAcceptanceTestProfiles);
+router.get("/test-profiles", requireTestFlag, runAcceptanceTestProfiles);
 
 // Protected Admin Routes (Requires Admin auth token)
 router.get("/admin/careers", verifyAdmin, getAllCareersAdmin);

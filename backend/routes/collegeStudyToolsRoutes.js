@@ -29,8 +29,17 @@ const {
   generateResumeSuggestions,
   generateInterviewQuestions,
   getPeerMentors,
-  getCollegeDashboardSummary
+  getCollegeDashboardSummary,
+  getAtsPresets,
+  checkResumeAtsScore
 } = require("../controllers/collegeStudyToolsController");
+const requireTestFlag = require("../middleware/requireTestFlag");
+
+const multer = require("multer");
+const uploadResume = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 router.get("/dashboard-summary", verifyStudent, getCollegeDashboardSummary);
 
@@ -51,7 +60,7 @@ router.post("/placement/create-plan", verifyStudent, createPlacementPlan);
 router.get("/placement/active", verifyStudent, getActivePlacementPlan);
 router.post("/placement/complete-task", verifyStudent, completePlacementTask);
 router.delete("/placement/active", verifyStudent, deleteActivePlacementPlan);
-router.get("/planner/test", runPlannerAcceptanceTest);
+router.get("/planner/test", requireTestFlag, runPlannerAcceptanceTest);
 router.post("/assessment/submit", verifyStudent, submitAssessmentResult);
 router.get("/analytics", verifyStudent, getAnalyticsData);
 router.post("/mentors/doubt-request", verifyStudent, submitMentorDoubtRequest);
@@ -65,6 +74,11 @@ router.get("/resume-builder", verifyStudent, generateResumeSuggestions);
 router.post("/interview-prep", verifyStudent, generateInterviewQuestions);
 router.get("/mentors", verifyStudent, getPeerMentors);
 
+// ATS Resume Score & Keyword Checker Routes
+router.get("/ats-presets", verifyStudent, getAtsPresets);
+router.post("/ats-checker", verifyStudent, uploadResume.single("resumeFile"), checkResumeAtsScore);
+
 module.exports = router;
+
 
 

@@ -7,7 +7,8 @@ const verifyOwnership = require("../middleware/verifyOwnership");
 
 // Student Routes
 router.get("/questions/:classLevel", assessmentController.getQuestionsByLevel);
-router.post("/submit", assessmentController.submitAssessment);
+router.post("/submit", verifyStudent, assessmentController.submitAssessment);
+router.post("/reassess", verifyStudent, assessmentController.getReassessmentQuestions);
 router.get("/result/:userId", verifyStudent, verifyOwnership("userId"), assessmentController.getLatestResult);
 
 // Admin Routes

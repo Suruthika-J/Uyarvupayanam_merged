@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const getJwtSecret = require("../utils/jwtSecret");
 const router = express.Router();
 const ScienceWorld = require("../models/ScienceWorld");
 const ScienceQuestion = require("../models/ScienceQuestion");
@@ -54,7 +55,7 @@ async function optionalAuth(req, res, next) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) return next();
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id).select("-password");
     if (user) req.student = user;
   } catch (error) {

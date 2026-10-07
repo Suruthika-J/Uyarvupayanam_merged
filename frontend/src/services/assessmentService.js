@@ -25,6 +25,12 @@ const assessmentService = {
         const response = await axiosInstance.get(`/assessment/questions/${classLevel}`);
         return response.data;
     },
+
+    // Builds the "Check Your Progress" re-assessment set (questions + plan)
+    getReassessmentQuestions: async (data) => {
+        const response = await axiosInstance.post('/assessment/reassess', data);
+        return response.data;
+    },
     submitAssessment: async (data) => {
         const response = await axiosInstance.post('/assessment/submit', data);
         return response.data;

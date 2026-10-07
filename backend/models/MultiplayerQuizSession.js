@@ -12,6 +12,8 @@ const participantSchema = new mongoose.Schema({
   score: { type: Number, default: 0 },
   answeredCount: { type: Number, default: 0 },
   correctCount: { type: Number, default: 0 },
+  streak: { type: Number, default: 0 },
+  bestStreak: { type: Number, default: 0 },
   currentQuestionIndex: { type: Number, default: 0 },
   lastActiveAt: { type: Date, default: Date.now }
 }, { _id: false });
@@ -22,16 +24,18 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
   conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "PeerConversation" },
 
   topic: { type: String, required: true },
+  topicId: { type: String },
+  topicLabel: { type: String },
   subtopic: { type: String, default: "General" },
   difficulty: { type: String, default: "Medium" },
 
-  questionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "AhpFuzzyQuestion" }],
+  questionIds: [{ type: mongoose.Schema.Types.Mixed }],
 
   participants: [participantSchema],
 
   status: {
     type: String,
-    enum: ["WAITING", "READY", "COUNTDOWN", "LIVE", "COMPLETED", "CANCELLED", "SOLO_AFTER_DISCONNECT"],
+    enum: ["WAITING", "READY", "COUNTDOWN", "LIVE", "WAITING_FOR_NEXT", "COMPLETED", "CANCELLED", "SOLO_AFTER_DISCONNECT"],
     default: "WAITING",
     index: true
   },
@@ -45,6 +49,8 @@ const multiplayerQuizSessionSchema = new mongoose.Schema({
 
   currentQuestionIndex: { type: Number, default: 0 },
   currentQuestionStartedAt: { type: Date },
+
+  nextQuestionReadyUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
   completedAt: { type: Date }
 }, { timestamps: true });

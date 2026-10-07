@@ -8,7 +8,7 @@
 
 const axios = require("axios");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 
 const norm = (str) => (str || '').toString().toLowerCase().trim();
 
@@ -477,6 +477,10 @@ Respond strictly in valid JSON array of objects with schema:
   };
 
   const domainFallback = fallbacks[practiceConfig.domainKey] || fallbacks.computing;
+
+  if (!GROK_API_KEY) {
+    return { practiceConfig, questions: domainFallback };
+  }
 
   try {
     const response = await axios.post(

@@ -1190,6 +1190,11 @@ exports.getParentSnapshot = async (req, res) => {
     if (!studentId) {
       return res.status(400).json({ success: false, message: "studentId query param is required." });
     }
+    // Own-data only: the authenticated student may fetch their own snapshot.
+    // The generic message avoids confirming whether other accounts exist.
+    if (!req.student || String(req.student._id) !== String(studentId)) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
     const student = await User.findById(studentId).select("name classLevel district createdAt");
     if (!student) {
       return res.status(404).json({ success: false, message: "Student not found." });

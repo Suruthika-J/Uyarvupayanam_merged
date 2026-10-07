@@ -1,7 +1,7 @@
 const GraduateProfile = require("../models/GraduateProfile");
 const axios = require("axios");
 
-const GROK_API_KEY = process.env.GROK_API_KEY || "xai-JPHZZdSGepdkppoqz9vWnMBzmKwKdenngyfYaO08Wf3Mp0W0ddsapnTkQWD2hhdyTc28IrxnEMkUpbO0";
+const GROK_API_KEY = process.env.GROK_API_KEY || "";
 
 // Fallback response engine tailored to graduate profile
 const generateFallbackAdvisorResponse = (profile, question) => {
@@ -66,43 +66,45 @@ Keep responses clear, well-structured, encouraging, and focused on practical nex
 ${graduateContext}
 `;
 
-    try {
-      const messagesPayload = [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory.slice(-6).map(m => ({
-          role: m.sender === "user" ? "user" : "assistant",
-          content: m.text
-        })),
-        { role: "user", content: message }
-      ];
+    if (GROK_API_KEY) {
+      try {
+        const messagesPayload = [
+          { role: "system", content: systemPrompt },
+          ...conversationHistory.slice(-6).map(m => ({
+            role: m.sender === "user" ? "user" : "assistant",
+            content: m.text
+          })),
+          { role: "user", content: message }
+        ];
 
-      const grokResponse = await axios.post(
-        "https://api.x.ai/v1/chat/completions",
-        {
-          model: "grok-2-latest",
-          messages: messagesPayload,
-          temperature: 0.7,
-          max_tokens: 800
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${GROK_API_KEY}`
+        const grokResponse = await axios.post(
+          "https://api.x.ai/v1/chat/completions",
+          {
+            model: "grok-2-latest",
+            messages: messagesPayload,
+            temperature: 0.7,
+            max_tokens: 800
           },
-          timeout: 10000
-        }
-      );
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${GROK_API_KEY}`
+            },
+            timeout: 10000
+          }
+        );
 
-      const aiReply = grokResponse.data?.choices?.[0]?.message?.content?.trim();
-      if (aiReply) {
-        return res.status(200).json({
-          success: true,
-          reply: aiReply,
-          source: "xAI Grok API"
-        });
+        const aiReply = grokResponse.data?.choices?.[0]?.message?.content?.trim();
+        if (aiReply) {
+          return res.status(200).json({
+            success: true,
+            reply: aiReply,
+            source: "xAI Grok API"
+          });
+        }
+      } catch (apiErr) {
+        console.warn("Graduate AI Advisor Grok API error, using fallback engine:", apiErr.message);
       }
-    } catch (apiErr) {
-      console.warn("Graduate AI Advisor Grok API error, using fallback engine:", apiErr.message);
     }
 
     // Fallback response engine

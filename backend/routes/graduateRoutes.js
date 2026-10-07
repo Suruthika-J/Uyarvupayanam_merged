@@ -1,23 +1,51 @@
 const express = require("express");
 const router = express.Router();
-const graduateController = require("../controllers/graduateController");
-const graduateAdvisorController = require("../controllers/graduateAdvisorController");
+const {
+  getMyProfile,
+  saveOnboardingStep,
+  completeOnboarding,
+  getDashboardSummary,
+  getCareerRecommendations,
+  getSkillGapAnalysis,
+  getExamsGuide,
+  getHigherStudiesGuide,
+  getUpskillingRoadmap,
+} = require("../controllers/graduateController");
+const { askAdvisorChat } = require("../controllers/collegeStudyToolsController");
 const verifyStudent = require("../middleware/verifyStudent");
+const { rateLimit } = require("../middleware/rateLimit");
 
-// ── Profile & Onboarding ───────────────────────────────────────────────────────
-router.get("/profile", verifyStudent, graduateController.getMyProfile);
-router.post("/profile/step", verifyStudent, graduateController.saveOnboardingStep);
-router.post("/onboarding/complete", verifyStudent, graduateController.completeOnboarding);
+// ── Graduate Career Portal ────────────────────────────────────────────────────
+// All handlers derive the acting user exclusively from the verified token
+// (req.student._id); no client-supplied user/profile identifiers are trusted.
 
-// ── Dashboard & Specialized Intelligence ──────────────────────────────────────
-router.get("/dashboard", verifyStudent, graduateController.getDashboardSummary);
-router.get("/careers", verifyStudent, graduateController.getCareerRecommendations);
-router.get("/skill-gap", verifyStudent, graduateController.getSkillGapAnalysis);
-router.get("/exams", verifyStudent, graduateController.getExamsGuide);
-router.get("/higher-studies", verifyStudent, graduateController.getHigherStudiesGuide);
-router.get("/roadmap", verifyStudent, graduateController.getUpskillingRoadmap);
+router.get("/profile", verifyStudent, getMyProfile);
+router.post(
+  "/profile/step",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `grad-step:${req.student._id}`, max: 40, windowMs: 60000 }),
+  saveOnboardingStep
+);
+router.post(
+  "/onboarding/complete",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `grad-onb:${req.student._id}`, max: 10, windowMs: 60000 }),
+  completeOnboarding
+);
+router.get("/dashboard", verifyStudent, getDashboardSummary);
+router.get("/careers", verifyStudent, getCareerRecommendations);
+router.get("/skill-gap", verifyStudent, getSkillGapAnalysis);
+router.get("/exams", verifyStudent, getExamsGuide);
+router.get("/higher-studies", verifyStudent, getHigherStudiesGuide);
+router.get("/roadmap", verifyStudent, getUpskillingRoadmap);
 
-// ── AI Graduate Advisor ────────────────────────────────────────────────────────
-router.post("/advisor/chat", verifyStudent, graduateAdvisorController.chatWithGraduateAdvisor);
+// AI career advisor — reuses the shared study-tools chat handler (same identity
+// contract: req.student, graceful fallback reply on provider errors/rate limits).
+router.post(
+  "/advisor/chat",
+  verifyStudent,
+  rateLimit({ keyFn: (req) => `grad-chat:${req.student._id}`, max: 20, windowMs: 60000 }),
+  askAdvisorChat
+);
 
 module.exports = router;

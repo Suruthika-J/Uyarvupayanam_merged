@@ -285,7 +285,7 @@ export default function BookmarksPage() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                 <SBadge color="indigo">Course</SBadge>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>98% Match</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Suggested for you</span>
               </div>
               <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
                 {(studentContext?.targetCareer || profile?.targetCareer) ? `${studentContext?.targetCareer || profile?.targetCareer} Mastery Curriculum` : `${studentContext?.course || profile?.domain || 'Computer Science'} Specialization`}
@@ -327,7 +327,7 @@ export default function BookmarksPage() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                 <SBadge color="orange">Entrance Exam</SBadge>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309' }}>Registration Open</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#b45309' }}>Explore</span>
               </div>
               <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
                 {`GATE & TANCET Examination (${studentContext?.course || 'Engineering'})`}
@@ -348,7 +348,7 @@ export default function BookmarksPage() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                 <SBadge color="green">Scholarship</SBadge>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Eligible</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#047857' }}>Check eligibility</span>
               </div>
               <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--s-text)', margin: '0 0 6px' }}>
                 Tamil Nadu Higher Education Merit & Technical Scholarship

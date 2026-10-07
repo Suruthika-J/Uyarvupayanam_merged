@@ -84,6 +84,7 @@ const CLASS_SECTIONS = {
     { id: 'Scholarships', label: 'Scholarships', icon: FiDollarSign, color: '#10b981' },
     { id: 'Skills', label: 'Skills', icon: FiTarget, color: '#ec4899' },
     { id: 'Maths Missions', label: 'Maths Missions', icon: FiDivide, color: ACCENT },
+    { id: 'English Missions', label: 'English Missions', icon: FiBookOpen, color: '#8b5cf6' },
     { id: 'Habits', label: 'Habits', icon: FiHeart, color: '#f43f5e' },
   ],
   "10": [
@@ -348,6 +349,100 @@ function MathsMissionsCard({ onStart }) {
   )
 }
 
+// The English Missions entry card — dark galaxy card used inside the
+// dedicated "English Missions" section of the Class 8 page (same active-sec
+// pattern as Maths Missions). Opens the English Space Explorer module.
+function EnglishMissionsCard({ onStart }) {
+  return (
+    <div
+      className="hover-lift"
+      onClick={onStart}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onStart() }}
+      style={{
+        background: 'radial-gradient(900px 400px at 80% -20%, #24306e 0%, #181d47 45%, #0c1128 100%)',
+        border: '1.5px solid rgba(139,92,246,0.45)', borderRadius: 20,
+        boxShadow: '0 24px 48px -28px rgba(109,40,217,0.65)',
+        padding: '24px 28px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap',
+        transition: 'all 0.25s ease',
+      }}
+    >
+      <div style={{ width: 62, height: 62, borderRadius: 18, background: 'rgba(139,92,246,0.25)', border: '1.5px solid rgba(139,92,246,0.55)', color: '#c4b5fd', display: 'grid', placeItems: 'center', flexShrink: 0, boxShadow: '0 12px 26px -14px rgba(139,92,246,0.9)' }}>
+        <FiBookOpen size={28} />
+      </div>
+      <div style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0, fontSize: 21, fontWeight: 900, color: '#eef1fb', letterSpacing: '-0.01em' }}>English Missions</h3>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: '#e9defe', background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(139,92,246,0.55)', borderRadius: 99, padding: '4px 11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Learning</span>
+        </div>
+        <p style={{ margin: '6px 0 0', fontSize: 14, color: '#a9b4d4', lineHeight: 1.6, maxWidth: 620 }}>
+          Fly through grammar, reading, vocabulary, writing, listening and speaking in a dark galaxy. Finish each topic's activities to unlock an AI-generated assessment.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          {['6 areas', '23 topics', 'AI assessments'].map((chip) => (
+            <span key={chip} style={{ fontSize: 11.5, fontWeight: 700, color: '#d3d9f5', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(168,180,235,0.25)', borderRadius: 99, padding: '4px 11px' }}>{chip}</span>
+          ))}
+        </div>
+      </div>
+      <SBtn
+        variant="primary"
+        style={{ background: 'linear-gradient(120deg, #8b5cf6, #6d28d9)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 26px', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+      >
+        Start English Mission <FiArrowRight size={16} />
+      </SBtn>
+    </div>
+  )
+}
+
+// The Skill Adventure entry card — Uyarvu-green hero shown at the top of the
+// Class 8 "Skills" tab (level 8 only). The regular skills content grid stays
+// rendered below it, exactly as before.
+function SkillsAdventureCard({ onStart }) {
+  return (
+    <div
+      className="hover-lift"
+      onClick={onStart}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onStart() }}
+      style={{
+        background: 'linear-gradient(120deg, #14532d 0%, #1a7a50 62%, #23a068 100%)',
+        border: '1.5px solid #1a7a50', borderRadius: 20,
+        boxShadow: '0 24px 48px -28px rgba(26,122,80,0.65)',
+        padding: '26px 28px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap',
+        transition: 'all 0.25s ease',
+      }}
+    >
+      <div style={{ width: 62, height: 62, borderRadius: 18, background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.4)', color: '#ffd34d', display: 'grid', placeItems: 'center', flexShrink: 0, boxShadow: '0 12px 26px -14px rgba(0,0,0,0.6)' }}>
+        <FiStar size={28} />
+      </div>
+      <div style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0, fontSize: 21, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.01em' }}>Skill Adventure</h3>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: '#14532d', background: '#ffd34d', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 99, padding: '4px 11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Play · Learn · Grow</span>
+        </div>
+        <p style={{ margin: '6px 0 0', fontSize: 14, color: '#e7f6ee', lineHeight: 1.6, maxWidth: 640 }}>
+          Build 8 real-life skills through short games — communication, logic, digital, creativity, social, life skills, environment and science. Three stages per game, harvested by performance, with recommendations matched to your learning profile.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          {['8 skills', '24 games', '3 stages each', 'Smart recommendations'].map((chip) => (
+            <span key={chip} style={{ fontSize: 11.5, fontWeight: 700, color: '#ecfdf3', background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.28)', borderRadius: 99, padding: '4px 11px' }}>{chip}</span>
+          ))}
+        </div>
+      </div>
+      <SBtn
+        variant="primary"
+        style={{ background: '#ffd34d', color: '#14532d', border: 'none', borderRadius: 12, padding: '12px 26px', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+      >
+        Start Skill Adventure <FiArrowRight size={16} />
+      </SBtn>
+    </div>
+  )
+}
+
 export default function ClassLevelPage(props) {
   const params = useParams()
   const navigate = useNavigate()
@@ -606,7 +701,7 @@ export default function ClassLevelPage(props) {
   const availableSections = useMemo(() => {
     if (loading) return sections;
     return sections.filter(s => {
-      if (s.id === 'Colleges' || s.id === 'College Mapping' || s.id === 'Maths Missions') return true;
+      if (s.id === 'Colleges' || s.id === 'College Mapping' || s.id === 'Maths Missions' || s.id === 'English Missions') return true;
       const allItems = [...(contents || []), ...(scholarships || [])];
       return allItems.some(c => c.sectionType === s.id);
     });
@@ -803,6 +898,16 @@ export default function ClassLevelPage(props) {
             </div>
             <MathsMissionsCard onStart={() => navigate('/student/class8/maths')} />
           </div>
+        ) : activeSec === 'English Missions' && cleanLevel === '8' ? (
+          <div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:30 }}>
+              <div>
+                <h2 style={{ fontSize:28, fontWeight:800, color: C5.ink, letterSpacing: '-0.02em' }}>English Missions</h2>
+                <p style={{ color:'#64748b', fontSize: 15, margin: '8px 0 0 0' }}>Explore six English learning areas in a dark galaxy — then prove it with AI assessments.</p>
+              </div>
+            </div>
+            <EnglishMissionsCard onStart={() => navigate('/student/class8/english')} />
+          </div>
         ) : loading ? (
           <div style={{ padding: '100px 0' }}><SLoader /></div>
         ) : (
@@ -830,6 +935,14 @@ export default function ClassLevelPage(props) {
                </div>
                )}
             </div>
+
+{/* Skill Adventure hero — shown only for Class 8 in the Skills tab;
+                the content grid below stays exactly as it was. */}
+            {activeSec === 'Skills' && cleanLevel === '8' && (
+              <div style={{ marginBottom: 32 }}>
+                <SkillsAdventureCard onStart={() => navigate('/student/class8/skills')} />
+              </div>
+            )}
 
              <div style={{ display: 'grid', gridTemplateColumns: activeSec === 'Scholarships' ? 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))' : '1fr', gap: activeSec === 'Scholarships' ? 24 : 32 }}>
                 {activeSec === 'Careers' && cleanLevel !== '12' && filteredContent.length > 0 && (

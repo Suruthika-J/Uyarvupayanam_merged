@@ -9,7 +9,7 @@ const learningRecommendationSchema = new mongoose.Schema(
         studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
         grade: { type: String },
         cycle: { type: Number, default: 1 },
-        mode: { type: String, enum: ["onboarding", "reassess"], default: "onboarding" },
+        mode: { type: String, enum: ["onboarding", "reassess", "skills"], default: "onboarding" },
         recommendationType: {
             type: String,
             enum: ["FOUNDATION", "DEVELOPMENT", "ADVANCEMENT", "EXPLORATION"],

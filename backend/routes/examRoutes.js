@@ -10,14 +10,15 @@ const {
 
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const verifyAdmin = require("../middleware/verifyAdmin");
 
 const router = express.Router();
 
 // POST - Upload CSV
-router.post("/upload-csv", upload.single("file"), uploadCSV);
+router.post("/upload-csv", verifyAdmin, upload.single("file"), uploadCSV);
 
 // POST - Create new exam
-router.post("/", createExam);
+router.post("/", verifyAdmin, createExam);
 
 // GET - Get all exams
 router.get("/", getAllExams);
@@ -26,9 +27,9 @@ router.get("/", getAllExams);
 router.get("/:id", getExamById);
 
 // PUT - Update exam
-router.put("/:id", updateExam);
+router.put("/:id", verifyAdmin, updateExam);
 
 // DELETE - Delete exam
-router.delete("/:id", deleteExam);
+router.delete("/:id", verifyAdmin, deleteExam);
 
 module.exports = router;

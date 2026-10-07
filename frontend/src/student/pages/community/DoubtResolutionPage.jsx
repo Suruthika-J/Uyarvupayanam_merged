@@ -30,19 +30,16 @@ export default function DoubtResolutionPage() {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
       if (saved) {
-        setDoubts(JSON.parse(saved))
-      } else {
-        setDoubts([
-          {
-            id: 'd1',
-            subject: 'Data Structures & Algorithms',
-            question: 'What is the main advantage of AVL tree balance factor rotation over standard BST insertion?',
-            status: 'AI Answered',
-            aiAnswer: 'AVL trees strictly maintain O(log N) height via balance factor rotations (LL, RR, LR, RL), guaranteeing log N time complexity for worst-case lookups and insertions.',
-            date: 'Sample'
-          }
-        ])
+        let parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          // Drop the old fabricated sample doubt (id `d1`, date "Sample") that an
+          // earlier build seeded — only doubts the student actually asked (and
+          // their real AI answers) are ever shown or stored from now on.
+          parsed = parsed.filter((d) => !(d && d.id === 'd1' && d.date === 'Sample'))
+        }
+        setDoubts(parsed)
       }
+      // Fresh visit: start with an empty list — no fabricated sample doubts.
     } catch (e) {
       console.warn('Could not parse local doubts')
     }
@@ -58,7 +55,13 @@ export default function DoubtResolutionPage() {
           setMentors(mRes.value.data.mentors)
           if (mRes.value.data.mentors[0]) {
             setSelectedMentor(mRes.value.data.mentors[0].name)
+          } else {
+            setSelectedMentor('General Mentor Pool')
           }
+        } else {
+          // No mentors configured yet — never show fabricated mentor profiles.
+          setMentors([])
+          setSelectedMentor('General Mentor Pool')
         }
 
         if (rRes.status === 'fulfilled' && rRes.value.data?.success && Array.isArray(rRes.value.data.requests)) {
@@ -254,6 +257,16 @@ export default function DoubtResolutionPage() {
 
           {/* DOUBTS FEED */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {doubts.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '36px 20px', background: '#f8fafc', borderRadius: 20, border: '1px dashed var(--s-border)' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--s-text)', marginBottom: 6 }}>
+                  No doubts yet
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--s-text3)', lineHeight: 1.6 }}>
+                  Ask your first academic question above — the AI answer and any mentor escalation will appear here.
+                </div>
+              </div>
+            )}
             {doubts.map((d) => (
               <SCard key={d.id} style={{ padding: 24, borderRadius: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -373,9 +386,7 @@ export default function DoubtResolutionPage() {
                         label: `${m.name} (${(m.expertise || []).slice(0, 2).join(', ')}) — Rating: ${m.rating || '4.9'}⭐`
                       }))
                     : [
-                        { value: 'Arun Kumar (PSG Tech)', label: 'Arun Kumar — Computer Science (4.9⭐)' },
-                        { value: 'Priya Sundaram (Anna Univ)', label: 'Priya Sundaram — Data Science (4.8⭐)' },
-                        { value: 'Karthik Raja (CIT)', label: 'Karthik Raja — Full Stack Dev (4.95⭐)' }
+                        { value: 'General Mentor Pool', label: 'General Mentor Pool — routed to an available mentor on submit' }
                       ]
                 }
               />

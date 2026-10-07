@@ -7,8 +7,21 @@ const connectDB = require("./config/db");
 const path = require("path");
 
 dotenv.config();
+
+// JWT signing secret boot guard. In production the server refuses to start
+// without a real JWT_SECRET so the development-only fallback secret can never
+// be used against deployed traffic (see utils/jwtSecret.js).
+try {
+  require("./utils/jwtSecret")();
+} catch (err) {
+  console.error(`[FATAL] ${err.message}. Refusing to start.`);
+  process.exit(1);
+}
 connectDB().then(() => {
   try {
+    // Recover memory jobs interrupted by a previous process restart (in-process
+    // background processing has no durable queue) — surfaces them as retryable.
+    require("./services/memoryProcessingService").recoverInterrupted();
     const { importDiplomaCSV } = require("./utils/diplomaImporter");
     importDiplomaCSV(false).catch(err => console.error("Error in auto diploma import:", err));
   } catch (err) {
@@ -105,6 +118,16 @@ connectDB().then(() => {
       .catch(err => console.error("Error in Maths Missions seeding:", err));
   } catch (err) {
     console.error("Failed to require/run Maths Missions seeding:", err);
+  }
+  try {
+    const { seedEnglishMissions } = require("./seeders/seedEnglishMissions");
+    seedEnglishMissions()
+      .then(results => {
+        console.log("English Missions seed (curriculum in code):", results);
+      })
+      .catch(err => console.error("Error in English Missions seeding:", err));
+  } catch (err) {
+    console.error("Failed to require/run English Missions seeding:", err);
   }
   try {
     const { seedScience } = require("./seeders/seedScience");
@@ -221,6 +244,36 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("quiz:answer", async ({ sessionId, userId, questionId, selectedOption, responseTime }) => {
+    try {
+      if (!sessionId || !userId) return;
+      const { processUserAnswer } = require("./controllers/multiplayerQuizController");
+      await processUserAnswer({ sessionId, userId, questionId, selectedOption, responseTime, io });
+    } catch (err) {
+      console.error(`Socket quiz:answer error for user ${userId}:`, err.message);
+    }
+  });
+
+  socket.on("quiz:next-question-ready", async ({ sessionId, userId, questionId }) => {
+    try {
+      if (!sessionId || !userId) return;
+      const { markUserReadyForNext } = require("./controllers/multiplayerQuizController");
+      await markUserReadyForNext({ sessionId, userId, questionId, io });
+    } catch (err) {
+      console.error(`Socket quiz:next-question-ready error for user ${userId}:`, err.message);
+    }
+  });
+
+  socket.on("quiz:timeout", async ({ sessionId }) => {
+    try {
+      if (!sessionId) return;
+      const { checkAndEnforceQuestionTimeout } = require("./controllers/multiplayerQuizController");
+      await checkAndEnforceQuestionTimeout(sessionId, io);
+    } catch (err) {
+      console.error(`Socket quiz:timeout error:`, err.message);
+    }
+  });
+
   socket.on("quiz:chat", ({ sessionId, userId, senderName, message }) => {
     if (sessionId && message) {
       io.to(`quiz:${sessionId}`).emit("quiz:chat-message", {
@@ -264,6 +317,7 @@ app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/class-content", require("./routes/classContentRoutes"));
 app.use("/api/user-actions", require("./routes/userActionRoutes"));
+app.use("/api/recommendations", require("./routes/recommendationRoutes"));
 app.use("/api/assessment", require("./routes/grokAssessmentRoutes"));
 app.use("/api/study-tools", require("./routes/collegeStudyToolsRoutes"));
 app.use("/api/college-courses", require("./routes/collegeCourseRoutes"));
@@ -280,6 +334,10 @@ app.use("/api/taxonomy", require("./routes/taxonomyRoutes"));
 app.use("/api/admission-help", require("./routes/admissionHelpRoutes"));
 app.use("/api/class5-communication", require("./routes/class5CommunicationRoutes"));
 app.use("/api/communication-content", require("./routes/communicationContentRoutes"));
+
+// Graduate career portal (profile, onboarding, dashboard, careers, exams,
+// higher-studies, roadmap, AI advisor) — userType "graduate" portal.
+app.use("/api/graduate", require("./routes/graduateRoutes"));
 
 // Class 5 career-discovery feature (Discover Me, Skill Quests, Squad, Real World, Trophy Room)
 // Note: endpoints live under /api/class5/* so the existing /api/scholarships service stays untouched.
@@ -303,6 +361,9 @@ app.use("/api/science", require("./routes/scienceRoutes"));
 // English Adventure (Class 5)
 app.use("/api/english", require("./routes/englishRoutes"));
 
+// Class 8 English Space Explorer (server-driven lesson + AI assessment module)
+app.use("/api/english-missions", require("./routes/englishMissionsRoutes"));
+
 // Streams After 10th (Class 10 HSC groups & vocational courses)
 app.use("/api/streams", require("./routes/streamRoutes"));
 
@@ -325,11 +386,21 @@ app.use("/api/onboarding/ahp", require("./routes/ahpOnboardingRoutes"));
 // ── Intelligent Focus Mode (College Students) ───────────────────────────────
 app.use("/api/focus", require("./routes/focusRoutes"));
 
-// ── Peer Chat & Study Partner System (College Students) ─────────────────────
+// Peer Chat & Study Partner System (College Students)
 app.use("/api/peer-chat", require("./routes/peerChatRoutes"));
 
 // ── Real-time Multiplayer Quiz Engine ───────────────────────────────────────
 app.use("/api/multiplayer-quiz", require("./routes/multiplayerQuizRoutes"));
+
+// ── Engineering Hackathon & Project Teammate Matchmaker ─────────────────────
+app.use("/api/teammate-matchmaker", require("./routes/teammateMatchmakerRoutes"));
+
+// ── Personal Memory Vault (all authenticated students — voice, journal,
+//    email/letter, document, story/note) with AI processing + retrieval ─────
+app.use("/api/memories", require("./routes/memoryRoutes"));
+
+// ── Class 8 Skill Adventure (games + evidence → LD-NBSE) ────────────────────
+app.use("/api/class8-skills", require("./routes/class8SkillsRoutes"));
 
 // ── Start ───────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;

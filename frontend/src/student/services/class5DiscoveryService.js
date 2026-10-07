@@ -174,10 +174,13 @@ export const getGame = (keyOrId) => {
 export async function submitGameAttempt(gameId, { pct }) {
   const student = getStudent()
   if (!student) return { success: true, xpEarned: Math.round((pct / 100) * 25), badgeAwarded: false, pct }
+  // Backend: POST /api/class5/games/:id/attempt (game id = _id OR key). The
+  // previous '/class5/games/attempt' never matched a route, so every attempt
+  // silently fell back to local seed data and no XP/attempt was ever saved.
   return call(
-    '/class5/games/attempt',
+    `/class5/games/${encodeURIComponent(gameId)}/attempt`,
     { success: true, xpEarned: Math.round((pct / 100) * 25), badgeAwarded: false, pct },
-    { method: 'post', body: { gameId, pct } }
+    { method: 'post', body: { pct } }
   )
 }
 

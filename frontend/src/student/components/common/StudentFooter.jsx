@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { FiMail, FiPhone, FiMapPin, FiInstagram, FiTwitter, FiYoutube } from 'react-icons/fi'
 
 const PLATFORM_LINKS = [
+  // Landing-page section anchors (native <a> so the browser performs the
+  // in-page scroll; rendered below as plain anchors, not router Links).
   { to: '/#about',        label: 'About' },
   { to: '/student/careers', label: 'Explore' },
   { to: '/#how-it-works',  label: 'How It Works' },
@@ -29,9 +31,11 @@ const ACCOUNT_LINKS = [
 ]
 
 const LEGAL_LINKS = [
-  { to: '/#privacy', label: 'Privacy Policy' },
-  { to: '/#terms',   label: 'Terms of Service' },
-  { to: '/#contact', label: 'Contact Us' },
+  // No legal/contact pages exist yet — rendered as non-navigating placeholders
+  // (not dead hrefs). See docs/student-admin-integration-audit.md.
+  { to: null, label: 'Privacy Policy' },
+  { to: null, label: 'Terms of Service' },
+  { to: null, label: 'Contact Us' },
 ]
 
 export default function StudentFooter() {
@@ -73,15 +77,16 @@ export default function StudentFooter() {
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               {[FiInstagram, FiTwitter, FiYoutube].map((Icon, i) => (
-                <a key={i} href="#" style={{
+                // No official social accounts exist yet — decorative placeholders,
+                // intentionally non-navigating (no dead href="#").
+                <span key={i} title="Social accounts coming soon" style={{
                   width: 34, height: 34, borderRadius: 10,
                   background: 'rgba(255,255,255,0.06)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#64748b', textDecoration: 'none',
-                  transition: 'all 0.2s',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#64748b', cursor: 'default',
                 }}>
                   <Icon size={15} />
-                </a>
+                </span>
               ))}
             </div>
           </div>
@@ -95,15 +100,26 @@ export default function StudentFooter() {
             }}>
               Platform
             </h4>
-            {PLATFORM_LINKS.map(l => (
-              <Link key={l.to} to={l.to} style={{
-                display: 'block', color: '#64748b',
-                textDecoration: 'none', fontSize: 13, marginBottom: 10,
-                transition: 'color 0.15s',
-              }}>
-                {l.label}
-              </Link>
-            ))}
+            {PLATFORM_LINKS.map(l =>
+              l.to?.startsWith('/#') && l.to.length > 2 ? (
+                // Native anchor: navigates to the landing page and scrolls to the section.
+                <a key={l.to} href={l.to} style={{
+                  display: 'block', color: '#64748b',
+                  textDecoration: 'none', fontSize: 13, marginBottom: 10,
+                  transition: 'color 0.15s',
+                }}>
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={l.to} to={l.to} style={{
+                  display: 'block', color: '#64748b',
+                  textDecoration: 'none', fontSize: 13, marginBottom: 10,
+                  transition: 'color 0.15s',
+                }}>
+                  {l.label}
+                </Link>
+              )
+            )}
           </div>
 
           {/* Student */}
@@ -168,13 +184,22 @@ export default function StudentFooter() {
             }}>
               Legal
             </h4>
-            {LEGAL_LINKS.map(l => (
-              <Link key={l.to} to={l.to} style={{
-                display: 'block', color: '#64748b',
-                textDecoration: 'none', fontSize: 13, marginBottom: 8,
-              }}>
-                {l.label}
-              </Link>
+            {LEGAL_LINKS.map((l, i) => (
+              l.to ? (
+                <Link key={l.label} to={l.to} style={{
+                  display: 'block', color: '#64748b',
+                  textDecoration: 'none', fontSize: 13, marginBottom: 8,
+                }}>
+                  {l.label}
+                </Link>
+              ) : (
+                <span key={l.label} title="Page coming soon" style={{
+                  display: 'block', color: '#475569',
+                  fontSize: 13, marginBottom: 8, cursor: 'default',
+                }}>
+                  {l.label} <small style={{ color: '#334155' }}>(soon)</small>
+                </span>
+              )
             ))}
           </div>
         </div>

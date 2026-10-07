@@ -11,18 +11,19 @@ const {
 } = require("../controllers/courseController");
 
 const router = express.Router();
+const verifyAdmin = require("../middleware/verifyAdmin");
 
 // POST - Create new course
-router.post("/", createCourse);
+router.post("/", verifyAdmin, createCourse);
 
 // POST - Bulk Import (text-based)
-router.post("/bulk", bulkImportCourses);
+router.post("/bulk", verifyAdmin, bulkImportCourses);
 
 // POST - Preview source import (dry run)
-router.post("/preview-import", previewSourceImport);
+router.post("/preview-import", verifyAdmin, previewSourceImport);
 
 // POST - Import from source (actual insert)
-router.post("/import-from-source", importFromSource);
+router.post("/import-from-source", verifyAdmin, importFromSource);
 
 // GET - Get all courses
 router.get("/", getAllCourses);
@@ -31,9 +32,9 @@ router.get("/", getAllCourses);
 router.get("/:id", getCourseById);
 
 // PUT - Update course
-router.put("/:id", updateCourse);
+router.put("/:id", verifyAdmin, updateCourse);
 
 // DELETE - Delete course
-router.delete("/:id", deleteCourse);
+router.delete("/:id", verifyAdmin, deleteCourse);
 
 module.exports = router;
