@@ -1,0 +1,131 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   TamilNaduCareerPage — Tamil Nadu government hub. Page structure is kept
+   minimal: page heading → implemented recruitment board cards → global footer.
+   Progressive disclosure — more boards appear as their pages are built.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  background: #fff;
+  border-bottom: 1px solid var(--s-border);
+  padding: 72px 24px 56px;
+}
+
+.heroInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--s-blue-l);
+  color: var(--s-blue);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 14px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--s-text);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--s-text3);
+}
+
+.crumb a {
+  color: var(--s-blue);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  text-decoration: underline;
+}
+
+/* ── Recruitment board card ────────────────────────────────────────────────── */
+.cardSection {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 72px;
+}
+
+.boardCard {
+  display: block;
+  padding: 30px;
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.boardCard:hover {
+  border-color: var(--s-blue);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.boardName {
+  margin: 0 0 12px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 21px;
+  line-height: 1.35;
+  color: var(--s-blue);
+}
+
+.boardDesc {
+  margin: 0 0 22px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--s-text2);
+}
+
+.boardLink {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  background: var(--s-blue);
+  color: #fff;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 14px;
+  transition: filter 0.15s ease;
+}
+
+.boardCard:hover .boardLink {
+  filter: brightness(0.94);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .hero {
+    padding: 52px 20px 40px;
+  }
+
+  .cardSection {
+    padding: 32px 20px 56px;
+  }
+
+  .boardCard {
+    padding: 24px;
+  }
+}

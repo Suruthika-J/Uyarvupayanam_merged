@@ -307,6 +307,7 @@ app.use("/api/cutoffs", require("./routes/cutoffRoutes"));
 app.use("/api/cutoff", require("./routes/cutoffRoutes"));
 app.use("/api/courses", require("./routes/courseRoutes"));
 app.use("/api/exams", require("./routes/examRoutes"));
+app.use("/api/graduate-exams", require("./routes/graduateExamRoutes"));
 app.use("/api/colleges", require("./routes/collegeRoutes"));
 app.use("/api/scholarships", require("./routes/scholarshipRoutes"));
 app.use("/api/college-scholarships", require("./routes/collegeScholarshipRoutes"));

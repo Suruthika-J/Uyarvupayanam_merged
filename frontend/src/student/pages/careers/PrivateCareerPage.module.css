@@ -1,0 +1,273 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   PrivateCareerPage — structured private-career exploration (15 sectors).
+   Same visual language as the government page: white cards, thin borders, soft
+   shadows, display-font headings, no decorative icons.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  background: #fff;
+  border-bottom: 1px solid var(--s-border);
+  padding: 72px 24px 56px;
+}
+
+.heroInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--s-primary-l);
+  color: var(--s-primary);
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 14px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--s-text);
+}
+
+.heroDesc {
+  max-width: 640px;
+  margin: 0 auto 24px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--s-text2);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--s-text3);
+}
+
+.crumb a {
+  color: var(--s-primary);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  text-decoration: underline;
+}
+
+.section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 24px 8px;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--s-text);
+}
+
+.sectionDesc {
+  max-width: 680px;
+  margin: 0 auto;
+  font-size: 14.5px;
+  color: var(--s-text2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sectorCard {
+  background: #fff;
+  border: 1px solid var(--s-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  padding: 26px 28px;
+}
+
+.sectorHead {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--s-border);
+}
+
+.sectorName {
+  margin: 0 0 6px;
+  font-family: var(--s-font-display);
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--s-primary);
+}
+
+.sectorSummary {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--s-text2);
+}
+
+.block {
+  margin-bottom: 16px;
+}
+
+.blockLabel {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-text3);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip,
+.chipCompany {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.chip {
+  background: var(--s-surface2);
+  border: 1px solid var(--s-border);
+  color: var(--s-text2);
+}
+
+.chipCompany {
+  background: var(--s-primary-l);
+  border: 1px solid #cfe7db;
+  color: var(--s-primary);
+}
+
+.degreeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.degreeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.degreeRole {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--s-text);
+}
+
+.degreeText {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--s-text2);
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+}
+
+.textList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.textList li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--s-text2);
+}
+
+.textList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--s-primary);
+}
+
+.growth {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--s-text2);
+}
+
+.note {
+  max-width: 760px;
+  margin: 48px auto 72px;
+  padding: 20px 24px;
+  background: var(--s-surface2);
+  border: 1px dashed var(--s-border);
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--s-text2);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .hero {
+    padding: 52px 20px 40px;
+  }
+
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .sectorCard {
+    padding: 20px;
+  }
+
+  .section {
+    padding: 40px 20px 4px;
+  }
+
+  .note {
+    margin: 36px auto 56px;
+  }
+}

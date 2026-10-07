@@ -1402,15 +1402,6 @@ How can I assist you with your coursework, interview preparation, or career goal
             timeout: 10000
           }
         );
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${GROK_API_KEY}`
-            },
-            timeout: 10000
-          }
-        );
         const grokText = response.data?.choices?.[0]?.message?.content;
         if (grokText && grokText.trim().length > 30) {
           reply = grokText.trim();
