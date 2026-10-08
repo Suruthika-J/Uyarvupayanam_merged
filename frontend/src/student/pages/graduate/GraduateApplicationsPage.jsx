@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import graduateService from '../../../services/graduateService'
 import { SCard, SBtn, SLoader, SBadge, SSelect } from '../../components/ui'
 import { FiCheckSquare, FiClock, FiExternalLink, FiBell, FiPlus } from 'react-icons/fi'
@@ -15,6 +15,7 @@ const STATUS_OPTIONS = [
 ]
 
 export default function GraduateApplicationsPage() {
+  const navigate = useNavigate()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -177,6 +178,19 @@ export default function GraduateApplicationsPage() {
                     }}
                   >
                     <FiBell size={14} /> {app.reminderSet ? 'Reminder Set' : 'Remind Me'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/graduate/resume-builder?targetRole=${encodeURIComponent(app.opportunityName || opp.opportunityName || '')}&targetCompany=${encodeURIComponent(app.organization || opp.organization || '')}&targetCategory=${encodeURIComponent(app.category || 'JOB')}`)}
+                    style={{
+                      padding: '10px 14px', borderRadius: 10, border: '1px solid #bfdbfe',
+                      background: '#eff6ff', color: '#1d4ed8',
+                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6
+                    }}
+                  >
+                    📄 Attach Resume
                   </button>
 
                   <button
