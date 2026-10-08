@@ -103,8 +103,8 @@ export default function CollegeDetailPage() {
                 <SBadge color="blue" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>{college.stream}</SBadge>
                 {college.accreditation && <SBadge color="white" style={{ background: 'rgba(255,193,7,0.2)', border: '1px solid rgba(255,193,7,0.4)', color: '#ffd700' }}>⭐ {college.accreditation}</SBadge>}
               </div>
-              <h1 style={{ fontFamily: 'var(--s-font-display)', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, margin: 0 }}>
-                {college.collegeName}
+              <h1 style={{ fontFamily: 'var(--s-font-display)', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, margin: 0, color: '#ffffff', wordBreak: 'break-word' }}>
+                {college.collegeName || college.name || college.college || college.institution || 'College Institution'}
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16, opacity: 0.9 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16 }}>

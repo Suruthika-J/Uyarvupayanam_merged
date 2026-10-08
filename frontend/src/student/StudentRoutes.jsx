@@ -146,6 +146,7 @@ import GraduateApplicationsPage from './pages/graduate/GraduateApplicationsPage'
 import GraduatePeerMentorPage from './pages/graduate/GraduatePeerMentorPage'
 import GraduatePeerChatPage from './pages/graduate/GraduatePeerChatPage'
 import GraduateRoadmapPage from './pages/graduate/GraduateRoadmapPage'
+import GraduateTopicDetailPage from './pages/graduate/GraduateTopicDetailPage'
 import GraduatePlacementPage from './pages/graduate/GraduatePlacementPage'
 import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
 import GraduateResumePage from './pages/graduate/GraduateResumePage'
@@ -158,10 +159,14 @@ import './student.css'
 // A smart dashboard redirector that decides which layout to send the student to
 function CollegeDashboardRedirector() {
   const { student } = useStudentAuth()
-  if (student?.userType === 'college_student') {
+  const isCollege = student?.userType === 'college_student' ||
+    String(student?.classLevel || '').toLowerCase().includes('college')
+  const isGraduate = student?.userType === 'graduate'
+
+  if (isCollege) {
     return <Navigate to="/college/dashboard" replace />
   }
-  if (student?.userType === 'graduate') {
+  if (isGraduate) {
     return <Navigate to="/graduate/dashboard" replace />
   }
   // Fallback: render the school dashboard
@@ -455,6 +460,9 @@ export default function StudentRoutes() {
             <Route path="careers" element={<GraduateCareersPage />} />
             <Route path="skill-gap" element={<GraduateSkillGapPage />} />
             <Route path="roadmap" element={<GraduateRoadmapPage />} />
+            <Route path="roadmap/:examId" element={<GraduateRoadmapPage />} />
+            <Route path="roadmap/:examId/topic/:topicId" element={<GraduateTopicDetailPage />} />
+            <Route path="exams/:examId" element={<GraduateRoadmapPage />} />
             <Route path="placement" element={<GraduatePlacementPage />} />
             <Route path="interview" element={<GraduateInterviewPage />} />
             <Route path="resume-builder" element={<GraduateResumeBuilderPage />} />

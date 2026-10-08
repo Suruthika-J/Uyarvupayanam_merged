@@ -36,6 +36,20 @@ const {
   checkResumeAtsScore,
   getAtsHistory
 } = require("../controllers/collegeStudyToolsController");
+
+const {
+  getExams,
+  getExamById,
+  getExamPattern,
+  getExamSyllabus,
+  getExamPapers,
+  researchExam,
+  getStudyPlan,
+  createOrUpdateStudyPlan,
+  getExamProgress,
+  recordTopicProgress,
+  submitMockTest
+} = require("../controllers/examPreparationController");
 const verifyStudent = require("../middleware/verifyStudent");
 const { rateLimit } = require("../middleware/rateLimit");
 
@@ -100,5 +114,21 @@ router.post("/resume/generate-summary", verifyStudent, generateAiSummary);
 router.get("/ats-presets", verifyStudent, getAtsPresets);
 router.post("/ats-checker", verifyStudent, uploadResume.single("resumeFile"), checkResumeAtsScore);
 router.get("/ats-history", verifyStudent, getAtsHistory);
+
+const optionalStudent = require("../middleware/optionalStudent");
+
+// ── Exam Intelligence & Exam-Specific Study Roadmap ───────────────────────────
+router.get("/exams", optionalStudent, getExams);
+router.get("/exams/:examId", optionalStudent, getExamById);
+router.get("/exams/:examId/pattern", optionalStudent, getExamPattern);
+router.get("/exams/:examId/syllabus", optionalStudent, getExamSyllabus);
+router.get("/exams/:examId/papers", optionalStudent, getExamPapers);
+router.post("/exams/:examId/research", optionalStudent, researchExam);
+router.get("/exams/:examId/study-plan", optionalStudent, getStudyPlan);
+router.post("/exams/:examId/study-plan", verifyStudent, createOrUpdateStudyPlan);
+router.post("/exams/:examId/recalculate-plan", verifyStudent, createOrUpdateStudyPlan);
+router.get("/exams/:examId/progress", optionalStudent, getExamProgress);
+router.post("/exams/:examId/topic/:topicId/progress", verifyStudent, recordTopicProgress);
+router.post("/exams/:examId/mock/submit", verifyStudent, submitMockTest);
 
 module.exports = router;

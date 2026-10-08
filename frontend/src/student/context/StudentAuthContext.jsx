@@ -14,7 +14,10 @@ export function StudentAuthProvider({ children }) {
     const saved = localStorage.getItem('studentData')
     if (savedToken && saved) {
       try {
-        const parsed = JSON.parse(saved)
+        let parsed = JSON.parse(saved)
+        if (parsed?.email && (/(\.edu|\.ac)\.in$/i.test(parsed.email) || /@nec\.edu\.in$/i.test(parsed.email))) {
+          parsed.userType = 'college_student'
+        }
         setStudent(parsed)
         setToken(savedToken)
         setIsAuthenticated(true)
@@ -24,6 +27,9 @@ export function StudentAuthProvider({ children }) {
           .then(res => {
             if (res.data?.success && res.data.student) {
               const fresh = res.data.student
+              if (fresh?.email && (/(\.edu|\.ac)\.in$/i.test(fresh.email) || /@nec\.edu\.in$/i.test(fresh.email))) {
+                fresh.userType = 'college_student'
+              }
               localStorage.setItem('studentData', JSON.stringify(fresh))
               setStudent(fresh)
             }

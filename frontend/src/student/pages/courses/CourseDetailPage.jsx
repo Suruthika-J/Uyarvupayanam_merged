@@ -596,7 +596,9 @@ export default function CourseDetailPage() {
                     <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                       <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--s-bg)', fontSize: 26, display: 'grid', placeItems: 'center', flexShrink: 0 }}>🏫</div>
                       <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: 17, fontWeight: 900, margin: '0 0 4px', color: 'var(--s-text)', lineHeight: 1.3 }}>{clg.collegeName}</h3>
+                        <h3 style={{ fontSize: 17, fontWeight: 900, margin: '0 0 4px', color: '#0f172a', lineHeight: 1.3, wordBreak: 'break-word' }}>
+                          {clg.collegeName || clg.name || clg.college || clg.institution || clg.collegeId?.collegeName || 'College Institution'}
+                        </h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--s-text3)', fontSize: 13, fontWeight: 700 }}>
                           <FiMapPin size={12} /> {clg.district}{clg.state ? `, ${clg.state}` : ''}
                         </div>

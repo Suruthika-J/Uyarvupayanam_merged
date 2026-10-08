@@ -1044,7 +1044,9 @@ export default function ClassLevelPage(props) {
                         <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:20 }}>
                           <div style={{ width:48, height:48, borderRadius:12, background:'var(--s-primary-l)', color:'var(--s-primary)', display:'grid', placeItems:'center', fontSize:20 }}><FiMapPin size={24} /></div>
                           <div>
-                            <h3 style={{ margin:0, fontSize:18, fontWeight:900 }}>{clg.collegeName}</h3>
+                            <h3 style={{ margin:0, fontSize:18, fontWeight:900, color:'#0f172a', wordBreak:'break-word' }}>
+                              {clg.collegeName || clg.name || clg.college || clg.institution || 'College Institution'}
+                            </h3>
                             <div style={{ fontSize:13, color:'#64748b' }}><FiMapPin size={12} /> {clg.location}, {clg.district}</div>
                           </div>
                         </div>

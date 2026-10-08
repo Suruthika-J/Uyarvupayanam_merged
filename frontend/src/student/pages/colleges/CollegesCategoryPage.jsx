@@ -392,7 +392,7 @@ export default function CollegesCategoryPage() {
             {filteredColleges.map((col) => (
               <InsightRow
                 key={col.id}
-                title={col.name}
+                title={col.name || col.collegeName || col.college || col.institution || 'College Institution'}
                 onOpen={() => navigate(`/student/class12/colleges/${category}/college/${col.id}`)}
                 accentColor={style.color}
                 accentBg={style.bg}

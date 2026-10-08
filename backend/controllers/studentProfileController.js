@@ -17,7 +17,7 @@ const StudentProfile = require("../models/StudentProfile");
 const { upsertStudentProfile, pickProfileFields } = require("../utils/studentProfileSync");
 
 // PUT-able User fields — already exist on the User model (no schema change).
-const USER_FIELDS = ["name", "classLevel", "district"];
+const USER_FIELDS = ["name", "classLevel", "district", "userType"];
 
 // ── GET /api/student/profile ────────────────────────────────────────────────
 // Read-only. Returns { success, student, profile }. `student` is the verified

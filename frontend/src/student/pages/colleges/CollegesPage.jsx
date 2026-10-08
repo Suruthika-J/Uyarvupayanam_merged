@@ -84,11 +84,12 @@ function CollegeCard({ college, isSaved, onToggleSave }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 style={{
-            fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 14.5,
-            color: 'var(--s-text)', marginBottom: 4, lineHeight: 1.4,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            fontFamily: 'var(--s-font-display)', fontWeight: 800, fontSize: 15,
+            color: '#0f172a', marginBottom: 4, lineHeight: 1.35,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            overflow: 'hidden', wordBreak: 'break-word'
           }}>
-            {college.collegeName}
+            {college.collegeName || college.name || college.college || college.institution || college.collegeId?.collegeName || 'College Institution'}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--s-text3)' }}>
             <FiMapPin size={11} />

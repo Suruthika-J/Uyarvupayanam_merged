@@ -111,6 +111,64 @@ const graduateService = {
   chatAdvisor: async (payload) => {
     const response = await axiosInstance.post('/graduate/advisor/chat', payload);
     return response.data;
+  },
+
+  // ── Exam Intelligence & Exam-Specific Study Roadmap ───────────────────────
+  getExams: async (category = 'ALL', search = '') => {
+    const response = await axiosInstance.get('/graduate/exams', {
+      params: { category, search }
+    });
+    return response.data;
+  },
+
+  getExamById: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}`);
+    return response.data;
+  },
+
+  getExamPattern: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}/pattern`);
+    return response.data;
+  },
+
+  getExamSyllabus: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}/syllabus`);
+    return response.data;
+  },
+
+  getExamPapers: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}/papers`);
+    return response.data;
+  },
+
+  researchExam: async (examId) => {
+    const response = await axiosInstance.post(`/graduate/exams/${examId}/research`);
+    return response.data;
+  },
+
+  getStudyPlan: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}/study-plan`);
+    return response.data;
+  },
+
+  saveStudyPlan: async (examId, data = {}) => {
+    const response = await axiosInstance.post(`/graduate/exams/${examId}/study-plan`, data);
+    return response.data;
+  },
+
+  getExamProgress: async (examId) => {
+    const response = await axiosInstance.get(`/graduate/exams/${examId}/progress`);
+    return response.data;
+  },
+
+  recordTopicProgress: async (examId, topicId, data = {}) => {
+    const response = await axiosInstance.post(`/graduate/exams/${examId}/topic/${topicId}/progress`, data);
+    return response.data;
+  },
+
+  submitMockTest: async (examId, data = {}) => {
+    const response = await axiosInstance.post(`/graduate/exams/${examId}/mock/submit`, data);
+    return response.data;
   }
 };
 

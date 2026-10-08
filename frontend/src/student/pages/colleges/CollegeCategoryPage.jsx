@@ -172,9 +172,9 @@ export default function CollegeCategoryPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{
                       margin: '0 0 6px', fontSize: 16, fontWeight: 900, lineHeight: 1.3,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      color: '#0f172a', wordBreak: 'break-word', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
                     }}>
-                      {college.collegeName}
+                      {college.collegeName || college.name || college.college || college.institution || college.collegeId?.collegeName || 'College Institution'}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b' }}>
                       <FiMapPin size={13} />

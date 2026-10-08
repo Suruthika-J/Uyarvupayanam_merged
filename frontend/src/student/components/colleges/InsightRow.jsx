@@ -65,7 +65,7 @@ export default function InsightRow({ title, subtitle, footer, onOpen, accentColo
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#1e293b' }}>{title}</h3>
+        <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a', wordBreak: 'break-word', lineHeight: 1.35 }}>{title || 'College Institution'}</h3>
         {subtitle && (
           <p style={{
             margin: '6px 0 0', fontSize: 13.5, color: '#64748b', maxWidth: 640, overflow: 'hidden',

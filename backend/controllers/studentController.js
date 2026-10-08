@@ -45,9 +45,13 @@ const registerStudent = async (req, res) => {
     let created = false;
 
     if (!student) {
-      // Validate userType enum
+      // Validate userType enum & auto-detect college institutional emails (.edu.in, .ac.in, nec.edu.in)
       const validUserTypes = ["school_student", "college_student", "graduate"];
-      const finalUserType = validUserTypes.includes(userType) ? userType : "school_student";
+      let finalUserType = validUserTypes.includes(userType) ? userType : "school_student";
+      const isCollegeDomain = /@nec\.edu\.in$/i.test(normalizedEmail) || /(\.edu|\.ac)\.in$/i.test(normalizedEmail);
+      if (isCollegeDomain && finalUserType === "school_student") {
+        finalUserType = "college_student";
+      }
 
       // Hash password
       const salt = await bcrypt.genSalt(10);
@@ -146,6 +150,15 @@ const loginStudent = async (req, res) => {
         message: "Please verify your email to complete your sign-up.",
         code: "EMAIL_NOT_VERIFIED",
       });
+    }
+
+    // Auto-heal college institutional emails & classLevel college_student records
+    const isCollegeEmail = /@nec\.edu\.in$/i.test(student.email) || /(\.edu|\.ac)\.in$/i.test(student.email);
+    if (isCollegeEmail || student.classLevel === "college_student") {
+      if (student.userType !== "college_student") {
+        student.userType = "college_student";
+        await student.save();
+      }
     }
 
     // Generate token
