@@ -42,8 +42,8 @@ export default function StudentProtectedRoute({ children }) {
     return <Navigate to="/student/onboarding/college" replace />
   }
 
-  if (isGraduate && student?.onboardingCompleted === false && path !== '/student/onboarding/graduate') {
-    return <Navigate to="/student/onboarding/graduate" replace />
+  if (isGraduate && student?.onboardingCompleted === false && path !== '/student/onboarding/graduate' && path !== '/graduate/onboarding') {
+    return <Navigate to="/graduate/onboarding" replace />
   }
 
   if (isSchoolStudent && student?.onboardingCompleted === false && path !== '/student/onboarding') {

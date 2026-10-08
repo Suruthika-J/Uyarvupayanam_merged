@@ -9,16 +9,21 @@ const graduateProfileSchema = new mongoose.Schema(
       unique: true
     },
 
-    // ── STAGE 1: Degree Completed & Education ──────────────────────────────
-    field: { type: String, trim: true },
-    degree: { type: String, trim: true },
-    domain: { type: String, trim: true },
-    specialization: { type: String, trim: true },
-    college: { type: String, trim: true },
-    university: { type: String, trim: true },
-    graduationYear: { type: String, trim: true },
-    cgpa: { type: String, trim: true },
-    percentage: { type: String, trim: true },
+    // ── PERSONAL / ACADEMIC INFORMATION ──────────────────────────────────
+    degree: { type: String, trim: true, default: "B.E." },
+    degreeId: { type: String, trim: true, default: "be" },
+    specialization: { type: String, trim: true, default: "Computer Science" },
+    specializationId: { type: String, trim: true, default: "cse" },
+    collegeName: { type: String, trim: true, default: "" },
+    universityName: { type: String, trim: true, default: "" },
+    college: { type: String, trim: true, default: "" }, // alias
+    university: { type: String, trim: true, default: "" }, // alias
+    graduationYear: { type: String, trim: true, default: "2026" },
+    graduationStatus: { type: String, trim: true, default: "Completed" }, // "Completed", "Final Year", etc.
+    cgpa: { type: String, trim: true, default: "8.0" },
+    percentage: { type: String, trim: true, default: "80%" },
+    state: { type: String, trim: true, default: "Tamil Nadu" },
+    location: { type: String, trim: true, default: "Chennai" },
     hasBacklogs: { type: Boolean, default: false },
     backlogCount: { type: Number, default: 0 },
     employmentStatus: {
@@ -26,7 +31,14 @@ const graduateProfileSchema = new mongoose.Schema(
       default: "Fresher / Not currently working"
     },
 
-    // ── STAGE 2: Skills & Interests ────────────────────────────────────────
+    // ── CAREER INTERESTS & DOMAINS ──────────────────────────────────────
+    careerInterests: [{ type: String }], // Higher Studies, Government Exams, PSU / Government Jobs, Private Jobs, Research, Entrepreneurship, Teaching / Academia, International Studies, Other
+    preferredDomains: [{ type: String }], // Software Engineering, AI / ML, Data Science, Cyber Security, Cloud / DevOps, Core Engineering, Electronics, Management, Research, Finance, Government Administration, Other
+    field: { type: String, trim: true, default: "Engineering" },
+    domain: { type: String, trim: true, default: "Computer Science" },
+
+    // ── SKILLS & EXPERIENCE ─────────────────────────────────────────────
+    skills: [{ type: String }],
     technicalSkills: [
       {
         name: { type: String, required: true },
@@ -39,34 +51,27 @@ const graduateProfileSchema = new mongoose.Schema(
     ],
     softSkills: [{ type: String }],
     tools: [{ type: String }],
-    interests: [{ type: String }],
+    experience: [
+      {
+        title: { type: String },
+        company: { type: String },
+        duration: { type: String },
+        description: { type: String }
+      }
+    ],
 
-    // ── STAGE 3: Career Direction & Preferences ────────────────────────────
+    // ── CAREER DIRECTION & PREFERENCES ──────────────────────────────────
     primaryCareerDirection: {
       type: String,
       default: "Get a Job"
     },
     secondaryDirections: [{ type: String }],
-    preferredWorkType: {
-      type: String,
-      default: "Technical"
-    },
-    preferredEnvironment: {
-      type: String,
-      default: "Office / Hybrid"
-    },
-    careerPriority: {
-      type: String,
-      default: "Growth & Skill Development"
-    },
+    preferredWorkType: { type: String, default: "Technical" },
+    preferredEnvironment: { type: String, default: "Office / Hybrid" },
     targetCareer: { type: String, trim: true },
 
-    // ── STAGE 4: Competitive Exams ─────────────────────────────────────────
-    examInterest: {
-      type: String,
-      enum: ["Yes", "Maybe", "No"],
-      default: "No"
-    },
+    // ── COMPETITIVE EXAMS & HIGHER STUDIES ────────────────────────────────
+    examInterest: { type: String, enum: ["Yes", "Maybe", "No"], default: "Yes" },
     selectedExams: [
       {
         examName: { type: String },
@@ -75,73 +80,24 @@ const graduateProfileSchema = new mongoose.Schema(
         preparationStatus: { type: String, default: "Exploring" }
       }
     ],
-
-    // ── STAGE 5: Higher Studies / Upskilling ───────────────────────────────
-    higherStudyInterest: {
-      type: String,
-      enum: ["Yes", "Maybe", "No"],
-      default: "No"
-    },
-    preferredHigherDegrees: [{ type: String }], // e.g. M.Tech, MBA, MS Abroad, PhD
+    higherStudyInterest: { type: String, enum: ["Yes", "Maybe", "No"], default: "Yes" },
+    preferredHigherDegrees: [{ type: String }],
     targetCountries: [{ type: String }],
     upskillingFocusAreas: [{ type: String }],
 
-    // ── STAGE 6: Professional Placement ────────────────────────────────────
-    lookingForOpportunity: {
-      type: String,
-      default: "Full-time job"
-    },
+    // ── PLACEMENT & RESUME ────────────────────────────────────────────────
+    lookingForOpportunity: { type: String, default: "Full-time job" },
     preferredRoles: [{ type: String }],
     preferredIndustries: [{ type: String }],
     preferredLocations: [{ type: String }],
-    remotePreference: {
-      type: String,
-      default: "Flexible"
-    },
-    expectedSalary: { type: String, trim: true },
-    relocationWillingness: { type: Boolean, default: true },
+    resumeUrl: { type: String, default: "" },
 
-    // ── Portfolio, Projects & Experience ───────────────────────────────────
-    projects: [
-      {
-        title: { type: String },
-        description: { type: String },
-        techStack: { type: String },
-        projectUrl: { type: String }
-      }
-    ],
-    internships: [
-      {
-        company: { type: String },
-        role: { type: String },
-        duration: { type: String },
-        description: { type: String }
-      }
-    ],
-    certifications: [
-      {
-        name: { type: String },
-        issuer: { type: String },
-        issueYear: { type: String }
-      }
-    ],
-    workExperience: [
-      {
-        company: { type: String },
-        role: { type: String },
-        duration: { type: String },
-        description: { type: String }
-      }
-    ],
-    resumeUrl: { type: String },
-
-    // ── Telemetry & Scores ─────────────────────────────────────────────────
+    // ── TELEMETRY & COMPLETION ────────────────────────────────────────────
     currentStep: { type: Number, default: 1 },
     profileCompletion: { type: Number, default: 0 },
     careerReadinessScore: { type: Number, default: 40 },
     onboardingCompleted: { type: Boolean, default: false },
 
-    // Cache of personalized recommendations
     cachedRecommendations: {
       bestFitCareers: [{ type: mongoose.Schema.Types.Mixed }],
       skillGap: { type: mongoose.Schema.Types.Mixed },

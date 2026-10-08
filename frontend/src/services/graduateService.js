@@ -12,7 +12,7 @@ const graduateService = {
   },
 
   completeOnboarding: async (data = {}) => {
-    const response = await axiosInstance.post('/graduate/onboarding/complete', data);
+    const response = await axiosInstance.post('/graduate/onboarding', data);
     return response.data;
   },
 
@@ -21,23 +21,85 @@ const graduateService = {
     return response.data;
   },
 
-  getCareers: async () => {
-    const response = await axiosInstance.get('/graduate/careers');
+  getOpportunities: async (category = 'ALL', search = '') => {
+    const response = await axiosInstance.get('/graduate/opportunities', {
+      params: { category, search }
+    });
     return response.data;
   },
 
-  getSkillGap: async () => {
-    const response = await axiosInstance.get('/graduate/skill-gap');
+  getOpportunityById: async (id) => {
+    const response = await axiosInstance.get(`/graduate/opportunities/${id}`);
     return response.data;
   },
 
-  getExams: async () => {
-    const response = await axiosInstance.get('/graduate/exams');
+  getGovernmentExams: async () => {
+    const response = await axiosInstance.get('/graduate/government-exams');
     return response.data;
   },
 
   getHigherStudies: async () => {
     const response = await axiosInstance.get('/graduate/higher-studies');
+    return response.data;
+  },
+
+  getApplications: async () => {
+    const response = await axiosInstance.get('/graduate/applications');
+    return response.data;
+  },
+
+  saveApplication: async (data) => {
+    const response = await axiosInstance.post('/graduate/applications', data);
+    return response.data;
+  },
+
+  setReminder: async (opportunityId) => {
+    const response = await axiosInstance.post(`/graduate/opportunities/${opportunityId}/reminder`);
+    return response.data;
+  },
+
+  refreshResearch: async (query = '') => {
+    const response = await axiosInstance.post('/graduate/research/refresh', { query });
+    return response.data;
+  },
+
+  getMentorRequests: async () => {
+    const response = await axiosInstance.get('/graduate/mentor/requests');
+    return response.data;
+  },
+
+  acceptMentorRequest: async (id) => {
+    const response = await axiosInstance.post(`/graduate/mentor/requests/${id}/accept`);
+    return response.data;
+  },
+
+  rejectMentorRequest: async (id) => {
+    const response = await axiosInstance.post(`/graduate/mentor/requests/${id}/reject`);
+    return response.data;
+  },
+
+  getActiveMentees: async () => {
+    const response = await axiosInstance.get('/graduate/mentor/mentees');
+    return response.data;
+  },
+
+  getRelationshipMessages: async (id) => {
+    const response = await axiosInstance.get(`/graduate/mentor/relationships/${id}/messages`);
+    return response.data;
+  },
+
+  sendRelationshipMessage: async (id, content) => {
+    const response = await axiosInstance.post(`/graduate/mentor/relationships/${id}/messages`, { content });
+    return response.data;
+  },
+
+  getMentorProfile: async () => {
+    const response = await axiosInstance.get('/graduate/mentor/profile');
+    return response.data;
+  },
+
+  updateMentorProfile: async (data) => {
+    const response = await axiosInstance.put('/graduate/mentor/profile', data);
     return response.data;
   },
 

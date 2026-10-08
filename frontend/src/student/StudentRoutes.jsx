@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { StudentAuthProvider, useStudentAuth } from './context/StudentAuthContext'
 import StudentLayout from './layouts/StudentLayout'
 import CollegeStudentLayout from './layouts/CollegeStudentLayout'
+import GraduateLayout from './layouts/GraduateLayout'
 import StudentProtectedRoute from './layouts/StudentProtectedRoute'
 import MaintenanceGuard from './components/common/MaintenanceGuard'
 
@@ -130,6 +131,7 @@ import IntelligentFocusPage from './pages/academic/IntelligentFocusPage'
 import FocusAnalyticsPage from './pages/academic/FocusAnalyticsPage'
 import PeerChatPage from './pages/community/PeerChatPage'
 import MultiplayerQuizPage from './pages/community/MultiplayerQuizPage'
+
 // ── Graduate portal pages (userType "graduate") ─────────────────────────────
 import GraduateDashboardPage from './pages/graduate/GraduateDashboardPage'
 import GraduateProfilePage from './pages/graduate/GraduateProfilePage'
@@ -138,6 +140,11 @@ import GraduateCareersPage from './pages/graduate/GraduateCareersPage'
 import GraduateSkillGapPage from './pages/graduate/GraduateSkillGapPage'
 import GraduateExamsPage from './pages/graduate/GraduateExamsPage'
 import GraduateHigherStudiesPage from './pages/graduate/GraduateHigherStudiesPage'
+import GraduateOpportunitiesPage from './pages/graduate/GraduateOpportunitiesPage'
+import GraduateOpportunityDetailPage from './pages/graduate/GraduateOpportunityDetailPage'
+import GraduateApplicationsPage from './pages/graduate/GraduateApplicationsPage'
+import GraduatePeerMentorPage from './pages/graduate/GraduatePeerMentorPage'
+import GraduatePeerChatPage from './pages/graduate/GraduatePeerChatPage'
 import GraduateRoadmapPage from './pages/graduate/GraduateRoadmapPage'
 import GraduatePlacementPage from './pages/graduate/GraduatePlacementPage'
 import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
@@ -146,21 +153,20 @@ import GraduateUpskillingPage from './pages/graduate/GraduateUpskillingPage'
 
 import './student.css'
 
-// A smart dashboard redirector that decides which layout to send the college student to
+// A smart dashboard redirector that decides which layout to send the student to
 function CollegeDashboardRedirector() {
   const { student } = useStudentAuth()
   if (student?.userType === 'college_student') {
     return <Navigate to="/college/dashboard" replace />
   }
   if (student?.userType === 'graduate') {
-    return <Navigate to="/student/graduate/dashboard" replace />
+    return <Navigate to="/graduate/dashboard" replace />
   }
   // Fallback: render the school dashboard
   return <DashboardPage />
 }
 
-// Aliased routes redirect (<Navigate replace>) to a canonical /student/* URL,
-// preserving any :param segments (e.g. reset-password/:token) along the way.
+// Aliased routes redirect (<Navigate replace>) to a canonical URL
 function PreserveParamRedirect({ to }) {
   const params = useParams()
   const rendered = to.replace(/:[A-Za-z_][A-Za-z0-9_]*/g, (m) => params[m.slice(1)] ?? m)
@@ -175,22 +181,19 @@ export default function StudentRoutes() {
 
           {/* ════════════════════════════════════════════════════════
               SCHOOL / PUBLIC ROUTES  (StudentLayout — top navbar)
-              Canonical form: /student/* for authenticated student pages.
-              / and /explore stay plain as public marketing entry points.
-              Plain aliases redirect (<Navigate replace>) to canonical.
               ════════════════════════════════════════════════════════ */}
           <Route element={<StudentLayout />}>
             <Route index element={<LandingPage />} />
 
-            {/* Landing — canonical / ; /home & /student/home are aliases */}
+            {/* Landing */}
             <Route path="home" element={<Navigate to="/" replace />} />
             <Route path="student/home" element={<Navigate to="/" replace />} />
 
-            {/* Explore — public marketing entry, canonical plain /explore */}
+            {/* Explore */}
             <Route path="explore" element={<ExplorePage />} />
             <Route path="student/explore" element={<Navigate to="/explore" replace />} />
 
-            {/* Auth — canonical /student/signin ... */}
+            {/* Auth */}
             <Route path="student/signin" element={<LoginPage />} />
             <Route path="signin" element={<Navigate to="/student/signin" replace />} />
             <Route path="login" element={<Navigate to="/student/signin" replace />} />
@@ -206,17 +209,17 @@ export default function StudentRoutes() {
             <Route path="student/signup/verify" element={<SignupOtpPage />} />
             <Route path="signup/verify" element={<Navigate to="/student/signup/verify" replace />} />
 
-            {/* Onboarding — open, canonical /student/onboarding ... */}
+            {/* Onboarding */}
             <Route path="student/onboarding" element={<StudentProtectedRoute><OnboardingPage /></StudentProtectedRoute>} />
             <Route path="onboarding" element={<Navigate to="/student/onboarding" replace />} />
             <Route path="student/onboarding/college" element={<StudentProtectedRoute><CollegeOnboardingPage /></StudentProtectedRoute>} />
             <Route path="onboarding/college" element={<Navigate to="/student/onboarding/college" replace />} />
             <Route path="student/onboarding/graduate" element={<StudentProtectedRoute><GraduateOnboardingPage /></StudentProtectedRoute>} />
-            <Route path="onboarding/graduate" element={<Navigate to="/student/onboarding/graduate" replace />} />
+            <Route path="onboarding/graduate" element={<Navigate to="/graduate/onboarding" replace />} />
             <Route path="student/onboarding/result" element={<StudentProtectedRoute><RecommendationResultPage /></StudentProtectedRoute>} />
             <Route path="onboarding/result" element={<Navigate to="/student/onboarding/result" replace />} />
 
-            {/* School class routes — canonical /student/classX */}
+            {/* School class routes */}
             <Route path="student/class5" element={<Class5Dashboard />}>
               <Route index element={<Navigate to="adhikaram" replace />} />
               <Route path="scholarships" element={<ScholarshipsSection />} />
@@ -257,21 +260,18 @@ export default function StudentRoutes() {
             <Route path="class8" element={<Navigate to="/student/class8" replace />} />
             <Route path="student/class8/content/:slug" element={<ContentDetailPage />} />
             <Route path="class8/content/:slug" element={<PreserveParamRedirect to="/student/class8/content/:slug" />} />
-            {/* Class 8 Maths Missions — gamified learning */}
             <Route path="student/class8/maths" element={<StudentProtectedRoute><MathsMissionsPage /></StudentProtectedRoute>} />
             <Route path="class8/maths" element={<Navigate to="/student/class8/maths" replace />} />
             <Route path="student/class8/maths/topic/:topicId" element={<StudentProtectedRoute><MathsTopicPage /></StudentProtectedRoute>} />
             <Route path="class8/maths/topic/:topicId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId" />} />
             <Route path="student/class8/maths/topic/:topicId/mission/:missionId" element={<StudentProtectedRoute><MathsMissionPage /></StudentProtectedRoute>} />
             <Route path="class8/maths/topic/:topicId/mission/:missionId" element={<PreserveParamRedirect to="/student/class8/maths/topic/:topicId/mission/:missionId" />} />
-            {/* Class 8 English Space Explorer — six learning areas, AI assessments */}
             <Route path="student/class8/english" element={<StudentProtectedRoute><EnglishMissionsPage /></StudentProtectedRoute>} />
             <Route path="class8/english" element={<Navigate to="/student/class8/english" replace />} />
             <Route path="student/class8/english/area/:areaId" element={<StudentProtectedRoute><EnglishAreaPage /></StudentProtectedRoute>} />
             <Route path="class8/english/area/:areaId" element={<PreserveParamRedirect to="/student/class8/english/area/:areaId" />} />
             <Route path="student/class8/english/topic/:topicId" element={<StudentProtectedRoute><EnglishTopicPage /></StudentProtectedRoute>} />
             <Route path="class8/english/topic/:topicId" element={<PreserveParamRedirect to="/student/class8/english/topic/:topicId" />} />
-            {/* Class 8 Skill Adventure — play-based skill development + LD-NBSE */}
             <Route path="student/class8/skills" element={<StudentProtectedRoute><SkillsDashboardPage /></StudentProtectedRoute>} />
             <Route path="class8/skills" element={<Navigate to="/student/class8/skills" replace />} />
             <Route path="student/class8/skills/diagnostic" element={<StudentProtectedRoute><SkillDiagnosticPage /></StudentProtectedRoute>} />
@@ -328,7 +328,6 @@ export default function StudentRoutes() {
             <Route path="careers/government/state/tamil-nadu/tnpsc" element={<Navigate to="/student/careers/government/state/tamil-nadu/tnpsc" replace />} />
             <Route path="student/careers/government/state/tamil-nadu/tnpsc/:examId" element={<GraduateExamDetailPage />} />
             <Route path="careers/government/state/tamil-nadu/tnpsc/:examId" element={<PreserveParamRedirect to="/student/careers/government/state/tamil-nadu/tnpsc/:examId" />} />
-            {/* Legacy state-less TNPSC drill-down aliases (kept working) */}
             <Route path="student/careers/government/tamil-nadu" element={<Navigate to="/student/careers/government/state/tamil-nadu" replace />} />
             <Route path="careers/government/tamil-nadu" element={<Navigate to="/student/careers/government/state/tamil-nadu" replace />} />
             <Route path="student/careers/government/tamil-nadu/tnpsc" element={<OrgExamsPage orgSlug="tnpsc" />} />
@@ -368,7 +367,7 @@ export default function StudentRoutes() {
             <Route path="student/courses/diploma" element={<DiplomaCourses />} />
             <Route path="courses/diploma" element={<Navigate to="/student/courses/diploma" replace />} />
 
-            {/* School Dashboard — redirects college students to /college/dashboard */}
+            {/* School Dashboard */}
             <Route path="student/dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
             <Route path="dashboard" element={<Navigate to="/student/dashboard" replace />} />
             <Route path="student/bookmarks" element={<StudentProtectedRoute><BookmarksPage /></StudentProtectedRoute>} />
@@ -380,41 +379,21 @@ export default function StudentRoutes() {
             <Route path="student/profile" element={<StudentProtectedRoute><ProfilePage /></StudentProtectedRoute>} />
             <Route path="profile" element={<Navigate to="/student/profile" replace />} />
 
-            {/* Graduate portal — done via the /student/graduate/* canonical paths
-                (rendered inside the shared student layout). userType "graduate"
-                accounts land here after completing graduate onboarding. */}
-            <Route path="student/graduate" element={<Navigate to="/student/graduate/dashboard" replace />} />
-            <Route path="student/graduate/dashboard" element={<StudentProtectedRoute><GraduateDashboardPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/profile" element={<StudentProtectedRoute><GraduateProfilePage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/advisor" element={<StudentProtectedRoute><GraduateAIAdvisorPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/careers" element={<StudentProtectedRoute><GraduateCareersPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/skill-gap" element={<StudentProtectedRoute><GraduateSkillGapPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/exams" element={<StudentProtectedRoute><GraduateExamsPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/higher-studies" element={<StudentProtectedRoute><GraduateHigherStudiesPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/roadmap" element={<StudentProtectedRoute><GraduateRoadmapPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/placement" element={<StudentProtectedRoute><GraduatePlacementPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/interview" element={<StudentProtectedRoute><GraduateInterviewPage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/resume" element={<StudentProtectedRoute><GraduateResumePage /></StudentProtectedRoute>} />
-            <Route path="student/graduate/upskilling" element={<StudentProtectedRoute><GraduateUpskillingPage /></StudentProtectedRoute>} />
-            <Route path="graduate/dashboard" element={<Navigate to="/student/graduate/dashboard" replace />} />
-            <Route path="graduate/profile" element={<Navigate to="/student/graduate/profile" replace />} />
-            <Route path="graduate/advisor" element={<Navigate to="/student/graduate/advisor" replace />} />
-            <Route path="graduate/careers" element={<Navigate to="/student/graduate/careers" replace />} />
-            <Route path="graduate/skill-gap" element={<Navigate to="/student/graduate/skill-gap" replace />} />
-            <Route path="graduate/exams" element={<Navigate to="/student/graduate/exams" replace />} />
-            <Route path="graduate/higher-studies" element={<Navigate to="/student/graduate/higher-studies" replace />} />
-            <Route path="graduate/roadmap" element={<Navigate to="/student/graduate/roadmap" replace />} />
-            <Route path="graduate/placement" element={<Navigate to="/student/graduate/placement" replace />} />
-            <Route path="graduate/interview" element={<Navigate to="/student/graduate/interview" replace />} />
-            <Route path="graduate/resume" element={<Navigate to="/student/graduate/resume" replace />} />
-            <Route path="graduate/upskilling" element={<Navigate to="/student/graduate/upskilling" replace />} />
+            {/* Legacy aliases redirecting to /graduate/* */}
+            <Route path="student/graduate" element={<Navigate to="/graduate/dashboard" replace />} />
+            <Route path="student/graduate/dashboard" element={<Navigate to="/graduate/dashboard" replace />} />
+            <Route path="student/graduate/profile" element={<Navigate to="/graduate/profile" replace />} />
+            <Route path="student/graduate/advisor" element={<Navigate to="/graduate/advisor" replace />} />
+            <Route path="student/graduate/careers" element={<Navigate to="/graduate/careers" replace />} />
+            <Route path="student/graduate/skill-gap" element={<Navigate to="/graduate/skill-gap" replace />} />
+            <Route path="student/graduate/exams" element={<Navigate to="/graduate/government-exams" replace />} />
+            <Route path="student/graduate/higher-studies" element={<Navigate to="/graduate/higher-studies" replace />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
 
           {/* ════════════════════════════════════════════════════════
-              COLLEGE STUDENT ROUTES  (CollegeStudentLayout — dark sidebar)
-              All under /college/* prefix — sidebar stays constant
+              COLLEGE STUDENT ROUTES (CollegeStudentLayout — dark sidebar)
               ════════════════════════════════════════════════════════ */}
           <Route
             path="/college"
@@ -449,23 +428,37 @@ export default function StudentRoutes() {
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
-          {/* Legacy /student/* college routes → redirect to /college/* */}
-          <Route path="student/college-profile" element={<Navigate to="/college/profile" replace />} />
-          <Route path="student/advisor" element={<Navigate to="/college/advisor" replace />} />
-          <Route path="student/advisor/chat" element={<Navigate to="/college/advisor/chat" replace />} />
-          <Route path="student/memories" element={<Navigate to="/college/memories" replace />} />
-          <Route path="student/academic/planner" element={<Navigate to="/college/academic/planner" replace />} />
-          <Route path="student/academic/roadmap" element={<Navigate to="/college/academic/roadmap" replace />} />
-          <Route path="student/academic/performance" element={<Navigate to="/college/academic/performance" replace />} />
-          <Route path="student/career/skill-gap" element={<Navigate to="/college/career/skill-gap" replace />} />
-          <Route path="student/career/compare" element={<Navigate to="/college/career/compare" replace />} />
-          <Route path="student/career/resume" element={<Navigate to="/college/career/resume" replace />} />
-          <Route path="student/career/ats-checker" element={<Navigate to="/college/career/ats-checker" replace />} />
-          <Route path="student/career/interview-prep" element={<Navigate to="/college/career/interview-prep" replace />} />
-          <Route path="student/study-tools/notes-summarizer" element={<Navigate to="/college/study-tools/notes-summarizer" replace />} />
-          <Route path="student/study-tools/practice" element={<Navigate to="/college/study-tools/practice" replace />} />
-          <Route path="student/community/mentors" element={<Navigate to="/college/community/mentors" replace />} />
-          <Route path="student/community/doubts" element={<Navigate to="/college/community/doubts" replace />} />
+          {/* ════════════════════════════════════════════════════════
+              GRADUATE ECOSYSTEM ROUTES (GraduateLayout — dark sidebar)
+              ════════════════════════════════════════════════════════ */}
+          <Route
+            path="/graduate"
+            element={<StudentProtectedRoute><GraduateLayout /></StudentProtectedRoute>}
+          >
+            <Route path="dashboard" element={<GraduateDashboardPage />} />
+            <Route path="onboarding" element={<GraduateOnboardingPage />} />
+            <Route path="profile" element={<GraduateProfilePage />} />
+            <Route path="opportunities" element={<GraduateOpportunitiesPage />} />
+            <Route path="opportunities/:id" element={<GraduateOpportunityDetailPage />} />
+            <Route path="government-exams" element={<GraduateExamsPage />} />
+            <Route path="exams" element={<Navigate to="../government-exams" replace />} />
+            <Route path="higher-studies" element={<GraduateHigherStudiesPage />} />
+            <Route path="upcoming-exams" element={<GraduateExamsPage />} />
+            <Route path="applications" element={<GraduateApplicationsPage />} />
+            <Route path="peer-mentor" element={<GraduatePeerMentorPage />} />
+            <Route path="peer-mentor/:relationshipId/chat" element={<GraduatePeerChatPage />} />
+            <Route path="messages" element={<GraduatePeerMentorPage />} />
+            <Route path="advisor" element={<GraduateAIAdvisorPage />} />
+            <Route path="ai-advisor" element={<Navigate to="../advisor" replace />} />
+            <Route path="careers" element={<GraduateCareersPage />} />
+            <Route path="skill-gap" element={<GraduateSkillGapPage />} />
+            <Route path="roadmap" element={<GraduateRoadmapPage />} />
+            <Route path="placement" element={<GraduatePlacementPage />} />
+            <Route path="interview" element={<GraduateInterviewPage />} />
+            <Route path="resume" element={<GraduateResumePage />} />
+            <Route path="upskilling" element={<GraduateUpskillingPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
 
         </Routes>
       </MaintenanceGuard>
