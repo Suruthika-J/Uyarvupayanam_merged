@@ -162,9 +162,8 @@ import './student.css'
 // A smart dashboard redirector that decides which layout to send the student to
 function CollegeDashboardRedirector() {
   const { student } = useStudentAuth()
-  const isCollege = student?.userType === 'college_student' ||
-    String(student?.classLevel || '').toLowerCase().includes('college')
-  const isGraduate = student?.userType === 'graduate'
+  const isCollege = student?.userType === 'college_student'
+    const isGraduate = student?.userType === 'graduate'
 
   if (isCollege) {
     return <Navigate to="/college/dashboard" replace />

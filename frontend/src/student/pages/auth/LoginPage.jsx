@@ -21,8 +21,10 @@ export default function LoginPage() {
   // Already signed in? Go straight to the student's dashboard.
   React.useEffect(() => {
     if (isAuthenticated && student) {
-      const isCollege = student?.userType === 'college_student' || String(student?.classLevel || '').toLowerCase().includes('college') || /(\.edu|\.ac)\.in$/i.test(student?.email || '') || /@nec\.edu\.in$/i.test(student?.email || '')
-      const isGraduate = student?.userType === 'graduate' && !isCollege
+      // Identify the authenticated account by its STORED student type —
+      // never by the email domain or classLevel.
+      const isCollege = student?.userType === 'college_student'
+      const isGraduate = student?.userType === 'graduate'
       let dest = from
       if (from === '/student/dashboard') {
         // Route each user type to its own portal, not a generic dashboard.
@@ -65,8 +67,8 @@ export default function LoginPage() {
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
       const s = res.data.student
-      const isCollege = s?.userType === 'college_student' || String(s?.classLevel || '').toLowerCase().includes('college') || /(\.edu|\.ac)\.in$/i.test(s?.email || '') || /@nec\.edu\.in$/i.test(s?.email || '')
-      const isGraduate = s?.userType === 'graduate' && !isCollege
+      const isCollege = s?.userType === 'college_student'
+      const isGraduate = s?.userType === 'graduate'
       let dest = from
       if (from === '/student/dashboard') {
         // Route each user type to its own portal, not a generic dashboard.

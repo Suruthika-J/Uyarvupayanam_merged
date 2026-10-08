@@ -66,6 +66,22 @@ const uploadResume = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+// ── Graduate portal boundary ────────────────────────────────────────────
+// The frontend hides these routes, but the backend is the real security
+// boundary: a non-graduate account must not read or write graduate data
+// just by changing the URL. The /exams/* routes are public exam-content
+// APIs (optionalStudent) and are intentionally excluded.
+// NOTE: verifyStudent must run before the type check — req.student is only
+// populated after authentication.
+router.use(/^\/(?!exams(?:\/|$)).*/, (req, res, next) => {
+  verifyStudent(req, res, () => {
+    if (req.student?.userType !== 'graduate') {
+      return res.status(403).json({ success: false, message: 'Graduate accounts only' });
+    }
+    next();
+  });
+});
+
 // ── Profile & Onboarding ────────────────────────────────────
 router.get("/profile", verifyStudent, getMyProfile);
 router.post(

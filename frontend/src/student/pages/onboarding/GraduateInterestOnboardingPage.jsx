@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import graduateService from '../../../services/graduateService'
+import { useStudentAuth } from '../../context/StudentAuthContext'
 
 const INTEREST_OPTIONS = [
   { id: 'Central Government Exams', desc: 'UPSC, SSC, Banking, Railways, defence & PSU recruitment' },
@@ -24,6 +25,7 @@ const input = { width: '100%', padding: '10px 12px', borderRadius: 10, border: '
 
 export default function GraduateInterestOnboardingPage() {
   const navigate = useNavigate()
+  const { updateStudent } = useStudentAuth()
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -108,8 +110,13 @@ export default function GraduateInterestOnboardingPage() {
       setSaving(true)
       await saveProgress({ careerInterests: form.careerInterests, targetState: form.targetState, ageRange: form.ageRange, examPreparation: form.examPreparation, preferredLocations: form.preferredLocations, preferredRoles: form.preferredRoles, preferredIndustries: form.preferredIndustries, employmentStatus: form.employmentStatus })
       const res = await graduateService.completeOnboarding({})
-      if (res.success) navigate('/student/graduate/dashboard', { replace: true })
-      else setError(res.message || 'Could not save onboarding.')
+      if (res.success) {
+        // CRITICAL: update the auth context so StudentProtectedRoute sees
+        // onboardingCompleted=true — otherwise it bounces the user straight
+        // back to onboarding (infinite loop).
+        updateStudent({ userType: 'graduate', onboardingCompleted: true })
+        navigate('/student/graduate/dashboard', { replace: true })
+      } else setError(res.message || 'Could not save onboarding.')
     } catch {
       setError('Failed to save. Please try again.')
     } finally {

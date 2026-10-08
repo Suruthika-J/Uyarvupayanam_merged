@@ -99,6 +99,9 @@ const verifyLoginOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     if (student.status === "blocked") {
+    // Temporary safe diagnostic (id/role/userType only — no PII).
+    console.log('[auth] otp login id=' + student._id + ' role=' + student.role + ' userType=' + student.userType);
+
       return res.status(403).json({ message: "Your account has been blocked by admin" });
     }
 
@@ -109,14 +112,10 @@ const verifyLoginOtp = async (req, res) => {
       await student.save();
     }
 
-    // Auto-heal college institutional emails & classLevel college_student records
-    const isCollegeEmail = /@nec\.edu\.in$/i.test(student.email) || /(\.edu|\.ac)\.in$/i.test(student.email);
-    if (isCollegeEmail || student.classLevel === "college_student") {
-      if (student.userType !== "college_student") {
-        student.userType = "college_student";
-        await student.save();
-      }
-    }
+    // NOTE: userType is the stored, authoritative identity of this account.
+    // A successful OTP proves email ownership — it does NOT prove the account
+    // is a College account. Never re-classify from the email domain or
+    // classLevel here (a Graduate with a .edu address stays Graduate).
 
     const token = jwt.sign({ id: student._id }, getJwtSecret(), {
       expiresIn: "7d",
