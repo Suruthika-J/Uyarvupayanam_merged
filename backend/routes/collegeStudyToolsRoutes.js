@@ -28,6 +28,11 @@ const {
   generatePracticeQuestions,
   askAdvisorChat,
   generateResumeSuggestions,
+  saveResumeVersion,
+  getResumeVersions,
+  deleteResumeVersion,
+  generateAiSummary,
+  getAtsHistory,
   generateInterviewQuestions,
   getPeerMentors,
   getCollegeDashboardSummary,
@@ -97,13 +102,21 @@ router.get("/practice/questions", verifyStudent, getPracticeQuestions);
 router.get("/practice-questions", verifyStudent, getPracticeQuestions);
 router.post("/practice-questions", verifyStudent, generatePracticeQuestions);
 router.post("/chat", verifyStudent, askAdvisorChat);
+
+// Resume Builder Routes
 router.get("/resume-builder", verifyStudent, generateResumeSuggestions);
+router.post("/resume-builder/save", verifyStudent, saveResumeVersion);
+router.get("/resume-builder/versions", verifyStudent, getResumeVersions);
+router.delete("/resume-builder/:id", verifyStudent, deleteResumeVersion);
+router.post("/resume-builder/generate-summary", verifyStudent, generateAiSummary);
+
 router.post("/interview-prep", verifyStudent, generateInterviewQuestions);
 router.get("/mentors", verifyStudent, getPeerMentors);
 
 // ATS Resume Score & Keyword Checker Routes
 router.get("/ats-presets", verifyStudent, getAtsPresets);
 router.post("/ats-checker", verifyStudent, uploadResume.single("resumeFile"), checkResumeAtsScore);
+router.get("/ats-history", verifyStudent, getAtsHistory);
 
 module.exports = router;
 

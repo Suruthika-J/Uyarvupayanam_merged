@@ -122,6 +122,48 @@ export default function GraduateDashboardPage() {
         </div>
       </SCard>
 
+      {/* ── GRADUATE RESUME DASHBOARD WIDGET ── */}
+      <SCard style={{ padding: 22, borderRadius: 20, marginBottom: 28, background: '#fff', border: '1px solid var(--s-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#dbeafe', color: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+              📄
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>MY RESUME</h3>
+                <span style={{ background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 6, fontSize: 11.5, fontWeight: 800 }}>
+                  ✓ Resume Ready
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--s-text3)', marginTop: 2, display: 'flex', gap: 12 }}>
+                <span>Target: <strong>{profile.preferredDomains?.[0] || profile.targetCareer || 'Software Engineer'}</strong></span>
+                <span>• ATS Score: <strong style={{ color: '#2563eb' }}>{profile.careerReadinessScore || 82}/100</strong></span>
+                <span>• Last Updated: <strong>Today</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link to="/graduate/resume-builder">
+              <SBtn variant="primary" style={{ padding: '8px 16px', borderRadius: 10, fontSize: 13 }}>
+                [ EDIT RESUME ]
+              </SBtn>
+            </Link>
+            <Link to="/graduate/ats-checker">
+              <SBtn variant="secondary" style={{ padding: '8px 16px', borderRadius: 10, fontSize: 13 }}>
+                [ CHECK ATS ]
+              </SBtn>
+            </Link>
+            <Link to="/graduate/resume-builder">
+              <SBtn variant="secondary" style={{ padding: '8px 16px', borderRadius: 10, fontSize: 13 }}>
+                [ DOWNLOAD ]
+              </SBtn>
+            </Link>
+          </div>
+        </div>
+      </SCard>
+
       {/* ── OPPORTUNITY SUMMARY CARDS (ACTUAL DB COUNTS) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
         

@@ -149,6 +149,8 @@ import GraduateRoadmapPage from './pages/graduate/GraduateRoadmapPage'
 import GraduatePlacementPage from './pages/graduate/GraduatePlacementPage'
 import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
 import GraduateResumePage from './pages/graduate/GraduateResumePage'
+import GraduateResumeBuilderPage from './pages/graduate/GraduateResumeBuilderPage'
+import GraduateAtsCheckerPage from './pages/graduate/GraduateAtsCheckerPage'
 import GraduateUpskillingPage from './pages/graduate/GraduateUpskillingPage'
 
 import './student.css'
@@ -455,7 +457,9 @@ export default function StudentRoutes() {
             <Route path="roadmap" element={<GraduateRoadmapPage />} />
             <Route path="placement" element={<GraduatePlacementPage />} />
             <Route path="interview" element={<GraduateInterviewPage />} />
-            <Route path="resume" element={<GraduateResumePage />} />
+            <Route path="resume-builder" element={<GraduateResumeBuilderPage />} />
+            <Route path="ats-checker" element={<GraduateAtsCheckerPage />} />
+            <Route path="resume" element={<GraduateResumeBuilderPage />} />
             <Route path="upskilling" element={<GraduateUpskillingPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>

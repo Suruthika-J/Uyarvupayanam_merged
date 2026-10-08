@@ -1,5 +1,7 @@
 const axios = require("axios");
 const CollegeStudentProfile = require("../models/CollegeStudentProfile");
+const GraduateProfile = require("../models/GraduateProfile");
+const Resume = require("../models/Resume");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const StudentSkillProgress = require("../models/StudentSkillProgress");
 const StudentTestResult = require("../models/StudentTestResult");
@@ -2214,12 +2216,171 @@ exports.getAtsPresets = async (req, res) => {
   }
 };
 
+// GET saved resume versions for authenticated user
+exports.getResumeVersions = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id || req.user?._id;
+    const resumes = await Resume.find({ userId: studentId }).sort({ updatedAt: -1 }).lean();
+    return res.status(200).json({ success: true, resumes });
+  } catch (err) {
+    console.error("Get resume versions error:", err);
+    return res.status(500).json({ success: false, message: "Failed to fetch saved resume versions" });
+  }
+};
+
+// POST / PUT save resume version
+exports.saveResumeVersion = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id || req.user?._id;
+    const data = req.body || {};
+    const user = await User.findById(studentId).lean();
+    const userType = user?.userType || "graduate";
+
+    let resumeDoc = null;
+    if (data._id || data.id) {
+      resumeDoc = await Resume.findOne({ _id: data._id || data.id, userId: studentId });
+    }
+
+    if (!resumeDoc) {
+      resumeDoc = new Resume({
+        userId: studentId,
+        userType
+      });
+    }
+
+    if (data.versionName) resumeDoc.versionName = data.versionName;
+    if (data.targetRole) resumeDoc.targetRole = data.targetRole;
+    if (data.targetCompany !== undefined) resumeDoc.targetCompany = data.targetCompany;
+    if (data.targetCategory) resumeDoc.targetCategory = data.targetCategory;
+    if (data.template) resumeDoc.template = data.template;
+    if (data.personalInfo) resumeDoc.personalInfo = { ...resumeDoc.personalInfo, ...data.personalInfo };
+    if (data.professionalSummary !== undefined) resumeDoc.professionalSummary = data.professionalSummary;
+    if (Array.isArray(data.education)) resumeDoc.education = data.education;
+    if (Array.isArray(data.technicalSkills)) resumeDoc.technicalSkills = data.technicalSkills;
+    if (Array.isArray(data.softSkills)) resumeDoc.softSkills = data.softSkills;
+    if (Array.isArray(data.experience)) resumeDoc.experience = data.experience;
+    if (Array.isArray(data.internships)) resumeDoc.internships = data.internships;
+    if (Array.isArray(data.projects)) resumeDoc.projects = data.projects;
+    if (Array.isArray(data.certifications)) resumeDoc.certifications = data.certifications;
+    if (Array.isArray(data.achievements)) resumeDoc.achievements = data.achievements;
+    if (Array.isArray(data.publications)) resumeDoc.publications = data.publications;
+    if (Array.isArray(data.research)) resumeDoc.research = data.research;
+    if (Array.isArray(data.leadership)) resumeDoc.leadership = data.leadership;
+    if (Array.isArray(data.volunteerExperience)) resumeDoc.volunteerExperience = data.volunteerExperience;
+    if (Array.isArray(data.extracurricular)) resumeDoc.extracurricular = data.extracurricular;
+    if (Array.isArray(data.languages)) resumeDoc.languages = data.languages;
+    if (Array.isArray(data.customSections)) resumeDoc.customSections = data.customSections;
+    if (data.sectionVisibility) resumeDoc.sectionVisibility = { ...resumeDoc.sectionVisibility, ...data.sectionVisibility };
+
+    // Calculate readiness percent
+    let score = 20;
+    if (resumeDoc.personalInfo?.fullName) score += 10;
+    if (resumeDoc.personalInfo?.degree) score += 10;
+    if (resumeDoc.professionalSummary) score += 15;
+    if (resumeDoc.technicalSkills?.length > 0) score += 15;
+    if (resumeDoc.projects?.length > 0 || resumeDoc.experience?.length > 0) score += 20;
+    if (resumeDoc.personalInfo?.linkedin || resumeDoc.personalInfo?.github) score += 10;
+
+    resumeDoc.resumeReadinessPercent = Math.min(100, score);
+    await resumeDoc.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume saved successfully",
+      resume: resumeDoc
+    });
+  } catch (err) {
+    console.error("Save resume version error:", err);
+    return res.status(500).json({ success: false, message: "Failed to save resume version" });
+  }
+};
+
+// DELETE resume version
+exports.deleteResumeVersion = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id || req.user?._id;
+    const { id } = req.params;
+    await Resume.deleteOne({ _id: id, userId: studentId });
+    return res.status(200).json({ success: true, message: "Resume version deleted" });
+  } catch (err) {
+    console.error("Delete resume error:", err);
+    return res.status(500).json({ success: false, message: "Failed to delete resume version" });
+  }
+};
+
+// Generate AI summary based strictly on student's actual profile and resume details
+exports.generateAiSummary = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id || req.user?._id;
+    const { targetRole, resumeDetails } = req.body || {};
+
+    const [user, gradProfile, collegeProfile] = await Promise.all([
+      User.findById(studentId).select("name email").lean(),
+      GraduateProfile.findOne({ userId: studentId }).lean(),
+      CollegeStudentProfile.findOne({ userId: studentId }).lean()
+    ]);
+
+    const profile = gradProfile || collegeProfile || {};
+    const name = user?.name || "Candidate";
+    const degree = resumeDetails?.degree || profile.degree || profile.degreeProgramme || "Engineering";
+    const domain = resumeDetails?.specialization || profile.specialization || profile.domain || "Computer Science";
+    const college = resumeDetails?.institution || profile.collegeName || profile.institution || "University";
+    const role = targetRole || resumeDetails?.targetRole || profile.targetCareer || "Software Engineer";
+    const skills = resumeDetails?.technicalSkills || profile.skills || [];
+
+    const skillsText = Array.isArray(skills) && skills.length > 0
+      ? skills.slice(0, 5).map(s => (typeof s === "string" ? s : s.name)).join(", ")
+      : "core technical competencies";
+
+    const generatedSummary = `Motivated ${degree} graduate specializing in ${domain} from ${college}. Proficient in ${skillsText} with a strong foundation in problem solving and applied software engineering. Seeking entry to mid-level opportunities as a ${role} to deliver high-impact solutions.`;
+
+    return res.status(200).json({
+      success: true,
+      summary: generatedSummary
+    });
+  } catch (err) {
+    console.error("Generate AI summary error:", err);
+    return res.status(500).json({ success: false, message: "Failed to generate summary" });
+  }
+};
+
+// GET ATS History
+exports.getAtsHistory = async (req, res) => {
+  try {
+    const studentId = req.student?.id || req.student?._id || req.user?._id;
+    const resumes = await Resume.find({ userId: studentId }).select("versionName targetRole targetCompany latestAtsScore atsHistory").lean();
+    
+    let history = [];
+    resumes.forEach(r => {
+      if (Array.isArray(r.atsHistory)) {
+        r.atsHistory.forEach(h => {
+          history.push({
+            ...h,
+            resumeId: r._id,
+            versionName: r.versionName
+          });
+        });
+      }
+    });
+
+    history.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
+
+    return res.status(200).json({ success: true, history });
+  } catch (err) {
+    console.error("Get ATS history error:", err);
+    return res.status(500).json({ success: false, message: "Failed to fetch ATS history" });
+  }
+};
+
+// Check ATS Score
 exports.checkResumeAtsScore = async (req, res) => {
   try {
     const studentId = req.student?.id || req.student?._id;
     let resumeText = req.body?.resumeText || "";
     const jobDescription = req.body?.jobDescription || "";
     const useProfile = req.body?.useProfile === true || req.body?.useProfile === "true";
+    const targetCompany = req.body?.targetCompany || "";
+    const targetRole = req.body?.targetRole || "";
 
     // 1. If PDF file was uploaded via multipart/form-data
     if (req.file && req.file.buffer) {
@@ -2238,35 +2399,49 @@ exports.checkResumeAtsScore = async (req, res) => {
     // 2. If user requested to use their generated profile telemetry or no text was supplied
     let profile = null;
     if (useProfile || (!resumeText && studentId)) {
-      const [user, studentProfile] = await Promise.all([
+      const [user, gradProfile, collegeProfile] = await Promise.all([
         User.findById(studentId).select("name email phone").lean(),
+        GraduateProfile.findOne({ userId: studentId }).lean(),
         CollegeStudentProfile.findOne({ userId: studentId }).lean()
       ]);
-      profile = studentProfile;
 
-      if (studentProfile) {
+      profile = gradProfile || collegeProfile;
+
+      if (profile) {
         const studentName = user?.name || "Student Name";
         const email = user?.email || "";
-        const phone = studentProfile?.phone || user?.phone || "";
-        const college = studentProfile?.institution || "Engineering College";
-        const degree = studentProfile?.degreeProgramme || "Undergraduate";
-        const domain = studentProfile?.domain || studentProfile?.field || "Technical Studies";
-        const cgpa = studentProfile?.cgpa ? `CGPA: ${studentProfile.cgpa}` : "";
-        const skillsList = (studentProfile?.skills || []).join(", ");
-        const certsList = (studentProfile?.certifications || []).map(c => `• ${c}`).join("\n");
-        const projectsList = (studentProfile?.projects || []).map(p =>
+        const phone = profile?.phone || user?.phone || "";
+        const college = profile?.collegeName || profile?.institution || profile?.universityName || "Engineering Institution";
+        const degree = profile?.degree || profile?.degreeProgramme || "Undergraduate";
+        const domain = profile?.specialization || profile?.domain || profile?.field || "Technical Studies";
+        const cgpa = profile?.cgpa || profile?.percentage ? `CGPA/Score: ${profile.cgpa || profile.percentage}` : "";
+
+        let skillsList = (profile?.skills || []).join(", ");
+        if (Array.isArray(profile?.technicalSkills)) {
+          const names = profile.technicalSkills.map(s => (typeof s === "string" ? s : s.name)).filter(Boolean);
+          skillsList = Array.from(new Set([...(profile?.skills || []), ...names])).join(", ");
+        }
+
+        const certsList = (profile?.certifications || []).map(c => `• ${c}`).join("\n");
+        const projectsList = (profile?.projects || []).map(p =>
           `• ${p.title || 'Academic Project'}: ${p.description || ''} (Technologies: ${p.techStack || 'Relevant stack'})`
         ).join("\n");
-        const summary = studentProfile?.careerObjective || `Motivated ${degree} graduate in ${domain} with strong technical foundation in ${skillsList}. Seeking entry-level opportunities to apply engineering skills.`;
+
+        const expList = (profile?.experience || []).map(e =>
+          `• ${e.role || e.title || 'Role'} at ${e.company || 'Company'} (${e.duration || ''}): ${e.description || ''}`
+        ).join("\n");
+
+        const summary = profile?.careerObjective || `Motivated ${degree} graduate in ${domain} with strong technical foundation in ${skillsList}. Seeking entry-level opportunities to apply engineering skills.`;
 
         // Synthesize full resume text
         resumeText = [
           `${studentName} | ${email} | ${phone}`,
           `Education:\n${degree} in ${domain}, ${college}. ${cgpa}`,
-          studentProfile?.school10 ? `Secondary Education: ${studentProfile.school10} (CGPA/Score: ${studentProfile.cgpa10 || 'N/A'})` : '',
-          studentProfile?.institution12 ? `Higher Secondary: ${studentProfile.institution12} (${studentProfile.branch12 || 'HSC'}) (Score: ${studentProfile.cgpa12 || 'N/A'})` : '',
+          profile?.school10 ? `Secondary Education: ${profile.school10} (CGPA/Score: ${profile.cgpa10 || 'N/A'})` : '',
+          profile?.institution12 ? `Higher Secondary: ${profile.institution12} (${profile.branch12 || 'HSC'}) (Score: ${profile.cgpa12 || 'N/A'})` : '',
           `Professional Summary:\n${summary}`,
           `Technical Competencies:\n${skillsList}`,
+          expList ? `Work Experience & Internships:\n${expList}` : '',
           projectsList ? `Projects & Portfolio:\n${projectsList}` : '',
           certsList ? `Certifications & Credentials:\n${certsList}` : ''
         ].filter(Boolean).join("\n\n");
@@ -2283,6 +2458,38 @@ exports.checkResumeAtsScore = async (req, res) => {
     // Run ATS scanner
     const analysis = analyzeResumeForAts(resumeText, jobDescription, profile || {});
 
+    // Save ATS scan entry into Resume document if studentId exists
+    if (studentId) {
+      try {
+        let resumeDoc = await Resume.findOne({ userId: studentId }).sort({ updatedAt: -1 });
+        if (!resumeDoc) {
+          resumeDoc = new Resume({
+            userId: studentId,
+            versionName: targetRole ? `${targetRole} Resume` : "Primary Resume",
+            targetRole: targetRole || "Software Engineer",
+            targetCompany: targetCompany
+          });
+        }
+
+        resumeDoc.latestAtsScore = analysis.overallAtsScore;
+        if (!Array.isArray(resumeDoc.atsHistory)) resumeDoc.atsHistory = [];
+
+        resumeDoc.atsHistory.push({
+          jobTitle: targetRole || (jobDescription.slice(0, 40) + "..."),
+          company: targetCompany || "Target Employer",
+          jobDescriptionSnippet: jobDescription.slice(0, 150),
+          overallScore: analysis.overallAtsScore,
+          verdictLevel: analysis.verdict?.level || "Analyzed",
+          matchedSkills: (analysis.categoryScores?.technicalSkills?.matched || []).map(m => m.skill || m),
+          missingSkills: (analysis.categoryScores?.technicalSkills?.missing || [])
+        });
+
+        await resumeDoc.save();
+      } catch (saveErr) {
+        console.warn("Could not record ATS history to Resume doc:", saveErr.message);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       analysis,
@@ -2296,5 +2503,6 @@ exports.checkResumeAtsScore = async (req, res) => {
     });
   }
 };
+
 
 

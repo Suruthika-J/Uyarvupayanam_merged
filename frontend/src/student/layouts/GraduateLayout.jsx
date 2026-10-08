@@ -4,12 +4,14 @@ import { useStudentAuth } from '../context/StudentAuthContext'
 import {
   FiGrid, FiUser, FiCompass, FiBriefcase, FiAward,
   FiBook, FiCheckSquare, FiCalendar, FiUsers, FiMessageSquare,
-  FiBell, FiSettings, FiLogOut, FiMenu, FiX, FiTarget, FiTrendingUp
+  FiBell, FiSettings, FiLogOut, FiMenu, FiX, FiTarget, FiTrendingUp, FiFileText
 } from 'react-icons/fi'
 
 const GRADUATE_SIDEBAR_NAV = [
   { id: 'dashboard',        icon: FiGrid,          label: 'Dashboard',          to: '/graduate/dashboard' },
   { id: 'profile',          icon: FiUser,          label: 'My Profile',         to: '/graduate/profile' },
+  { id: 'resume-builder',   icon: FiFileText,      label: 'Resume Builder',     to: '/graduate/resume-builder' },
+  { id: 'ats-checker',      icon: FiTrendingUp,    label: 'ATS Score Checker',  to: '/graduate/ats-checker' },
   { id: 'opportunities',    icon: FiCompass,       label: 'Opportunities',      to: '/graduate/opportunities' },
   { id: 'government-exams', icon: FiBook,          label: 'Government Exams',  to: '/graduate/government-exams' },
   { id: 'higher-studies',   icon: FiAward,         label: 'Higher Studies',     to: '/graduate/higher-studies' },

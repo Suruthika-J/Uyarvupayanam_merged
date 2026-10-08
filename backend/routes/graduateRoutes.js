@@ -25,9 +25,25 @@ const {
   updateMentorProfile
 } = require("../controllers/graduateMentorController");
 
-const { askAdvisorChat } = require("../controllers/collegeStudyToolsController");
+const {
+  askAdvisorChat,
+  generateResumeSuggestions,
+  saveResumeVersion,
+  getResumeVersions,
+  deleteResumeVersion,
+  generateAiSummary,
+  getAtsPresets,
+  checkResumeAtsScore,
+  getAtsHistory
+} = require("../controllers/collegeStudyToolsController");
 const verifyStudent = require("../middleware/verifyStudent");
 const { rateLimit } = require("../middleware/rateLimit");
+
+const multer = require("multer");
+const uploadResume = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 // ── Profile & Onboarding ───────────────────────────────────────────────────────
 router.get("/profile", verifyStudent, getMyProfile);
@@ -73,5 +89,16 @@ router.get("/mentor/relationships/:id/messages", verifyStudent, getRelationshipM
 router.post("/mentor/relationships/:id/messages", verifyStudent, sendRelationshipMessage);
 router.get("/mentor/profile", verifyStudent, getMentorProfile);
 router.put("/mentor/profile", verifyStudent, updateMentorProfile);
+
+// ── Resume Builder & ATS Score Checker (Graduate Portal) ───────────────────────
+router.get("/resume", verifyStudent, generateResumeSuggestions);
+router.get("/resume/versions", verifyStudent, getResumeVersions);
+router.post("/resume/save", verifyStudent, saveResumeVersion);
+router.delete("/resume/:id", verifyStudent, deleteResumeVersion);
+router.post("/resume/generate-summary", verifyStudent, generateAiSummary);
+
+router.get("/ats-presets", verifyStudent, getAtsPresets);
+router.post("/ats-checker", verifyStudent, uploadResume.single("resumeFile"), checkResumeAtsScore);
+router.get("/ats-history", verifyStudent, getAtsHistory);
 
 module.exports = router;
