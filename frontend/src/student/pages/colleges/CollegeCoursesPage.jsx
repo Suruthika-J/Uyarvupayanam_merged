@@ -112,8 +112,8 @@ export default function CollegeCoursesPage() {
             </span>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>College → Courses</span>
           </div>
-          <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 900, color: '#1e293b', letterSpacing: '-0.02em' }}>
-            {data.college.name}
+          <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(22px, 3.5vw, 30px)', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', wordBreak: 'break-word' }}>
+            {data.college.name || data.college.collegeName || data.college.college || data.college.institution || 'College Institution'}
           </h1>
           <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {data.college.location && (

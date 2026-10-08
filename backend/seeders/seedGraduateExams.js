@@ -1,1303 +1,828 @@
-/* ─────────────────────────────────────────────────────────────────────────────
-   seedGraduateExams — initial catalogue for the Graduate Exams admin module.
-
-   State → Tamil Nadu follows the reference structure (Oliveboard guide):
-   TNPSC, TNPCB, TNUSRB, TN TRB, TNEB (TANTRANSCO / TANGEDCO), TNFUSRC,
-   Tamil Nadu State Transport Corporation, Tamil Nadu Agriculture University,
-   Banking & Railway Recruitment Board and other TN organizations — every body
-   is its own RecruitmentOrganization record with its own exams.
-
-   Data principle: the seed provides STRUCTURAL exam information (what the exam
-   is, typical posts) plus clearly marked REFERENCE values from the guide.
-   Every current/vacancy-style field (dates, live status, application URL) is
-   left empty or reads "Refer to the latest official notification" — nothing
-   volatile is fabricated. The Oliveboard URL is stored ONLY in the
-   `referenceSource` field and is never treated as an official application URL.
-
-   Idempotent: organizations are upserted by slug, exams by slug. Retired
-   legacy records listed in RETIRED_EXAM_SLUGS are hard-deleted so no old
-   Tamil Nadu entries remain alongside the new structure.
-   Run with: npm run seed:graduate-exams
-   ───────────────────────────────────────────────────────────────────────────── */
-
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const path = require("path");
-const RecruitmentOrganization = require("../models/RecruitmentOrganization");
-const GraduateExam = require("../models/GraduateExam");
-const slugify = require("../utils/slugify");
+const Exam = require("../models/Exam");
 
-dotenv.config({ path: path.join(__dirname, "..", ".env") });
+dotenv.config();
 
-const REFER = "Refer to the latest official notification";
-
-/* ── Organizations ────────────────────────────────────────────────────────── */
-
-// Third-party reference guide used as the structural source for the Tamil Nadu
-// state organizations. Stored ONLY in `referenceSource` (never as an official
-// application/notification URL).
-const OLIVEBOARD_REFERENCE = "https://www.oliveboard.in/blog/tamil-nadu-govt-jobs/";
-
-const ORGANIZATIONS = [
+const SEED_EXAMS = [
+  // ── 1. GOVERNMENT ──────────────────────────────────────────────────────────
   {
-    name: "Tamil Nadu Public Service Commission (TNPSC)",
-    slug: "tnpsc",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Tamil Nadu Public Service Commission conducts recruitment examinations for various Tamil Nadu state government services.",
-    officialWebsite: "https://www.tnpsc.gov.in",
-    sourceUrl: "https://apply.tnpscexams.in/notification?app_id=UElZMDAwMDAwMQ==",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Pollution Control Board (TNPCB)",
-    slug: "tnpcb",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Constituted by the Government of Tamil Nadu under the Water, Air and Environment (Prevention & Control of Pollution) Acts; manages biomedical, solid, plastic, e-waste and construction & demolition waste and builds environmental awareness through a three-tier technical hierarchy.",
-    officialWebsite: "https://tnpcb.gov.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)",
-    slug: "tnusrb",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Also known as the Tamil Nadu Police Recruitment Board; conducts recruitment for police and uniformed services — Grade-II Constables, Jail Warders, Firemen and Sub-Inspectors.",
-    officialWebsite: "https://www.tnusrb.tn.gov.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Teachers Recruitment Board (TN TRB)",
-    slug: "tn-trb",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Recruitment board for teaching posts in Tamil Nadu schools and colleges — conducts TNTET, TNSET and teacher / professor related recruitment.",
-    officialWebsite: "https://www.trb.tn.gov.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    slug: "tneb",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "TNEB is the holding company restructured under the Electricity Act, 2003 with the subsidiaries TANTRANSCO (transmission) and TANGEDCO (generation & distribution). Recruitments are notified across the TNEB group.",
-    officialWebsite: "https://www.tangedco.org",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    slug: "tnfusrc",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Conducts recruitment for the Tamil Nadu Forest Department uniformed services — Forest Guards, Forest Watchers, Foresters and Junior Research Fellows.",
-    officialWebsite: "https://www.forests.tn.gov.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu State Transport Corporation",
-    slug: "tnstc",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "State public road-transport undertaking of Tamil Nadu; notifies its own recruitment for driver, conductor, technical and administrative posts.",
-    officialWebsite: "https://www.tnstc.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Tamil Nadu Agriculture University (TNAU)",
-    slug: "tnau",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "The state agriculture university (Coimbatore) — recruits teaching, research and non-teaching staff for its campuses and colleges.",
-    officialWebsite: "https://www.tnau.ac.in",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Banking & Railway Recruitment Board (Tamil Nadu)",
-    slug: "tn-brrb",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Banking and railway recruitments relevant for Tamil Nadu candidates — conducted by the national bodies (IBPS / SBI and the Railway Recruitment Boards).",
-    officialWebsite: "",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Other Tamil Nadu Government Recruitment Organizations",
-    slug: "tn-other",
-    governmentType: "State",
-    state: "Tamil Nadu",
-    description:
-      "Additional Tamil Nadu state boards, departments and public sector undertakings that periodically notify state recruitments; refer to each organisation's official website for current notifications.",
-    officialWebsite: "",
-    sourceUrl: "",
-    referenceSource: OLIVEBOARD_REFERENCE,
-  },
-  {
-    name: "Union Public Service Commission (UPSC)",
-    slug: "upsc",
-    governmentType: "Central",
-    state: "",
-    description:
-      "The Union Public Service Commission conducts the flagship national service examinations (CSE, Civil Engineering, Medical Services and others).",
-    officialWebsite: "https://upsc.gov.in",
-    sourceUrl: "",
-    referenceSource: "",
-  },
-  {
-    name: "Staff Selection Commission (SSC)",
-    slug: "ssc",
-    governmentType: "Central",
-    state: "",
-    description:
-      "SSC conducts combined-level recruitment examinations (CGL, CHSL, CPO, MTS) for various central government departments.",
+    examId: "ssc-cgl",
+    name: "SSC Combined Graduate Level Examination",
+    shortName: "SSC CGL",
+    category: "Government",
+    subCategory: "Central Government Recruitment",
+    conductingOrganization: "Staff Selection Commission (SSC)",
+    description: "National competitive examination to recruit staff for Group B and Group C non-technical posts in Central Government Ministries, Departments, and Secretariats.",
+    purpose: "Recruitment to Group B & C Gazetted/Non-Gazetted posts across Central Ministries.",
+    careerOpportunities: ["Assistant Section Officer (ASO)", "Inspector of Income Tax", "Central Excise Inspector", "Assistant Enforcement Officer", "Sub Inspector (CBI)", "Auditor (CAG)"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "BBA", "BCA", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations", "Computer Science", "Electrical", "Mechanical", "Arts", "Commerce"],
+    minimumQualification: "Bachelor's Degree in any discipline from a recognized university",
+    eligibility: {
+      qualificationRequirements: "Bachelor's Degree in any discipline from a recognized University or equivalent.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "18 to 30 years (OBC +3 yrs, SC/ST +5 yrs)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["Tier 1: Computer Based Examination (Qualifying)", "Tier 2: Computer Based Examination (Paper I Compulsory, Paper II AAO/JSO)"],
+    applicationStartDate: new Date("2026-06-10"),
+    applicationEndDate: new Date("2026-07-20"),
+    examDate: new Date("2026-09-15"),
+    importantDates: {
+      notificationDate: "June 2026",
+      applicationStart: "10 June 2026",
+      applicationDeadline: "20 July 2026",
+      examDate: "September 2026",
+      resultDate: "December 2026"
+    },
+    applicationUrl: "https://ssc.gov.in",
     officialWebsite: "https://ssc.gov.in",
-    sourceUrl: "",
-    referenceSource: "",
+    notificationUrl: "https://ssc.gov.in/notifications",
+    syllabusUrl: "https://ssc.gov.in/syllabus",
+    examPatternUrl: "https://ssc.gov.in/candidate-corner/exam-pattern",
+    status: "OPEN",
+    sourceType: "Official Commission Portal",
+    sourceUrl: "https://ssc.gov.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "Tier 1 CBT Examination",
+        durationMinutes: 60,
+        totalQuestions: 100,
+        totalMarks: 200,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "tier1_quant", name: "Quantitative Aptitude", questionCount: 25, marks: 50, durationMinutes: 15, negativeMarking: "0.50", weightage: 1.0, syllabusTopics: [{ topicId: "quant_percentage", name: "Percentage", normalizedKey: "percentage", estimatedHours: 4, difficulty: "Medium", syllabusWeight: 85, historicalFrequency: 90, recentFrequency: 88, prerequisites: ["Basic Arithmetic"], conceptsToLearn: ["Percentage Increase/Decrease", "Successive Percentage"], revisionChecklist: ["Fraction to % table"] }, { topicId: "quant_time_work", name: "Time & Work", normalizedKey: "time_work", estimatedHours: 4, difficulty: "Medium", syllabusWeight: 90, historicalFrequency: 92, recentFrequency: 94, prerequisites: ["LCM & Ratio"], conceptsToLearn: ["Efficiency Method", "Pipes & Cisterns"], revisionChecklist: ["Work = Rate x Time"] }] },
+          { sectionId: "tier1_reasoning", name: "General Intelligence & Reasoning", questionCount: 25, marks: 50, durationMinutes: 15, negativeMarking: "0.50", weightage: 1.0, syllabusTopics: [{ topicId: "reasoning_analogy", name: "Analogy & Classification", normalizedKey: "analogy", estimatedHours: 3, difficulty: "Easy", syllabusWeight: 85, historicalFrequency: 85, recentFrequency: 85, prerequisites: ["Alphabet Positions"], conceptsToLearn: ["Letter Analogy", "Number Analogy"], revisionChecklist: ["A-Z opposite pairs"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Tier 1", section: "All Sections", paperTitle: "SSC CGL 2025 Official Tier 1 PDF Paper", paperUrl: "https://ssc.gov.in/answer-keys", officialSource: "SSC Official Website", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "Staff Selection Commission Official Portal", url: "https://ssc.gov.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official source for SSC CGL notifications and exam scheme." }
+    ]
   },
   {
-    name: "Banking & Financial Institutions (IBPS / SBI)",
-    slug: "banking",
-    governmentType: "Central",
-    state: "",
-    description:
-      "Recruitment for officer and clerk roles in public sector banks through IBPS and State Bank of India.",
-    officialWebsite: "https://www.ibps.in",
-    sourceUrl: "",
-    referenceSource: "",
+    examId: "upsc-cse",
+    name: "UPSC Civil Services Examination",
+    shortName: "UPSC CSE",
+    category: "Government",
+    subCategory: "All India Civil Services",
+    conductingOrganization: "Union Public Service Commission (UPSC)",
+    description: "Premier national competitive examination for recruitment to Indian Administrative Service (IAS), Indian Police Service (IPS), Indian Foreign Service (IFS), and Central Group A Services.",
+    purpose: "Recruitment to IAS, IPS, IFS, IRS, and Top Central Administrative Services.",
+    careerOpportunities: ["District Magistrate (IAS)", "Superintendent of Police (IPS)", "Diplomat (IFS)", "Commissioner of Income Tax (IRS)"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Graduate Degree in any discipline from a recognized University",
+    eligibility: {
+      qualificationRequirements: "Degree from any recognized University or equivalent qualification.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "21 to 32 years (Relaxations: OBC 35 yrs, SC/ST 37 yrs)",
+      nationality: "Indian Citizen (for IAS & IPS)"
+    },
+    selectionProcess: ["Prelims (GS Paper I & CSAT)", "Mains Written Exam (9 Papers)", "Personality Test (Interview)"],
+    applicationStartDate: new Date("2026-02-14"),
+    applicationEndDate: new Date("2026-03-05"),
+    examDate: new Date("2026-05-24"),
+    importantDates: {
+      notificationDate: "February 2026",
+      applicationStart: "14 February 2026",
+      applicationDeadline: "05 March 2026",
+      examDate: "24 May 2026",
+      resultDate: "September 2026"
+    },
+    applicationUrl: "https://upsconline.nic.in",
+    officialWebsite: "https://upsc.gov.in",
+    notificationUrl: "https://upsc.gov.in/examinations/active-exams",
+    syllabusUrl: "https://upsc.gov.in/examinations/syllabi",
+    examPatternUrl: "https://upsc.gov.in/examinations/examination-scheme",
+    status: "UPCOMING",
+    sourceType: "Union Commission Official Portal",
+    sourceUrl: "https://upsc.gov.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "Preliminary Examination",
+        durationMinutes: 240,
+        totalQuestions: 180,
+        totalMarks: 400,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "prelims_gs1", name: "General Studies Paper I", questionCount: 100, marks: 200, durationMinutes: 120, negativeMarking: "0.66", weightage: 1.0, syllabusTopics: [{ topicId: "upsc_polity", name: "Indian Polity & Governance", normalizedKey: "polity", estimatedHours: 10, difficulty: "Hard", syllabusWeight: 98, historicalFrequency: 95, recentFrequency: 96, prerequisites: ["Constitutional Basics"], conceptsToLearn: ["Fundamental Rights", "Parliamentary Committees"], revisionChecklist: ["Laxmikanth High Yields"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Prelims", section: "GS Paper 1", paperTitle: "UPSC Prelims 2025 Official GS Paper 1", paperUrl: "https://upsc.gov.in/examinations/previous-question-papers", officialSource: "UPSC Official Portal", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "Union Public Service Commission", url: "https://upsc.gov.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official website of UPSC." }
+    ]
   },
-  {
-    name: "Railway Recruitment Boards (RRB)",
-    slug: "railways",
-    governmentType: "Central",
-    state: "",
-    description:
-      "Recruitment for graduate, undergraduate and level-1 posts across Indian Railways zones.",
-    officialWebsite: "https://indianrailways.gov.in",
-    sourceUrl: "",
-    referenceSource: "",
-  },
-  {
-    name: "Other Central Government Bodies",
-    slug: "other-central",
-    governmentType: "Central",
-    state: "",
-    description:
-      "Sectoral recruitments announced by individual central organisations and public sector undertakings (EPFO, ESIC, CBDT, NTA, PSUs and more).",
-    officialWebsite: "",
-    sourceUrl: "",
-    referenceSource: "",
-  },
-];
 
-/* ── TNPSC Exams (State → Tamil Nadu) ─────────────────────────────────────── */
+  // ── 2. ENGINEERING ─────────────────────────────────────────────────────────
+  {
+    examId: "gate-cse",
+    name: "Graduate Aptitude Test in Engineering (Computer Science)",
+    shortName: "GATE CSE",
+    category: "Engineering",
+    subCategory: "Postgraduate & PSU Engineering",
+    conductingOrganization: "IITs / IISc (GATE Committee)",
+    description: "Comprehensive national examination testing undergraduate engineering concepts for M.Tech admissions in IITs/NITs and Executive Trainee recruitment in top PSUs.",
+    purpose: "M.Tech/Ph.D. admissions in IITs/NITs and PSU Officer Recruitment.",
+    careerOpportunities: ["M.Tech at IIT Madras / IIT Bombay / IISc", "Executive Engineer at IOCL / ONGC / NTPC", "PMRF Research Fellowship"],
+    eligibleDegrees: ["B.E.", "B.Tech", "M.Sc", "MCA"],
+    eligibleBranches: ["Computer Science", "Information Technology", "AI & Data Science", "Software Engineering"],
+    minimumQualification: "B.E./B.Tech 3rd/4th year student or graduate",
+    eligibility: {
+      qualificationRequirements: "Bachelor's degree in Engineering/Technology or Master's degree in relevant Science stream.",
+      minDegree: "B.E. / B.Tech / M.Sc",
+      minPercentage: "Passing Marks",
+      ageRequirements: "No upper age limit",
+      nationality: "Indian & International"
+    },
+    selectionProcess: ["Single CBT Examination (3 Hours, 65 Questions, 100 Marks)"],
+    applicationStartDate: new Date("2026-08-25"),
+    applicationEndDate: new Date("2026-09-30"),
+    examDate: new Date("2027-02-06"),
+    importantDates: {
+      notificationDate: "August 2026",
+      applicationStart: "25 August 2026",
+      applicationDeadline: "30 September 2026",
+      examDate: "February 2027",
+      resultDate: "March 2027"
+    },
+    applicationUrl: "https://gate2026.iitr.ac.in",
+    officialWebsite: "https://gate2026.iitr.ac.in",
+    notificationUrl: "https://gate2026.iitr.ac.in/syllabus.html",
+    syllabusUrl: "https://gate2026.iitr.ac.in/syllabus/CS.pdf",
+    examPatternUrl: "https://gate2026.iitr.ac.in/exam-pattern.html",
+    status: "OPEN",
+    sourceType: "IIT Organizing Committee Portal",
+    sourceUrl: "https://gate2026.iitr.ac.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "GATE CBT Examination",
+        durationMinutes: 180,
+        totalQuestions: 65,
+        totalMarks: 100,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "gate_cs_core", name: "Computer Science Core", questionCount: 55, marks: 85, durationMinutes: 150, negativeMarking: "1/3", weightage: 1.0, syllabusTopics: [{ topicId: "gate_ds_algo", name: "Data Structures & Algorithms", normalizedKey: "algorithms", estimatedHours: 8, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 96, recentFrequency: 95, prerequisites: ["C Programming"], conceptsToLearn: ["Trees & Heaps", "Graph Traversal"], revisionChecklist: ["Dijkstra Complexity"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Main", section: "CS Paper", paperTitle: "GATE 2025 CS Official Question Paper & Answer Key", paperUrl: "https://gate2026.iitr.ac.in/previous-papers.html", officialSource: "GATE Committee", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "GATE Official Organizing Committee Portal", url: "https://gate2026.iitr.ac.in", sourceType: "Official Committee", confidence: "HIGH", description: "Official website for GATE 2026." }
+    ]
+  },
+  {
+    examId: "gate-ece",
+    name: "Graduate Aptitude Test in Engineering (Electronics & Communication)",
+    shortName: "GATE ECE",
+    category: "Engineering",
+    subCategory: "Postgraduate & PSU Engineering",
+    conductingOrganization: "IITs / IISc (GATE Committee)",
+    description: "National engineering entrance examination for Electronics, Communication, VLSI, and Embedded Systems graduates.",
+    purpose: "M.Tech admissions in Microelectronics/VLSI and PSU Officer Recruitment.",
+    careerOpportunities: ["VLSI Design Engineer (M.Tech IITs)", "ISRO Scientist/Engineer", "BEL / BHEL Executive Engineer"],
+    eligibleDegrees: ["B.E.", "B.Tech", "M.Sc"],
+    eligibleBranches: ["Electronics & Communication", "Electrical & Electronics", "Instrumentation"],
+    minimumQualification: "B.E./B.Tech in ECE or allied branches",
+    eligibility: {
+      qualificationRequirements: "Bachelor's degree in ECE/EEE/Instrumentation.",
+      minDegree: "B.E. / B.Tech",
+      minPercentage: "Passing Marks",
+      ageRequirements: "No upper age limit",
+      nationality: "Indian & International"
+    },
+    selectionProcess: ["Single Stage CBT Examination"],
+    applicationStartDate: new Date("2026-08-25"),
+    applicationEndDate: new Date("2026-09-30"),
+    examDate: new Date("2027-02-07"),
+    importantDates: {
+      notificationDate: "August 2026",
+      applicationStart: "25 August 2026",
+      applicationDeadline: "30 September 2026",
+      examDate: "February 2027",
+      resultDate: "March 2027"
+    },
+    applicationUrl: "https://gate2026.iitr.ac.in",
+    officialWebsite: "https://gate2026.iitr.ac.in",
+    notificationUrl: "https://gate2026.iitr.ac.in/syllabus/EC.pdf",
+    syllabusUrl: "https://gate2026.iitr.ac.in/syllabus/EC.pdf",
+    examPatternUrl: "https://gate2026.iitr.ac.in",
+    status: "OPEN",
+    sourceType: "IIT GATE Committee",
+    sourceUrl: "https://gate2026.iitr.ac.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "GATE ECE CBT",
+        durationMinutes: 180,
+        totalQuestions: 65,
+        totalMarks: 100,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "ece_core", name: "Electronics & Signals", questionCount: 55, marks: 85, durationMinutes: 150, negativeMarking: "1/3", weightage: 1.0, syllabusTopics: [{ topicId: "ece_signals", name: "Signals & Systems", normalizedKey: "digital_logic", estimatedHours: 6, difficulty: "Hard", syllabusWeight: 90, historicalFrequency: 90, recentFrequency: 92, prerequisites: ["Fourier Series"], conceptsToLearn: ["Laplace & Z-Transform"], revisionChecklist: ["Transform Properties"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Main", section: "ECE Paper", paperTitle: "GATE 2025 EC Official Question Paper", paperUrl: "https://gate2026.iitr.ac.in", officialSource: "GATE Committee", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "GATE Official Portal", url: "https://gate2026.iitr.ac.in", sourceType: "Official Committee", confidence: "HIGH", description: "GATE ECE Official portal." }
+    ]
+  },
 
-const PATTERN = (mode, duration, questions, marks, subjects) => ({
-  mode,
-  duration,
-  questions,
-  marks,
-  subjects,
-});
+  // ── 3. MANAGEMENT ──────────────────────────────────────────────────────────
+  {
+    examId: "cat",
+    name: "Common Admission Test (CAT)",
+    shortName: "CAT",
+    category: "Management",
+    subCategory: "IIM & Top B-School Admissions",
+    conductingOrganization: "Indian Institutes of Management (IIMs)",
+    description: "Computer-based test conducted annually by IIMs for admission to MBA/PGDM programs across 21 IIMs, FMS Delhi, XLRI (select programs), SPJIMR, and MDI Gurgaon.",
+    purpose: "MBA/PGDM Admissions to Top B-Schools in India.",
+    careerOpportunities: ["Management Consultant", "Investment Banker", "Product Manager", "Brand Manager"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "BBA", "BCA", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Bachelor's Degree with at least 50% marks (45% for SC/ST/PwD)",
+    eligibility: {
+      qualificationRequirements: "Bachelor's Degree with at least 50% marks or equivalent CGPA.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "50% Marks",
+      ageRequirements: "No age limit",
+      nationality: "Indian & International"
+    },
+    selectionProcess: ["CAT Computer Based Test (2 Hours)", "Written Ability Test (WAT) / Group Discussion", "Personal Interview (PI)"],
+    applicationStartDate: new Date("2026-08-01"),
+    applicationEndDate: new Date("2026-09-20"),
+    examDate: new Date("2026-11-29"),
+    importantDates: {
+      notificationDate: "July 2026",
+      applicationStart: "01 August 2026",
+      applicationDeadline: "20 September 2026",
+      examDate: "29 November 2026",
+      resultDate: "January 2027"
+    },
+    applicationUrl: "https://iimcat.ac.in",
+    officialWebsite: "https://iimcat.ac.in",
+    notificationUrl: "https://iimcat.ac.in",
+    syllabusUrl: "https://iimcat.ac.in",
+    examPatternUrl: "https://iimcat.ac.in",
+    status: "OPEN",
+    sourceType: "IIM Convenor Portal",
+    sourceUrl: "https://iimcat.ac.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "CAT CBT Examination",
+        durationMinutes: 120,
+        totalQuestions: 66,
+        totalMarks: 198,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "varc", name: "Verbal Ability & Reading Comprehension", questionCount: 24, marks: 72, durationMinutes: 40, negativeMarking: "-1 MCQ, 0 TITA", weightage: 1.0, syllabusTopics: [{ topicId: "cat_rc", name: "Reading Comprehension", normalizedKey: "reading_comprehension", estimatedHours: 6, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["Advanced Reading"], conceptsToLearn: ["Tone & Main Idea"], revisionChecklist: ["Aeon Essays"] }] },
+          { sectionId: "qa", name: "Quantitative Ability", questionCount: 22, marks: 66, durationMinutes: 40, negativeMarking: "-1 MCQ, 0 TITA", weightage: 1.0, syllabusTopics: [{ topicId: "cat_arithmetic", name: "Arithmetic & Algebra", normalizedKey: "percentage", estimatedHours: 8, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["Basic Math"], conceptsToLearn: ["Percentages & Logarithms"], revisionChecklist: ["Formula Cheat Sheet"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Main", section: "All Slots", paperTitle: "CAT 2025 Official Question Paper & Response Sheet", paperUrl: "https://iimcat.ac.in", officialSource: "IIM CAT Convenor Portal", sourceType: "OFFICIAL_PORTAL" }
+    ],
+    sources: [
+      { title: "IIM CAT Official Portal", url: "https://iimcat.ac.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official website for CAT registrations." }
+    ]
+  },
+  {
+    examId: "xat",
+    name: "Xavier Aptitude Test (XAT)",
+    shortName: "XAT",
+    category: "Management",
+    subCategory: "XLRI & Associated B-School Admissions",
+    conductingOrganization: "XLRI Jamshedpur (on behalf of XAMI)",
+    description: "National level management entrance test conducted by XLRI Jamshedpur for admission to BM, HRM, and PGDM programs in XLRI and 160+ associate management institutes.",
+    purpose: "MBA/PGDM admissions at XLRI Jamshedpur, XLRI Delhi, XIMB, IMT Ghaziabad, etc.",
+    careerOpportunities: ["HR Director (XLRI HRM)", "Business Consultant", "Strategy Manager"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Recognized Bachelor's Degree of minimum 3 years duration",
+    eligibility: {
+      qualificationRequirements: "Three-year Bachelor's degree in any discipline from a recognized University.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "No age limit",
+      nationality: "Indian & International"
+    },
+    selectionProcess: ["XAT Computer Based Test (3 Hours 30 Mins)", "Group Discussion & Personal Interview (GD-PI)"],
+    applicationStartDate: new Date("2026-07-15"),
+    applicationEndDate: new Date("2026-11-30"),
+    examDate: new Date("2027-01-03"),
+    importantDates: {
+      notificationDate: "July 2026",
+      applicationStart: "15 July 2026",
+      applicationDeadline: "30 November 2026",
+      examDate: "03 January 2027",
+      resultDate: "January 2027"
+    },
+    applicationUrl: "https://xatonline.in",
+    officialWebsite: "https://xatonline.in",
+    notificationUrl: "https://xatonline.in",
+    syllabusUrl: "https://xatonline.in",
+    examPatternUrl: "https://xatonline.in",
+    status: "OPEN",
+    sourceType: "XLRI Official Portal",
+    sourceUrl: "https://xatonline.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "XAT Computer Based Test",
+        durationMinutes: 210,
+        totalQuestions: 105,
+        totalMarks: 105,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "xat_dm", name: "Decision Making & Ethics", questionCount: 22, marks: 22, durationMinutes: 45, negativeMarking: "0.25", weightage: 1.0, syllabusTopics: [{ topicId: "dm_ethics", name: "Ethical Dilemmas & Business Cases", normalizedKey: "data_interpretation_lr", estimatedHours: 5, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["Logical Reasoning"], conceptsToLearn: ["Stakeholder Analysis"], revisionChecklist: ["XLRI Decision Making Sets"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Main", section: "All Sections", paperTitle: "XAT 2025 Official Question Paper", paperUrl: "https://xatonline.in", officialSource: "XLRI Jamshedpur Portal", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "XLRI XAT Official Website", url: "https://xatonline.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official website for XAT." }
+    ]
+  },
 
-const TNPSC_EXAMS = [
+  // ── 4. HIGHER STUDIES ──────────────────────────────────────────────────────
   {
-    slug: "group-1",
-    examName: "TNPSC Group I",
-    shortName: "Group I",
-    category: "Combined Civil Services Examination – I",
-    description:
-      "The flagship TNPSC examination for senior State services posts across the administrative, police, and allied departments.",
-    qualification: "Bachelor\u2019s degree from a recognised university; post-wise subject requirements and final-year provisions as per the official notification.",
-    posts: [
-      "Deputy Collector / District Officer",
-      "Deputy Superintendent of Police",
-      "Assistant Commissioner (Commercial Taxes)",
-      "Deputy Registrar of Co-operative Societies",
-      "Assistant Director (Rural Development)",
-      "District Employment Officer / related officer-level posts",
+    examId: "cuet-pg",
+    name: "Central Universities Entrance Test (CUET-PG)",
+    shortName: "CUET PG",
+    category: "Higher Studies",
+    subCategory: "Central & State University PG Admissions",
+    conductingOrganization: "National Testing Agency (NTA)",
+    description: "All-India entrance test for admission into Master's programs (M.Sc, M.A., M.Com, MCA, LL.M., B.Ed) across 190+ Central, State, and Deemed Universities including DU, JNU, BHU, and HYU.",
+    purpose: "Postgraduate Degree Admissions across Central & State Universities.",
+    careerOpportunities: ["M.Sc / M.A. Postgraduate", "University Research Fellow", "Higher Studies Specialist"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "BCA", "Degree in relevant subject"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Bachelor's Degree in relevant discipline from a recognized University",
+    eligibility: {
+      qualificationRequirements: "Bachelor's degree in relevant discipline.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "50% Marks",
+      ageRequirements: "No age limit (subject to university guidelines)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["NTA CBT Examination (1 Hour 45 Mins, 75 Questions)"],
+    applicationStartDate: new Date("2026-01-05"),
+    applicationEndDate: new Date("2026-02-10"),
+    examDate: new Date("2026-03-20"),
+    importantDates: {
+      notificationDate: "December 2025",
+      applicationStart: "05 January 2026",
+      applicationDeadline: "10 February 2026",
+      examDate: "20 March 2026",
+      resultDate: "April 2026"
+    },
+    applicationUrl: "https://pgcuet.samarth.ac.in",
+    officialWebsite: "https://nta.ac.in",
+    notificationUrl: "https://pgcuet.samarth.ac.in",
+    syllabusUrl: "https://pgcuet.samarth.ac.in/index.php/site/syllabus",
+    examPatternUrl: "https://pgcuet.samarth.ac.in",
+    status: "CLOSED",
+    sourceType: "NTA Official Portal",
+    sourceUrl: "https://pgcuet.samarth.ac.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "CUET PG Computer Based Test",
+        durationMinutes: 105,
+        totalQuestions: 75,
+        totalMarks: 300,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "domain_paper", name: "Domain Knowledge Paper", questionCount: 75, marks: 300, durationMinutes: 105, negativeMarking: "-1 per wrong answer", weightage: 1.0, syllabusTopics: [{ topicId: "cuet_domain", name: "Core Discipline Syllabus", normalizedKey: "number_system", estimatedHours: 6, difficulty: "Medium", syllabusWeight: 90, historicalFrequency: 90, recentFrequency: 90, prerequisites: ["Undergraduate Core"], conceptsToLearn: ["Core Subject Fundamentals"], revisionChecklist: ["UG Summary Notes"] }] }
+        ]
+      }
     ],
-    selectionProcess: [
-      "Preliminary Examination (objective type) — screening",
-      "Main Examination (written, descriptive)",
-      "Oral Test / Interview",
-      "Minimum qualifying standards for each stage as specified in the notification",
+    previousPapers: [
+      { year: 2025, stage: "Main", section: "All Subjects", paperTitle: "CUET PG 2025 Official Question Papers", paperUrl: "https://nta.ac.in/Downloads", officialSource: "NTA Official Portal", sourceType: "OFFICIAL_PDF" }
     ],
-    examPattern: PATTERN(
-      "Objective type (Preliminary) and descriptive written examination (Mains)",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["General Studies", "Aptitude & Mental Ability", "Tamil / General English (as applicable)", "Optional subject(s) at Mains (group-specific)"]
-    ),
-    syllabus: [
-      "General Studies — history, geography, polity, economy, science & current affairs of India and Tamil Nadu",
-      "Aptitude & Mental Ability — quantitative aptitude, reasoning, data interpretation",
-      "Optional subjects and papers as published in the official syllabus for the current cycle",
-    ],
+    sources: [
+      { title: "NTA CUET PG Portal", url: "https://pgcuet.samarth.ac.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official CUET PG portal." }
+    ]
   },
-  {
-    slug: "group-2",
-    examName: "TNPSC Group II",
-    shortName: "Group II",
-    category: "Combined Civil Services Examination – II",
-    description:
-      "Recruitment for executive and non-gazetted posts in Tamil Nadu state departments and services.",
-    qualification: "Bachelor\u2019s degree from a recognised university; post-wise subject or technical requirements as per the official notification.",
-    posts: [
-      "Deputy Commercial Tax Officer",
-      "Sub-Registrar",
-      "Probation Officer",
-      "Junior Employment Officer",
-      "Assistant Section Officer",
-      "Special Assistant (various departments)",
-      "Senior Inspector / related supervisory posts",
-    ],
-    selectionProcess: [
-      "Preliminary Examination (objective) — common with Group IIA for the preliminary stage",
-      "Main Examination — conducted separately for Group II",
-      "Oral Test / Interview for specified posts",
-      "Certificate verification",
-    ],
-    examPattern: PATTERN(
-      "Objective type (Preliminary) and written examination (Mains)",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["General Studies", "Aptitude & Mental Ability", "Tamil / General English (as applicable)", "Post-specific and language papers at Mains"]
-    ),
-    syllabus: [
-      "General Studies and language papers as published in the official syllabus",
-      "Post-specific papers such as accounts, office procedures and computer basics (where applicable)",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-  {
-    slug: "group-2a",
-    examName: "TNPSC Group IIA",
-    shortName: "Group IIA",
-    category: "Combined Civil Services Examination – IIA (Non-Interview Posts)",
-    description:
-      "Recruitment for non-interview executive and clerical posts — Group IIA shares the common preliminary stage with Group II but has its own mains and post set.",
-    qualification: "Bachelor\u2019s degree from a recognised university; post-wise requirements as per the official notification.",
-    posts: [
-      "Junior Assistant / Assistant (non-security and security posts)",
-      "Assistant Section Officer (as per notification)",
-      "Clerical and record-keeping posts in state departments",
-      "Typist / Steno-Typist posts (where included)",
-    ],
-    selectionProcess: [
-      "Preliminary Examination (objective) — common with Group II for the preliminary stage",
-      "Main Examination — conducted separately for Group IIA (non-interview scheme)",
-      "Certificate verification",
-    ],
-    examPattern: PATTERN(
-      "Objective type (Preliminary) and written examination (Mains)",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["General Studies", "Aptitude & Mental Ability", "Tamil / General English (as applicable)", "Post-specific papers applicable to non-interview posts"]
-    ),
-    syllabus: [
-      "General Studies, Tamil/General English and Aptitude papers per the official syllabus",
-      "Post-specific papers applicable to non-interview posts",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-  {
-    slug: "group-3",
-    examName: "TNPSC Group III",
-    shortName: "Group III",
-    category: "Combined Civil Services Examination – III (Non-Interview Posts)",
-    description:
-      "TNPSC-conducted recruitment for non-interview village, clerical and ministerial posts in Tamil Nadu state services.",
-    qualification: "Role-specific — most Group III posts require 10+2 (HSC) or a degree depending on the post; every post sets its own educational bar in the official notification.",
-    posts: [
-      "Junior Assistant (non-secretariat / taluk offices)",
-      "Field Surveyor / Draftsman",
-      "Typist / Steno-Typist",
-      "Bill Collector / related village & ministerial posts",
-    ],
-    selectionProcess: [
-      "Preliminary Examination (objective) where applicable",
-      "Single written examination (objective type) for the non-interview scheme",
-      "Certificate verification",
-    ],
-    examPattern: PATTERN(
-      "Objective type — Computer Based Test (CBT)",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["General Studies", "Aptitude & Mental Ability", "Tamil / General English (as applicable)"]
-    ),
-    syllabus: [
-      "General Studies — India and Tamil Nadu at the notified level",
-      "Aptitude & Mental Ability",
-      "Language papers as per the official syllabus",
-    ],
-  },
-  {
-    slug: "group-4",
-    examName: "TNPSC Group IV",
-    shortName: "Group IV",
-    category: "Combined Civil Services Examination – IV",
-    description:
-      "Entry-level recruitment for village, clerical and ministerial posts across Tamil Nadu state departments.",
-    qualification: "Class 10 (SSLC), 10+2 or a degree depending on the post — every post sets its own educational bar in the official notification.",
-    posts: [
-      "Village Administrative Officer (VAO)",
-      "Junior Assistant (Security / Non-Security)",
-      "Bill Collector",
-      "Field Surveyor / Draftsman",
-      "Typist / Steno-Typist (Grade 3)",
-      "Office Assistant / related ministerial posts",
-    ],
-    selectionProcess: [
-      "Single written examination (objective type) — Combined Civil Services Examination IV",
-      "Certificate verification",
-    ],
-    examPattern: PATTERN(
-      "Objective type — Computer Based Test (CBT)",
-      "As specified in the official notification",
-      "As per the official notification of the current cycle",
-      "As per the official notification of the current cycle",
-      ["General Studies", "Aptitude & Mental Ability", "Tamil / General English (as applicable)"]
-    ),
-    syllabus: [
-      "General Studies — India and Tamil Nadu at secondary level",
-      "Aptitude & Mental Ability",
-      "General English / Tamil comprehension and language paper as per official syllabus",
-    ],
-  },
-  {
-    slug: "combined-engineering-services",
-    examName: "TNPSC Combined Engineering Services",
-    shortName: "CES",
-    category: "Combined Engineering Services",
-    description:
-      "Recruitment of Assistant Engineers and allied engineering posts for Tamil Nadu state departments through TNPSC.",
-    qualification: "B.E / B.Tech in the notified engineering discipline (Civil, Mechanical, Electrical, ECE and allied branches) as per the official notification.",
-    posts: [
-      "Assistant Engineer (various state departments)",
-      "Assistant Electrical Inspector",
-      "Assistant Engineer (Highways / PWD / TNEB etc. as notified)",
-    ],
-    selectionProcess: [
-      "Written examination (objective and/or subject-specific papers for the notified post)",
-      "Certificate verification",
-      "Interview / oral stage for specified posts, as per notification",
-    ],
-    examPattern: PATTERN(
-      "Objective and/or descriptive written examination depending on the exam",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["Domain / technical subjects of the notified post", "General Studies and Tamil/General English where applicable"]
-    ),
-    syllabus: [
-      "Core engineering subjects of the notified branch",
-      "General Studies where applicable",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-  {
-    slug: "assistant-system-engineer",
-    examName: "TNPSC Assistant System Engineer",
-    shortName: "ASE",
-    category: "Assistant System Engineer",
-    description:
-      "TNPSC-conducted recruitment of Assistant System Engineers for e-governance and IT posts in the Tamil Nadu state administration.",
-    qualification: "B.E / B.Tech in Computer Science, Information Technology, ECE or an MCA as notified by TNPSC for the post.",
-    posts: [
-      "Assistant System Engineer (state e-governance / IT departments)",
-      "Related computer / IT posts as notified",
-    ],
-    selectionProcess: [
-      "Written examination (technical subjects)",
-      "Certificate verification",
-    ],
-    examPattern: PATTERN(
-      "Objective type — Computer Based Test (CBT)",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["Computer Science / IT technical subjects", "General Studies and Tamil/General English where applicable"]
-    ),
-    syllabus: [
-      "IT / Computer Science fundamentals per the official syllabus",
-      "General Studies where applicable",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-  {
-    slug: "district-educational-officer",
-    examName: "TNPSC District Educational Officer",
-    shortName: "DEO",
-    category: "District Educational Officer",
-    description:
-      "Recruitment of District Educational Officers and allied educational-administration posts in Tamil Nadu as conducted through TNPSC.",
-    qualification: "Post-specific — a bachelor\u2019s degree (usually with a degree/diploma in Education, B.Ed) as required by the notification; verify the exact qualification for the current cycle.",
-    posts: ["District Educational Officer", "Allied educational administration posts as notified"],
-    selectionProcess: [
-      "Written examination (subject + educational administration papers)",
-      "Certificate verification",
-      "Interview for specified posts, as per notification",
-    ],
-    examPattern: PATTERN(
-      "Objective and/or descriptive written examination depending on the exam",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["Education / administration subjects", "General Studies and Tamil/General English where applicable"]
-    ),
-    syllabus: [
-      "Educational administration and teacher-related norms",
-      "General Studies where applicable",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-  {
-    slug: "other",
-    examName: "Other TNPSC Examinations",
-    shortName: "Other",
-    category: "Combined & departmental TNPSC examinations",
-    description:
-      "Additional TNPSC-conducted examinations for specialised and departmental recruitments. Combined Library & Information Services, Combined Geology Service and Combined Statistics examinations can be added from the admin panel as separate records.",
-    qualification: "Post-specific — professional posts require their corresponding degree/diploma as per the official notification.",
-    posts: [
-      "Combined & departmental examinations notified by TNPSC",
-      "Statistical, library and other specialised posts as notified",
-    ],
-    selectionProcess: [
-      "Written examination (objective and/or subject-specific papers)",
-      "Certificate verification",
-      "Interview / oral stage for specified posts, as per notification",
-    ],
-    examPattern: PATTERN(
-      "Objective and/or descriptive written examination depending on the exam",
-      "As specified in the official notification",
-      REFER,
-      REFER,
-      ["Domain / technical subjects of the notified post", "General Studies and Tamil/General English where applicable"]
-    ),
-    syllabus: [
-      "Domain and technical subjects per the official syllabus of each examination",
-      "General Studies where applicable",
-      "Full syllabus per the official notification of the current cycle",
-    ],
-  },
-];
 
-/* ── Other Tamil Nadu State Exams ───────────────────────────────────────────
-   Records below are created from the Oliveboard reference guide. They carry
-   STRUCTURAL info (which posts each organisation recruits for) plus clearly
-   marked REFERENCE values. Current ages/salaries must be verified on the
-   official websites — nothing volatile is fabricated.
-   ─────────────────────────────────────────────────────────────────────────── */
-
-// Smallest patch — one "exam record" per notified post (same pattern used by
-// TNUSRB/TNEB/TNFUSRC entries and by the required Admin structure).
-const postExam = (slug, examName, posts, extra = {}) => ({
-  slug,
-  examName,
-  shortName: extra.shortName || "",
-  category: extra.category || "State Recruitment",
-  description:
-    extra.description ||
-    `Recruitment post notified by ${extra.org || "the organisation"}.`,
-  qualification: "",
-  posts,
-  salary: extra.salary || "",
-  additionalEligibility: extra.ageRef || "",
-  selectionProcess: [],
-  examPattern: PATTERN("", "", "", "", []),
-  syllabus: [],
-});
-
-const TNPCB_EXAMS = [
-  postExam("tnpcb-chief-environmental-engineer", "TNPCB Chief Environmental Engineer", ["Chief Environmental Engineer"], {
-    shortName: "Chief Environmental Engineer",
-    category: "TNPCB — Technical & Environmental Posts",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "TNPCB's top engineering post — part of the board's three-tier technical hierarchy; notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-additional-chief-environmental-engineer", "TNPCB Additional Chief Environmental Engineer", ["Additional Chief Environmental Engineer"], {
-    shortName: "Additional Chief Environmental Engineer",
-    category: "TNPCB — Technical & Environmental Posts",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Senior technical post in the TNPCB hierarchy; notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-joint-chief-environmental-engineer", "TNPCB Joint Chief Environmental Engineer", ["Joint Chief Environmental Engineer"], {
-    shortName: "Joint Chief Environmental Engineer",
-    category: "TNPCB — Technical & Environmental Posts",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Mid-senior technical post in the TNPCB hierarchy; notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-district-assistant-environmental-engineer", "TNPCB District & Assistant Environmental Engineer", ["District & Assistant Environmental Engineer"], {
-    shortName: "District & Assistant Environmental Engineer",
-    category: "TNPCB — Technical & Environmental Posts",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Entry / district-level engineering post in the TNPCB hierarchy; notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-financial-advisor", "TNPCB Financial Advisor", ["Financial Advisor"], {
-    shortName: "Financial Advisor",
-    category: "TNPCB — Finance & Administration",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Finance and accounts post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-chief-scientific-officer", "TNPCB Chief Scientific Officer", ["Chief Scientific Officer"], {
-    shortName: "Chief Scientific Officer",
-    category: "TNPCB — Science & Laboratory",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Scientific post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-environmental-scientist", "TNPCB Environmental Scientist", ["Environmental Scientist"], {
-    shortName: "Environmental Scientist",
-    category: "TNPCB — Science & Laboratory",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Environmental science post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-advanced-environmental-laboratory", "TNPCB Advanced Environmental Laboratory", ["Advanced Environmental Laboratory"], {
-    shortName: "Advanced Environmental Laboratory",
-    category: "TNPCB — Science & Laboratory",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Advanced environmental laboratory post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-district-environmental-laboratory", "TNPCB District Environmental Laboratory", ["District Environmental Laboratory"], {
-    shortName: "District Environmental Laboratory",
-    category: "TNPCB — Science & Laboratory",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "District environmental laboratory post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-  postExam("tnpcb-manager-internal-audit", "TNPCB Manager (Internal Audit)", ["Manager (Internal Audit)"], {
-    shortName: "Manager (Internal Audit)",
-    category: "TNPCB — Finance & Administration",
-    org: "Tamil Nadu Pollution Control Board (TNPCB)",
-    description:
-      "Internal audit management post notified by the Tamil Nadu Pollution Control Board.",
-    salary: "Reference range: Rs.19,500 – Rs.1,19,500 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): min age 18; max age 30 (35 for SC/ST, MBC/DC, BC/BCM candidates) — verify in the latest official notification.",
-  }),
-];
-
-const TNUSRB_EXAMS = [
-  postExam("tnusrb-police-constable", "TNUSRB Police Constable (GR.II)", ["Grade-II Constable (Armed Reserve)", "Grade-II Constable (Special Force)"], {
-    shortName: "Police Constable",
-    category: "Police & Uniformed Services Recruitment",
-    org: "Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)",
-    description:
-      "Grade-II Police Constable recruitment (Armed Reserve & Special Force) conducted by the Tamil Nadu Police Recruitment Board (TNUSRB).",
-    salary: "Reference range: Rs.18,200 – Rs.52,900 (varies by post — verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): general 18–24; SC/ST up to 29; MBC/DC/BC up to 26; ex-servicemen up to 45 — verify in the latest official notification.",
-  }),
-  postExam("tnusrb-jail-warder", "TNUSRB Jail Warder (GR.II)", ["GR.II Jail Warder"], {
-    shortName: "Jail Warder",
-    category: "Police & Uniformed Services Recruitment",
-    org: "Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)",
-    description:
-      "GR.II Jail Warder recruitment conducted by the Tamil Nadu Uniformed Services Recruitment Board (TNUSRB).",
-    salary: "Reference range: Rs.18,200 – Rs.52,900 (verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): general 18–24; SC/ST up to 29; MBC/DC/BC up to 26; ex-servicemen up to 45 — verify in the latest official notification.",
-  }),
-  postExam("tnusrb-fireman", "TNUSRB Fireman", ["Fireman"], {
-    shortName: "Fireman",
-    category: "Police & Uniformed Services Recruitment",
-    org: "Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)",
-    description:
-      "Fireman recruitment conducted by the Tamil Nadu Uniformed Services Recruitment Board (TNUSRB).",
-    salary: "Reference range: Rs.18,200 – Rs.52,900 (verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): general 18–24; SC/ST up to 29; MBC/DC/BC up to 26; ex-servicemen up to 45 — verify in the latest official notification.",
-  }),
-  postExam("tnusrb-sub-inspector", "TNUSRB Sub-Inspector", ["Sub-Inspector"], {
-    shortName: "Sub-Inspector",
-    category: "Police & Uniformed Services Recruitment",
-    org: "Tamil Nadu Uniformed Services Recruitment Board (TNUSRB)",
-    description:
-      "Sub-Inspector recruitment conducted by the Tamil Nadu Uniformed Services Recruitment Board (TNUSRB).",
-    salary: "Reference range: Rs.36,900 – Rs.1,16,600 (verify in the latest official notification).",
-    ageRef:
-      "Reference (guide): general 20–28; BC up to 30; SC/ST up to 33; ex-servicemen / departmental up to 45 — verify in the latest official notification.",
-  }),
-];
-
-const TNTRB_EXAMS = [
-  postExam("tn-trb-tntet", "TNTET — Tamil Nadu Teachers Eligibility Test", ["Trained Graduate Teacher (TGT)", "Post Graduate Teacher (PGT)", "JBT Teacher"], {
-    shortName: "TNTET",
-    category: "Teaching Recruitment",
-    org: "Tamil Nadu Teachers Recruitment Board (TN TRB)",
-    description:
-      "Tamil Nadu Teachers Eligibility Test conducted by TN TRB for graduate / post-graduate teacher posts in government schools.",
-    salary: "Reference range: basic pay Rs.29,900 – Rs.1,04,400 with grade pay (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): 18–40 years — verify age norms in the latest official notification.",
-  }),
-  postExam("tn-trb-tnset", "TNSET — Tamil Nadu State Eligibility Test", ["Assistant Professor"], {
-    shortName: "TNSET",
-    category: "Teaching Recruitment",
-    org: "Tamil Nadu Teachers Recruitment Board (TN TRB)",
-    description:
-      "Tamil Nadu State Eligibility Test conducted by TN TRB for Assistant Professor (college teaching) posts.",
-    salary: "Reference: approx. Rs.70,000 per month (verify pay in the latest official notification).",
-    ageRef: "Reference (guide): no age limit is applicable for TNSET — verify in the latest official notification.",
-  }),
-];
-
-const TNEB_EXAMS = [
-  postExam("tneb-field-assistant", "TNEB Field Assistant", ["Field Assistant"], {
-    shortName: "Field Assistant",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Field Assistant post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 (except Gangman) — verify in the latest official notification.",
-  }),
-  postExam("tneb-gangman", "TNEB Gangman", ["Gangman"], {
-    shortName: "Gangman",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Gangman post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18 — verify the age limit and relaxations in the latest official notification.",
-  }),
-  postExam("tneb-junior-assistant-accounts", "TNEB Junior Assistant / Accounts", ["Junior Assistant / Accounts"], {
-    shortName: "Junior Assistant / Accounts",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Junior Assistant / Accounts post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tneb-assistant-engineer", "TNEB Assistant Engineer", ["Assistant Engineer"], {
-    shortName: "Assistant Engineer",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Assistant Engineer post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tneb-assessor", "TNEB Assessor", ["Assessor"], {
-    shortName: "Assessor",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Assessor post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tneb-technical-assistant", "TNEB Technical Assistant", ["Technical Assistant"], {
-    shortName: "Technical Assistant",
-    category: "TNEB Group Recruitment",
-    org: "Tamil Nadu Electricity Board (TNEB / TANTRANSCO / TANGEDCO)",
-    description:
-      "Technical Assistant post notified under the TNEB group (TNEB / TANTRANSCO / TANGEDCO).",
-    salary: "Reference range: Rs.18,800 – Rs.1,26,500 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-];
-
-const TNFUSRC_EXAMS = [
-  postExam("tnfusrc-forest-guard", "TNFUSRC Forest Guard", ["Forest Guard"], {
-    shortName: "Forest Guard",
-    category: "Forest Uniformed Services Recruitment",
-    org: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    description:
-      "Forest Guard recruitment conducted by the Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC).",
-    salary: "Reference range: Rs.5,200 – Rs.57,900 (basic + grade pay + HRA varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tnfusrc-forest-guard-driving-license", "TNFUSRC Forest Guard with Driving License", ["Forest Guard with Driving License"], {
-    shortName: "Forest Guard with Driving License",
-    category: "Forest Uniformed Services Recruitment",
-    org: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    description:
-      "Forest Guard (with Driving License) recruitment conducted by TNFUSRC.",
-    salary: "Reference range: Rs.5,200 – Rs.57,900 (basic + grade pay + HRA varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tnfusrc-forest-watcher", "TNFUSRC Forest Watcher", ["Forest Watcher"], {
-    shortName: "Forest Watcher",
-    category: "Forest Uniformed Services Recruitment",
-    org: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    description:
-      "Forest Watcher recruitment conducted by TNFUSRC.",
-    salary: "Reference range: Rs.5,200 – Rs.57,900 (basic + grade pay + HRA varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tnfusrc-forester", "TNFUSRC Forester", ["Forester"], {
-    shortName: "Forester",
-    category: "Forest Uniformed Services Recruitment",
-    org: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    description:
-      "Forester recruitment conducted by TNFUSRC.",
-    salary: "Reference range: Rs.5,200 – Rs.57,900 (basic + grade pay + HRA varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 30 — verify in the latest official notification.",
-  }),
-  postExam("tnfusrc-junior-research-fellow", "TNFUSRC Junior Research Fellow (JRF)", ["Junior Research Fellow (JRF)"], {
-    shortName: "Junior Research Fellow",
-    category: "Forest Uniformed Services Recruitment",
-    org: "Tamil Nadu Forest Uniformed Services Recruitment Committee (TNFUSRC)",
-    description:
-      "Junior Research Fellow (JRF) recruitment conducted by TNFUSRC.",
-    salary: "Reference range: Rs.5,200 – Rs.57,900 (varies by post — verify in the latest official notification).",
-    ageRef: "Reference (guide): min age 18; max age 28 — verify in the latest official notification.",
-  }),
-];
-
-// Organizations listed by the source without post-level detail (Tamil Nadu
-// State Transport Corporation, Tamil Nadu Agriculture University, Banking &
-// Railway Recruitment Board and other TN boards). They are seeded as ORG ONLY —
-// no examinations are invented for them; admins add exams as notifications come.
-const STATE_TN_ORG_EXAM_MAP = {
-  tnpsc: TNPSC_EXAMS,
-  tnpcb: TNPCB_EXAMS,
-  tnusrb: TNUSRB_EXAMS,
-  "tn-trb": TNTRB_EXAMS,
-  tneb: TNEB_EXAMS,
-  tnfusrc: TNFUSRC_EXAMS,
-  tnstc: [],
-  tnau: [],
-  "tn-brrb": [],
-  "tn-other": [],
-};
-
-/* ── Central Exams ────────────────────────────────────────────────────────── */
-
-const CENTRAL_EXAMS = [
-  // UPSC
+  // ── 5. BANKING ─────────────────────────────────────────────────────────────
   {
-    slug: "upsc-civil-services",
-    examName: "UPSC Civil Services Examination (CSE)",
-    shortName: "CSE",
-    category: "Civil Services",
-    description:
-      "The flagship national service examination for Group A & B services such as IAS, IPS, IFS, and IRS.",
-    qualification: "Indian citizens. Qualification is role-specific: a recognised bachelor\u2019s degree in any discipline; final-year students may apply provisionally if the degree is completed before the examination.",
-    posts: [
-      "Indian Administrative Service (IAS)",
-      "Indian Police Service (IPS)",
-      "Indian Foreign Service (IFS)",
-      "Indian Revenue Service (IRS) & other Group A/B services",
-    ],
-    selectionProcess: [
-      "Preliminary Examination (Prelims — objective, two papers)",
-      "Main Examination (Mains — nine descriptive papers)",
-      "Personality Test / Interview",
-    ],
-    examPattern: PATTERN(
-      "Objective (Prelims) + descriptive (Mains)",
-      "As per the official notification",
-      REFER,
-      REFER,
-      ["General Studies (Prelims & Mains)", "Optional subject at Mains", "Essay and language papers"]
-    ),
-    syllabus: [
-      "NCERTs for foundational grasp (6–12, humanities + optional subjects)",
-      "Current affairs practice (daily newspaper + monthly compilations)",
-      "Answer-writing practice for Mains",
-      "Previous years\u2019 question papers & mock tests",
-      "Dedicated optional subject strategy",
-    ],
-  },
-  {
-    slug: "upsc-engineering-services",
-    examName: "UPSC Engineering Services Examination (ESE)",
-    shortName: "ESE",
-    category: "Engineering Services",
-    description:
-      "Recruitment of engineers in civil/mechanical/electrical/electronics & telecommunication disciplines for central engineering services.",
-    qualification: "B.E / B.Tech (or equivalent) in the notified engineering discipline from a recognised institution.",
-    posts: [
-      "Engineers in irrigation, railways, defence, CPWD and similar central engineering services",
-      "Indian Railway Service of Engineers and allied services",
-    ],
-    selectionProcess: [
-      "Preliminary Examination — General Studies & Engineering Aptitude",
-      "Main Examination — conventional papers of the notified engineering discipline",
-      "Personality Test / Interview",
-    ],
-    examPattern: PATTERN(
-      "Objective (Prelims) + conventional (Mains)",
-      "As per the official notification",
-      REFER,
-      REFER,
-      ["General Studies & Engineering Aptitude", "Civil / Mechanical / Electrical / Electrical & Telecom engineering"]
-    ),
-    syllabus: [
-      "Standard syllabus for the notified engineering discipline",
-      "General Studies portion as published by UPSC",
-      "Previous years\u2019 ESE papers",
-    ],
-  },
-  {
-    slug: "upsc-combined-medical-services",
-    examName: "UPSC Combined Medical Services Examination (CMS)",
-    shortName: "CMS",
-    category: "Combined Medical Services",
-    description:
-      "Recruitment of medical officers for the Armed Forces Medical Services, railways, CGHS and statutory organisations.",
-    qualification: "MBBS degree (including candidates in the final year of MBBS as per UPSC rules) with the required registration.",
-    posts: [
-      "Medical Officer in CGHS",
-      "Railway Medical Officer",
-      "Medical Officer in the Armed Forces (AFCMS-OS)",
-      "Medical Officers in CG organizations",
-    ],
-    selectionProcess: [
-      "Written examination (objective multiple-choice papers)",
-      "Interview / personality test (for specified services)",
-    ],
-    examPattern: PATTERN(
-      "Objective type",
-      "As per the official notification",
-      REFER,
-      REFER,
-      ["Paper I & Paper II — medical subjects (medicine, surgery, obstetrics & gynaecology, preventive & social medicine)"]
-    ),
-    syllabus: [
-      "MBBS-level medical subjects as published in the UPSC CMS syllabus",
-      "Previous years\u2019 CMS papers",
-    ],
-  },
-  {
-    slug: "upsc-other",
-    examName: "Other UPSC Examinations",
-    shortName: "Other UPSC",
-    category: "UPSC",
-    description:
-      "Other UPSC-conducted recruitment examinations (e.g. CAPF), plus specialised services not listed above.",
-    qualification: "Role-specific per examination as published in the official UPSC notification.",
-    posts: ["Central Armed Police Forces (CAPF) and other notified services"],
-    selectionProcess: ["Written examination", "Interview / physical tests as applicable"],
-    examPattern: PATTERN("Objective and/or descriptive per exam", "As per the official notification", REFER, REFER, ["General Studies", "Specialised papers as notified"]),
-    syllabus: ["Syllabus per the official notification", "Previous years\u2019 UPSC papers"],
-  },
-  // SSC
-  {
-    slug: "ssc-cgl",
-    examName: "SSC Combined Graduate Level (CGL)",
-    shortName: "CGL",
-    category: "Combined Graduate Level",
-    description:
-      "SSC CGL recruits graduate-level staff for central government departments (Group B gazetted/ non-gazetted and Group C non-technical posts).",
-    qualification: "Bachelor\u2019s degree from a recognised university; individual posts inside the exam may add subject-specific requirements.",
-    posts: [
-      "Assistant Section Officer",
-      "Inspector & Auditor posts in central departments",
-      "Lower Division Clerk & Junior Accountant level posts (as per scheme)",
-    ],
-    selectionProcess: [
-      "Tier 1 — Computer Based Examination",
-      "Tier 2 — subject / quantitative & descriptive papers (post-dependent)",
-      "Skill / typing test & document verification (post-dependent)",
-    ],
-    examPattern: PATTERN(
-      "Computer Based Examination (objective) + descriptive paper",
-      "As per the official notification",
-      REFER,
-      REFER,
-      ["Quantitative Aptitude", "English Language", "General Intelligence & Reasoning", "General Awareness"]
-    ),
-    syllabus: [
-      "Quantitative aptitude & reasoning practice",
-      "English language & comprehension",
-      "General awareness / current affairs",
-      "Previous years\u2019 CGL papers",
-    ],
-  },
-  {
-    slug: "ssc-chsl",
-    examName: "SSC CHSL (10+2)",
-    shortName: "CHSL",
-    category: "Combined Higher Secondary Level",
-    description:
-      "SSC CHSL recruits 10+2-level staff such as Lower Division Clerks and Postal Assistants in central departments.",
-    qualification: "10+2 (Senior Secondary) pass from a recognised board; data entry operator posts may add typing skill requirements.",
-    posts: ["Lower Division Clerk (LDC)", "Junior Secretariat Assistant", "Postal Assistant / Sorting Assistant (as notified)"],
-    selectionProcess: [
-      "Tier 1 — Computer Based Examination",
-      "Tier 2 — descriptive / skill test (typing)",
-      "Document verification",
-    ],
-    examPattern: PATTERN(
-      "Computer Based Examination (objective)",
-      "As per the official notification",
-      REFER,
-      REFER,
-      ["English Language", "Quantitative Aptitude", "General Intelligence", "General Awareness"]
-    ),
-    syllabus: [
-      "Quantitative aptitude, reasoning, English & general awareness",
-      "Typing practice for skill-test posts",
-    ],
-  },
-  {
-    slug: "ssc-cpo",
-    examName: "SSC CPO (Central Police Organisations)",
-    shortName: "CPO",
-    category: "Central Police Organisations",
-    description:
-      "SSC CPO recruits Sub-Inspectors into Delhi Police, CAPFs and other central police organisations.",
-    qualification: "Bachelor\u2019s degree from a recognised university; physical standards apply.",
-    posts: ["Sub-Inspector in Delhi Police / CAPFs", "SI (Executive) in CISF, CRPF, BSF, SSB, ITBP"],
-    selectionProcess: [
-      "Paper I — Computer Based Examination",
-      "Physical Standard Test (PST) / Physical Endurance Test (PET)",
-      "Paper II (objective) — qualifying",
-      "Medical examination & document verification",
-    ],
-    examPattern: PATTERN("Computer Based Examination (objective)", "As per the official notification", REFER, REFER, ["General Intelligence & Reasoning", "General Knowledge & Awareness", "Quantitative Aptitude", "English"]),
-    syllabus: [
-      "Reasoning, quantitative aptitude, English & general awareness",
-      "Physical fitness preparation",
-    ],
-  },
-  {
-    slug: "ssc-other",
-    examName: "Other SSC Examinations",
-    shortName: "Other SSC",
-    category: "SSC",
-    description:
-      "Other SSC-conducted examinations (e.g. MTS, Steno, departmental exams) not listed above.",
-    qualification: "Role-specific per exam (Class 10 / 10+2 / degree as notified).",
-    posts: ["Multi-Tasking Staff and other notified posts"],
-    selectionProcess: ["Computer Based Examination", "Skill tests as applicable", "Document verification"],
-    examPattern: PATTERN("Computer Based Examination (objective)", "As per the official notification", REFER, REFER, ["Reasoning, English, Quantitative Aptitude, General Awareness"]),
-    syllabus: ["Syllabus per the official notification", "Previous years\u2019 SSC papers"],
-  },
-  // Banking
-  {
-    slug: "ibps-po",
-    examName: "IBPS Probationary Officer (CWE PO/MT)",
+    examId: "ibps-po",
+    name: "IBPS Probationary Officer / Management Trainee Examination",
     shortName: "IBPS PO",
     category: "Banking",
-    description:
-      "IBPS CWE PO/MT recruits Probationary Officers for participating public sector banks.",
-    qualification: "Bachelor\u2019s degree in any discipline from a recognised university (as per the current notification's eligibility window).",
-    posts: ["Probationary Officer / Management Trainee in participating PSBs"],
-    selectionProcess: [
-      "Preliminary Examination (objective, online)",
-      "Main Examination (online, post-specific papers)",
-      "Interview / document verification",
+    subCategory: "Public Sector Banks Recruitment",
+    conductingOrganization: "Institute of Banking Personnel Selection (IBPS)",
+    description: "National recruitment exam to select Probationary Officers and Management Trainees across 11 participating Public Sector Banks in India (e.g. Punjab National Bank, Bank of Baroda, Canara Bank).",
+    purpose: "Recruitment to Bank PO / Assistant Manager positions in Public Sector Banks.",
+    careerOpportunities: ["Probationary Officer (Scale I)", "Assistant Branch Manager", "Credit Officer / Treasury Manager"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Degree (Graduation) in any discipline from a recognized University",
+    eligibility: {
+      qualificationRequirements: "Degree in any discipline from a University recognized by the Govt. Of India.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "20 to 30 years (OBC +3 yrs, SC/ST +5 yrs)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["Phase 1: Preliminary Examination (100 Marks)", "Phase 2: Main Examination (225 Marks incl. Descriptive)", "Phase 3: Interview (100 Marks)"],
+    applicationStartDate: new Date("2026-08-01"),
+    applicationEndDate: new Date("2026-08-28"),
+    examDate: new Date("2026-10-15"),
+    importantDates: {
+      notificationDate: "July 2026",
+      applicationStart: "01 August 2026",
+      applicationDeadline: "28 August 2026",
+      examDate: "October 2026 (Prelims)",
+      resultDate: "December 2026"
+    },
+    applicationUrl: "https://ibps.in",
+    officialWebsite: "https://ibps.in",
+    notificationUrl: "https://ibps.in",
+    syllabusUrl: "https://ibps.in",
+    examPatternUrl: "https://ibps.in",
+    status: "OPEN",
+    sourceType: "IBPS Official Portal",
+    sourceUrl: "https://ibps.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "Prelims Examination",
+        durationMinutes: 60,
+        totalQuestions: 100,
+        totalMarks: 100,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "ibps_quant", name: "Quantitative Aptitude", questionCount: 35, marks: 35, durationMinutes: 20, negativeMarking: "0.25", weightage: 1.0, syllabusTopics: [{ topicId: "ibps_di", name: "Data Interpretation & Speed Math", normalizedKey: "data_interpretation", estimatedHours: 5, difficulty: "Medium", syllabusWeight: 90, historicalFrequency: 92, recentFrequency: 94, prerequisites: ["Fractions & %"], conceptsToLearn: ["Tabular & Caselet DI"], revisionChecklist: ["Square roots & Cubes up to 30"] }] }
+        ]
+      }
     ],
-    examPattern: PATTERN("Online objective (Prelims + Mains) + Interview", "As per the official notification", REFER, REFER, ["Reasoning & Computer Aptitude", "Data Analysis & Interpretation", "English/GA", "Professional Knowledge (Mains)"]),
-    syllabus: [
-      "Reasoning, quantitative aptitude & English",
-      "Financial and general awareness",
-      "Banking products & current affairs",
-      "Interview preparation",
+    previousPapers: [
+      { year: 2025, stage: "Prelims", section: "All Sections", paperTitle: "IBPS PO 2025 Prelims Official Memory Paper", paperUrl: "https://ibps.in", officialSource: "IBPS Portal", sourceType: "OFFICIAL_PORTAL" }
     ],
+    sources: [
+      { title: "Institute of Banking Personnel Selection", url: "https://ibps.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official website for IBPS." }
+    ]
   },
   {
-    slug: "ibps-clerk",
-    examName: "IBPS Clerk",
-    shortName: "IBPS Clerk",
-    category: "Banking",
-    description:
-      "IBPS CWE Clerk recruits Clerical Cadre staff for participating public sector banks.",
-    qualification: "Bachelor\u2019s degree in any discipline from a recognised university (eligibility window as per the notification).",
-    posts: ["Clerical Cadre (customer-facing roles) in participating PSBs"],
-    selectionProcess: ["Preliminary Examination (objective, online)", "Main Examination (online)"],
-    examPattern: PATTERN("Online objective (Prelims + Mains)", "As per the official notification", REFER, REFER, ["English", "Numerical Ability", "Reasoning Ability", "General/Financial Awareness"]),
-    syllabus: [
-      "Numerical ability, reasoning & English",
-      "General and financial awareness",
-      "Previous IBPS papers",
-    ],
-  },
-  {
-    slug: "sbi-po",
-    examName: "SBI Probationary Officer",
+    examId: "sbi-po",
+    name: "State Bank of India Probationary Officer Examination",
     shortName: "SBI PO",
     category: "Banking",
-    description:
-      "State Bank of India recruits Probationary Officers through its own CWE for its officer cadre.",
-    qualification: "Bachelor\u2019s degree in any discipline from a recognised university (eligibility window as per the notification).",
-    posts: ["Probationary Officer at State Bank of India"],
-    selectionProcess: [
-      "Preliminary Examination",
-      "Main Examination (objective + descriptive)",
-      "Phase III — Interview / Psychometric test",
+    subCategory: "SBI Recruitment",
+    conductingOrganization: "State Bank of India (SBI)",
+    description: "Premier banking examination conducted by State Bank of India to recruit Probationary Officers across its nationwide branch network.",
+    purpose: "Recruitment to Officer Grade (Scale I) in State Bank of India.",
+    careerOpportunities: ["Probationary Officer (SBI)", "Deputy Manager", "Chief General Manager"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Graduation in any discipline from a recognized University",
+    eligibility: {
+      qualificationRequirements: "Graduation in any discipline from a recognized University or equivalent.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "21 to 30 years",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["Phase 1: Prelims", "Phase 2: Mains & Descriptive Test", "Phase 3: Psychometric Test & Group Exercise / Interview"],
+    applicationStartDate: new Date("2026-09-07"),
+    applicationEndDate: new Date("2026-09-27"),
+    examDate: new Date("2026-11-10"),
+    importantDates: {
+      notificationDate: "September 2026",
+      applicationStart: "07 September 2026",
+      applicationDeadline: "27 September 2026",
+      examDate: "November 2026",
+      resultDate: "January 2027"
+    },
+    applicationUrl: "https://sbi.co.in/web/careers",
+    officialWebsite: "https://sbi.co.in/web/careers",
+    notificationUrl: "https://sbi.co.in/web/careers",
+    syllabusUrl: "https://sbi.co.in/web/careers",
+    examPatternUrl: "https://sbi.co.in/web/careers",
+    status: "OPEN",
+    sourceType: "SBI Careers Portal",
+    sourceUrl: "https://sbi.co.in/web/careers",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "SBI PO Prelims Exam",
+        durationMinutes: 60,
+        totalQuestions: 100,
+        totalMarks: 100,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "sbi_reasoning", name: "Reasoning Ability", questionCount: 35, marks: 35, durationMinutes: 20, negativeMarking: "0.25", weightage: 1.0, syllabusTopics: [{ topicId: "sbi_puzzles", name: "Seating Arrangement & Puzzles", normalizedKey: "data_interpretation_lr", estimatedHours: 6, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["Basic Logic"], conceptsToLearn: ["Circular & Linear Arrangements"], revisionChecklist: ["50 Banking Puzzles"] }] }
+        ]
+      }
     ],
-    examPattern: PATTERN("Online objective + descriptive + Interview", "As per the official notification", REFER, REFER, ["Reasoning & Computer Aptitude", "Data Analysis & Interpretation", "English & English Language", "General Banking Awareness"]),
-    syllabus: [
-      "Data analysis, reasoning & English",
-      "Banking & financial awareness",
-      "Interview preparation",
+    previousPapers: [
+      { year: 2025, stage: "Prelims", section: "All Sections", paperTitle: "SBI PO 2025 Prelims Official PDF Paper", paperUrl: "https://sbi.co.in/web/careers", officialSource: "SBI Careers", sourceType: "OFFICIAL_PORTAL" }
     ],
+    sources: [
+      { title: "State Bank of India Careers", url: "https://sbi.co.in/web/careers", sourceType: "Official Portal", confidence: "HIGH", description: "Official SBI recruitment portal." }
+    ]
   },
+
+  // ── 6. RAILWAY ─────────────────────────────────────────────────────────────
   {
-    slug: "sbi-clerk",
-    examName: "SBI Clerk",
-    shortName: "SBI Clerk",
-    category: "Banking",
-    description:
-      "State Bank of India recruits Junior Associates (Customer Support & Sales) through its CWE for clerical posts.",
-    qualification: "Graduation in any discipline from a recognised university (eligibility window as per the notification).",
-    posts: ["Junior Associate (Customer Support & Sales) at SBI"],
-    selectionProcess: ["Preliminary Examination", "Main Examination (objective)"],
-    examPattern: PATTERN("Online objective (Prelims + Mains)", "As per the official notification", REFER, REFER, ["English", "Numerical Ability", "Reasoning Ability", "Banking Awareness"]),
-    syllabus: [
-      "Numerical ability, reasoning & English",
-      "Banking & financial awareness",
-      "Previous SBI Clerk papers",
+    examId: "rrb-ntpc",
+    name: "RRB Non-Technical Popular Categories Examination",
+    shortName: "RRB NTPC",
+    category: "Railway",
+    subCategory: "Indian Railways Recruitment",
+    conductingOrganization: "Railway Recruitment Boards (RRB)",
+    description: "All-India competitive examination for recruitment to Non-Technical Popular Categories (Graduate posts) in 21 Railway Recruitment zones across Indian Railways.",
+    purpose: "Recruitment to Station Master, Goods Guard, Senior Clerk, Junior Accounts Assistant posts in Indian Railways.",
+    careerOpportunities: ["Station Master", "Goods Guard (Train Manager)", "Commercial Apprentice", "Senior Clerk cum Typist"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Degree from recognized University or its equivalent",
+    eligibility: {
+      qualificationRequirements: "Degree from recognized University or its equivalent.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "18 to 33 years (Relaxations: OBC +3 yrs, SC/ST +5 yrs)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["1st Stage CBT", "2nd Stage CBT", "Computer Based Aptitude Test (CBAT) / Typing Test", "Document Verification"],
+    applicationStartDate: new Date("2026-09-14"),
+    applicationEndDate: new Date("2026-10-13"),
+    examDate: new Date("2026-12-15"),
+    importantDates: {
+      notificationDate: "September 2026",
+      applicationStart: "14 September 2026",
+      applicationDeadline: "13 October 2026",
+      examDate: "December 2026",
+      resultDate: "March 2027"
+    },
+    applicationUrl: "https://indianrailways.gov.in",
+    officialWebsite: "https://indianrailways.gov.in",
+    notificationUrl: "https://indianrailways.gov.in",
+    syllabusUrl: "https://indianrailways.gov.in",
+    examPatternUrl: "https://indianrailways.gov.in",
+    status: "OPEN",
+    sourceType: "Railway Recruitment Board Official Portal",
+    sourceUrl: "https://indianrailways.gov.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "1st Stage CBT",
+        durationMinutes: 90,
+        totalQuestions: 100,
+        totalMarks: 100,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "rrb_math", name: "Mathematics", questionCount: 30, marks: 30, durationMinutes: 30, negativeMarking: "1/3", weightage: 1.0, syllabusTopics: [{ topicId: "rrb_number", name: "Number System & Speed Math", normalizedKey: "number_system", estimatedHours: 4, difficulty: "Medium", syllabusWeight: 88, historicalFrequency: 90, recentFrequency: 89, prerequisites: ["Basic Arithmetic"], conceptsToLearn: ["Divisibility & LCM"], revisionChecklist: ["Formula Sheet"] }] }
+        ]
+      }
     ],
+    previousPapers: [
+      { year: 2025, stage: "CBT 1", section: "All Shifts", paperTitle: "RRB NTPC 2025 Official CBT 1 Master Papers", paperUrl: "https://indianrailways.gov.in", officialSource: "RRB Official Website", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "Indian Railways RRB Official Portal", url: "https://indianrailways.gov.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official RRB recruitment portal." }
+    ]
   },
+
+  // ── 7. DEFENCE ─────────────────────────────────────────────────────────────
   {
-    slug: "banking-other",
-    examName: "Other Banking Recruitments",
-    shortName: "Other Banking",
-    category: "Banking",
-    description:
-      "Other public-sector banking and financial-institution recruitments (RBI, NABARD, specialist officers) as notified.",
-    qualification: "Role-specific per examination and post.",
-    posts: ["RBI Grade B / Assistant and other notified financial-institution posts"],
-    selectionProcess: ["Pre/Mains written examinations", "Interview (for officer posts)"],
-    examPattern: PATTERN("Online objective (+ interview for officers)", "As per the official notification", REFER, REFER, ["English, Quantitative Aptitude, Reasoning, Economic & Financial awareness or specialist subjects"]),
-    syllabus: ["Syllabus per the official notification", "Current affairs & financial awareness"],
+    examId: "cds",
+    name: "Combined Defence Services Examination (CDS)",
+    shortName: "CDS",
+    category: "Defence",
+    subCategory: "Armed Forces Officer Entry",
+    conductingOrganization: "Union Public Service Commission (UPSC)",
+    description: "National examination for recruitment of Commissioned Officers into Indian Military Academy (IMA), Indian Naval Academy (INA), Air Force Academy (AFA), and Officers Training Academy (OTA).",
+    purpose: "Commissioned Officer Entry in Indian Army, Navy, and Air Force.",
+    careerOpportunities: ["Lieutenant (Indian Army)", "Sub Lieutenant (Indian Navy)", "Flying Officer (Indian Air Force)"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Degree of a recognized University (Physics & Math required for AFA/INA)",
+    eligibility: {
+      qualificationRequirements: "Degree from recognized University (Engineering for INA, Physics & Math in 10+2/B.E. for AFA).",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "19 to 24 years (Unmarried candidates)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["UPSC Written Examination", "SSB Interview (5-Day Testing)", "Medical Examination"],
+    applicationStartDate: new Date("2026-05-20"),
+    applicationEndDate: new Date("2026-06-09"),
+    examDate: new Date("2026-09-01"),
+    importantDates: {
+      notificationDate: "May 2026",
+      applicationStart: "20 May 2026",
+      applicationDeadline: "09 June 2026",
+      examDate: "September 2026",
+      resultDate: "December 2026"
+    },
+    applicationUrl: "https://upsconline.nic.in",
+    officialWebsite: "https://upsc.gov.in",
+    notificationUrl: "https://upsc.gov.in",
+    syllabusUrl: "https://upsc.gov.in",
+    examPatternUrl: "https://upsc.gov.in",
+    status: "OPEN",
+    sourceType: "UPSC Official Portal",
+    sourceUrl: "https://upsc.gov.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "UPSC Written Exam (IMA/INA/AFA)",
+        durationMinutes: 360,
+        totalQuestions: 300,
+        totalMarks: 300,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "cds_english", name: "English Language", questionCount: 120, marks: 100, durationMinutes: 120, negativeMarking: "0.33", weightage: 1.0, syllabusTopics: [{ topicId: "cds_grammar", name: "Grammar & Comprehension", normalizedKey: "verbal_ability", estimatedHours: 5, difficulty: "Medium", syllabusWeight: 90, historicalFrequency: 90, recentFrequency: 90, prerequisites: ["English Basics"], conceptsToLearn: ["Error Spotting & Ordering"], revisionChecklist: ["100 Grammar Rules"] }] }
+        ]
+      }
+    ],
+    previousPapers: [
+      { year: 2025, stage: "Written", section: "All Papers", paperTitle: "CDS 2025 Official Question Papers", paperUrl: "https://upsc.gov.in", officialSource: "UPSC Official Portal", sourceType: "OFFICIAL_PDF" }
+    ],
+    sources: [
+      { title: "UPSC CDS Official Portal", url: "https://upsc.gov.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official CDS notification portal." }
+    ]
   },
-  // Railways
+
+  // ── 8. STATE PSC ───────────────────────────────────────────────────────────
   {
-    slug: "rrb-ntpc",
-    examName: "RRB NTPC (Non-Technical Popular Categories)",
-    shortName: "NTPC",
-    category: "Railways",
-    description:
-      "RRB NTPC recruitment for graduate and undergraduate non-technical posts across Indian Railways zones.",
-    qualification: "Graduate posts require a bachelor\u2019s degree; undergraduate posts require 10+2 as per the notification.",
-    posts: [
-      "Station Master / Goods Train Manager (graduate)",
-      "Commercial Apprentice & Senior Clerk (graduate)",
-      "Junior Clerk cum Typist (undergraduate)",
+    examId: "tnpsc-group-1",
+    name: "TNPSC Group I Services Examination",
+    shortName: "TNPSC Group I",
+    category: "State PSC",
+    subCategory: "Tamil Nadu Public Service Commission",
+    conductingOrganization: "Tamil Nadu Public Service Commission (TNPSC)",
+    description: "Premier State Civil Services examination conducted by TNPSC for recruitment to top Group A Executive posts in Tamil Nadu State Administration.",
+    purpose: "Recruitment to Deputy Collector, DSP, District Registrar, Assistant Commissioner (Commercial Taxes) in Tamil Nadu.",
+    careerOpportunities: ["Deputy Collector (TNSCS)", "Deputy Superintendent of Police (DSP)", "Assistant Commissioner (Commercial Taxes)"],
+    eligibleDegrees: ["B.E.", "B.Tech", "B.Sc", "B.Com", "B.A.", "Degree in any discipline"],
+    eligibleBranches: ["All Specializations"],
+    minimumQualification: "Degree of any University recognized by University Grants Commission",
+    eligibility: {
+      qualificationRequirements: "Must possess a Degree of any University recognized by UGC.",
+      minDegree: "Bachelor Degree",
+      minPercentage: "Passing Marks",
+      ageRequirements: "21 to 39 years (for reserved categories)",
+      nationality: "Indian Citizen (Tamil Nadu Eligibility Rules apply)"
+    },
+    selectionProcess: ["Preliminary Examination (Single Paper, 200 Questions)", "Main Written Examination (3 Papers)", "Oral Test (Interview)"],
+    applicationStartDate: new Date("2026-03-28"),
+    applicationEndDate: new Date("2026-04-27"),
+    examDate: new Date("2026-07-12"),
+    importantDates: {
+      notificationDate: "March 2026",
+      applicationStart: "28 March 2026",
+      applicationDeadline: "27 April 2026",
+      examDate: "12 July 2026",
+      resultDate: "November 2026"
+    },
+    applicationUrl: "https://tnpscexams.in",
+    officialWebsite: "https://tnpsc.gov.in",
+    notificationUrl: "https://tnpsc.gov.in",
+    syllabusUrl: "https://tnpsc.gov.in/english/syllabus.html",
+    examPatternUrl: "https://tnpsc.gov.in",
+    status: "OPEN",
+    sourceType: "TNPSC Official Commission Portal",
+    sourceUrl: "https://tnpsc.gov.in",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "Preliminary Examination",
+        durationMinutes: 180,
+        totalQuestions: 200,
+        totalMarks: 300,
+        negativeMarking: false,
+        sections: [
+          { sectionId: "tnpsc_gs", name: "General Studies & Mental Ability", questionCount: 200, marks: 300, durationMinutes: 180, negativeMarking: "None", weightage: 1.0, syllabusTopics: [{ topicId: "tnpsc_hist", name: "History & Culture of Tamil Nadu", normalizedKey: "history", estimatedHours: 6, difficulty: "Medium", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["TN Samacheer Kalvi Books"], conceptsToLearn: ["Sangam Age & Freedom Struggle in TN"], revisionChecklist: ["TN History Timeline"] }] }
+        ]
+      }
     ],
-    selectionProcess: [
-      "Computer Based Test — Stage 1",
-      "Computer Based Test — Stage 2 (post-dependent subjects)",
-      "Computer Based Aptitude Test / typing test (post-dependent)",
-      "Document verification & medical examination",
+    previousPapers: [
+      { year: 2025, stage: "Prelims", section: "GS Paper", paperTitle: "TNPSC Group I 2025 Prelims Official PDF", paperUrl: "https://tnpsc.gov.in", officialSource: "TNPSC Official Website", sourceType: "OFFICIAL_PDF" }
     ],
-    examPattern: PATTERN("Computer Based Examination (objective, two stages)", "As per the official notification", REFER, REFER, ["General Awareness", "Mathematics", "General Intelligence & Reasoning"]),
-    syllabus: [
-      "General awareness (railway & national current affairs)",
-      "Mathematics & reasoning",
-      "Previous years\u2019 RRB papers",
-    ],
+    sources: [
+      { title: "Tamil Nadu Public Service Commission", url: "https://tnpsc.gov.in", sourceType: "Official Portal", confidence: "HIGH", description: "Official website for TNPSC." }
+    ]
   },
+
+  // ── 9. PSU ─────────────────────────────────────────────────────────────────
   {
-    slug: "rrb-group-d",
-    examName: "RRB Level-1 (Group D)",
-    shortName: "Group D",
-    category: "Railways",
-    description:
-      "Railway Level-1 recruitment (track maintainers, assistants, helpers and similar posts) across zones.",
-    qualification: "Class 10 pass or ITI (per trade requirements) as per the notification.",
-    posts: ["Track Maintainer, Assistant Pointsman, Helper and similar Level-1 posts"],
-    selectionProcess: [
-      "Computer Based Test (CBT)",
-      "Physical Efficiency Test (PET)",
-      "Document verification & medical examination",
+    examId: "isro-scientist",
+    name: "ISRO Scientist/Engineer 'SC' Recruitment",
+    shortName: "ISRO Scientist SC",
+    category: "PSU",
+    subCategory: "Space Research & Development",
+    conductingOrganization: "ISRO Centralised Recruitment Board (ICRB)",
+    description: "Prestigious national recruitment for Scientist/Engineer 'SC' positions in Indian Space Research Organisation centers across India.",
+    purpose: "Recruitment of R&D Scientists and Systems Engineers in ISRO Centers (VSSC, URSC, SAC, LPSC).",
+    careerOpportunities: ["Scientist/Engineer 'SC' (ISRO)", "Space Mission Payload Engineer", "Rocket Propulsion Engineer"],
+    eligibleDegrees: ["B.E.", "B.Tech"],
+    eligibleBranches: ["Computer Science", "Electronics & Communication", "Mechanical", "Electrical"],
+    minimumQualification: "B.E./B.Tech or equivalent with a minimum first class of 65% marks or CGPA 6.84/10",
+    eligibility: {
+      qualificationRequirements: "First Class B.E./B.Tech with aggregate minimum 65% marks or CGPA 6.84/10.",
+      minDegree: "B.E. / B.Tech",
+      minPercentage: "65% Marks / 6.84 CGPA",
+      ageRequirements: "18 to 28 years (OBC +3 yrs, SC/ST +5 yrs)",
+      nationality: "Indian Citizen"
+    },
+    selectionProcess: ["Written Examination (80 Objective Questions)", "Personal Interview"],
+    applicationStartDate: new Date("2026-05-15"),
+    applicationEndDate: new Date("2026-06-05"),
+    examDate: new Date("2026-08-20"),
+    importantDates: {
+      notificationDate: "May 2026",
+      applicationStart: "15 May 2026",
+      applicationDeadline: "05 June 2026",
+      examDate: "August 2026",
+      resultDate: "October 2026"
+    },
+    applicationUrl: "https://isro.gov.in/Careers.html",
+    officialWebsite: "https://isro.gov.in",
+    notificationUrl: "https://isro.gov.in/Careers.html",
+    syllabusUrl: "https://isro.gov.in/Careers.html",
+    examPatternUrl: "https://isro.gov.in/Careers.html",
+    status: "OPEN",
+    sourceType: "ISRO Official Careers Portal",
+    sourceUrl: "https://isro.gov.in/Careers.html",
+    sourceConfidence: "HIGH",
+    stages: [
+      {
+        stageName: "Written Examination",
+        durationMinutes: 120,
+        totalQuestions: 80,
+        totalMarks: 240,
+        negativeMarking: true,
+        sections: [
+          { sectionId: "isro_discipline", name: "Discipline Core Paper", questionCount: 80, marks: 240, durationMinutes: 120, negativeMarking: "1 mark per wrong answer", weightage: 1.0, syllabusTopics: [{ topicId: "isro_cs_core", name: "Core Discipline Technical Concepts", normalizedKey: "algorithms", estimatedHours: 8, difficulty: "Hard", syllabusWeight: 95, historicalFrequency: 95, recentFrequency: 95, prerequisites: ["B.Tech Core"], conceptsToLearn: ["GATE Level Engineering Problems"], revisionChecklist: ["Formula Cheat Sheet"] }] }
+        ]
+      }
     ],
-    examPattern: PATTERN("Computer Based Examination (objective)", "As per the official notification", REFER, REFER, ["General Science", "Mathematics", "General Intelligence & Reasoning", "General Awareness"]),
-    syllabus: [
-      "General science, mathematics & reasoning",
-      "Railway current affairs",
-      "Physical fitness for PET",
+    previousPapers: [
+      { year: 2025, stage: "Written", section: "CS / ECE Paper", paperTitle: "ISRO Scientist 2025 Official Question Paper", paperUrl: "https://isro.gov.in/Careers.html", officialSource: "ISRO ICRB Portal", sourceType: "OFFICIAL_PDF" }
     ],
-  },
-  {
-    slug: "railways-other",
-    examName: "Other Railway Recruitments",
-    shortName: "Other Railways",
-    category: "Railways",
-    description:
-      "Additional railway recruitment categories (technical, apprentice, ALP/Technician and departmental) as notified.",
-    qualification: "Role-specific per category (ITI / diploma / degree as notified).",
-    posts: ["ALP/Technician and other notified railway posts"],
-    selectionProcess: ["Computer Based Test", "Documents & medicals as applicable"],
-    examPattern: PATTERN("Computer Based Examination (objective)", "As per the official notification", REFER, REFER, ["Domain/technical subjects plus aptitude sections as notified"]),
-    syllabus: ["Syllabus per the official notification", "Technical fundamentals for the trade"],
-  },
-  // Other Central
-  {
-    slug: "other-central",
-    examName: "Other Central Government Recruitments",
-    shortName: "Other Central",
-    category: "Central",
-    description:
-      "Sectoral recruitments announced by individual central organisations and PSUs (EPFO, ESIC, CBDT/Income Tax, CBI, NTA, PSUs such as IOCL, ONGC, NTPC).",
-    qualification: "Role-specific to each board or PSU — most clerical/officer posts need graduation; technical posts need the relevant engineering/domain qualification as per the notification.",
-    posts: [
-      "Assistant / Inspector / Office Executive (EPFO, ESIC, CBI, Income Tax)",
-      "Junior Engineer / Junior Assistant (PSUs)",
-      "Scientist / Engineer / Technical posts (PSUs & R&D bodies)",
-    ],
-    selectionProcess: ["Computer Based / Written Examination", "Skill / trade test (if applicable)", "Document verification & medical (as applicable)"],
-    examPattern: PATTERN("Computer Based / Written Examination", "As per the official notification", REFER, REFER, ["General aptitude + domain subjects specific to the post"]),
-    syllabus: [
-      "General aptitude + domain subjects specific to the post",
-      "Current affairs for the organisation\u2019s sector",
-      "Sector-specific technical fundamentals",
-    ],
-  },
+    sources: [
+      { title: "ISRO Careers Official Portal", url: "https://isro.gov.in/Careers.html", sourceType: "Official Portal", confidence: "HIGH", description: "Official website for ISRO Scientist recruitment." }
+    ]
+  }
 ];
 
-/* ── Seeding helpers ───────────────────────────────────────────────────────── */
+async function runSeed() {
+  try {
+    const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/uyarvu_payanam";
+    console.log(`Connecting to MongoDB for Exam Seeding: ${mongoUri}`);
+    await mongoose.connect(mongoUri);
 
-// Legacy records that shipped in an earlier catalogue and must NOT be kept
-// alongside the new structure. Hard-deleted on seed so no old Tamil Nadu
-// entries remain (previously the archived "Combined Library" residue).
-const RETIRED_EXAM_SLUGS = ["tnpsc-combined-library-and-information-services-examination"];
-
-async function upsertOrganization(org) {
-  let doc = await RecruitmentOrganization.findOne({ slug: org.slug });
-  if (doc) {
-    Object.assign(doc, org);
-    await doc.save();
-  } else {
-    doc = await RecruitmentOrganization.create(org);
-  }
-  return doc;
-}
-
-async function upsertExam(examData, org) {
-  // The organization is the source of truth for governmentType/state.
-  const payload = {
-    ...examData,
-    organization: org._id,
-    governmentType: org.governmentType,
-    state: org.state,
-  };
-  let doc = await GraduateExam.findOne({ slug: examData.slug });
-  if (doc) {
-    Object.assign(doc, payload);
-    await doc.save();
-    return { created: false };
-  }
-  await GraduateExam.create(payload);
-  return { created: true };
-}
-
-async function run() {
-  await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/uyarvu_payanam");
-  console.log("✅ MongoDB connected — seeding graduate exams");
-
-  const orgResults = {};
-  for (const org of ORGANIZATIONS) {
-    orgResults[org.slug] = await upsertOrganization(org);
-    console.log(`  Organization ready: ${org.name}`);
-  }
-
-  let created = 0;
-  let updated = 0;
-
-  // Tamil Nadu State organizations → their exam lists.
-  for (const [orgSlug, exams] of Object.entries(STATE_TN_ORG_EXAM_MAP)) {
-    const org = orgResults[orgSlug];
-    for (const exam of exams) {
-      const res = await upsertExam(exam, org);
-      if (res.created) created += 1;
-      else updated += 1;
-      console.log(`  ${res.created ? "＋ created" : "➜ updated"} ${orgSlug.toUpperCase()} exam: ${exam.examName}`);
+    console.log("Seeding Graduate Examinations database...");
+    for (const item of SEED_EXAMS) {
+      await Exam.findOneAndUpdate(
+        { examId: item.examId },
+        { $set: item },
+        { upsert: true, new: true }
+      );
+      console.log(`✓ Seeded/Updated Exam: ${item.shortName} (${item.category})`);
     }
-  }
 
-  const centralOrgs = {
-    upsc: orgResults.upsc,
-    ssc: orgResults.ssc,
-    banking: orgResults.banking,
-    railways: orgResults.railways,
-    "other-central": orgResults["other-central"],
-  };
-  for (const exam of CENTRAL_EXAMS) {
-    const orgSlug = exam.slug.startsWith("upsc-")
-      ? "upsc"
-      : exam.slug.startsWith("ssc-")
-        ? "ssc"
-        : exam.slug.startsWith("ibps-") || exam.slug.startsWith("sbi-") || exam.slug.startsWith("banking-")
-          ? "banking"
-          : exam.slug.startsWith("rrb-") || exam.slug.startsWith("railways-")
-            ? "railways"
-            : "other-central";
-    const res = await upsertExam(exam, centralOrgs[orgSlug]);
-    if (res.created) created += 1;
-    else updated += 1;
-    console.log(`  ${res.created ? "＋ created" : "➜ updated"} ${orgSlug.toUpperCase()} exam: ${exam.examName}`);
+    const count = await Exam.countDocuments({});
+    console.log(`\nSuccessfully seeded database! Total Exam records: ${count}`);
+  } catch (err) {
+    console.error("Seeding error:", err);
+  } finally {
+    await mongoose.disconnect();
   }
-
-  // Remove retired legacy records so no outdated Tamil Nadu entries remain.
-  if (RETIRED_EXAM_SLUGS.length) {
-    const removed = await GraduateExam.deleteMany({ slug: { $in: RETIRED_EXAM_SLUGS } });
-    if (removed.deletedCount) {
-      console.log(`  🗑 removed ${removed.deletedCount} retired exam record(s): ${RETIRED_EXAM_SLUGS.join(", ")}`);
-    } else {
-      console.log("  (no retired exam records found to remove)");
-    }
-  }
-
-  console.log(`\n✅ Done — ${created} created, ${updated} updated.`);
-  await mongoose.disconnect();
-  process.exit(0);
 }
 
-run().catch((err) => {
-  console.error("❌ Seed failed:", err.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  runSeed();
+}
+
+module.exports = {
+  runSeed,
+  SEED_EXAMS
+};

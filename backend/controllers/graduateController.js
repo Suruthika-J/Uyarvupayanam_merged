@@ -1,4 +1,8 @@
 const GraduateProfile = require("../models/GraduateProfile");
+const GraduateOpportunity = require("../models/GraduateOpportunity");
+const GraduateApplication = require("../models/GraduateApplication");
+const GraduateMentorRelationship = require("../models/GraduateMentorRelationship");
+const MentorRequest = require("../models/MentorRequest");
 const User = require("../models/User");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const Exam = require("../models/Exam");
@@ -41,43 +45,650 @@ const mergeEditableFields = (profile, source) => {
   return profile;
 };
 
-// ── Profile Completion Calculator ─────────────────────────────────────────────
+const { evaluateEligibility } = require("../services/GraduateEligibilityEngine");
+const { refreshOpportunityStatuses, triggerTavilyResearch, seedDefaultOpportunities } = require("../services/GraduateOpportunityResearchService");
+
+// Calculate profile completion percentage
 const calculateProfileCompletion = (profile) => {
   let score = 0;
   if (profile.degree) score += 15;
-  if (profile.domain) score += 10;
-  if (profile.college) score += 10;
-  if (profile.graduationYear) score += 5;
-  if (profile.technicalSkills && profile.technicalSkills.length > 0) score += 15;
-  if (profile.softSkills && profile.softSkills.length > 0) score += 5;
-  if (profile.tools && profile.tools.length > 0) score += 5;
-  if (profile.primaryCareerDirection) score += 10;
-  if (profile.projects && profile.projects.length > 0) score += 10;
-  if (profile.internships && profile.internships.length > 0) score += 5;
-  if (profile.preferredRoles && profile.preferredRoles.length > 0) score += 5;
-  if (profile.onboardingCompleted) score += 5;
+  if (profile.specialization) score += 15;
+  if (profile.collegeName || profile.college) score += 10;
+  if (profile.graduationYear) score += 10;
+  if (profile.cgpa || profile.percentage) score += 10;
+  if (profile.careerInterests && profile.careerInterests.length > 0) score += 15;
+  if (profile.preferredDomains && profile.preferredDomains.length > 0) score += 15;
+  if (profile.onboardingCompleted) score += 10;
   return Math.min(100, score);
 };
 
-// ── Career Readiness Score Calculator ─────────────────────────────────────────
+// Calculate career readiness score
 const calculateReadinessScore = (profile) => {
-  let score = 30; // baseline for degree completion
-  const techCount = (profile.technicalSkills || []).length;
-  score += Math.min(25, techCount * 5);
-
-  const projectsCount = (profile.projects || []).length;
-  score += Math.min(20, projectsCount * 10);
-
-  const internCount = (profile.internships || []).length;
-  score += Math.min(15, internCount * 15);
-
-  if (profile.resumeUrl) score += 5;
-  if (profile.certifications && profile.certifications.length > 0) score += 5;
-
+  let score = 40; // baseline degree
+  if (profile.cgpa && parseFloat(profile.cgpa) >= 7.5) score += 15;
+  if (profile.skills && profile.skills.length > 0) score += 15;
+  if (profile.experience && profile.experience.length > 0) score += 15;
+  if (profile.resumeUrl) score += 15;
   return Math.min(100, score);
 };
 
-// ── Helper: Evaluate Best-Fit Careers & Switching Advice ──────────────────────
+// Normalize String to ID helper
+const toId = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// ── GET /api/graduate/profile ──────────────────────────────────────────────────
+exports.getMyProfile = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    let profile = await GraduateProfile.findOne({ userId });
+    if (!profile) {
+      const user = await User.findById(userId);
+      profile = new GraduateProfile({
+        userId,
+        degree: "B.E.",
+        degreeId: "be",
+        specialization: "Computer Science",
+        specializationId: "cse",
+        profileCompletion: 0,
+        careerReadinessScore: 40,
+        onboardingCompleted: false
+      });
+      await profile.save();
+    }
+
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    console.error("Get graduate profile error:", error);
+    res.status(500).json({ success: false, message: "Server error fetching profile" });
+  }
+};
+
+// ── PUT & POST /api/graduate/profile & /api/graduate/onboarding ────────────────
+exports.completeGraduateOnboarding = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const data = req.body;
+    let profile = await GraduateProfile.findOne({ userId });
+    if (!profile) profile = new GraduateProfile({ userId });
+
+    // Personal / Academic fields
+    if (data.degree) {
+      profile.degree = data.degree;
+      profile.degreeId = data.degreeId || toId(data.degree);
+    }
+    if (data.specialization) {
+      profile.specialization = data.specialization;
+      profile.specializationId = data.specializationId || toId(data.specialization);
+    }
+    if (data.collegeName !== undefined) profile.collegeName = data.collegeName;
+    if (data.universityName !== undefined) profile.universityName = data.universityName;
+    if (data.graduationYear !== undefined) profile.graduationYear = data.graduationYear;
+    if (data.graduationStatus !== undefined) profile.graduationStatus = data.graduationStatus;
+    if (data.cgpa !== undefined) profile.cgpa = data.cgpa;
+    if (data.percentage !== undefined) profile.percentage = data.percentage;
+    if (data.state !== undefined) profile.state = data.state;
+    if (data.location !== undefined) profile.location = data.location;
+
+    // Career Interests & Domains
+    if (Array.isArray(data.careerInterests)) profile.careerInterests = data.careerInterests;
+    if (Array.isArray(data.preferredDomains)) profile.preferredDomains = data.preferredDomains;
+    if (Array.isArray(data.skills)) profile.skills = data.skills;
+    if (Array.isArray(data.experience)) profile.experience = data.experience;
+    if (data.resumeUrl !== undefined) profile.resumeUrl = data.resumeUrl;
+
+    profile.onboardingCompleted = true;
+    profile.profileCompletion = calculateProfileCompletion(profile);
+    profile.careerReadinessScore = calculateReadinessScore(profile);
+
+    await profile.save();
+
+    // Update User model role/userType
+    await User.findByIdAndUpdate(userId, {
+      userType: "graduate",
+      onboardingCompleted: true
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Graduate onboarding profile saved successfully",
+      profile
+    });
+  } catch (error) {
+    console.error("Complete graduate onboarding error:", error);
+    res.status(500).json({ success: false, message: "Failed to save graduate onboarding profile" });
+  }
+};
+
+// ── GET /api/graduate/dashboard ───────────────────────────────────────────────
+exports.getDashboardSummary = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    let profile = await GraduateProfile.findOne({ userId });
+    if (!profile) {
+      profile = new GraduateProfile({ userId, onboardingCompleted: false });
+      await profile.save();
+    }
+
+    const careerMatches = await generateCareerMatches(profile);
+    const topCareer = careerMatches[0] || null;
+
+    // Refresh data statuses
+    await refreshOpportunityStatuses();
+
+    // ── Real dashboard statistics (no fabricated numbers) ──────────────
+    const savedCount = await SavedItem.countDocuments({ userId, contentType: "GraduateExam" });
+    const applicationsTracked = await ApplicationTracker.countDocuments({ userId });
+    const activeExams = await GraduateExam.find({ isActive: true })
+      .select("examName governmentType state applicationEndDate examDate organization category")
+      .populate("organization", "name")
+      .limit(500)
+      .lean();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const inThirtyDays = new Date(today.getTime() + 30 * 86400000);
+    const upcoming = [];
+    for (const ex of activeExams) {
+      const appEnd = parseDate(ex.applicationEndDate);
+      const examD = parseDate(ex.examDate);
+      if (appEnd && appEnd >= today && appEnd <= inThirtyDays) {
+        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Application deadline", date: ex.applicationEndDate, state: ex.state, governmentType: ex.governmentType });
+      } else if (examD && examD >= today && examD <= inThirtyDays) {
+        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Exam date", date: ex.examDate, state: ex.state, governmentType: ex.governmentType });
+      }
+    }
+    upcoming.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const recommended = await computeRecommendations(profile);
+    const recommendedCount = recommended.central.length + recommended.state.length;
+
+    // Weekly action plan generated dynamically based on profile
+    const weeklyPlan = [
+      {
+        task: `Practice core interview questions for ${topCareer ? topCareer.title : "your target role"}`,
+        category: "Interview Prep",
+        status: "pending"
+      },
+      {
+        task: `Build a mini portfolio project covering ${topCareer?.missingSkills?.[0] || "modern tools"}`,
+        category: "Upskilling",
+        status: "pending"
+      },
+      {
+        task: "Update Resume Projects section with measurable outcomes",
+        category: "Placement Hub",
+        status: "pending"
+      }
+    ];
+
+    // Fetch opportunities from DB (ensure default seeding if empty)
+    let opportunities = await GraduateOpportunity.find({}).lean();
+    if (opportunities.length === 0) {
+      await seedDefaultOpportunities();
+      opportunities = await GraduateOpportunity.find({}).lean();
+    }
+
+    // Actual Database Counts for Opportunity Summary Cards
+    const govCount = opportunities.filter(o => o.category === "GOVERNMENT_EXAMS").length;
+    const higherStudiesCount = opportunities.filter(o => o.category === "HIGHER_STUDIES").length;
+    const psuCount = opportunities.filter(o => o.category === "PSU").length;
+    const privateJobsCount = opportunities.filter(o => o.category === "PRIVATE_JOBS").length;
+
+    // Actual Mentorship Requests Count
+    const incomingMentorRequestsCount = await GraduateMentorRelationship.countDocuments({
+      mentorId: userId,
+      status: "PENDING"
+    }) + await MentorRequest.countDocuments({ status: "Pending" });
+
+    // Evaluate Eligibility for Opportunities
+    const evaluatedOpportunities = opportunities.map(opp => {
+      const evalResult = evaluateEligibility(profile, opp);
+      return {
+        ...opp,
+        eligibilityEvaluation: evalResult,
+        matchScore: evalResult.matchScore
+      };
+    });
+
+    // Sort by Match Score (Recommended for You)
+    evaluatedOpportunities.sort((a, b) => b.matchScore - a.matchScore);
+
+    // Upcoming Exams (Sorted by nearest deadline / exam date)
+    const now = new Date();
+    const upcomingExams = evaluatedOpportunities
+      .filter(o => o.applicationDeadline || o.examDate)
+      .sort((a, b) => {
+        const dateA = a.applicationDeadline || a.examDate;
+        const dateB = b.applicationDeadline || b.examDate;
+        return new Date(dateA) - new Date(dateB);
+      })
+      .slice(0, 6);
+
+    // Deadline Alerts (Closing soon / Upcoming)
+    const deadlineAlerts = evaluatedOpportunities
+      .filter(o => o.applicationDeadline && o.status !== "CLOSED")
+      .map(o => {
+        const diffMs = new Date(o.applicationDeadline).getTime() - now.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        let urgency = "GREEN"; // upcoming
+        if (diffDays <= 3) urgency = "RED"; // apply within 3 days
+        else if (diffDays <= 7) urgency = "ORANGE"; // apply within 7 days
+
+        return {
+          id: o._id,
+          title: o.opportunityName,
+          organization: o.organization,
+          deadline: o.applicationDeadline,
+          diffDays,
+          urgency,
+          applicationUrl: o.applicationUrl
+        };
+      })
+      .sort((a, b) => a.diffDays - b.diffDays)
+      .slice(0, 5);
+
+    // Active User Applications Count
+    const userApplicationsCount = await GraduateApplication.countDocuments({ userId });
+
+    res.status(200).json({
+      success: true,
+      profile,
+      summaryCounts: {
+        governmentExams: govCount,
+        higherStudies: higherStudiesCount,
+        psuOpportunities: psuCount,
+        privateJobs: privateJobsCount,
+        mentorshipRequests: incomingMentorRequestsCount,
+        myApplications: userApplicationsCount
+      },
+      weeklyPlan,
+      stats: {
+        recommendedOpportunities: recommendedCount,
+        savedOpportunities: savedCount,
+        applicationsTracked,
+        upcomingDeadlines: upcoming.length
+      },
+      upcoming,
+      recommendedOpportunities: evaluatedOpportunities.slice(0, 6),
+      upcomingExams,
+      deadlineAlerts
+    });
+  } catch (error) {
+    console.error("Get graduate dashboard summary error:", error);
+    res.status(500).json({ success: false, message: "Failed to load dashboard summary" });
+  }
+};
+
+// ── GET /api/graduate/opportunities ───────────────────────────────────────────
+exports.getOpportunities = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { category, search } = req.query;
+
+    const profile = await GraduateProfile.findOne({ userId });
+
+    let filter = {};
+    if (category && category !== "ALL") {
+      filter.category = category;
+    }
+
+    if (search) {
+      filter.$or = [
+        { opportunityName: { $regex: search, $options: "i" } },
+        { organization: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    let opportunities = await GraduateOpportunity.find(filter).lean();
+    if (opportunities.length === 0 && (!category || category === "ALL")) {
+      await seedDefaultOpportunities();
+      opportunities = await GraduateOpportunity.find(filter).lean();
+    }
+
+    const evaluated = opportunities.map(opp => {
+      const evalResult = evaluateEligibility(profile, opp);
+      return {
+        ...opp,
+        eligibilityEvaluation: evalResult,
+        matchScore: evalResult.matchScore
+      };
+    });
+
+    evaluated.sort((a, b) => b.matchScore - a.matchScore);
+
+    res.status(200).json({ success: true, opportunities: evaluated });
+  } catch (error) {
+    console.error("Get opportunities error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch opportunities" });
+  }
+};
+
+// ── GET /api/graduate/opportunities/:id ───────────────────────────────────────
+exports.getOpportunityById = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { id } = req.params;
+
+    const opportunity = await GraduateOpportunity.findById(id).lean();
+    if (!opportunity) {
+      return res.status(404).json({ success: false, message: "Opportunity not found" });
+    }
+
+    const profile = await GraduateProfile.findOne({ userId });
+    const eligibilityEvaluation = evaluateEligibility(profile, opportunity);
+
+    // Check if user has already added this to My Applications
+    let existingApplication = null;
+    if (userId) {
+      existingApplication = await GraduateApplication.findOne({ userId, opportunityId: id }).lean();
+    }
+
+    res.status(200).json({
+      success: true,
+      opportunity: {
+        ...opportunity,
+        eligibilityEvaluation,
+        matchScore: eligibilityEvaluation.matchScore,
+        existingApplication
+      }
+    });
+  } catch (error) {
+    console.error("Get opportunity by id error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch opportunity details" });
+  }
+};
+
+// ── GET /api/graduate/government-exams ────────────────────────────────────────
+exports.getGovernmentExams = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const profile = await GraduateProfile.findOne({ userId });
+
+    const filter = { category: { $in: ["GOVERNMENT_EXAMS", "PSU"] } };
+    let exams = await GraduateOpportunity.find(filter).lean();
+
+    if (exams.length === 0) {
+      await seedDefaultOpportunities();
+      exams = await GraduateOpportunity.find(filter).lean();
+    }
+
+    const evaluated = exams.map(opp => {
+      const evalResult = evaluateEligibility(profile, opp);
+      return {
+        ...opp,
+        eligibilityEvaluation: evalResult,
+        matchScore: evalResult.matchScore
+      };
+    });
+
+    evaluated.sort((a, b) => b.matchScore - a.matchScore);
+
+    res.status(200).json({ success: true, exams: evaluated });
+  } catch (error) {
+    console.error("Get government exams error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch government exams" });
+  }
+};
+
+// ── GET /api/graduate/higher-studies ──────────────────────────────────────────
+exports.getHigherStudiesGuide = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const profile = await GraduateProfile.findOne({ userId });
+
+    const degree = (profile?.degree || "B.E.").toUpperCase();
+
+    // 7-Step Higher Studies Application Pipeline
+    const applicationFlow = [
+      { step: 1, title: "Choose Program", description: "Select target postgraduate program (M.Tech, MS, MBA, MCA, PhD)" },
+      { step: 2, title: "Choose Entrance Exam", description: "Identify eligible national/state entrance exam (GATE, CAT, XAT, CUET-PG, GRE)" },
+      { step: 3, title: "Check Eligibility", description: "Verify degree, minimum percentage, and specialization requirements" },
+      { step: 4, title: "View Participating Institutes", description: "Explore participating IITs, NITs, IIMs, Central Universities, and Global Colleges" },
+      { step: 5, title: "Application Process", description: "Fill online portal forms, upload certificates, and submit application fees" },
+      { step: 6, title: "Official Application Link", description: "Navigate directly to verified official admission portal" },
+      { step: 7, title: "Preparation Roadmap", description: "Access AI-guided study syllabus, mock tests, and subject revision plans" }
+    ];
+
+    // Entrance Exams List for Higher Studies
+    const entranceFilter = { category: "HIGHER_STUDIES" };
+    let entranceExams = await GraduateOpportunity.find(entranceFilter).lean();
+    if (entranceExams.length === 0) {
+      await seedDefaultOpportunities();
+      entranceExams = await GraduateOpportunity.find(entranceFilter).lean();
+    }
+
+    const evaluatedExams = entranceExams.map(opp => {
+      const evalResult = evaluateEligibility(profile, opp);
+      return {
+        ...opp,
+        eligibilityEvaluation: evalResult,
+        matchScore: evalResult.matchScore
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      degree,
+      disclaimerNotice: "Eligibility varies by university/program. Verify the official admission notification before applying.",
+      applicationFlow,
+      entranceExams: evaluatedExams
+    });
+  } catch (error) {
+    console.error("Get higher studies guide error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch higher studies guide" });
+  }
+};
+
+// ── GET /api/graduate/applications & POST /api/graduate/applications ─────────
+exports.getUserApplications = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const applications = await GraduateApplication.find({ userId })
+      .populate("opportunityId")
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    res.status(200).json({ success: true, applications });
+  } catch (error) {
+    console.error("Get user applications error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch applications" });
+  }
+};
+
+exports.createOrUpdateApplication = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { opportunityId, status, notes } = req.body;
+
+    const opp = await GraduateOpportunity.findById(opportunityId);
+    if (!opp) return res.status(404).json({ success: false, message: "Opportunity not found" });
+
+    let application = await GraduateApplication.findOne({ userId, opportunityId });
+    if (application) {
+      if (status) application.status = status;
+      if (notes !== undefined) application.notes = notes;
+      await application.save();
+    } else {
+      application = new GraduateApplication({
+        userId,
+        opportunityId,
+        opportunityName: opp.opportunityName,
+        category: opp.category,
+        organization: opp.organization,
+        status: status || "PLANNING",
+        officialApplicationUrl: opp.applicationUrl,
+        deadline: opp.applicationDeadline,
+        notes: notes || ""
+      });
+      await application.save();
+    }
+
+    res.status(200).json({ success: true, application });
+  } catch (error) {
+    console.error("Create/update application error:", error);
+    res.status(500).json({ success: false, message: "Failed to save application" });
+  }
+};
+
+// ── POST /api/graduate/opportunities/:id/reminder ─────────────────────────────
+exports.setOpportunityReminder = async (req, res) => {
+  try {
+    const userId = req.student?._id || req.user?._id || req.student?.id;
+    const { id } = req.params;
+
+    const opp = await GraduateOpportunity.findById(id);
+    if (!opp) return res.status(404).json({ success: false, message: "Opportunity not found" });
+
+    const now = new Date();
+    if (opp.applicationDeadline && new Date(opp.applicationDeadline) < now) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot create reminders for already-closed applications."
+      });
+    }
+
+    let application = await GraduateApplication.findOne({ userId, opportunityId: id });
+    if (!application) {
+      application = new GraduateApplication({
+        userId,
+        opportunityId: id,
+        opportunityName: opp.opportunityName,
+        category: opp.category,
+        organization: opp.organization,
+        status: "PLANNING",
+        officialApplicationUrl: opp.applicationUrl,
+        deadline: opp.applicationDeadline
+      });
+    }
+
+    application.reminderSet = true;
+    application.reminderDate = opp.applicationDeadline || new Date(Date.now() + 7 * 86400000);
+    await application.save();
+
+    // Create Notification record
+    await Notification.create({
+      userId,
+      title: `Deadline Reminder: ${opp.opportunityName} 📅`,
+      message: `Reminder set for ${opp.opportunityName} (Deadline: ${opp.applicationDeadline ? new Date(opp.applicationDeadline).toLocaleDateString() : 'Upcoming'}). Official URL: ${opp.applicationUrl}`,
+      type: "exam",
+      targetLevel: "Graduate",
+      sentByAdmin: false
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Deadline reminder set for ${opp.opportunityName}`,
+      application
+    });
+  } catch (error) {
+    console.error("Set opportunity reminder error:", error);
+    res.status(500).json({ success: false, message: "Failed to set deadline reminder" });
+  }
+};
+
+// ── POST /api/graduate/research/refresh ───────────────────────────────────────
+exports.refreshOpportunityResearch = async (req, res) => {
+  try {
+    const { query } = req.body;
+
+    await refreshOpportunityStatuses();
+    const liveResults = await triggerTavilyResearch(query);
+
+    res.status(200).json({
+      success: true,
+      message: "Graduate opportunity research refreshed and verified",
+      liveResults
+    });
+  } catch (error) {
+    console.error("Refresh research error:", error);
+    res.status(500).json({ success: false, message: "Failed to refresh research" });
+  }
+};
+
+// GET /api/graduate/recommendations
+exports.getRecommendations = async (req, res) => {
+  try {
+    const userId = req.student?._id;
+    const profile = await GraduateProfile.findOne({ userId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Graduate profile not found" });
+    }
+    const recommendations = await computeRecommendations(profile);
+    res.json({ success: true, ...recommendations });
+  } catch (error) {
+    console.error("Get recommendations error:", error);
+    res.status(500).json({ success: false, message: "Failed to load recommendations" });
+  }
+};
+
+// GET /api/graduate/notifications
+// Only verified, DB-backed items: published dates of managed exams plus
+// admin announcements targeted at graduates. Nothing is fabricated.
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.student?._id;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today.getTime() + 30 * 86400000);
+
+    const exams = await GraduateExam.find({ isActive: true })
+      .select("examName governmentType state applicationEndDate examDate notificationUrl applicationUrl organization")
+      .populate("organization", "name")
+      .limit(500)
+      .lean();
+
+    const alerts = [];
+    for (const ex of exams) {
+      const appEnd = parseDate(ex.applicationEndDate);
+      const examD = parseDate(ex.examDate);
+      if (appEnd && appEnd >= today && appEnd <= horizon) {
+        alerts.push({
+          kind: "deadline",
+          title: `Application deadline approaching: ${ex.examName}`,
+          message: `Applications close on ${ex.applicationEndDate}${ex.state ? ` (${ex.state})` : ""}. Organization: ${ex.organization?.name || "—"}.`,
+          date: ex.applicationEndDate,
+          examId: ex._id,
+          actionUrl: ex.applicationUrl || ex.notificationUrl || "",
+        });
+      }
+      if (examD && examD >= today && examD <= horizon) {
+        alerts.push({
+          kind: "exam",
+          title: `Exam scheduled: ${ex.examName}`,
+          message: `Exam date: ${ex.examDate}${ex.state ? ` (${ex.state})` : ""}.`,
+          date: ex.examDate,
+          examId: ex._id,
+          actionUrl: ex.notificationUrl || ex.applicationUrl || "",
+        });
+      }
+    }
+    alerts.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+    const announcements = await Notification.find({
+      $or: [
+        { userId },
+        { isBroadcast: true },
+        { targetLevel: { $in: ["All", "Graduate"] }, userId: null },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.json({ success: true, alerts: alerts.slice(0, 20), announcements });
+  } catch (error) {
+    console.error("Get graduate notifications error:", error);
+    res.status(500).json({ success: false, message: "Failed to load notifications" });
+  }
+};
+
+
+
+// ── Restored local-module handlers ──
 const generateCareerMatches = async (profile) => {
   const userDomain = (profile.domain || "").toLowerCase();
   const userDegree = (profile.degree || "").toLowerCase();
@@ -226,32 +837,8 @@ const generateCareerMatches = async (profile) => {
   return results;
 };
 
-// ── GET /api/graduate/profile ──────────────────────────────────────────────────
-exports.getMyProfile = async (req, res) => {
-  try {
-    const userId = req.student?._id || req.user?._id || req.student?.id;
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+// ΓöÇΓöÇ GET /api/graduate/profile ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-    let profile = await GraduateProfile.findOne({ userId });
-    if (!profile) {
-      profile = new GraduateProfile({
-        userId,
-        currentStep: 1,
-        profileCompletion: 0,
-        careerReadinessScore: 40,
-        onboardingCompleted: false
-      });
-      await profile.save();
-    }
-
-    res.status(200).json({ success: true, profile });
-  } catch (error) {
-    console.error("Get graduate profile error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-// ── Academic Combination Server-Side Validator ──────────────────────────────
 const validateAcademicCombination = (field, degree, domain) => {
   if (!field || !degree || !domain) return true;
   const fLower = String(field).toLowerCase();
@@ -269,7 +856,8 @@ const validateAcademicCombination = (field, degree, domain) => {
   return true;
 };
 
-// ── POST /api/graduate/profile/step ───────────────────────────────────────────
+// ΓöÇΓöÇ POST /api/graduate/profile/step ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
 exports.saveOnboardingStep = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -301,156 +889,8 @@ exports.saveOnboardingStep = async (req, res) => {
   }
 };
 
-// ── POST /api/graduate/onboarding/complete ────────────────────────────────────
-exports.completeOnboarding = async (req, res) => {
-  try {
-    const userId = req.student?._id || req.user?._id || req.student?.id;
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+// ΓöÇΓöÇ POST /api/graduate/onboarding/complete ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-    let profile = await GraduateProfile.findOne({ userId });
-    if (!profile) profile = new GraduateProfile({ userId });
-
-    // Merge only server-allowlisted final fields (ownership/telemetry/completion
-    // flags are never client-settable).
-    mergeEditableFields(profile, req.body);
-
-    profile.onboardingCompleted = true;
-    profile.currentStep = 6;
-    profile.profileCompletion = calculateProfileCompletion(profile);
-    profile.careerReadinessScore = calculateReadinessScore(profile);
-
-    // Pre-calculate recommendations
-    const matches = await generateCareerMatches(profile);
-    profile.cachedRecommendations = {
-      bestFitCareers: matches.slice(0, 5)
-    };
-
-    await profile.save();
-
-    // Mark User model as onboarding completed & graduate
-    await User.findByIdAndUpdate(userId, {
-      userType: "graduate",
-      onboardingCompleted: true
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Graduate onboarding finalized successfully",
-      profile,
-      summary: {
-        degree: `${profile.degree || ""} in ${profile.domain || ""}`,
-        careerDirection: profile.primaryCareerDirection,
-        readinessScore: profile.careerReadinessScore,
-        topCareer: matches[0]?.title || "Professional Career"
-      }
-    });
-  } catch (error) {
-    console.error("Complete graduate onboarding error:", error);
-    res.status(500).json({ success: false, message: "Failed to finalize onboarding" });
-  }
-};
-
-// ── GET /api/graduate/dashboard ───────────────────────────────────────────────
-exports.getDashboardSummary = async (req, res) => {
-  try {
-    const userId = req.student?._id || req.user?._id || req.student?.id;
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
-
-    const profile = await GraduateProfile.findOne({ userId });
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Graduate profile not found" });
-    }
-
-    const careerMatches = await generateCareerMatches(profile);
-    const topCareer = careerMatches[0] || null;
-
-    // ── Real dashboard statistics (no fabricated numbers) ──────────────
-    const savedCount = await SavedItem.countDocuments({ userId, contentType: "GraduateExam" });
-    const applicationsTracked = await ApplicationTracker.countDocuments({ userId });
-    const activeExams = await GraduateExam.find({ isActive: true })
-      .select("examName governmentType state applicationEndDate examDate organization category")
-      .populate("organization", "name")
-      .limit(500)
-      .lean();
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const inThirtyDays = new Date(today.getTime() + 30 * 86400000);
-    const upcoming = [];
-    for (const ex of activeExams) {
-      const appEnd = parseDate(ex.applicationEndDate);
-      const examD = parseDate(ex.examDate);
-      if (appEnd && appEnd >= today && appEnd <= inThirtyDays) {
-        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Application deadline", date: ex.applicationEndDate, state: ex.state, governmentType: ex.governmentType });
-      } else if (examD && examD >= today && examD <= inThirtyDays) {
-        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Exam date", date: ex.examDate, state: ex.state, governmentType: ex.governmentType });
-      }
-    }
-    upcoming.sort((a, b) => String(a.date).localeCompare(String(b.date)));
-    const recommended = await computeRecommendations(profile);
-    const recommendedCount = recommended.central.length + recommended.state.length;
-
-    // Weekly action plan generated dynamically based on profile
-    const weeklyPlan = [
-      {
-        task: `Practice core interview questions for ${topCareer ? topCareer.title : "your target role"}`,
-        category: "Interview Prep",
-        status: "pending"
-      },
-      {
-        task: `Build a mini portfolio project covering ${topCareer?.missingSkills?.[0] || "modern tools"}`,
-        category: "Upskilling",
-        status: "pending"
-      },
-      {
-        task: "Update Resume Projects section with measurable outcomes",
-        category: "Placement Hub",
-        status: "pending"
-      }
-    ];
-
-    if (profile.examInterest === "Yes" || profile.examInterest === "Maybe") {
-      weeklyPlan.push({
-        task: `Review syllabus and past question patterns for ${profile.selectedExams?.[0]?.examName || "Competitive Exams"}`,
-        category: "Exams",
-        status: "pending"
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      profile,
-      careerReadinessScore: profile.careerReadinessScore || calculateReadinessScore(profile),
-      primaryDirection: profile.primaryCareerDirection,
-      topCareer,
-      careerMatches: careerMatches.slice(0, 4),
-      skillGapSummary: {
-        strongSkills: (profile.technicalSkills || []).filter(s => s.proficiency === "Advanced").map(s => s.name),
-        developingSkills: (profile.technicalSkills || []).filter(s => s.proficiency !== "Advanced").map(s => s.name),
-        missingCriticalSkills: topCareer ? topCareer.missingSkills.slice(0, 3) : []
-      },
-      examTracker: profile.examInterest !== "No" ? {
-        active: true,
-        exams: profile.selectedExams || []
-      } : { active: false },
-      higherStudiesTracker: profile.higherStudyInterest !== "No" ? {
-        active: true,
-        preferredDegrees: profile.preferredHigherDegrees || []
-      } : { active: false },
-      weeklyPlan,
-      stats: {
-        recommendedOpportunities: recommendedCount,
-        savedOpportunities: savedCount,
-        applicationsTracked,
-        upcomingDeadlines: upcoming.length
-      },
-      upcoming
-    });
-  } catch (error) {
-    console.error("Get graduate dashboard error:", error);
-    res.status(500).json({ success: false, message: "Failed to load dashboard" });
-  }
-};
-
-// ── GET /api/graduate/careers ─────────────────────────────────────────────────
 exports.getCareerRecommendations = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -465,7 +905,7 @@ exports.getCareerRecommendations = async (req, res) => {
   }
 };
 
-// ── GET /api/graduate/skill-gap ───────────────────────────────────────────────
+// ΓöÇΓöÇ GET /api/graduate/skill-gap ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 exports.getSkillGapAnalysis = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -502,7 +942,8 @@ exports.getSkillGapAnalysis = async (req, res) => {
   }
 };
 
-// ── GET /api/graduate/exams ───────────────────────────────────────────────────
+// ΓöÇΓöÇ GET /api/graduate/exams ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
 exports.getExamsGuide = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -522,7 +963,7 @@ exports.getExamsGuide = async (req, res) => {
         overview: "A prestigious national examination testing comprehensive understanding of undergraduate engineering subjects.",
         syllabusKeywords: ["Core Engineering Mathematics", "Data Structures / Algorithms / Digital Logic", "Engineering Sciences"],
         officialWebsite: "https://gate.iitk.ac.in",
-        preparationRoadmap: "Phase 1: Syllabus fundamentals (3 months) → Phase 2: Previous year questions (2 months) → Phase 3: Mock tests & revision (1 month)"
+        preparationRoadmap: "Phase 1: Syllabus fundamentals (3 months) ΓåÆ Phase 2: Previous year questions (2 months) ΓåÆ Phase 3: Mock tests & revision (1 month)"
       },
       {
         name: "CAT (Common Admission Test)",
@@ -546,7 +987,7 @@ exports.getExamsGuide = async (req, res) => {
         overview: "Consists of Prelims (General Studies + CSAT), Mains (9 written papers), and Personality Interview.",
         syllabusKeywords: ["History, Geography, Polity", "Economics & Environment", "Current Affairs", "Optional Subject"],
         officialWebsite: "https://upsc.gov.in",
-        preparationRoadmap: "NCERT foundation reading (4 months) → Standard reference texts + answer writing (6 months) → Test series (3 months)"
+        preparationRoadmap: "NCERT foundation reading (4 months) ΓåÆ Standard reference texts + answer writing (6 months) ΓåÆ Test series (3 months)"
       },
       {
         name: "SSC CGL (Combined Graduate Level)",
@@ -570,7 +1011,7 @@ exports.getExamsGuide = async (req, res) => {
         overview: "GRE evaluates analytical writing, quantitative reasoning, and verbal reasoning. IELTS tests English language proficiency.",
         syllabusKeywords: ["Vocabulary & Reading Comprehension", "Quantitative Reasoning", "Analytical Writing"],
         officialWebsite: "https://www.ets.org/gre",
-        preparationRoadmap: "Vocabulary building + Quant practice (8–12 weeks) followed by full-length computer-based mocks."
+        preparationRoadmap: "Vocabulary building + Quant practice (8ΓÇô12 weeks) followed by full-length computer-based mocks."
       }
     ];
 
@@ -586,98 +1027,8 @@ exports.getExamsGuide = async (req, res) => {
   }
 };
 
-// ── GET /api/graduate/higher-studies ──────────────────────────────────────────
-exports.getHigherStudiesGuide = async (req, res) => {
-  try {
-    const userId = req.student?._id || req.user?._id || req.student?.id;
-    const profile = await GraduateProfile.findOne({ userId });
+// ΓöÇΓöÇ GET /api/graduate/higher-studies ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-    const degree = (profile?.degree || "").toLowerCase();
-    const domain = (profile?.domain || "").toLowerCase();
-
-    // Personalized higher study options based on degree
-    let programmes = [];
-
-    if (degree.includes("b.e") || degree.includes("b.tech") || domain.includes("engineering") || domain.includes("computer")) {
-      programmes = [
-        {
-          title: "M.Tech / M.E in Core / Specialized Engineering",
-          duration: "2 Years",
-          entranceExams: "GATE / TANCET / University Entrance",
-          keyInstitutes: "IITs, NITs, Anna University, PSG Tech",
-          careerOutcomes: "R&D Scientist, Specialized Core Engineer, Senior Architect, Academic Faculty",
-          whyRecommended: "Deepens specialized engineering domain competence and qualifies for high-tier corporate R&D roles."
-        },
-        {
-          title: "MS (Master of Science) Abroad",
-          duration: "1.5 – 2 Years",
-          entranceExams: "GRE, IELTS / TOEFL",
-          keyInstitutes: "Top Global Universities (USA, Germany, Singapore, Canada)",
-          careerOutcomes: "Global Tech Specialist, Research Scientist, International Silicon Valley / European Roles",
-          whyRecommended: "Offers international exposure, hands-on lab projects, and global industry placement options."
-        },
-        {
-          title: "MBA / Executive MBA",
-          duration: "2 Years",
-          entranceExams: "CAT, XAT, GMAT, MAT",
-          keyInstitutes: "IIMs, XLRI, FMS Delhi, IIT Depts of Management Studies",
-          careerOutcomes: "Product Manager, Management Consultant, Investment Banking, Strategy Lead",
-          whyRecommended: "Ideal for engineering graduates aiming to transition into business strategy, product management, or leadership."
-        }
-      ];
-    } else if (degree.includes("b.com") || degree.includes("bba") || domain.includes("commerce") || domain.includes("finance")) {
-      programmes = [
-        {
-          title: "MBA in Finance / Operations / Marketing",
-          duration: "2 Years",
-          entranceExams: "CAT, XAT, CMAT, MAT",
-          keyInstitutes: "IIMs, FMS, SPJIMR, Symbiosis",
-          careerOutcomes: "Investment Banker, Brand Manager, Corporate Finance Specialist, Management Consultant",
-          whyRecommended: "The premier postgraduate degree for accelerated growth in corporate management and finance."
-        },
-        {
-          title: "M.Com / Master of Financial Economics",
-          duration: "2 Years",
-          entranceExams: "CUET PG / University Entrance",
-          keyInstitutes: "Delhi School of Economics, Loyola College, Madras University",
-          careerOutcomes: "Financial Analyst, Economic Researcher, College Lecturer (after UGC NET)",
-          whyRecommended: "Strong foundation for academic research, government finance roles, and specialized banking."
-        }
-      ];
-    } else {
-      programmes = [
-        {
-          title: "MBA / PGDM in Business Administration",
-          duration: "2 Years",
-          entranceExams: "CAT, MAT, CMAT, XAT",
-          keyInstitutes: "Top National B-Schools",
-          careerOutcomes: "Business Manager, Operations Lead, HR Director, Startup Founder",
-          whyRecommended: "Versatile postgraduate degree that opens opportunities across corporate sectors."
-        },
-        {
-          title: "Specialized Master's Programme (M.Sc / M.A)",
-          duration: "2 Years",
-          entranceExams: "CUET PG / State University Exams",
-          keyInstitutes: "Central & State Universities",
-          careerOutcomes: "Specialized Domain Professional, Research Analyst, Educator",
-          whyRecommended: "Deepens subject knowledge for specialized analytical and research careers."
-        }
-      ];
-    }
-
-    res.status(200).json({
-      success: true,
-      degreeCompleted: profile?.degree || "Graduate Degree",
-      domain: profile?.domain || "General",
-      programmes
-    });
-  } catch (error) {
-    console.error("Get higher studies guide error:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch higher studies guide" });
-  }
-};
-
-// ── GET /api/graduate/roadmap ─────────────────────────────────────────────────
 exports.getUpskillingRoadmap = async (req, res) => {
   try {
     const userId = req.student?._id || req.user?._id || req.student?.id;
@@ -690,7 +1041,7 @@ exports.getUpskillingRoadmap = async (req, res) => {
       {
         phaseNumber: 1,
         title: "Phase 1: Strengthen Fundamentals & Core Concepts",
-        duration: "Weeks 1–4",
+        duration: "Weeks 1ΓÇô4",
         status: "in-progress",
         description: `Master fundamental principles and essential baseline competencies for ${targetCareer.title}.`,
         tasks: [
@@ -702,7 +1053,7 @@ exports.getUpskillingRoadmap = async (req, res) => {
       {
         phaseNumber: 2,
         title: "Phase 2: Tool Mastery & Applied Problem Solving",
-        duration: "Weeks 5–8",
+        duration: "Weeks 5ΓÇô8",
         status: "upcoming",
         description: `Build hands-on proficiency with required industry tools (${targetCareer.missingSkills?.slice(0, 3).join(", ") || "tools"}).`,
         tasks: [
@@ -714,7 +1065,7 @@ exports.getUpskillingRoadmap = async (req, res) => {
       {
         phaseNumber: 3,
         title: "Phase 3: Portfolio Projects & Real-World Evidence",
-        duration: "Weeks 9–12",
+        duration: "Weeks 9ΓÇô12",
         status: "upcoming",
         description: "Develop 2 comprehensive portfolio projects that demonstrate practical competence to hiring teams.",
         tasks: [
@@ -726,7 +1077,7 @@ exports.getUpskillingRoadmap = async (req, res) => {
       {
         phaseNumber: 4,
         title: "Phase 4: Placement Preparation & Career Transition",
-        duration: "Weeks 13–16",
+        duration: "Weeks 13ΓÇô16",
         status: "upcoming",
         description: "Optimize professional resume, practice technical & HR interviews, and begin targeted applications.",
         tasks: [
@@ -749,77 +1100,8 @@ exports.getUpskillingRoadmap = async (req, res) => {
 };
 
 // GET /api/graduate/recommendations
-exports.getRecommendations = async (req, res) => {
-  try {
-    const userId = req.student?._id;
-    const profile = await GraduateProfile.findOne({ userId });
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Graduate profile not found" });
-    }
-    const recommendations = await computeRecommendations(profile);
-    res.json({ success: true, ...recommendations });
-  } catch (error) {
-    console.error("Get recommendations error:", error);
-    res.status(500).json({ success: false, message: "Failed to load recommendations" });
-  }
-};
 
-// GET /api/graduate/notifications
-// Only verified, DB-backed items: published dates of managed exams plus
-// admin announcements targeted at graduates. Nothing is fabricated.
-exports.getNotifications = async (req, res) => {
-  try {
-    const userId = req.student?._id;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const horizon = new Date(today.getTime() + 30 * 86400000);
 
-    const exams = await GraduateExam.find({ isActive: true })
-      .select("examName governmentType state applicationEndDate examDate notificationUrl applicationUrl organization")
-      .populate("organization", "name")
-      .limit(500)
-      .lean();
+// restored handlers
 
-    const alerts = [];
-    for (const ex of exams) {
-      const appEnd = parseDate(ex.applicationEndDate);
-      const examD = parseDate(ex.examDate);
-      if (appEnd && appEnd >= today && appEnd <= horizon) {
-        alerts.push({
-          kind: "deadline",
-          title: `Application deadline approaching: ${ex.examName}`,
-          message: `Applications close on ${ex.applicationEndDate}${ex.state ? ` (${ex.state})` : ""}. Organization: ${ex.organization?.name || "—"}.`,
-          date: ex.applicationEndDate,
-          examId: ex._id,
-          actionUrl: ex.applicationUrl || ex.notificationUrl || "",
-        });
-      }
-      if (examD && examD >= today && examD <= horizon) {
-        alerts.push({
-          kind: "exam",
-          title: `Exam scheduled: ${ex.examName}`,
-          message: `Exam date: ${ex.examDate}${ex.state ? ` (${ex.state})` : ""}.`,
-          date: ex.examDate,
-          examId: ex._id,
-          actionUrl: ex.notificationUrl || ex.applicationUrl || "",
-        });
-      }
-    }
-    alerts.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
-    const announcements = await Notification.find({
-      $or: [
-        { userId },
-        { isBroadcast: true },
-        { targetLevel: { $in: ["All", "Graduate"] }, userId: null },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
-
-    res.json({ success: true, alerts: alerts.slice(0, 20), announcements });
-  } catch (error) {
-    console.error("Get graduate notifications error:", error);
-    res.status(500).json({ success: false, message: "Failed to load notifications" });
-  }
-};

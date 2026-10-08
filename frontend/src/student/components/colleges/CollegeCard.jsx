@@ -25,7 +25,9 @@ export default function CollegeCard({ college, courses = [], highlightedNames = 
       <div className="ccc-card-top">
         <div className="ccc-card-icon"><FiBookOpen /></div>
         <div className="ccc-card-title-wrap">
-          <h3 className="ccc-card-title">{college.collegeName}</h3>
+          <h3 className="ccc-card-title" style={{ color: '#0f172a', wordBreak: 'break-word', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.35 }}>
+            {college.collegeName || college.name || college.college || college.institution || college.collegeId?.collegeName || 'College Institution'}
+          </h3>
           <div className="ccc-card-location">
             <FiMapPin className="ccc-loc-icon" />
             {locationText}

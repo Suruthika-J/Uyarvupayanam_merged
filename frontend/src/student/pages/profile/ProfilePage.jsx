@@ -67,6 +67,7 @@ export default function ProfilePage() {
     classLevel:     student?.classLevel     || '10th',
     district:       student?.district       || '',
     careerInterest: student?.careerInterest || '',
+    userType:       student?.userType       || 'college_student',
   })
   const [saving,  setSaving]  = useState(false)
   const [success, setSuccess] = useState('')
@@ -77,10 +78,18 @@ export default function ProfilePage() {
     setError('')
     try {
       const res = await authService.updateProfile(form)
-      updateStudent(res.student || res.data || form)
+      const updated = res.student || res.data || form
+      updateStudent(updated)
       setSuccess('Profile updated successfully!')
       setEditing(false)
       setTimeout(() => setSuccess(''), 3500)
+      if (form.userType === 'college_student') {
+        navigate('/college/dashboard')
+      } else if (form.userType === 'graduate') {
+        navigate('/graduate/dashboard')
+      } else if (form.userType === 'school_student') {
+        navigate('/student/dashboard')
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile')
     } finally {
@@ -95,6 +104,7 @@ export default function ProfilePage() {
       classLevel:     student?.classLevel     || '10th',
       district:       student?.district       || '',
       careerInterest: student?.careerInterest || '',
+      userType:       student?.userType       || 'college_student',
     })
     setEditing(false)
     setError('')
@@ -266,6 +276,11 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <SInput label="Full Name"    placeholder="Your full name"   icon={<FiUser />}   value={form.name}  onChange={set('name')} />
             <SInput label="Phone Number" placeholder="+91 XXXXX XXXXX"  icon={<FiPhone />}  value={form.phone} onChange={set('phone')} />
+            <SSelect label="Student Category" value={form.userType} onChange={set('userType')}>
+              <option value="college_student">🎓 College Student (Degree / Diploma)</option>
+              <option value="graduate">💼 Graduate (Degree Completed)</option>
+              <option value="school_student">🏫 School Student (Class 5 - 12)</option>
+            </SSelect>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="s-grid-2col">
               <SSelect label="Class Level" value={form.classLevel} onChange={set('classLevel')}>
                 {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}

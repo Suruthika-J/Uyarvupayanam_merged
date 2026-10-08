@@ -18,19 +18,22 @@ export default function LoginPage() {
   let from       = location.state?.from?.pathname || '/student/dashboard'
   if (from === '/signin' || from === '/signup') from = '/student/dashboard'
 
-  // Already signed in? Go straight to where the student was heading.
+  // Already signed in? Go straight to the student's dashboard.
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && student) {
+      const isCollege = student?.userType === 'college_student' || String(student?.classLevel || '').toLowerCase().includes('college') || /(\.edu|\.ac)\.in$/i.test(student?.email || '') || /@nec\.edu\.in$/i.test(student?.email || '')
+      const isGraduate = student?.userType === 'graduate' && !isCollege
       let dest = from
       if (from === '/student/dashboard') {
-        dest = student?.userType === 'college_student' ? '/college/dashboard'
-             : student?.userType === 'graduate' && student?.onboardingCompleted !== false ? '/student/graduate/dashboard'
-             : student?.userType === 'graduate' ? '/student/onboarding/graduate'
+        // Route each user type to its own portal, not a generic dashboard.
+        dest = isCollege ? '/college/dashboard'
+             : isGraduate && student?.onboardingCompleted !== false ? '/student/graduate/dashboard'
+             : isGraduate ? '/student/onboarding/graduate'
              : '/student/dashboard'
       }
       navigate(dest, { replace: true })
     }
-  }, [isAuthenticated, navigate, from, student])
+  }, [isAuthenticated, student, navigate, from])
 
   // Email-first (OTP) is the default sign-in; password login stays one tap away.
   const [mode,      setMode]     = useState('otp') // 'password' | 'otp'
@@ -62,12 +65,14 @@ export default function LoginPage() {
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
       const s = res.data.student
+      const isCollege = s?.userType === 'college_student' || String(s?.classLevel || '').toLowerCase().includes('college') || /(\.edu|\.ac)\.in$/i.test(s?.email || '') || /@nec\.edu\.in$/i.test(s?.email || '')
+      const isGraduate = s?.userType === 'graduate' && !isCollege
       let dest = from
       if (from === '/student/dashboard') {
         // Route each user type to its own portal, not a generic dashboard.
-        dest = s?.userType === 'college_student' ? '/college/dashboard'
-             : s?.userType === 'graduate' && s?.onboardingCompleted !== false ? '/student/graduate/dashboard'
-             : s?.userType === 'graduate' ? '/student/onboarding/graduate'
+        dest = isCollege ? '/college/dashboard'
+             : isGraduate && s?.onboardingCompleted !== false ? '/student/graduate/dashboard'
+             : isGraduate ? '/student/onboarding/graduate'
              : '/student/dashboard'
       }
       navigate(dest, { replace: true })

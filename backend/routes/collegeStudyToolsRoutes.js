@@ -28,6 +28,11 @@ const {
   generatePracticeQuestions,
   askAdvisorChat,
   generateResumeSuggestions,
+  saveResumeVersion,
+  getResumeVersions,
+  deleteResumeVersion,
+  generateAiSummary,
+  getAtsHistory,
   generateInterviewQuestions,
   getPeerMentors,
   getCollegeDashboardSummary,
@@ -40,6 +45,13 @@ const {
   getPracticeSession,
   getSessionResults
 } = require("../controllers/practiceSessionController");
+const {
+  researchCompany,
+  generatePracticeQuestions: generateCompanyPracticeQuestions,
+  startMockInterview,
+  respondMockInterview,
+  submitInterviewResult: submitCompanyInterviewResult
+} = require("../controllers/companyInterviewPrepController");
 const requireTestFlag = require("../middleware/requireTestFlag");
 
 const multer = require("multer");
@@ -73,7 +85,11 @@ router.get("/analytics", verifyStudent, getAnalyticsData);
 router.post("/mentors/doubt-request", verifyStudent, submitMentorDoubtRequest);
 router.get("/mentors/student-requests", verifyStudent, getMentorRequestsForStudent);
 router.post("/mentors/request-action", verifyStudent, handleMentorRequestAction);
-router.post("/interview-prep/submit", verifyStudent, submitInterviewResult);
+router.post("/interview-prep/research", verifyStudent, researchCompany);
+router.post("/interview-prep/generate-practice", verifyStudent, generateCompanyPracticeQuestions);
+router.post("/interview-prep/mock-interview/start", verifyStudent, startMockInterview);
+router.post("/interview-prep/mock-interview/respond", verifyStudent, respondMockInterview);
+router.post("/interview-prep/submit", verifyStudent, submitCompanyInterviewResult);
 router.post("/summarize", verifyStudent, summarizeNotes);
 
 // LLM Adaptive Practice Session Routes
@@ -86,13 +102,21 @@ router.get("/practice/questions", verifyStudent, getPracticeQuestions);
 router.get("/practice-questions", verifyStudent, getPracticeQuestions);
 router.post("/practice-questions", verifyStudent, generatePracticeQuestions);
 router.post("/chat", verifyStudent, askAdvisorChat);
+
+// Resume Builder Routes
 router.get("/resume-builder", verifyStudent, generateResumeSuggestions);
+router.post("/resume-builder/save", verifyStudent, saveResumeVersion);
+router.get("/resume-builder/versions", verifyStudent, getResumeVersions);
+router.delete("/resume-builder/:id", verifyStudent, deleteResumeVersion);
+router.post("/resume-builder/generate-summary", verifyStudent, generateAiSummary);
+
 router.post("/interview-prep", verifyStudent, generateInterviewQuestions);
 router.get("/mentors", verifyStudent, getPeerMentors);
 
 // ATS Resume Score & Keyword Checker Routes
 router.get("/ats-presets", verifyStudent, getAtsPresets);
 router.post("/ats-checker", verifyStudent, uploadResume.single("resumeFile"), checkResumeAtsScore);
+router.get("/ats-history", verifyStudent, getAtsHistory);
 
 module.exports = router;
 

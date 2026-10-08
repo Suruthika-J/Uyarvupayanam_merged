@@ -109,6 +109,15 @@ const verifyLoginOtp = async (req, res) => {
       await student.save();
     }
 
+    // Auto-heal college institutional emails & classLevel college_student records
+    const isCollegeEmail = /@nec\.edu\.in$/i.test(student.email) || /(\.edu|\.ac)\.in$/i.test(student.email);
+    if (isCollegeEmail || student.classLevel === "college_student") {
+      if (student.userType !== "college_student") {
+        student.userType = "college_student";
+        await student.save();
+      }
+    }
+
     const token = jwt.sign({ id: student._id }, getJwtSecret(), {
       expiresIn: "7d",
     });

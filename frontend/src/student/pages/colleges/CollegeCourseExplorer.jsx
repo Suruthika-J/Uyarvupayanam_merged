@@ -127,7 +127,7 @@ export default function CollegeCourseExplorer() {
                   <FiHome size={18} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--s-text)' }}>{c.collegeName}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14.5, color: '#0f172a' }}>{c.collegeName || c.name || c.college || c.institution || 'College Institution'}</div>
                   <div style={{ fontSize: 12, color: 'var(--s-text3)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <FiMapPin size={11} /> {c.district}, {c.location}
                   </div>
@@ -154,7 +154,7 @@ export default function CollegeCourseExplorer() {
                   <FiHome size={28} />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>{selectedCollege.collegeName}</h2>
+                  <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#ffffff', wordBreak: 'break-word' }}>{selectedCollege.collegeName || selectedCollege.name || selectedCollege.college || selectedCollege.institution || 'College Institution'}</h2>
                   <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: 14.5, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <FiMapPin size={14} /> {selectedCollege.location}, {selectedCollege.district}
                   </p>

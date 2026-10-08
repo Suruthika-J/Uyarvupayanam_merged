@@ -275,6 +275,39 @@ export function SSelect({ label, options, children, style = {}, ...props }) {
   )
 }
 
+/* ── Textarea ────────────────────────────────────────────── */
+export function STextarea({ label, error, style = {}, rows = 3, ...props }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      {label && (
+        <label style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--s-text2)',
+          fontFamily: 'var(--s-font-display)',
+        }}>{label}</label>
+      )}
+      <textarea
+        rows={rows}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          width: '100%', fontFamily: 'var(--s-font-body)',
+          background: 'var(--s-surface)',
+          border: `1.5px solid ${focused ? 'var(--s-primary)' : error ? '#dc2626' : 'var(--s-border)'}`,
+          borderRadius: 10,
+          padding: '11px 14px',
+          fontSize: 14, color: 'var(--s-text)', outline: 'none',
+          resize: 'vertical',
+          transition: 'border-color 0.2s ease', ...style,
+        }}
+        {...props}
+      />
+      {error && <span style={{ fontSize: 12, color: '#dc2626', marginTop: 1 }}>{error}</span>}
+    </div>
+  )
+}
+
+
 /* ── Alert ───────────────────────────────────────────────── */
 const ALERT_STYLES = {
   success: { bg: 'var(--s-success-l)', border: '#a7f3d0', text: 'var(--s-success)' },

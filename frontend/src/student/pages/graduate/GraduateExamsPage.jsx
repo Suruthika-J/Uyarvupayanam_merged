@@ -149,6 +149,15 @@ export default function GraduateExamsPage() {
     ex.category.toLowerCase().includes(search.toLowerCase())
   )
 
+  // Shared handler: open the official application portal with a safe fallback
+  const handleApplyNow = (url) => {
+    if (url && url !== '#') {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else {
+      alert('Official application URL unavailable or opening soon.')
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -250,9 +259,9 @@ export default function GraduateExamsPage() {
                   </div>
                   {!elig.label.startsWith('Eligible') && exam.eligibilityNote === undefined && null}
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                    {exam.applicationUrl && (
-                      <a href={exam.applicationUrl} target="_blank" rel="noreferrer" style={{ ...pill, background: '#2563eb', color: '#fff' }}>Apply officially <FiExternalLink size={12} /></a>
-                    )}
+                    <button onClick={() => handleApplyNow(exam.applicationUrl)} style={{ ...pill, background: '#2563eb', color: '#fff' }}>
+                      Apply officially <FiExternalLink size={12} />
+                    </button>
                     <button onClick={() => toggleSave(exam)} style={{ ...pill, background: savedIds.has(String(exam._id)) ? '#fef3c7' : '#f1f5f9', color: '#0f172a' }}>
                       <FiBookmark size={12} /> {savedIds.has(String(exam._id)) ? 'Saved' : 'Save'}
                     </button>

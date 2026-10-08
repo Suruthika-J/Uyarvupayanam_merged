@@ -20,6 +20,8 @@ const verifyStudent = require("../middleware/verifyStudent");
 const verifyAdmin = require("../middleware/verifyAdmin");
 const requireTestFlag = require("../middleware/requireTestFlag");
 
+const { getCurrentRoadmap } = require("../controllers/learningRoadmapController");
+
 // Protected Student Routes
 router.get("/recommendations", verifyStudent, getAdvisorRecommendations);
 router.get("/career/:slug", verifyStudent, getCareerDetail);
@@ -28,8 +30,8 @@ router.get("/skill-gap", verifyStudent, getStudentSkillGap);
 router.post("/skill/acquire", verifyStudent, acquireSkillProgress);
 router.get("/skill/assessment", verifyStudent, getSkillAssessmentQuestions);
 router.post("/skill/verify", verifyStudent, verifySkillAssessment);
-router.get("/roadmap", verifyStudent, getStudentRoadmap);
-router.post("/roadmap/progress", verifyStudent, updateRoadmapProgress);
+router.get("/roadmap", verifyStudent, getCurrentRoadmap);
+router.post("/roadmap/progress", verifyStudent, getCurrentRoadmap);
 router.post("/compare", verifyStudent, compareCareers);
 router.get("/test-profiles", requireTestFlag, runAcceptanceTestProfiles);
 

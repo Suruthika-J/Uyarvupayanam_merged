@@ -2,28 +2,35 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useStudentAuth } from '../context/StudentAuthContext'
 import {
-  FiGrid, FiUser, FiCompass, FiZap, FiBriefcase,
-  FiFileText, FiAward, FiTarget, FiBarChart2,
-  FiBook, FiMessageSquare, FiLogOut, FiMenu, FiX, FiCheckSquare, FiTrendingUp
+  FiGrid, FiUser, FiCompass, FiBriefcase, FiAward,
+  FiBook, FiCheckSquare, FiCalendar, FiUsers, FiMessageSquare,
+  FiBell, FiSettings, FiLogOut, FiMenu, FiX, FiTarget, FiTrendingUp, FiFileText,
+  FiZap, FiBarChart2
 } from 'react-icons/fi'
 
 const GRADUATE_SIDEBAR_NAV = [
-  { id: 'dashboard',      icon: FiGrid,          label: 'Dashboard',          to: '/student/graduate/dashboard' },
-  { id: 'exams',          icon: FiBook,          label: 'Government Exams',   to: '/student/graduate/exams' },
-  { id: 'placement',      icon: FiCheckSquare,   label: 'Private Jobs',       to: '/student/graduate/placement' },
-  { id: 'saved',          icon: FiFileText,      label: 'Saved Opportunities',to: '/student/graduate/saved' },
-  { id: 'applications',   icon: FiTarget,        label: 'My Applications',    to: '/student/graduate/applications' },
-  { id: 'notifications',  icon: FiZap,           label: 'Notifications',      to: '/student/graduate/notifications' },
-  { id: 'practice',       icon: FiBarChart2,     label: 'Practice & Preparation', to: '/study-tools/practice' },
-  { id: 'careers',        icon: FiBriefcase,     label: 'My Career',          to: '/student/graduate/careers' },
-  { id: 'skill-gap',      icon: FiZap,           label: 'Skills & Gap',       to: '/student/graduate/skill-gap' },
-  { id: 'roadmap',        icon: FiTarget,        label: 'Career Roadmap',     to: '/student/graduate/roadmap' },
-  { id: 'higher-studies', icon: FiAward,         label: 'Higher Studies',     to: '/student/graduate/higher-studies' },
-  { id: 'upskilling',     icon: FiTrendingUp,    label: 'Upskilling Hub',     to: '/student/graduate/upskilling' },
-  { id: 'resume',         icon: FiFileText,      label: 'Resume Builder',     to: '/student/graduate/resume' },
-  { id: 'interview',      icon: FiBarChart2,     label: 'Interview Prep',     to: '/student/graduate/interview' },
-  { id: 'advisor',        icon: FiMessageSquare, label: 'AI Advisor',         to: '/student/graduate/advisor' },
-  { id: 'profile',        icon: FiUser,          label: 'My Profile',         to: '/student/graduate/profile' },
+  { id: 'dashboard',        icon: FiGrid,          label: 'Dashboard',           to: '/student/graduate/dashboard' },
+  { id: 'opportunities',    icon: FiCompass,       label: 'Opportunities',       to: '/graduate/opportunities' },
+  { id: 'exams',            icon: FiBook,          label: 'Government Exams',    to: '/student/graduate/exams' },
+  { id: 'upcoming-exams',   icon: FiCalendar,      label: 'Upcoming Exams',      to: '/graduate/upcoming-exams' },
+  { id: 'placement',        icon: FiCheckSquare,   label: 'Private Jobs',        to: '/student/graduate/placement' },
+  { id: 'saved',            icon: FiFileText,      label: 'Saved Opportunities', to: '/student/graduate/saved' },
+  { id: 'applications',     icon: FiTarget,        label: 'My Applications',     to: '/student/graduate/applications' },
+  { id: 'resume-builder',   icon: FiFileText,      label: 'Resume Builder',      to: '/graduate/resume-builder' },
+  { id: 'resume',           icon: FiFileText,      label: 'Resume (Classic)',    to: '/student/graduate/resume' },
+  { id: 'ats-checker',      icon: FiTrendingUp,    label: 'ATS Score Checker',   to: '/graduate/ats-checker' },
+  { id: 'psu',              icon: FiBriefcase,     label: 'PSU Opportunities',   to: '/graduate/opportunities?category=PSU' },
+  { id: 'careers',          icon: FiBriefcase,     label: 'Jobs & Careers',      to: '/student/graduate/careers' },
+  { id: 'skill-gap',        icon: FiZap,           label: 'Skills & Gap',        to: '/student/graduate/skill-gap' },
+  { id: 'roadmap',          icon: FiTarget,        label: 'Career Roadmap',      to: '/student/graduate/roadmap' },
+  { id: 'higher-studies',   icon: FiAward,         label: 'Higher Studies',      to: '/student/graduate/higher-studies' },
+  { id: 'upskilling',       icon: FiTrendingUp,    label: 'Upskilling Hub',      to: '/student/graduate/upskilling' },
+  { id: 'interview',        icon: FiBarChart2,     label: 'Interview Prep',      to: '/student/graduate/interview' },
+  { id: 'practice',         icon: FiBarChart2,     label: 'Practice & Preparation', to: '/study-tools/practice' },
+  { id: 'peer-mentor',      icon: FiUsers,         label: 'Peer Mentorship',     to: '/graduate/peer-mentor' },
+  { id: 'advisor',          icon: FiMessageSquare, label: 'AI Advisor',          to: '/student/graduate/advisor' },
+  { id: 'profile',          icon: FiUser,          label: 'My Profile',          to: '/student/graduate/profile' },
+  { id: 'notifications',    icon: FiZap,           label: 'Notifications',       to: '/student/graduate/notifications' },
 ]
 
 export default function GraduateLayout() {
@@ -40,7 +47,7 @@ export default function GraduateLayout() {
   return (
     <div className="student-root" style={{ minHeight: '100vh', display: 'flex', background: '#f8fafc' }}>
 
-      {/* ── Mobile overlay ── */}
+      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 89 }}
@@ -66,14 +73,14 @@ export default function GraduateLayout() {
               color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 900, fontSize: 18, flexShrink: 0, boxShadow: '0 4px 12px rgba(37,99,235,0.4)'
             }}>
-              G
+              🎓
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 900, color: '#fff', fontFamily: 'var(--s-font-display)', lineHeight: 1.2 }}>
                 Uyarvu Payanam
               </div>
               <div style={{ fontSize: 10, fontWeight: 800, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Graduate Portal
+                Graduate Ecosystem
               </div>
             </div>
           </Link>
@@ -82,7 +89,8 @@ export default function GraduateLayout() {
         {/* Nav Items */}
         <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
           {GRADUATE_SIDEBAR_NAV.map(({ id, icon: Icon, label, to }) => {
-            const isActive = location.pathname === to || (to !== '/student/graduate/dashboard' && location.pathname.startsWith(to))
+            const isActive = location.pathname === to.split('?')[0] ||
+              (to !== '/student/graduate/dashboard' && location.pathname.startsWith(to.split('?')[0]))
             return (
               <Link
                 key={id}
@@ -128,7 +136,7 @@ export default function GraduateLayout() {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT AREA ── */}
+      {/* MAIN CONTENT AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Mobile Header Bar */}
         <header style={{
@@ -143,7 +151,7 @@ export default function GraduateLayout() {
             <FiMenu size={22} />
           </button>
           <div style={{ fontSize: 12, fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            🎓 Graduate Transition Hub
+            🎓 Graduate Portal
           </div>
           <div style={{ width: 22 }} />
         </header>
