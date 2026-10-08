@@ -2,6 +2,11 @@ const GraduateProfile = require("../models/GraduateProfile");
 const User = require("../models/User");
 const CollegeCareerCatalog = require("../models/CollegeCareerCatalog");
 const Exam = require("../models/Exam");
+const GraduateExam = require("../models/GraduateExam");
+const SavedItem = require("../models/SavedItem");
+const ApplicationTracker = require("../models/ApplicationTracker");
+const Notification = require("../models/Notification");
+const { parseDate, assessEligibility, computeRecommendations } = require("../utils/graduateMatching");
 
 // Public onboarding fields a client may write via /profile/step and
 // /onboarding/complete. Ownership (userId), completion flag (onboardingCompleted),
@@ -21,7 +26,9 @@ const ONBOARDING_EDITABLE_FIELDS = new Set([
   "lookingForOpportunity", "preferredRoles", "preferredIndustries",
   "preferredLocations", "remotePreference", "expectedSalary",
   "relocationWillingness",
-  "projects", "internships", "certifications", "workExperience", "resumeUrl"
+  "projects", "internships", "certifications", "workExperience", "resumeUrl",
+  "careerInterests", "targetState", "examPreparation", "ageRange", "remotePreference",
+  "phone", "location", "linkedinUrl", "githubUrl", "portfolioUrl"
 ]);
 
 // Merges only server-allowlisted fields onto a graduate profile.
@@ -357,6 +364,30 @@ exports.getDashboardSummary = async (req, res) => {
     const careerMatches = await generateCareerMatches(profile);
     const topCareer = careerMatches[0] || null;
 
+    // ── Real dashboard statistics (no fabricated numbers) ──────────────
+    const savedCount = await SavedItem.countDocuments({ userId, contentType: "GraduateExam" });
+    const applicationsTracked = await ApplicationTracker.countDocuments({ userId });
+    const activeExams = await GraduateExam.find({ isActive: true })
+      .select("examName governmentType state applicationEndDate examDate organization category")
+      .populate("organization", "name")
+      .limit(500)
+      .lean();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const inThirtyDays = new Date(today.getTime() + 30 * 86400000);
+    const upcoming = [];
+    for (const ex of activeExams) {
+      const appEnd = parseDate(ex.applicationEndDate);
+      const examD = parseDate(ex.examDate);
+      if (appEnd && appEnd >= today && appEnd <= inThirtyDays) {
+        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Application deadline", date: ex.applicationEndDate, state: ex.state, governmentType: ex.governmentType });
+      } else if (examD && examD >= today && examD <= inThirtyDays) {
+        upcoming.push({ examId: ex._id, title: ex.examName, organization: ex.organization?.name || "", kind: "Exam date", date: ex.examDate, state: ex.state, governmentType: ex.governmentType });
+      }
+    }
+    upcoming.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const recommended = await computeRecommendations(profile);
+    const recommendedCount = recommended.central.length + recommended.state.length;
+
     // Weekly action plan generated dynamically based on profile
     const weeklyPlan = [
       {
@@ -404,7 +435,14 @@ exports.getDashboardSummary = async (req, res) => {
         active: true,
         preferredDegrees: profile.preferredHigherDegrees || []
       } : { active: false },
-      weeklyPlan
+      weeklyPlan,
+      stats: {
+        recommendedOpportunities: recommendedCount,
+        savedOpportunities: savedCount,
+        applicationsTracked,
+        upcomingDeadlines: upcoming.length
+      },
+      upcoming
     });
   } catch (error) {
     console.error("Get graduate dashboard error:", error);
@@ -707,5 +745,81 @@ exports.getUpskillingRoadmap = async (req, res) => {
   } catch (error) {
     console.error("Get upskilling roadmap error:", error);
     res.status(500).json({ success: false, message: "Failed to generate roadmap" });
+  }
+};
+
+// GET /api/graduate/recommendations
+exports.getRecommendations = async (req, res) => {
+  try {
+    const userId = req.student?._id;
+    const profile = await GraduateProfile.findOne({ userId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Graduate profile not found" });
+    }
+    const recommendations = await computeRecommendations(profile);
+    res.json({ success: true, ...recommendations });
+  } catch (error) {
+    console.error("Get recommendations error:", error);
+    res.status(500).json({ success: false, message: "Failed to load recommendations" });
+  }
+};
+
+// GET /api/graduate/notifications
+// Only verified, DB-backed items: published dates of managed exams plus
+// admin announcements targeted at graduates. Nothing is fabricated.
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.student?._id;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today.getTime() + 30 * 86400000);
+
+    const exams = await GraduateExam.find({ isActive: true })
+      .select("examName governmentType state applicationEndDate examDate notificationUrl applicationUrl organization")
+      .populate("organization", "name")
+      .limit(500)
+      .lean();
+
+    const alerts = [];
+    for (const ex of exams) {
+      const appEnd = parseDate(ex.applicationEndDate);
+      const examD = parseDate(ex.examDate);
+      if (appEnd && appEnd >= today && appEnd <= horizon) {
+        alerts.push({
+          kind: "deadline",
+          title: `Application deadline approaching: ${ex.examName}`,
+          message: `Applications close on ${ex.applicationEndDate}${ex.state ? ` (${ex.state})` : ""}. Organization: ${ex.organization?.name || "—"}.`,
+          date: ex.applicationEndDate,
+          examId: ex._id,
+          actionUrl: ex.applicationUrl || ex.notificationUrl || "",
+        });
+      }
+      if (examD && examD >= today && examD <= horizon) {
+        alerts.push({
+          kind: "exam",
+          title: `Exam scheduled: ${ex.examName}`,
+          message: `Exam date: ${ex.examDate}${ex.state ? ` (${ex.state})` : ""}.`,
+          date: ex.examDate,
+          examId: ex._id,
+          actionUrl: ex.notificationUrl || ex.applicationUrl || "",
+        });
+      }
+    }
+    alerts.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+    const announcements = await Notification.find({
+      $or: [
+        { userId },
+        { isBroadcast: true },
+        { targetLevel: { $in: ["All", "Graduate"] }, userId: null },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.json({ success: true, alerts: alerts.slice(0, 20), announcements });
+  } catch (error) {
+    console.error("Get graduate notifications error:", error);
+    res.status(500).json({ success: false, message: "Failed to load notifications" });
   }
 };

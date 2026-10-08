@@ -10,6 +10,8 @@ const {
   getExamsGuide,
   getHigherStudiesGuide,
   getUpskillingRoadmap,
+  getRecommendations,
+  getNotifications,
 } = require("../controllers/graduateController");
 const { askAdvisorChat } = require("../controllers/collegeStudyToolsController");
 const verifyStudent = require("../middleware/verifyStudent");
@@ -38,6 +40,8 @@ router.get("/skill-gap", verifyStudent, getSkillGapAnalysis);
 router.get("/exams", verifyStudent, getExamsGuide);
 router.get("/higher-studies", verifyStudent, getHigherStudiesGuide);
 router.get("/roadmap", verifyStudent, getUpskillingRoadmap);
+router.get("/recommendations", verifyStudent, getRecommendations);
+router.get("/notifications", verifyStudent, getNotifications);
 
 // AI career advisor — reuses the shared study-tools chat handler (same identity
 // contract: req.student, graceful fallback reply on provider errors/rate limits).

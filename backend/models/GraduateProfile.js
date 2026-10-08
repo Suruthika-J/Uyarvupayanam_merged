@@ -61,6 +61,26 @@ const graduateProfileSchema = new mongoose.Schema(
     },
     targetCareer: { type: String, trim: true },
 
+    // ── Interest-based onboarding preferences ──────────────────────────
+    careerInterests: [
+      {
+        type: String,
+        enum: [
+          "Central Government Exams",
+          "State Government Exams",
+          "Private-Sector Jobs",
+          "Both Government and Private Opportunities"
+        ]
+      }
+    ],
+    targetState: { type: String, trim: true, default: "" },
+    examPreparation: {
+      type: String,
+      enum: ["", "Yes", "No", "Planning to start"],
+      default: ""
+    },
+    ageRange: { type: String, trim: true, default: "" },
+
     // ── STAGE 4: Competitive Exams ─────────────────────────────────────────
     examInterest: {
       type: String,
@@ -134,6 +154,11 @@ const graduateProfileSchema = new mongoose.Schema(
       }
     ],
     resumeUrl: { type: String },
+    phone: { type: String, default: "" },
+    location: { type: String, default: "" },
+    linkedinUrl: { type: String, default: "" },
+    githubUrl: { type: String, default: "" },
+    portfolioUrl: { type: String, default: "" },
 
     // ── Telemetry & Scores ─────────────────────────────────────────────────
     currentStep: { type: Number, default: 1 },

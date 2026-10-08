@@ -136,6 +136,36 @@ export default function GraduateDashboardPage() {
         </div>
       )}
 
+      {/* -- REAL STATISTICS -- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+        {[
+          { label: 'Recommended Opportunities', value: data?.stats?.recommendedOpportunities ?? '—', color: '#2563eb' },
+          { label: 'Saved Opportunities', value: data?.stats?.savedOpportunities ?? '—', color: '#f59e0b' },
+          { label: 'Applications Tracked', value: data?.stats?.applicationsTracked ?? '—', color: '#10b981' },
+          { label: 'Upcoming Deadlines', value: data?.stats?.upcomingDeadlines ?? '—', color: '#ef4444' },
+        ].map((s) => (
+          <div key={s.label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: '18px 20px' }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginTop: 4 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {Array.isArray(data?.upcoming) && data.upcoming.length > 0 && (
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20 }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 800, color: '#0f172a' }}>Upcoming application deadlines &amp; exam dates</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {data.upcoming.slice(0, 5).map((u, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, color: '#475569', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>{u.title}</span>
+                <span>{u.kind}: {u.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+
       {/* ── 2. METRICS ROW: READINESS SCORE & TOP CAREER MATCH ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
 

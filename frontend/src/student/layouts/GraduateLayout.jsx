@@ -8,18 +8,22 @@ import {
 } from 'react-icons/fi'
 
 const GRADUATE_SIDEBAR_NAV = [
-  { id: 'dashboard',      icon: FiGrid,          label: 'Dashboard',          to: '/graduate/dashboard' },
-  { id: 'careers',        icon: FiBriefcase,     label: 'My Career',          to: '/graduate/careers' },
-  { id: 'skill-gap',      icon: FiZap,           label: 'Skills & Gap',       to: '/graduate/skill-gap' },
-  { id: 'roadmap',        icon: FiTarget,        label: 'Career Roadmap',     to: '/graduate/roadmap' },
-  { id: 'exams',          icon: FiBook,          label: 'Competitive Exams',  to: '/graduate/exams' },
-  { id: 'higher-studies', icon: FiAward,         label: 'Higher Studies',     to: '/graduate/higher-studies' },
-  { id: 'upskilling',     icon: FiTrendingUp,    label: 'Upskilling Hub',     to: '/graduate/upskilling' },
-  { id: 'placement',      icon: FiCheckSquare,   label: 'Placement Hub',      to: '/graduate/placement' },
-  { id: 'resume',         icon: FiFileText,      label: 'Resume Builder',     to: '/graduate/resume' },
-  { id: 'interview',      icon: FiBarChart2,     label: 'Interview Prep',     to: '/graduate/interview' },
-  { id: 'advisor',        icon: FiMessageSquare, label: 'AI Advisor',         to: '/graduate/ai-advisor' },
-  { id: 'profile',        icon: FiUser,          label: 'My Profile',         to: '/graduate/profile' },
+  { id: 'dashboard',      icon: FiGrid,          label: 'Dashboard',          to: '/student/graduate/dashboard' },
+  { id: 'exams',          icon: FiBook,          label: 'Government Exams',   to: '/student/graduate/exams' },
+  { id: 'placement',      icon: FiCheckSquare,   label: 'Private Jobs',       to: '/student/graduate/placement' },
+  { id: 'saved',          icon: FiFileText,      label: 'Saved Opportunities',to: '/student/graduate/saved' },
+  { id: 'applications',   icon: FiTarget,        label: 'My Applications',    to: '/student/graduate/applications' },
+  { id: 'notifications',  icon: FiZap,           label: 'Notifications',      to: '/student/graduate/notifications' },
+  { id: 'practice',       icon: FiBarChart2,     label: 'Practice & Preparation', to: '/study-tools/practice' },
+  { id: 'careers',        icon: FiBriefcase,     label: 'My Career',          to: '/student/graduate/careers' },
+  { id: 'skill-gap',      icon: FiZap,           label: 'Skills & Gap',       to: '/student/graduate/skill-gap' },
+  { id: 'roadmap',        icon: FiTarget,        label: 'Career Roadmap',     to: '/student/graduate/roadmap' },
+  { id: 'higher-studies', icon: FiAward,         label: 'Higher Studies',     to: '/student/graduate/higher-studies' },
+  { id: 'upskilling',     icon: FiTrendingUp,    label: 'Upskilling Hub',     to: '/student/graduate/upskilling' },
+  { id: 'resume',         icon: FiFileText,      label: 'Resume Builder',     to: '/student/graduate/resume' },
+  { id: 'interview',      icon: FiBarChart2,     label: 'Interview Prep',     to: '/student/graduate/interview' },
+  { id: 'advisor',        icon: FiMessageSquare, label: 'AI Advisor',         to: '/student/graduate/advisor' },
+  { id: 'profile',        icon: FiUser,          label: 'My Profile',         to: '/student/graduate/profile' },
 ]
 
 export default function GraduateLayout() {
@@ -55,7 +59,7 @@ export default function GraduateLayout() {
 
         {/* Logo */}
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <Link to="/graduate/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Link to="/student/graduate/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 38, height: 38, borderRadius: 12,
               background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
@@ -78,7 +82,7 @@ export default function GraduateLayout() {
         {/* Nav Items */}
         <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
           {GRADUATE_SIDEBAR_NAV.map(({ id, icon: Icon, label, to }) => {
-            const isActive = location.pathname === to || (to !== '/graduate/dashboard' && location.pathname.startsWith(to))
+            const isActive = location.pathname === to || (to !== '/student/graduate/dashboard' && location.pathname.startsWith(to))
             return (
               <Link
                 key={id}

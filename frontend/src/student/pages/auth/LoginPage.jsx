@@ -12,7 +12,7 @@ const PENDING_EMAIL_KEY = 'pendingSigninEmail'
 const PENDING_FROM_KEY  = 'pendingSigninFrom'
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useStudentAuth()
+  const { login, isAuthenticated, student } = useStudentAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
   let from       = location.state?.from?.pathname || '/student/dashboard'
@@ -21,9 +21,16 @@ export default function LoginPage() {
   // Already signed in? Go straight to where the student was heading.
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate(from, { replace: true })
+      let dest = from
+      if (from === '/student/dashboard') {
+        dest = student?.userType === 'college_student' ? '/college/dashboard'
+             : student?.userType === 'graduate' && student?.onboardingCompleted !== false ? '/student/graduate/dashboard'
+             : student?.userType === 'graduate' ? '/student/onboarding/graduate'
+             : '/student/dashboard'
+      }
+      navigate(dest, { replace: true })
     }
-  }, [isAuthenticated, navigate, from])
+  }, [isAuthenticated, navigate, from, student])
 
   // Email-first (OTP) is the default sign-in; password login stays one tap away.
   const [mode,      setMode]     = useState('otp') // 'password' | 'otp'
@@ -54,7 +61,16 @@ export default function LoginPage() {
       const res = await axiosInstance.post('/students/login', form)
       localStorage.setItem('studentToken', res.data.token)
       login(res.data.token, res.data.student)
-      navigate(from, { replace: true })
+      const s = res.data.student
+      let dest = from
+      if (from === '/student/dashboard') {
+        // Route each user type to its own portal, not a generic dashboard.
+        dest = s?.userType === 'college_student' ? '/college/dashboard'
+             : s?.userType === 'graduate' && s?.onboardingCompleted !== false ? '/student/graduate/dashboard'
+             : s?.userType === 'graduate' ? '/student/onboarding/graduate'
+             : '/student/dashboard'
+      }
+      navigate(dest, { replace: true })
     } catch (err) {
       // Account exists but the email isn't verified yet — continue the sign-up
       // flow: send a fresh signup code and move to the OTP verification screen.
