@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStudentAuth } from '../../context/StudentAuthContext'
 import graduateService from '../../../services/graduateService'
+import higherStudiesService from '../../services/higherStudiesService'
 import { SBtn, SCard, SLoader, SAlert, SBadge } from '../../components/ui'
 import {
   FiBriefcase, FiZap, FiTarget, FiBook, FiAward, FiCheckSquare,
@@ -27,6 +28,8 @@ export default function GraduateDashboardPage() {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [tasksCompleted, setTasksCompleted] = useState({})
+  const [higherStudiesCourses, setHigherStudiesCourses] = useState([])
+  const [higherStudiesLoading, setHigherStudiesLoading] = useState(true)
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -46,6 +49,27 @@ export default function GraduateDashboardPage() {
     }
     fetchDashboard()
   }, [])
+
+  // Fetch published higher studies courses for recommendations
+  useEffect(() => {
+    const fetchHigherStudies = async () => {
+      setHigherStudiesLoading(true)
+      try {
+        const params = { limit: '6' }
+        const degree = data?.profile?.degree
+        if (degree) params.search = degree
+        const res = await higherStudiesService.list(params)
+        if (res?.success) {
+          setHigherStudiesCourses(res.courses || [])
+        }
+      } catch (err) {
+        console.warn('Higher studies fetch error:', err)
+      } finally {
+        setHigherStudiesLoading(false)
+      }
+    }
+    fetchHigherStudies()
+  }, [data?.profile?.degree])
 
   const toggleTask = (idx) => {
     setTasksCompleted(prev => ({ ...prev, [idx]: !prev[idx] }))
@@ -672,6 +696,63 @@ export default function GraduateDashboardPage() {
             ))}
           </div>
         </SCard>
+      </div>
+
+      {/* ── HIGHER STUDIES RECOMMENDATIONS ── */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: 'var(--s-text)', margin: 0, fontFamily: 'var(--s-font-display)' }}>
+              Higher Studies For You
+            </h2>
+            <div style={{ fontSize: 13, color: 'var(--s-text3)' }}>
+              Recommended postgraduate courses based on your degree and interests.
+            </div>
+          </div>
+          <Link to="/student/graduate/higher-studies">
+            <SBtn variant="secondary" style={{ padding: '6px 14px', borderRadius: 10, fontSize: 12 }}>
+              View All Courses
+            </SBtn>
+          </Link>
+        </div>
+
+        {higherStudiesLoading ? (
+          <div style={{ textAlign: 'center', padding: 30, color: 'var(--s-text3)' }}>Loading courses...</div>
+        ) : higherStudiesCourses.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 30, color: 'var(--s-text3)' }}>
+            No higher studies courses available at the moment.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+            {higherStudiesCourses.map(course => (
+              <SCard key={course._id} style={{ padding: 20, borderRadius: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20, background: '#ede9fe', color: '#5b21b6' }}>
+                      {course.category}
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 4px' }}>{course.title}</h3>
+                  <div style={{ fontSize: 12, color: '#7c3aed', fontWeight: 700, marginBottom: 8 }}>
+                    {course.studyDomain}{course.specialization ? ` · ${course.specialization}` : ''}
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--s-text2)', lineHeight: 1.5, margin: '0 0 10px' }}>
+                    {course.shortDescription || course.detailedDescription?.slice(0, 100) + '...'}
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {course.duration && <span style={{ fontSize: 11, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6, color: 'var(--s-text3)' }}>{course.duration}</span>}
+                    {course.studyMode && <span style={{ fontSize: 11, background: '#f1f5f9', padding: '3px 8px', borderRadius: 6, color: 'var(--s-text3)' }}>{course.studyMode}</span>}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--s-border)' }}>
+                  <Link to={`/student/graduate/higher-studies/${course._id}`} style={{ flex: 1 }}>
+                    <SBtn variant="primary" style={{ width: '100%', padding: '6px 0', borderRadius: 8, fontSize: 12 }}>View Details</SBtn>
+                  </Link>
+                </div>
+              </SCard>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── UPCOMING EXAMS WIDGET ── */}

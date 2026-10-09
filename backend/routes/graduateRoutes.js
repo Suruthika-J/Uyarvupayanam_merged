@@ -58,6 +58,7 @@ const {
   submitMockTest
 } = require("../controllers/examPreparationController");
 const verifyStudent = require("../middleware/verifyStudent");
+const verifyAdmin = require("../middleware/verifyAdmin");
 const { rateLimit } = require("../middleware/rateLimit");
 
 const multer = require("multer");
@@ -170,5 +171,42 @@ router.post("/exams/:examId/recalculate-plan", verifyStudent, createOrUpdateStud
 router.get("/exams/:examId/progress", optionalStudent, getExamProgress);
 router.post("/exams/:examId/topic/:topicId/progress", verifyStudent, recordTopicProgress);
 router.post("/exams/:examId/mock/submit", verifyStudent, submitMockTest);
+
+const { crawlExamData } = require("../services/EasyShikshaExamCrawler");
+
+// ── Dynamic Exam Crawler (Admin only) ────────────────────────────────────────
+// Trigger: POST /api/graduate/crawl-exams
+// Fetches exams from EasyShiksha and persists to database.
+// Protected: requires verifyAdmin middleware
+router.post(
+  "/crawl-exams",
+  verifyAdmin,
+  async (req, res) => {
+    try {
+      const result = await crawlExamData();
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+          totalDiscovered: result.totalDiscovered,
+          totalSaved: result.totalSaved,
+          categoriesCovered: result.categoriesCovered,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: result.error || "Crawler failed",
+        });
+      }
+    } catch (err) {
+      console.error("Crawl exams error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to run exam crawler",
+        error: err.message,
+      });
+    }
+  }
+);
 
 module.exports = router;

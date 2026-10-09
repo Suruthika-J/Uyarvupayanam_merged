@@ -141,6 +141,8 @@ import GraduateCareersPage from './pages/graduate/GraduateCareersPage'
 import GraduateSkillGapPage from './pages/graduate/GraduateSkillGapPage'
 import GraduateExamsPage from './pages/graduate/GraduateExamsPage'
 import GraduateHigherStudiesPage from './pages/graduate/GraduateHigherStudiesPage'
+import HigherStudiesExplorePage from './pages/graduate/HigherStudiesExplorePage'
+import HigherStudiesDetailPage from './pages/graduate/HigherStudiesDetailPage'
 import GraduateOpportunitiesPage from './pages/graduate/GraduateOpportunitiesPage'
 import GraduateOpportunityDetailPage from './pages/graduate/GraduateOpportunityDetailPage'
 import GraduateApplicationsPage from './pages/graduate/GraduateApplicationsPage'
@@ -153,7 +155,6 @@ import GraduateInterviewPage from './pages/graduate/GraduateInterviewPage'
 import GraduateResumePage from './pages/graduate/GraduateResumePage'
 import GraduateResumeBuilderPage from './pages/graduate/GraduateResumeBuilderPage'
 import GraduateAtsCheckerPage from './pages/graduate/GraduateAtsCheckerPage'
-import GraduateUpskillingPage from './pages/graduate/GraduateUpskillingPage'
 import GraduateSavedPage from './pages/graduate/GraduateSavedPage'
 import GraduateNotificationsPage from './pages/graduate/GraduateNotificationsPage'
 
@@ -377,6 +378,10 @@ export default function StudentRoutes() {
             <Route path="student/courses/diploma" element={<DiplomaCourses />} />
             <Route path="courses/diploma" element={<Navigate to="/student/courses/diploma" replace />} />
 
+            {/* Higher Studies — public, no login required */}
+            <Route path="higher-studies" element={<HigherStudiesExplorePage />} />
+            <Route path="higher-studies/:id" element={<HigherStudiesDetailPage />} />
+
             {/* School Dashboard */}
             <Route path="student/dashboard" element={<StudentProtectedRoute><CollegeDashboardRedirector /></StudentProtectedRoute>} />
             <Route path="dashboard" element={<Navigate to="/student/dashboard" replace />} />
@@ -404,12 +409,12 @@ export default function StudentRoutes() {
             <Route path="student/graduate/careers" element={<GraduateCareersPage />} />
             <Route path="student/graduate/skill-gap" element={<GraduateSkillGapPage />} />
             <Route path="student/graduate/exams" element={<GraduateExamsPage />} />
-            <Route path="student/graduate/higher-studies" element={<GraduateHigherStudiesPage />} />
+            <Route path="student/graduate/higher-studies" element={<HigherStudiesExplorePage />} />
+            <Route path="student/graduate/higher-studies/:id" element={<HigherStudiesDetailPage />} />
             <Route path="student/graduate/roadmap" element={<GraduateRoadmapPage />} />
             <Route path="student/graduate/placement" element={<GraduatePlacementPage />} />
             <Route path="student/graduate/interview" element={<GraduateInterviewPage />} />
             <Route path="student/graduate/resume" element={<GraduateResumePage />} />
-            <Route path="student/graduate/upskilling" element={<GraduateUpskillingPage />} />
             <Route path="student/graduate/saved" element={<GraduateSavedPage />} />
             <Route path="student/graduate/applications" element={<GraduateApplicationsPage />} />
             <Route path="student/graduate/notifications" element={<GraduateNotificationsPage />} />
@@ -427,7 +432,6 @@ export default function StudentRoutes() {
           <Route path="graduate/placement" element={<Navigate to="/student/graduate/placement" replace />} />
           <Route path="graduate/interview" element={<Navigate to="/student/graduate/interview" replace />} />
           <Route path="graduate/resume" element={<Navigate to="/student/graduate/resume" replace />} />
-          <Route path="graduate/upskilling" element={<Navigate to="/student/graduate/upskilling" replace />} />
 
 
           {/* ════════════════════════════════════════════════════════
@@ -499,7 +503,6 @@ export default function StudentRoutes() {
             <Route path="resume-builder" element={<GraduateResumeBuilderPage />} />
             <Route path="ats-checker" element={<GraduateAtsCheckerPage />} />
             <Route path="resume" element={<GraduateResumeBuilderPage />} />
-            <Route path="upskilling" element={<GraduateUpskillingPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

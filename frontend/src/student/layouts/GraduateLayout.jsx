@@ -2,31 +2,23 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useStudentAuth } from '../context/StudentAuthContext'
 import {
-  FiGrid, FiUser, FiCompass, FiBriefcase, FiAward,
+  FiGrid, FiUser, FiAward,
   FiBook, FiCheckSquare, FiCalendar, FiUsers, FiMessageSquare,
   FiBell, FiSettings, FiLogOut, FiMenu, FiX, FiTarget, FiTrendingUp, FiFileText,
-  FiZap, FiBarChart2
+  FiZap
 } from 'react-icons/fi'
 
 const GRADUATE_SIDEBAR_NAV = [
   { id: 'dashboard',        icon: FiGrid,          label: 'Dashboard',           to: '/student/graduate/dashboard' },
-  { id: 'opportunities',    icon: FiCompass,       label: 'Opportunities',       to: '/graduate/opportunities' },
   { id: 'exams',            icon: FiBook,          label: 'Government Exams',    to: '/student/graduate/exams' },
   { id: 'upcoming-exams',   icon: FiCalendar,      label: 'Upcoming Exams',      to: '/graduate/upcoming-exams' },
   { id: 'placement',        icon: FiCheckSquare,   label: 'Private Jobs',        to: '/student/graduate/placement' },
   { id: 'saved',            icon: FiFileText,      label: 'Saved Opportunities', to: '/student/graduate/saved' },
   { id: 'applications',     icon: FiTarget,        label: 'My Applications',     to: '/student/graduate/applications' },
   { id: 'resume-builder',   icon: FiFileText,      label: 'Resume Builder',      to: '/graduate/resume-builder' },
-  { id: 'resume',           icon: FiFileText,      label: 'Resume (Classic)',    to: '/student/graduate/resume' },
   { id: 'ats-checker',      icon: FiTrendingUp,    label: 'ATS Score Checker',   to: '/graduate/ats-checker' },
-  { id: 'psu',              icon: FiBriefcase,     label: 'PSU Opportunities',   to: '/graduate/opportunities?category=PSU' },
-  { id: 'careers',          icon: FiBriefcase,     label: 'Jobs & Careers',      to: '/student/graduate/careers' },
-  { id: 'skill-gap',        icon: FiZap,           label: 'Skills & Gap',        to: '/student/graduate/skill-gap' },
   { id: 'roadmap',          icon: FiTarget,        label: 'Career Roadmap',      to: '/student/graduate/roadmap' },
-  { id: 'higher-studies',   icon: FiAward,         label: 'Higher Studies',      to: '/student/graduate/higher-studies' },
-  { id: 'upskilling',       icon: FiTrendingUp,    label: 'Upskilling Hub',      to: '/student/graduate/upskilling' },
-  { id: 'interview',        icon: FiBarChart2,     label: 'Interview Prep',      to: '/student/graduate/interview' },
-  { id: 'practice',         icon: FiBarChart2,     label: 'Practice & Preparation', to: '/study-tools/practice' },
+  { id: 'higher-studies',   icon: FiAward,         label: 'Higher Studies',     to: '/student/graduate/higher-studies' },
   { id: 'peer-mentor',      icon: FiUsers,         label: 'Peer Mentorship',     to: '/graduate/peer-mentor' },
   { id: 'advisor',          icon: FiMessageSquare, label: 'AI Advisor',          to: '/student/graduate/advisor' },
   { id: 'profile',          icon: FiUser,          label: 'My Profile',          to: '/student/graduate/profile' },

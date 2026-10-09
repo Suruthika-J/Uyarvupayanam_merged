@@ -37,6 +37,9 @@ const login = loginStudent;
 // generic so the forgot-password flow does not reveal which emails are registered.
 const requestOtp = async (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body is missing or malformed." });
+    }
     const email = String(req.body.email || "").trim().toLowerCase();
     const purpose = req.body.purpose === "reset" ? "reset" : "login";
 
@@ -82,6 +85,9 @@ const requestOtp = async (req, res) => {
 // ── OTP sign-in ────────────────────────────────────────────────────────────────
 const verifyLoginOtp = async (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body is missing or malformed." });
+    }
     const email = String(req.body.email || "").trim().toLowerCase();
     const otp = String(req.body.otp || "").trim();
 

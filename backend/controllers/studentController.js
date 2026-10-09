@@ -119,6 +119,9 @@ const registerStudent = async (req, res) => {
 
 const loginStudent = async (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body is missing or malformed." });
+    }
     const { email, password } = req.body;
     const normalizedEmail = String(email || "").trim().toLowerCase();
 
