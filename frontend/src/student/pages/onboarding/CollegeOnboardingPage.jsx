@@ -68,6 +68,63 @@ const CAREER_INTEREST_OPTIONS = [
   'Agricultural Scientist / Agronomist', 'Food Technology & Processing'
 ]
 
+// ── Institution Field Category Auto-Detector ──────────────────────────────
+function detectFieldFromInstitution(institutionName) {
+  if (!institutionName) return null
+  const name = institutionName.toLowerCase()
+
+  if (
+    name.includes('engineering') || name.includes('technology') || name.includes('technological') ||
+    name.includes('polytechnic') || name.includes('tech') || name.includes('engg') ||
+    name.includes('iit') || name.includes('nit') || name.includes('bits') || name.includes('iiit') ||
+    name.includes('anna university') || name.includes('institute of technology')
+  ) {
+    return 'engineering'
+  }
+
+  if (
+    name.includes('medical') || name.includes('medicine') || name.includes('hospital') ||
+    name.includes('health') || name.includes('dental') || name.includes('nursing') ||
+    name.includes('ayush') || name.includes('siddha') || name.includes('homeopathy') ||
+    name.includes('aiims') || name.includes('physiotherapy')
+  ) {
+    return 'medicine'
+  }
+
+  if (name.includes('pharmacy') || name.includes('pharmaceutical') || name.includes('pharm')) {
+    return 'pharmacy'
+  }
+
+  if (name.includes('law') || name.includes('legal') || name.includes('juris') || name.includes('advocate')) {
+    return 'law'
+  }
+
+  if (
+    name.includes('management') || name.includes('business') || name.includes('iim') ||
+    name.includes('b-school')
+  ) {
+    return 'management'
+  }
+
+  if (name.includes('commerce') || name.includes('accountancy')) {
+    return 'commerce'
+  }
+
+  if (name.includes('agriculture') || name.includes('agri') || name.includes('veterinary') || name.includes('horticulture') || name.includes('tnau')) {
+    return 'agriculture'
+  }
+
+  if (name.includes('design') || name.includes('fashion') || name.includes('nift') || name.includes('animation')) {
+    return 'design'
+  }
+
+  if (name.includes('arts') || name.includes('science') || name.includes('humanities') || name.includes('arts and science') || name.includes('arts & science')) {
+    return 'arts_social'
+  }
+
+  return null
+}
+
 // ── Step 1 sub-component with district-first + backend API filtered college picker ───
 function Step1InstitutionBlock({ profile, setProfile }) {
   const [collegeSearch, setCollegeSearch] = React.useState('')
@@ -523,6 +580,18 @@ export default function CollegeOnboardingPage() {
     skills: [],
     strengths: []
   })
+
+  // College Institution Field Matching & Filtering State
+  const [showAllFields, setShowAllFields] = useState(false)
+  const detectedFieldId = detectFieldFromInstitution(profile.institution)
+  const detectedFieldObj = COLLEGE_FIELDS_DATA.find(f => f.id === detectedFieldId)
+
+  // Auto-set fieldId when college institution is detected if not already matching
+  useEffect(() => {
+    if (detectedFieldId && (!profile.fieldId || profile.fieldId !== detectedFieldId)) {
+      setProfile(prev => ({ ...prev, fieldId: detectedFieldId }))
+    }
+  }, [profile.institution, detectedFieldId])
 
   // Step 6: MongoDB Discovery Assessment State
   const [discoveryQuestions, setDiscoveryQuestions] = useState([])
@@ -1227,48 +1296,97 @@ export default function CollegeOnboardingPage() {
           )}
 
           {/* STEP 2: Major Field */}
-          {step === 2 && (
-            <div className="s-anim-up">
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 8px', color: 'var(--s-text)' }}>
-                Step 2: Select Major Academic Field
-              </h3>
-              <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 28 }}>
-                Choose the primary domain area of your degree or diploma programme.
-              </p>
+          {step === 2 && (() => {
+            const fieldsToDisplay = (detectedFieldId && !showAllFields)
+              ? COLLEGE_FIELDS_DATA.filter(f => f.id === detectedFieldId)
+              : COLLEGE_FIELDS_DATA
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 18 }}>
-                {COLLEGE_FIELDS_DATA.map(f => {
-                  const isSelected = profile.fieldId === f.id
-                  const IconComp = ICON_MAP[f.icon] || FiBookOpen
-                  return (
-                    <div
-                      key={f.id}
-                      onClick={() => handleFieldSelect(f.id)}
+            return (
+              <div className="s-anim-up">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+                  <div>
+                    <h3 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--s-text)' }}>
+                      Step 2: Select Major Academic Field
+                    </h3>
+                  </div>
+                  {detectedFieldId && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllFields(!showAllFields)}
                       style={{
-                        padding: 22, borderRadius: 18, cursor: 'pointer',
-                        border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                        background: isSelected ? 'var(--s-primary-l)' : '#fff',
-                        boxShadow: isSelected ? 'var(--s-shadow-md)' : 'none',
-                        transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column'
+                        background: showAllFields ? '#f1f5f9' : '#e0f2fe',
+                        border: '1px solid #bae6fd',
+                        color: showAllFields ? '#475569' : '#0284c7',
+                        padding: '6px 14px',
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer'
                       }}
                     >
-                      <div style={{
-                        width: 46, height: 46, borderRadius: 12,
-                        background: isSelected ? 'var(--s-primary)' : '#f1f5f9',
-                        color: isSelected ? '#fff' : 'var(--s-primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        marginBottom: 12, transition: 'all 0.2s ease'
-                      }}>
-                        <IconComp size={24} />
+                      {showAllFields ? '🔒 Filter to My College Category' : '🌐 Show All Academic Fields'}
+                    </button>
+                  )}
+                </div>
+
+                <p style={{ fontSize: 14, color: 'var(--s-text3)', marginBottom: 20 }}>
+                  Choose the primary domain area of your degree or diploma programme.
+                </p>
+
+                {/* Auto-Matched Institution Banner */}
+                {detectedFieldId && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 18px', background: '#f0fdf4',
+                    border: '1.5px solid #86efac', borderRadius: 16,
+                    marginBottom: 24, color: '#166534'
+                  }}>
+                    <span style={{ fontSize: 24 }}>🎓</span>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#14532d' }}>
+                        Matched Academic Domain: {detectedFieldObj?.name}
                       </div>
-                      <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--s-text)', marginBottom: 4 }}>{f.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--s-text3)', lineHeight: 1.5 }}>{f.description}</div>
+                      <div style={{ fontSize: 12, color: '#166534', marginTop: 2, fontWeight: 600 }}>
+                        Based on your institution <strong>"{profile.institution}"</strong>, we have pre-selected the matching degree category for you.
+                      </div>
                     </div>
-                  )
-                })}
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 18 }}>
+                  {fieldsToDisplay.map(f => {
+                    const isSelected = profile.fieldId === f.id
+                    const IconComp = ICON_MAP[f.icon] || FiBookOpen
+                    return (
+                      <div
+                        key={f.id}
+                        onClick={() => handleFieldSelect(f.id)}
+                        style={{
+                          padding: 22, borderRadius: 18, cursor: 'pointer',
+                          border: isSelected ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
+                          background: isSelected ? 'var(--s-primary-l)' : '#fff',
+                          boxShadow: isSelected ? 'var(--s-shadow-md)' : 'none',
+                          transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column'
+                        }}
+                      >
+                        <div style={{
+                          width: 46, height: 46, borderRadius: 12,
+                          background: isSelected ? 'var(--s-primary)' : '#f1f5f9',
+                          color: isSelected ? '#fff' : 'var(--s-primary)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          marginBottom: 12, transition: 'all 0.2s ease'
+                        }}>
+                          <IconComp size={24} />
+                        </div>
+                        <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--s-text)', marginBottom: 4 }}>{f.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--s-text3)', lineHeight: 1.5 }}>{f.description}</div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* STEP 3: Degree Programme */}
           {step === 3 && (

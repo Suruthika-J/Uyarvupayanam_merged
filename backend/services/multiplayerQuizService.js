@@ -75,13 +75,14 @@ async function selectQuizQuestions({ topic, subtopic, count = 10 }) {
  * Sanitize question for client view (strip correctOption & explanation)
  */
 function sanitizeQuestionForClient(qDoc, questionIndex, totalQuestions) {
+  if (!qDoc) return null;
   const options = (qDoc.options || []).map(opt => ({
     id: opt.id || opt.optionId || String(opt._id),
     text: opt.text
   }));
 
   return {
-    questionId: qDoc._id,
+    questionId: qDoc._id ? qDoc._id.toString() : qDoc.questionId,
     questionIndex,
     totalQuestions,
     questionText: qDoc.questionText,

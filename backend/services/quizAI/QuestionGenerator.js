@@ -62,6 +62,7 @@ async function generateAIQuestions({ topic, subtopic, difficulty = "medium", num
   console.log(`[QuizAI] Generating ${numberOfQuestions} AI questions for topic: "${topic}", subtopic: "${subtopic}"...`);
 
   const provider = resolveProvider();
+  const mongoose = require("mongoose");
 
   if (provider && provider.type === "openai") {
     try {
@@ -90,14 +91,14 @@ Return ONLY valid JSON in this exact structure, with no markdown code fences, no
             { role: "user", content: prompt }
           ],
           temperature: 0.7,
-          max_tokens: 1500
+          max_tokens: 1800
         },
         {
           headers: {
             Authorization: `Bearer ${provider.apiKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 20000
+          timeout: 25000
         }
       );
 
@@ -111,7 +112,7 @@ Return ONLY valid JSON in this exact structure, with no markdown code fences, no
         const savedDocs = [];
         for (let i = 0; i < parsed.questions.length; i++) {
           const q = parsed.questions[i];
-          const qIdStr = `ai_q_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+          const qIdStr = `ai_q_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
           
           const optionsObj = (q.options || []).map((optText, idx) => ({
             id: String.fromCharCode(65 + idx), // A, B, C, D
@@ -138,7 +139,7 @@ Return ONLY valid JSON in this exact structure, with no markdown code fences, no
               questionText: q.question,
               options: optionsObj,
               correctOption: correctOptKey,
-              explanation: q.explanation || `Correct answer is ${correctOptKey}`,
+              explanation: q.explanation || `Correct answer is Option ${correctOptKey}`,
               source: "ai-generated-quiz-engine",
               sourceType: "AI_GENERATED",
               generatedBy: provider.type,
@@ -155,7 +156,7 @@ Return ONLY valid JSON in this exact structure, with no markdown code fences, no
         if (savedDocs.length > 0) return savedDocs;
       }
     } catch (err) {
-      console.warn(`[QuizAI] LLM generation call failed: ${err.message}. Falling back to dynamic question generator.`);
+      console.warn(`[QuizAI] LLM generation call failed: ${err.message}. Falling back to procedural question generator.`);
     }
   }
 
@@ -164,26 +165,34 @@ Return ONLY valid JSON in this exact structure, with no markdown code fences, no
   const fallbackDocs = [];
   for (let i = 1; i <= numberOfQuestions; i++) {
     const qIdStr = `fb_q_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
-    const doc = {
-      _id: qIdStr,
+    const docData = {
       questionId: qIdStr,
+      branch: "CSE",
       domainId: domainId || "general_cs",
       domainName: topic,
       difficulty: difficulty,
       category: topic,
-      questionText: `Which of the following is a primary characteristic or fundamental concept of ${subtopic || topic} (Question ${i})?`,
+      questionText: `Which of the following represents a core concept or standard implementation pattern in ${subtopic || topic}?`,
       options: [
-        { id: "A", text: `Standardized operational pattern for ${subtopic || topic}` },
-        { id: "B", text: `Deprecated architectural anti-pattern` },
-        { id: "C", text: `Unbounded memory allocation strategy` },
-        { id: "D", text: `Non-deterministic system state transition` }
+        { id: "A", optionId: `opt_${qIdStr}_0`, text: `Standardized operational specification for ${subtopic || topic}` },
+        { id: "B", optionId: `opt_${qIdStr}_1`, text: `Deprecated architectural anti-pattern` },
+        { id: "C", optionId: `opt_${qIdStr}_2`, text: `Unbounded memory allocation strategy` },
+        { id: "D", optionId: `opt_${qIdStr}_3`, text: `Non-deterministic system state transition` }
       ],
       correctOption: "A",
-      explanation: `Option A correctly represents the standard principles of ${subtopic || topic}.`,
+      explanation: `Option A correctly represents the standard core principles of ${subtopic || topic}.`,
+      source: "fallback-procedural-generator",
       sourceType: "AI_GENERATED",
       active: true
     };
-    fallbackDocs.push(doc);
+
+    try {
+      const dbDoc = await AhpFuzzyQuestion.create(docData);
+      fallbackDocs.push(dbDoc.toObject());
+    } catch (e) {
+      console.error("[QuizAI] Failed to save fallback question to DB:", e.message);
+      fallbackDocs.push({ ...docData, _id: new mongoose.Types.ObjectId() });
+    }
   }
 
   return fallbackDocs;

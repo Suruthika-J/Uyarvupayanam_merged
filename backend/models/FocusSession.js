@@ -4,13 +4,18 @@ const mongoose = require("mongoose");
 const focusEventSchema = new mongoose.Schema({
   sessionId: { type: mongoose.Schema.Types.ObjectId, ref: "FocusSession", required: true, index: true },
   userId:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  type: {
+  eventType: {
     type: String,
-    enum: ["TAB_SWITCH", "WINDOW_BLUR", "FOCUS_RETURN", "INACTIVITY", "FACE_NOT_DETECTED",
-           "LOOKING_AWAY", "MOTION_DETECTED", "SPEECH_DETECTED", "SESSION_PAUSED",
-           "SESSION_RESUMED", "OTHER"],
+    enum: [
+      "TAB_SWITCH", "PAGE_HIDDEN", "WINDOW_BLUR", "FULLSCREEN_EXIT", "FOCUS_RETURN",
+      "INACTIVITY", "FACE_PRESENT", "FACE_MISSING", "FACE_NOT_DETECTED",
+      "LOOKING_AWAY", "HEAD_DOWN", "PHONE_DETECTED", "PHONE_USAGE_ENDED", "POSSIBLE_PHONE_USAGE",
+      "AUDIO_ACTIVITY", "MOTION_DETECTED", "SPEECH_DETECTED", "SESSION_PAUSED",
+      "SESSION_RESUMED", "OTHER"
+    ],
     required: true
   },
+  severity:   { type: String, enum: ["LOW", "MEDIUM", "HIGH"], default: "LOW" },
   reason:     { type: String, trim: true },
   timestamp:  { type: Date, default: Date.now, index: true },
   duration:   { type: Number, default: 0 }, // seconds this event lasted
@@ -23,15 +28,20 @@ const focusSessionSchema = new mongoose.Schema({
   userId:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
 
   // Session configuration
-  subject:         { type: String, trim: true },  // e.g. "Data Structures"
-  topic:           { type: String, trim: true },  // e.g. "Binary Trees"
-  goal:            { type: String, trim: true },  // student's stated goal
+  subject:         { type: String, trim: true, default: "General Study" },
+  topic:           { type: String, trim: true },
+  goal:            { type: String, trim: true },
   category: {
     type: String,
     enum: ["subject", "course", "skill", "assignment", "interview_prep", "placement_prep", "general"],
     default: "general"
   },
   plannedDuration: { type: Number, default: 25 }, // minutes
+  detectionMode: {
+    type: String,
+    enum: ["STANDARD", "CAMERA", "FULL MONITORING"],
+    default: "STANDARD"
+  },
 
   // Monitoring settings (consent flags)
   monitoringSettings: {
@@ -51,11 +61,14 @@ const focusSessionSchema = new mongoose.Schema({
   },
   completed: { type: Boolean, default: false },
 
-  // Computed at end
-  actualDuration:         { type: Number, default: 0 }, // seconds actually elapsed
-  focusScore:             { type: Number, min: 0, max: 100, default: 0 },
-  distractionCount:       { type: Number, default: 0 },
-  totalDistractionDuration: { type: Number, default: 0 }, // total seconds away/distracted
+  // Computed metrics
+  actualDuration:          { type: Number, default: 0 }, // seconds actually elapsed
+  focusScore:              { type: Number, min: 0, max: 100, default: 100 },
+  distractionScore:        { type: Number, min: 0, max: 100, default: 0 },
+  distractionCount:        { type: Number, default: 0 },
+  totalDistractionDuration:{ type: Number, default: 0 },
+  xpEarned:                { type: Number, default: 0 },
+  goalStatus:              { type: String, enum: ["completed", "partially_completed", "not_completed"], default: "completed" },
 
   // Score breakdown for explainability
   scoreBreakdown: {
@@ -63,17 +76,29 @@ const focusSessionSchema = new mongoose.Schema({
     tabSwitchPenalty:    { type: Number },
     inactivityPenalty:   { type: Number },
     cameraAwayPenalty:   { type: Number },
+    phonePenalty:        { type: Number },
+    lookingAwayPenalty:  { type: Number },
     motionPenalty:       { type: Number },
     finalScore:          { type: Number }
   },
 
-  // Penalties config used (so score is always explainable)
+  // Penalties config used
   scoringConfig: {
-    tabSwitchPenalty:  { type: Number, default: 4 },
-    inactivityPenalty: { type: Number, default: 3 },
-    cameraAwayPenalty: { type: Number, default: 6 },
-    motionPenalty:     { type: Number, default: 2 }
+    tabSwitchPenalty:     { type: Number, default: 4 },
+    windowBlurPenalty:    { type: Number, default: 3 },
+    fullscreenExitPenalty:{ type: Number, default: 5 },
+    inactivityPenalty:    { type: Number, default: 3 },
+    cameraAwayPenalty:    { type: Number, default: 4 },
+    lookingAwayPenalty:   { type: Number, default: 4 },
+    phonePenalty:         { type: Number, default: 8 },
+    possiblePhonePenalty: { type: Number, default: 6 },
+    motionPenalty:        { type: Number, default: 2 }
   },
+
+  // Embedded event log summary
+  events: [focusEventSchema],
+
+  statistics: { type: mongoose.Schema.Types.Mixed },
 
   // Post-session reflection
   reflection: { type: String, trim: true },
@@ -90,3 +115,4 @@ const FocusSession = mongoose.model("FocusSession", focusSessionSchema);
 const FocusEvent   = mongoose.model("FocusEvent",   focusEventSchema);
 
 module.exports = { FocusSession, FocusEvent };
+

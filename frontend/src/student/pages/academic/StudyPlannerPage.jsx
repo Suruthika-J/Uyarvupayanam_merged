@@ -669,66 +669,56 @@ export default function StudyPlannerPage() {
           </p>
         </div>
 
-        {/* ACTIVE PLAN DETECTED BANNER */}
-        {activePlacementPlan ? (
-          <SCard style={{ padding: 32, borderRadius: 24, marginBottom: 32, background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#fff', border: '1px solid #312e81' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
-              <div>
-                <span style={{ background: '#818cf8', color: '#0f172a', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
-                  🎯 Active Placement Plan Saved
-                </span>
-                <h2 style={{ fontSize: 24, fontWeight: 900, margin: '10px 0 6px', color: '#fff' }}>
-                  {activePlacementPlan.companyName} — {activePlacementPlan.targetRole}
-                </h2>
-                <p style={{ fontSize: 14, color: '#c7d2fe', margin: 0, maxWidth: 600 }}>
-                  Hiring: <strong>{activePlacementPlan.hiringType}</strong> • {activePlacementPlan.durationDays} Days ({activePlacementPlan.totalAvailableHours} Total Hours)
-                </p>
-              </div>
+        {/* ACTIVE PLANS DETECTED BANNERS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
+          {activePlacementPlan && (
+            <SCard style={{ padding: 24, borderRadius: 24, background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#fff', border: '1px solid #312e81' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <span style={{ background: '#818cf8', color: '#0f172a', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
+                    🎯 Active Placement Plan Saved
+                  </span>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, margin: '8px 0 4px', color: '#fff' }}>
+                    {activePlacementPlan.companyName} — {activePlacementPlan.targetRole}
+                  </h2>
+                  <p style={{ fontSize: 13, color: '#c7d2fe', margin: 0 }}>
+                    Hiring: <strong>{activePlacementPlan.hiringType}</strong> • {activePlacementPlan.durationDays} Days ({activePlacementPlan.totalAvailableHours} Total Hours)
+                  </p>
+                </div>
 
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <SBtn variant="primary" onClick={() => { setPlannerType('placement'); setViewMode('dashboard') }} style={{ padding: '12px 24px', borderRadius: 14, fontSize: 14 }}>
-                  <FiPlay size={16} style={{ marginRight: 6 }} /> Continue Placement Plan
-                </SBtn>
-                <button
-                  type="button"
-                  onClick={() => { setPlannerType('placement'); setPlacementStep(1); setViewMode('wizard') }}
-                  style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 20px', borderRadius: 14, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
-                >
-                  <FiPlus size={16} style={{ marginRight: 6 }} /> Target Another Company
-                </button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <SBtn variant="primary" onClick={() => { setPlannerType('placement'); setViewMode('dashboard') }} style={{ padding: '10px 20px', borderRadius: 12, fontSize: 13 }}>
+                    <FiPlay size={15} style={{ marginRight: 6 }} /> Continue Placement Plan
+                  </SBtn>
+                </div>
               </div>
-            </div>
-          </SCard>
-        ) : activePlan ? (
-          <SCard style={{ padding: 32, borderRadius: 24, marginBottom: 32, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#fff', border: '1px solid #334155' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
-              <div>
-                <span style={{ background: '#38bdf8', color: '#0f172a', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
-                  📚 Active Academic Plan Saved
-                </span>
-                <h2 style={{ fontSize: 24, fontWeight: 900, margin: '10px 0 6px', color: '#fff' }}>
-                  {activePlan.title}
-                </h2>
-                <p style={{ fontSize: 14, color: '#94a3b8', margin: 0, maxWidth: 600 }}>
-                  Goal: <strong>{activePlan.goal}</strong> • {activePlan.durationDays} Days ({activePlan.totalAvailableHours} Total Hours)
-                </p>
-              </div>
+            </SCard>
+          )}
 
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <SBtn variant="primary" onClick={() => { setPlannerType('academic'); setViewMode('dashboard') }} style={{ padding: '12px 24px', borderRadius: 14, fontSize: 14 }}>
-                  <FiPlay size={16} style={{ marginRight: 6 }} /> Continue Academic Plan
-                </SBtn>
-                <button
-                  type="button"
-                  onClick={() => { setPlannerType('academic'); setWizardStep(1); setViewMode('wizard') }}
-                  style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 20px', borderRadius: 14, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
-                >
-                  <FiPlus size={16} style={{ marginRight: 6 }} /> Create New Plan
-                </button>
+          {activePlan && (
+            <SCard style={{ padding: 24, borderRadius: 24, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#fff', border: '1px solid #334155' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <span style={{ background: '#38bdf8', color: '#0f172a', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
+                    📚 Active Academic Plan Saved
+                  </span>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, margin: '8px 0 4px', color: '#fff' }}>
+                    {activePlan.title}
+                  </h2>
+                  <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>
+                    Goal: <strong>{activePlan.goal}</strong> • {activePlan.durationDays} Days ({activePlan.totalAvailableHours} Total Hours)
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <SBtn variant="primary" onClick={() => { setPlannerType('academic'); setViewMode('dashboard') }} style={{ padding: '10px 20px', borderRadius: 12, fontSize: 13 }}>
+                    <FiPlay size={15} style={{ marginRight: 6 }} /> Continue Academic Plan
+                  </SBtn>
+                </div>
               </div>
-            </div>
-          </SCard>
-        ) : null}
+            </SCard>
+          )}
+        </div>
 
         {/* HERO CHOICES: ACADEMIC VS PLACEMENT */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
@@ -736,13 +726,13 @@ export default function StudyPlannerPage() {
           <SCard style={{ padding: 36, borderRadius: 28, background: '#fff', border: '2px solid #818cf8', boxShadow: '0 12px 30px rgba(99,102,241,0.08)' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>🎯</div>
             <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
-              Specialized Workflow
+              Placement Preparation
             </span>
             <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--s-text)', margin: '10px 0 8px' }}>
-              Placement Preparation
+              Company Placement Preparation
             </h2>
             <p style={{ fontSize: 14, color: 'var(--s-text2)', margin: '0 0 24px', lineHeight: 1.6 }}>
-              Research target company hiring processes (*TCS, Infosys, Amazon, Zoho...*), discover reported selection rounds & subtopics, and generate a round-wise preparation schedule.
+              Research target company hiring processes (TCS, Infosys, Amazon, Zoho...), discover reported selection rounds & subtopics, and generate a round-wise preparation schedule.
             </p>
             <SBtn
               variant="primary"
@@ -757,20 +747,20 @@ export default function StudyPlannerPage() {
           <SCard style={{ padding: 36, borderRadius: 28, background: '#fff', border: '1px solid var(--s-border)' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>📚</div>
             <span style={{ background: '#f1f5f9', color: '#475569', padding: '4px 12px', borderRadius: 12, fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
-              General Academic
+              Exam & Semester Prep
             </span>
             <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--s-text)', margin: '10px 0 8px' }}>
               Academic Study Plan
             </h2>
             <p style={{ fontSize: 14, color: 'var(--s-text2)', margin: '0 0 24px', lineHeight: 1.6 }}>
-              Build a personalized study routine around semester exams, project milestones, or weak subjects based on your weekly availability.
+              Build a personalized study routine around semester exams, internal tests, GATE/CAT competitive exams, or weak subjects based on your weekly availability.
             </p>
             <button
               type="button"
               onClick={() => { setPlannerType('academic'); setWizardStep(1); setViewMode('wizard') }}
               style={{ width: '100%', background: 'var(--s-surface2)', border: '1px solid var(--s-border)', color: 'var(--s-text)', padding: '12px 24px', borderRadius: 14, fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
             >
-              <FiBookOpen size={17} style={{ marginRight: 8 }} /> Academic Study Plan
+              <FiBookOpen size={17} style={{ marginRight: 8 }} /> Exam & Semester Study Plan
             </button>
           </SCard>
         </div>
@@ -832,244 +822,309 @@ export default function StudyPlannerPage() {
   if (viewMode === 'dashboard') {
     const curPlan = plannerType === 'placement' ? activePlacementPlan : activePlan
 
+    let totalTasks = 0
+    let completedCount = 0
     if (curPlan) {
-      let totalTasks = 0
-      let completedCount = 0
       curPlan.schedule?.forEach(day => {
         day.tasks?.forEach(t => {
           totalTasks += 1
           if (t.status === 'completed') completedCount += 1
         })
       })
-      const percent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0
-
-      return (
-        <div style={{ maxWidth: 1080, margin: '0 auto' }} className="s-anim-up">
-          {/* HEADER BAR */}
-          <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: plannerType === 'placement' ? '#e0e7ff' : '#dbeafe', color: plannerType === 'placement' ? '#4338ca' : '#1e40af', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
-                <FiTarget size={14} /> {plannerType === 'placement' ? `Company Placement: ${curPlan.companyName}` : `Active Goal: ${curPlan.goal}`}
-              </div>
-              <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
-                {plannerType === 'placement' ? `🚀 ${curPlan.companyName} — ${curPlan.targetRole} Preparation` : '🎯 YOUR PERSONALIZED STUDY PLAN'}
-              </h1>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {xpEarned > 0 && (
-                <div style={{ background: '#d1fae5', color: '#047857', padding: '6px 14px', borderRadius: 14, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <FiAward size={16} /> +{xpEarned} XP Today
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (plannerType === 'placement') { setPlacementStep(1); setViewMode('wizard') }
-                  else { setWizardStep(1); setViewMode('wizard') }
-                }}
-                style={{ background: 'var(--s-primary)', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <FiPlus size={15} /> {plannerType === 'placement' ? 'Target Another Company' : 'Create New Plan'}
-              </button>
-              <button
-                type="button"
-                onClick={handleResetPlan}
-                title="Clear Active Plan"
-                style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', padding: '9px 14px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-              >
-                <FiTrash2 size={15} /> Reset
-              </button>
-            </div>
-          </div>
-
-          {/* OVERVIEW SUMMARY CARD */}
-          <div style={{
-            background: plannerType === 'placement' ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#fff', padding: '24px 30px', borderRadius: 22, marginBottom: 28,
-            boxShadow: '0 10px 25px rgba(0,0,0,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20
-          }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>
-                {plannerType === 'placement' ? 'Company Preparation Telemetry & Reported Rounds' : 'Study Plan Telemetry & Targets'}
-              </div>
-              <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 8px', color: '#fff' }}>
-                {plannerType === 'placement' ? `${curPlan.companyName} (${curPlan.targetRole}) Preparation Schedule` : curPlan.title}
-              </h2>
-              <p style={{ fontSize: 14, color: '#94a3b8', margin: 0, maxWidth: 620, lineHeight: 1.5 }}>
-                {curPlan.overview || `Targeting ${curPlan.companyName} (${curPlan.hiringType}) across ${curPlan.durationDays} Days (${curPlan.totalAvailableHours} Total Hours).`}
-              </p>
-
-              {/* REPORTED SELECTION ROUND CHIPS FOR PLACEMENT */}
-              {plannerType === 'placement' && curPlan.reportedRounds?.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-                  {curPlan.reportedRounds.map((r, rIdx) => (
-                    <span key={rIdx} style={{ background: 'rgba(255,255,255,0.15)', color: '#c7d2fe', padding: '3px 10px', borderRadius: 10, fontSize: 11, fontWeight: 800 }}>
-                      Round {rIdx + 1}: {r.roundName}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ width: 220 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 800, color: '#38bdf8', marginBottom: 6 }}>
-                <span>Completion Rate</span>
-                <span>{percent}%</span>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.15)', height: 10, borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{ width: `${percent}%`, height: '100%', background: '#34d399', transition: 'width 0.5s ease' }} />
-              </div>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, textAlign: 'right', fontWeight: 700 }}>
-                {completedCount} of {totalTasks} Sessions Done
-              </div>
-            </div>
-          </div>
-
-          {/* DAY TABS */}
-          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, marginBottom: 20 }}>
-            {curPlan.schedule?.map((dayObj, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setActiveDayIdx(idx)}
-                style={{
-                  padding: '10px 20px', borderRadius: 16, fontSize: 13, fontWeight: 800,
-                  border: activeDayIdx === idx ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
-                  background: activeDayIdx === idx ? 'var(--s-primary)' : '#fff',
-                  color: activeDayIdx === idx ? '#fff' : 'var(--s-text2)',
-                  cursor: 'pointer', transition: 'all 0.2s ease', whiteSpace: 'nowrap'
-                }}
-              >
-                {dayObj.day} ({dayObj.tasks?.length || 0} Sessions)
-              </button>
-            ))}
-          </div>
-
-          {/* DAY TIME-SLOTTED TASKS */}
-          {curPlan.schedule?.[activeDayIdx] && (
-            <SCard style={{ padding: 28, borderRadius: 22 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <div>
-                  <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
-                    📅 {curPlan.schedule[activeDayIdx].day} Schedule ({curPlan.schedule[activeDayIdx].date})
-                  </h3>
-                  <span style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>
-                    Target Allocation: {curPlan.schedule[activeDayIdx].dailyTargetHours}
-                  </span>
-                </div>
-                <SBadge color="blue">{curPlan.schedule[activeDayIdx].tasks?.length} Time Slots</SBadge>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {curPlan.schedule[activeDayIdx].tasks?.map((task) => {
-                  const isDone = task.status === 'completed'
-                  const isSkipped = task.status === 'skipped'
-
-                  return (
-                    <div
-                      key={task.id}
-                      style={{
-                        padding: '18px 22px', borderRadius: 16,
-                        background: isDone ? '#ecfdf5' : isSkipped ? '#f1f5f9' : '#fff',
-                        border: isDone ? '1px solid #a7f3d0' : isSkipped ? '1px solid #cbd5e1' : '1px solid var(--s-border)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 260 }}>
-                        <div style={{
-                          padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 900,
-                          background: task.priority === 'HIGH' ? '#fef3c7' : '#e0f2fe',
-                          color: task.priority === 'HIGH' ? '#b45309' : '#0369a1',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          ⏰ {task.timeSlot}
-                        </div>
-
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <span style={{ fontSize: 15, fontWeight: 900, color: isDone ? '#047857' : 'var(--s-text)', textDecoration: isDone ? 'line-through' : 'none' }}>
-                              {task.roundType || task.subject}
-                            </span>
-                            <span style={{
-                              fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8,
-                              background: '#dbeafe', color: '#1e40af'
-                            }}>
-                              {task.subject}
-                            </span>
-                          </div>
-
-                          <div style={{ fontSize: 13, color: isDone ? '#065f46' : 'var(--s-text2)', fontWeight: 600 }}>
-                            {task.topic}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* TASK ACTION BUTTONS */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteTask(task.id)}
-                          style={{
-                            background: isDone ? '#047857' : '#fff',
-                            color: isDone ? '#fff' : '#047857',
-                            border: '1px solid #047857', padding: '6px 14px', borderRadius: 10,
-                            fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                          }}
-                        >
-                          {isDone ? <><FiCheck size={14} /> Completed</> : 'Mark Complete'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRescheduleTask(task.id)}
-                          title="Reschedule Time Slot"
-                          style={{
-                            background: 'var(--s-surface2)', border: '1px solid var(--s-border)',
-                            color: 'var(--s-text2)', padding: '6px 10px', borderRadius: 10,
-                            fontSize: 12, fontWeight: 700, cursor: 'pointer'
-                          }}
-                        >
-                          <FiRepeat size={14} /> Reschedule
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleEditTaskTopic(task)}
-                          title="Edit Topic"
-                          style={{
-                            background: 'var(--s-surface2)', border: '1px solid var(--s-border)',
-                            color: 'var(--s-text2)', padding: '6px 10px', borderRadius: 10,
-                            fontSize: 12, fontWeight: 700, cursor: 'pointer'
-                          }}
-                        >
-                          <FiEdit2 size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSkipTask(task.id)}
-                          title="Skip Task"
-                          style={{
-                            background: isSkipped ? '#f1f5f9' : '#fff', border: '1px solid var(--s-border)',
-                            color: isSkipped ? '#64748b' : 'var(--s-text3)', padding: '6px 10px', borderRadius: 10,
-                            fontSize: 12, fontWeight: 700, cursor: 'pointer'
-                          }}
-                        >
-                          <FiSkipForward size={14} /> {isSkipped ? 'Skipped' : 'Skip'}
-                        </button>
-                      </div>
-
-                    </div>
-                  )
-                })}
-              </div>
-            </SCard>
-          )}
-        </div>
-      )
     }
+    const percent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0
+
+    return (
+      <div style={{ maxWidth: 1080, margin: '0 auto' }} className="s-anim-up">
+        {/* TOP SEGMENTED MODE SWITCHER TAB BAR */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, background: '#e2e8f0', padding: 6, borderRadius: 18 }}>
+          <button
+            type="button"
+            onClick={() => setPlannerType('placement')}
+            style={{
+              flex: 1, padding: '12px 20px', borderRadius: 14, fontSize: 14, fontWeight: 900,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              border: 'none',
+              background: plannerType === 'placement' ? '#4338ca' : 'transparent',
+              color: plannerType === 'placement' ? '#fff' : '#475569',
+              boxShadow: plannerType === 'placement' ? '0 4px 14px rgba(67,56,202,0.25)' : 'none',
+              cursor: 'pointer', transition: 'all 0.2s ease'
+            }}
+          >
+            <FiBriefcase size={18} /> 🎯 Placement Preparation {activePlacementPlan ? `(${activePlacementPlan.companyName})` : ''}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPlannerType('academic')}
+            style={{
+              flex: 1, padding: '12px 20px', borderRadius: 14, fontSize: 14, fontWeight: 900,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              border: 'none',
+              background: plannerType === 'academic' ? 'var(--s-primary)' : 'transparent',
+              color: plannerType === 'academic' ? '#fff' : '#475569',
+              boxShadow: plannerType === 'academic' ? '0 4px 14px rgba(37,99,235,0.25)' : 'none',
+              cursor: 'pointer', transition: 'all 0.2s ease'
+            }}
+          >
+            <FiBookOpen size={18} /> 📚 Exam & Semester Prep {activePlan ? `(${activePlan.title})` : ''}
+          </button>
+        </div>
+
+        {curPlan ? (
+          <>
+            {/* HEADER BAR */}
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: plannerType === 'placement' ? '#e0e7ff' : '#dbeafe', color: plannerType === 'placement' ? '#4338ca' : '#1e40af', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                  <FiTarget size={14} /> {plannerType === 'placement' ? `Company Placement: ${curPlan.companyName}` : `Active Goal: ${curPlan.goal}`}
+                </div>
+                <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+                  {plannerType === 'placement' ? `🚀 ${curPlan.companyName} — ${curPlan.targetRole} Preparation` : `🎯 ${curPlan.title}`}
+                </h1>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {xpEarned > 0 && (
+                  <div style={{ background: '#d1fae5', color: '#047857', padding: '6px 14px', borderRadius: 14, fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FiAward size={16} /> +{xpEarned} XP Today
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (plannerType === 'placement') { setPlacementStep(1); setViewMode('wizard') }
+                    else { setWizardStep(1); setViewMode('wizard') }
+                  }}
+                  style={{ background: 'var(--s-primary)', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <FiPlus size={15} /> {plannerType === 'placement' ? 'Target Another Company' : 'Create New Plan'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetPlan}
+                  title="Clear Active Plan"
+                  style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', padding: '9px 14px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <FiTrash2 size={15} /> Reset
+                </button>
+              </div>
+            </div>
+
+            {/* OVERVIEW SUMMARY CARD */}
+            <div style={{
+              background: plannerType === 'placement' ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#fff', padding: '24px 30px', borderRadius: 22, marginBottom: 28,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20
+            }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>
+                  {plannerType === 'placement' ? 'Company Preparation Telemetry & Reported Rounds' : 'Study Plan Telemetry & Targets'}
+                </div>
+                <h2 style={{ fontSize: 22, fontWeight: 900, margin: '4px 0 8px', color: '#fff' }}>
+                  {plannerType === 'placement' ? `${curPlan.companyName} (${curPlan.targetRole}) Preparation Schedule` : curPlan.title}
+                </h2>
+                <p style={{ fontSize: 14, color: '#94a3b8', margin: 0, maxWidth: 620, lineHeight: 1.5 }}>
+                  {curPlan.overview || `Targeting ${curPlan.companyName} (${curPlan.hiringType}) across ${curPlan.durationDays} Days (${curPlan.totalAvailableHours} Total Hours).`}
+                </p>
+
+                {/* REPORTED SELECTION ROUND CHIPS FOR PLACEMENT */}
+                {plannerType === 'placement' && curPlan.reportedRounds?.length > 0 && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                    {curPlan.reportedRounds.map((r, rIdx) => (
+                      <span key={rIdx} style={{ background: 'rgba(255,255,255,0.15)', color: '#c7d2fe', padding: '3px 10px', borderRadius: 10, fontSize: 11, fontWeight: 800 }}>
+                        Round {rIdx + 1}: {r.roundName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ width: 220 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 800, color: '#38bdf8', marginBottom: 6 }}>
+                  <span>Completion Rate</span>
+                  <span>{percent}%</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.15)', height: 10, borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ width: `${percent}%`, height: '100%', background: '#34d399', transition: 'width 0.5s ease' }} />
+                </div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, textAlign: 'right', fontWeight: 700 }}>
+                  {completedCount} of {totalTasks} Sessions Done
+                </div>
+              </div>
+            </div>
+
+            {/* DAY TABS */}
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, marginBottom: 20 }}>
+              {curPlan.schedule?.map((dayObj, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveDayIdx(idx)}
+                  style={{
+                    padding: '10px 20px', borderRadius: 16, fontSize: 13, fontWeight: 800,
+                    border: activeDayIdx === idx ? '2px solid var(--s-primary)' : '1px solid var(--s-border)',
+                    background: activeDayIdx === idx ? 'var(--s-primary)' : '#fff',
+                    color: activeDayIdx === idx ? '#fff' : 'var(--s-text2)',
+                    cursor: 'pointer', transition: 'all 0.2s ease', whiteSpace: 'nowrap'
+                  }}
+                >
+                  {dayObj.day} ({dayObj.tasks?.length || 0} Sessions)
+                </button>
+              ))}
+            </div>
+
+            {/* DAY TIME-SLOTTED TASKS */}
+            {curPlan.schedule?.[activeDayIdx] && (
+              <SCard style={{ padding: 28, borderRadius: 22 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div>
+                    <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--s-text)', margin: 0 }}>
+                      📅 {curPlan.schedule[activeDayIdx].day} Schedule ({curPlan.schedule[activeDayIdx].date})
+                    </h3>
+                    <span style={{ fontSize: 13, color: 'var(--s-text3)', fontWeight: 600 }}>
+                      Target Allocation: {curPlan.schedule[activeDayIdx].dailyTargetHours}
+                    </span>
+                  </div>
+                  <SBadge color="blue">{curPlan.schedule[activeDayIdx].tasks?.length} Time Slots</SBadge>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {curPlan.schedule[activeDayIdx].tasks?.map((task) => {
+                    const isDone = task.status === 'completed'
+                    const isSkipped = task.status === 'skipped'
+
+                    return (
+                      <div
+                        key={task.id}
+                        style={{
+                          padding: '18px 22px', borderRadius: 16,
+                          background: isDone ? '#ecfdf5' : isSkipped ? '#f1f5f9' : '#fff',
+                          border: isDone ? '1px solid #a7f3d0' : isSkipped ? '1px solid #cbd5e1' : '1px solid var(--s-border)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 260 }}>
+                          <div style={{
+                            padding: '6px 12px', borderRadius: 12, fontSize: 12, fontWeight: 900,
+                            background: task.priority === 'HIGH' ? '#fef3c7' : '#e0f2fe',
+                            color: task.priority === 'HIGH' ? '#b45309' : '#0369a1',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            ⏰ {task.timeSlot}
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 15, fontWeight: 900, color: isDone ? '#047857' : 'var(--s-text)', textDecoration: isDone ? 'line-through' : 'none' }}>
+                                {task.roundType || task.subject}
+                              </span>
+                              <span style={{
+                                fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 8,
+                                background: '#dbeafe', color: '#1e40af'
+                              }}>
+                                {task.subject}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: 13, color: isDone ? '#065f46' : 'var(--s-text2)', fontWeight: 600 }}>
+                              {task.topic}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* TASK ACTION BUTTONS */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteTask(task.id)}
+                            style={{
+                              background: isDone ? '#047857' : '#fff',
+                              color: isDone ? '#fff' : '#047857',
+                              border: '1px solid #047857', padding: '6px 14px', borderRadius: 10,
+                              fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                            }}
+                          >
+                            {isDone ? <><FiCheck size={14} /> Completed</> : 'Mark Complete'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRescheduleTask(task.id)}
+                            title="Reschedule Time Slot"
+                            style={{
+                              background: 'var(--s-surface2)', border: '1px solid var(--s-border)',
+                              color: 'var(--s-text2)', padding: '6px 10px', borderRadius: 10,
+                              fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                            }}
+                          >
+                            <FiRepeat size={14} /> Reschedule
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleEditTaskTopic(task)}
+                            title="Edit Topic"
+                            style={{
+                              background: 'var(--s-surface2)', border: '1px solid var(--s-border)',
+                              color: 'var(--s-text2)', padding: '6px 10px', borderRadius: 10,
+                              fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                            }}
+                          >
+                            <FiEdit2 size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSkipTask(task.id)}
+                            title="Skip Task"
+                            style={{
+                              background: isSkipped ? '#f1f5f9' : '#fff', border: '1px solid var(--s-border)',
+                              color: isSkipped ? '#64748b' : 'var(--s-text3)', padding: '6px 10px', borderRadius: 10,
+                              fontSize: 12, fontWeight: 700, cursor: 'pointer'
+                            }}
+                          >
+                            <FiSkipForward size={14} /> {isSkipped ? 'Skipped' : 'Skip'}
+                          </button>
+                        </div>
+
+                      </div>
+                    )
+                  })}
+                </div>
+              </SCard>
+            )}
+          </>
+        ) : (
+          /* CLEAN EMPTY STATE CARD WHEN SELECTED MODE HAS NO ACTIVE PLAN */
+          <SCard style={{ padding: 48, borderRadius: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>
+              {plannerType === 'placement' ? '🎯' : '📚'}
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--s-text)', margin: '0 0 8px' }}>
+              {plannerType === 'placement' ? 'No Active Placement Preparation Plan' : 'No Active Exam Preparation Plan'}
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--s-text3)', margin: '0 0 24px', maxWidth: 520, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+              {plannerType === 'placement'
+                ? 'Create a customized preparation schedule for your target company (Infosys, TCS, Amazon, Zoho...) with round-wise topics and practice slots.'
+                : 'Create a tailored study schedule for your semester exams, mid-terms, GATE/CAT, or weak subject revision.'}
+            </p>
+            <SBtn
+              variant="primary"
+              onClick={() => {
+                if (plannerType === 'placement') { setPlacementStep(1); setViewMode('wizard') }
+                else { setWizardStep(1); setViewMode('wizard') }
+              }}
+              style={{ padding: '12px 28px', borderRadius: 14, fontSize: 15, fontWeight: 900 }}
+            >
+              <FiPlus size={16} style={{ marginRight: 8 }} />
+              {plannerType === 'placement' ? 'Create Placement Preparation Plan' : 'Create Exam & Semester Plan'}
+            </SBtn>
+          </SCard>
+        )}
+      </div>
+    )
   }
 
   // ── SPECIALIZED PLACEMENT PREPARATION WIZARD (Phases 1 – 11) ──

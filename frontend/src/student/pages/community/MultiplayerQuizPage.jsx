@@ -214,6 +214,7 @@ export default function MultiplayerQuizPage() {
         ...prev,
         status: 'LIVE',
         currentQuestionIndex: qNum - 1,
+        totalQuestions: payload.totalQuestions || prev.totalQuestions,
         participants: payload.participants || prev.participants
       } : prev)
       setCurrentQuestion(payload.question)

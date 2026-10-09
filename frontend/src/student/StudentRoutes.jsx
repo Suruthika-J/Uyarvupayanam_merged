@@ -427,6 +427,7 @@ export default function StudentRoutes() {
             <Route path="peer-chat" element={<PeerChatPage />} />
             <Route path="multiplayer-quiz/:sessionId" element={<MultiplayerQuizPage />} />
             <Route path="academic/focus" element={<IntelligentFocusPage />} />
+            <Route path="academic/focus-analytics" element={<FocusAnalyticsPage />} />
             <Route path="focus/analytics" element={<FocusAnalyticsPage />} />
             <Route path="scholarships" element={<CollegeScholarshipsPage />} />
             <Route path="bookmarks" element={<BookmarksPage />} />
